@@ -18,7 +18,7 @@ typedef struct {
 } KbdEntry;
 
 
-#ifdef SYSTEM_win
+#if defined(SYSTEM_win) || defined(MACOSX)
 typedef struct {
   unsigned int red, green, blue;
 } XColor;
@@ -77,7 +77,7 @@ typedef struct {
     unsigned int StereoImageReg[8];
   } Vidc;
 
-#ifdef WIN32
+#if defined(WIN32) || defined(MACOSX)
   struct {
     char *ImageData,*CursorImageData;
 

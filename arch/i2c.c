@@ -59,7 +59,11 @@ static void SaveCMOS(ARMul_State *state) {
     return;
   }
 #else
+#ifdef MACOSX
+  OutFile = fopen("/tmp/hexcmos","w");
+#else
   OutFile = fopen("hexcmos","w");
+#endif
   if (OutFile == NULL) {
     fprintf(stderr,"SaveCMOS: Could not open (hexcmos.updated) CMOS settings file\n");
     exit(1);
@@ -322,7 +326,11 @@ static void SetUpCMOS(ARMul_State *state) {
 #ifdef __riscos__
   InFile = fopen("<ArcEm$Dir>.hexcmos", "r");
 #else
+#ifdef MACOSX
+  InFile = fopen("/tmp/hexcmos", "r");
+#else
   InFile = fopen("hexcmos", "r");
+#endif
 #endif
   if (InFile == NULL) {
     fprintf(stderr,"SetUpCMOS: Could not open (hexcmos) CMOS settings file\n");

@@ -415,7 +415,11 @@ unsigned ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
    exit(2);
  }
 #else
+#ifdef MACOSX
+ if (ROMFile = fopen("/tmp/ROM", "rb"), ROMFile == NULL) {
+#else
  if (ROMFile = fopen("ROM", "rb"), ROMFile == NULL) {
+#endif
    fprintf(stderr, "Couldn't open ROM file\n");
    exit(1);
  };
