@@ -1148,7 +1148,6 @@ static void ProcessKey(ARMul_State *state,XKeyEvent *key) {
       KBD.Buffer[KBD.BuffOcc].KeyColToSend=PresPtr->col;
       KBD.Buffer[KBD.BuffOcc].KeyRowToSend=PresPtr->row;
       KBD.Buffer[KBD.BuffOcc].KeyUpNDown=(key->type==KeyPress)?0:1;
-      KBD.BuffOcc++;
 #ifdef DEBUG_KBD
       fprintf(stderr,"ProcessKey: Got Col,Row=%d,%d UpNDown=%d BuffOcc=%d\n", 
               KBD.Buffer[KBD.BuffOcc].KeyColToSend,
@@ -1156,6 +1155,7 @@ static void ProcessKey(ARMul_State *state,XKeyEvent *key) {
                KBD.Buffer[KBD.BuffOcc].KeyUpNDown,
               KBD.BuffOcc);
 #endif
+      KBD.BuffOcc++;
       return;
     };
   }; /* Key search loop */
@@ -1184,7 +1184,6 @@ static void ProcessButton(ARMul_State *state,XButtonEvent *button) {
   KBD.Buffer[KBD.BuffOcc].KeyColToSend=ButtonNum;
   KBD.Buffer[KBD.BuffOcc].KeyRowToSend=7;
   KBD.Buffer[KBD.BuffOcc].KeyUpNDown=UpNDown;
-  KBD.BuffOcc++;
 #ifdef DEBUG_KBD
   fprintf(stderr,"ProcessButton: Got Col,Row=%d,%d UpNDown=%d BuffOcc=%d\n", 
           KBD.Buffer[KBD.BuffOcc].KeyColToSend,
@@ -1192,6 +1191,7 @@ static void ProcessButton(ARMul_State *state,XButtonEvent *button) {
            KBD.Buffer[KBD.BuffOcc].KeyUpNDown,
           KBD.BuffOcc);
 #endif
+  KBD.BuffOcc++;
 }; /* ProcessButton */
 
 /*----------------------------------------------------------------------------*/
