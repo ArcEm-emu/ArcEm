@@ -1042,6 +1042,20 @@ void DisplayKbd_Init(ARMul_State *state) {
       exit(1);
     };
   };
+
+#ifdef DEBUG_X_INIT
+    {
+        XVisualInfo *vi;
+
+        vi = &HD.visInfo;
+        fprintf(stderr, "XVisualInfo: %p, %#lx, %d, %d, %d, %#lx, "
+            "%#lx, %#lx, %d, %d)\n", vi->visual, vi->visualid,
+            vi->screen, vi->depth, vi->class, vi->red_mask,
+            vi->green_mask, vi->blue_mask, vi->colormap_size,
+            vi->bits_per_rgb);
+    }
+#endif
+
   HD.BackingWindow=XCreateWindow(HD.disp,
                                           HD.RootWindow,
                                           500,500, /* Position on root */
