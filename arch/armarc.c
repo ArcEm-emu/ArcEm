@@ -111,8 +111,8 @@ static void DumpHandler(int sig) {
  * Uses MEMC.TmpPage which must have been previously been set up by a call to
  * checkabort
  *
- * @param address
- * @returns
+ * @param address  Logical RAM address
+ * @returns        Physical RAM address
  */
 ARMword GetPhysAddress(unsigned int address) {
   ARMword pagetabval = MEMC.TmpPage;
@@ -158,7 +158,9 @@ ARMword GetPhysAddress(unsigned int address) {
  * @param PageTabVal
  * @returns 1 if we find it
   */
-int FindPageTableEntry_Search(unsigned int address, ARMword *PageTabVal) {
+static int
+FindPageTableEntry_Search(unsigned address, ARMword *PageTabVal)
+{
   int Current;
   unsigned int matchaddr;
   unsigned int mask;
@@ -197,19 +199,27 @@ int FindPageTableEntry_Search(unsigned int address, ARMword *PageTabVal) {
       MEMC.OldAddress1 = address;
       MEMC.OldPage1 = MEMC.PageTable[Current];
       *PageTabVal   = MEMC.PageTable[Current];
-      return(1);
+      return 1;
     }
   }
 
-  return(0);
+  return 0;
 } /* FindPageTableEntry_Search */
 
 
-static int FindPageTableEntry(unsigned int address, ARMword *PageTabVal) {
+/** FindPageTableEntry
+ *
+ * @param address
+ * @param PageTabVal
+ * @returns 1 if page entry for address found
+ */
+int
+FindPageTableEntry(unsigned address, ARMword *PageTabVal)
+{
   address >>= (12 + MEMC.PageSizeFlags);
   if (address == MEMC.OldAddress1) {
     *PageTabVal = MEMC.OldPage1;
-    return(1);
+    return 1;
   }
 
   return FindPageTableEntry_Search(address, PageTabVal);

@@ -8,17 +8,17 @@
 
 /*  armemu.c -- Main instruction emulation:  ARM6 Instruction Emulator.
     Copyright (C) 1994 Advanced RISC Machines Ltd.
- 
+
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation; either version 2 of the License, or
     (at your option) any later version.
- 
+
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
- 
+
     You should have received a copy of the GNU General Public License
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. */
@@ -43,16 +43,6 @@ ARMEmuFunc* pLoadedFunc; /* So that a fetched instruction followed by an overwri
 /***************************************************************************\
 *                   Load Instruction                                        *
 \***************************************************************************/
-
-static int FindPageTableEntry(unsigned int address, ARMword *PageTabVal) {
-  address >>= (12+MEMC.PageSizeFlags);
-  if (address == MEMC.OldAddress1) {
-    *PageTabVal = MEMC.OldPage1;
-    return(1);
-  };
-
-  return FindPageTableEntry_Search(address,PageTabVal);
-}
 
 static ARMword ARMul_LoadInstr(ARMword address, ARMEmuFunc** func)
 {
@@ -1357,7 +1347,7 @@ void ARMul_Emulate26(void)
      decoded = statestr.decoded;
      loaded  = statestr.loaded;
      pc      = statestr.pc;
-  
+
      decfunc = loadedfunc =
                instrfunc =
                ARMul_Emulate_DecodeInstr; /* Could do better here! */
@@ -1366,7 +1356,7 @@ void ARMul_Emulate26(void)
                 = pLoadedFunc
                 = &dummyfunc;
    }
-  
+
    do { /* just keep going */
      switch (statestr.NextInstr) {
         case NONSEQ:
@@ -1384,7 +1374,7 @@ void ARMul_Emulate26(void)
            loaded = ARMul_LoadInstr(pc + 8, &pLoadedFunc);
            loadedfunc = *pLoadedFunc;
            break;
- 
+
         case PCINCEDSEQ:
         case PCINCEDNONSEQ:
            /* DAG: R15 already advanced? */
@@ -1401,9 +1391,9 @@ void ARMul_Emulate26(void)
            loadedfunc = *pLoadedFunc;
            NORMALCYCLE;
            break;
- 
+
         /* DAG - resume was here! */
- 
+
         default: /* The program counter has been changed */
 #ifdef DEBUG
            printf("PC ch pc=0x%x (O 0x%x\n",statestr.Reg[15],pc);
@@ -1424,7 +1414,7 @@ void ARMul_Emulate26(void)
      ARMul_InvokeEvent();
 
      if (ARMul_Time >= ioc.NextTimerTrigger) UpdateTimerRegisters();
- 
+
      if (statestr.Exception) { /* Any exceptions */
        if ((statestr.Exception & 2) && !FFLAG) {
           ARMul_Abort(&statestr,ARMul_FIQV);
@@ -1435,16 +1425,16 @@ void ARMul_Emulate26(void)
          break;
        }
      }
-  
+
      /*fprintf(stderr,"exec: pc=0x%08x instr=0x%08x\n",pc,instr);*/
      instrfunc(instr, pc);
    } while (1); /* do loop */
-  
+
    statestr.decoded = decoded;
    statestr.loaded = loaded;
    statestr.pc = pc;
 
   }
- 
+
 } /* Emulate 26 in instruction based mode */
 

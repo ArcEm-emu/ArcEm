@@ -109,7 +109,7 @@ int ArmArc_WriteKbdRx(ARMul_State *state, unsigned char value);
 
 void EnableTrace(void);
 
-int FindPageTableEntry_Search(unsigned int address, ARMword *PageTabVal);
+int FindPageTableEntry(unsigned address, ARMword *PageTabVal);
 
 ARMword GetPhysAddress(unsigned int address);
 
