@@ -2,7 +2,7 @@
 
 #include "armarc.h"
 #include "DispKbd.h"
-#include "arch/keyboard.h"
+#include "keyboard.h"
 
 #define DEBUG_KEYBOARD 0
 #define DBG(a) if (DEBUG_KEYBOARD) fprintf a
