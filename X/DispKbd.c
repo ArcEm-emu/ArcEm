@@ -1173,14 +1173,19 @@ static void ProcessKey(ARMul_State *state,XKeyEvent *key) {
 
 /*----------------------------------------------------------------------------*/
 static void ProcessButton(ARMul_State *state,XButtonEvent *button) {
-  int ButtonNum=-1;
+    int b;
+    int arch_button;
 
-  if (button->button==Button1) ButtonNum=0;
-  if (button->button==Button2) ButtonNum=1;
-  if (button->button==Button3) ButtonNum=2;
-
-  /* Hey if you've got a 4 or more buttoned mouse hard luck! */
-  if (ButtonNum<0) return;
+    b = button->button;
+    if (b == Button1) {
+        arch_button = 0;
+    } else if (b == Button2) {
+        arch_button = 1;
+    } else if (b == Button3) {
+        arch_button = 2;
+    } else {
+        return;
+    }
 
   if (KBD.BuffOcc>=KBDBUFFLEN) {
 #ifdef DEBUG_KBD
@@ -1190,7 +1195,7 @@ static void ProcessButton(ARMul_State *state,XButtonEvent *button) {
   };
 
   /* Now add it to the buffer */
-  KBD.Buffer[KBD.BuffOcc].KeyColToSend=ButtonNum;
+    KBD.Buffer[KBD.BuffOcc].KeyColToSend = arch_button;
   KBD.Buffer[KBD.BuffOcc].KeyRowToSend=7;
   KBD.Buffer[KBD.BuffOcc].KeyUpNDown = button->type == ButtonRelease;
 #ifdef DEBUG_KBD
