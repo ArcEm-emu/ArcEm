@@ -1150,101 +1150,101 @@ static void StoreSMult(ARMul_State *state, ARMword instr,
 
 #define EMFUNCDECL26(name) ARMul_Emulate26_ ## name
 #define EMFUNC_CONDTEST
-#include "armemu_inscode/include.c"
+#include "armemuinstr.c"
 
 #undef EMFUNCDECL26
 #undef EMFUNC_CONDTEST
 #define EMFUNCDECL26(name) ARMul_Emulate26_ ## name ## _EQ
 #define EMFUNC_CONDTEST if (!ZFLAG) return;
-#include "armemu_inscode/include.c"
+#include "armemuinstr.c"
 
 #undef EMFUNCDECL26
 #undef EMFUNC_CONDTEST
 #define EMFUNCDECL26(name) ARMul_Emulate26_ ## name ## _NE
 #define EMFUNC_CONDTEST if (ZFLAG) return;
 
-#include "armemu_inscode/include.c"
+#include "armemuinstr.c"
 
 #undef EMFUNCDECL26
 #undef EMFUNC_CONDTEST
 #define EMFUNCDECL26(name) ARMul_Emulate26_ ## name ## _VS
 #define EMFUNC_CONDTEST if (!VFLAG) return;
-#include "armemu_inscode/include.c"
+#include "armemuinstr.c"
 
 #undef EMFUNCDECL26
 #undef EMFUNC_CONDTEST
 #define EMFUNCDECL26(name) ARMul_Emulate26_ ## name ## _VC
 #define EMFUNC_CONDTEST if (VFLAG) return;
 
-#include "armemu_inscode/include.c"
+#include "armemuinstr.c"
 
 #undef EMFUNCDECL26
 #undef EMFUNC_CONDTEST
 #define EMFUNCDECL26(name) ARMul_Emulate26_ ## name ## _MI
 #define EMFUNC_CONDTEST if (!NFLAG) return;
-#include "armemu_inscode/include.c"
+#include "armemuinstr.c"
 
 #undef EMFUNCDECL26
 #undef EMFUNC_CONDTEST
 #define EMFUNCDECL26(name) ARMul_Emulate26_ ## name ## _PL
 #define EMFUNC_CONDTEST if (NFLAG) return;
 
-#include "armemu_inscode/include.c"
+#include "armemuinstr.c"
 
 #undef EMFUNCDECL26
 #undef EMFUNC_CONDTEST
 #define EMFUNCDECL26(name) ARMul_Emulate26_ ## name ## _CS
 #define EMFUNC_CONDTEST if (!CFLAG) return;
-#include "armemu_inscode/include.c"
+#include "armemuinstr.c"
 
 #undef EMFUNCDECL26
 #undef EMFUNC_CONDTEST
 #define EMFUNCDECL26(name) ARMul_Emulate26_ ## name ## _CC
 #define EMFUNC_CONDTEST if (CFLAG) return;
 
-#include "armemu_inscode/include.c"
+#include "armemuinstr.c"
 
 #undef EMFUNCDECL26
 #undef EMFUNC_CONDTEST
 #define EMFUNCDECL26(name) ARMul_Emulate26_ ## name ## _HI
 #define EMFUNC_CONDTEST if (!(CFLAG && !ZFLAG)) return;
 
-#include "armemu_inscode/include.c"
+#include "armemuinstr.c"
 
 #undef EMFUNCDECL26
 #undef EMFUNC_CONDTEST
 #define EMFUNCDECL26(name) ARMul_Emulate26_ ## name ## _LS
 #define EMFUNC_CONDTEST if (!((!CFLAG || ZFLAG))) return;
 
-#include "armemu_inscode/include.c"
+#include "armemuinstr.c"
 
 #undef EMFUNCDECL26
 #undef EMFUNC_CONDTEST
 #define EMFUNCDECL26(name) ARMul_Emulate26_ ## name ## _GE
 #define EMFUNC_CONDTEST if (!((!NFLAG && !VFLAG) || (NFLAG && VFLAG))) return;
 
-#include "armemu_inscode/include.c"
+#include "armemuinstr.c"
 
 #undef EMFUNCDECL26
 #undef EMFUNC_CONDTEST
 #define EMFUNCDECL26(name) ARMul_Emulate26_ ## name ## _LT
 #define EMFUNC_CONDTEST if (!((NFLAG && !VFLAG) || (!NFLAG && VFLAG))) return;
 
-#include "armemu_inscode/include.c"
+#include "armemuinstr.c"
 
 #undef EMFUNCDECL26
 #undef EMFUNC_CONDTEST
 #define EMFUNCDECL26(name) ARMul_Emulate26_ ## name ## _GT
 #define EMFUNC_CONDTEST if (!((!NFLAG && !VFLAG && !ZFLAG) || (NFLAG && VFLAG && !ZFLAG))) return;
 
-#include "armemu_inscode/include.c"
+#include "armemuinstr.c"
 
 #undef EMFUNCDECL26
 #undef EMFUNC_CONDTEST
 #define EMFUNCDECL26(name) ARMul_Emulate26_ ## name ## _LE
 #define EMFUNC_CONDTEST if (!(((NFLAG && !VFLAG) || (!NFLAG && VFLAG)) || ZFLAG)) return;
 
-#include "armemu_inscode/include.c"
+#include "armemuinstr.c"
 
 /* ################################################################################## */
 /* ## Function called when the decode is unknown                                   ## */
@@ -1256,92 +1256,92 @@ void ARMul_Emulate_DecodeInstr(ARMword instr, ARMword pc) {
 
 #undef EMFUNCDECL26
 #define EMFUNCDECL26(name) ARMul_Emulate26_ ## name
-#include "armemu_switch/inc.c"
+#include "armemudec.c"
       break;
 
     case EQ:
 #undef EMFUNCDECL26
 #define EMFUNCDECL26(name) ARMul_Emulate26_ ## name ## _EQ
-#include "armemu_switch/inc.c"
+#include "armemudec.c"
 
       break;
 
     case NE:
 #undef EMFUNCDECL26
 #define EMFUNCDECL26(name) ARMul_Emulate26_ ## name ## _NE
-#include "armemu_switch/inc.c"
+#include "armemudec.c"
       break;
 
     case CS:
 #undef EMFUNCDECL26
 #define EMFUNCDECL26(name) ARMul_Emulate26_ ## name ## _CS
-#include "armemu_switch/inc.c"
+#include "armemudec.c"
       break;
 
     case CC:
 #undef EMFUNCDECL26
 #define EMFUNCDECL26(name) ARMul_Emulate26_ ## name ## _CC
-#include "armemu_switch/inc.c"
+#include "armemudec.c"
       break;
 
     case VS:
 #undef EMFUNCDECL26
 #define EMFUNCDECL26(name) ARMul_Emulate26_ ## name ## _VS
-#include "armemu_switch/inc.c"
+#include "armemudec.c"
       break;
 
     case VC:
 #undef EMFUNCDECL26
 #define EMFUNCDECL26(name) ARMul_Emulate26_ ## name ## _VC
-#include "armemu_switch/inc.c"
+#include "armemudec.c"
       break;
 
     case MI:
 #undef EMFUNCDECL26
 #define EMFUNCDECL26(name) ARMul_Emulate26_ ## name ## _MI
-#include "armemu_switch/inc.c"
+#include "armemudec.c"
       break;
 
     case PL:
 #undef EMFUNCDECL26
 #define EMFUNCDECL26(name) ARMul_Emulate26_ ## name ## _PL
-#include "armemu_switch/inc.c"
+#include "armemudec.c"
       break;
 
     case HI:
 #undef EMFUNCDECL26
 #define EMFUNCDECL26(name) ARMul_Emulate26_ ## name ## _HI
-#include "armemu_switch/inc.c"
+#include "armemudec.c"
       break;
 
     case LS:
 #undef EMFUNCDECL26
 #define EMFUNCDECL26(name) ARMul_Emulate26_ ## name ## _LS
-#include "armemu_switch/inc.c"
+#include "armemudec.c"
       break;
 
     case GE:
 #undef EMFUNCDECL26
 #define EMFUNCDECL26(name) ARMul_Emulate26_ ## name ## _GE
-#include "armemu_switch/inc.c"
+#include "armemudec.c"
       break;
 
     case LT:
 #undef EMFUNCDECL26
 #define EMFUNCDECL26(name) ARMul_Emulate26_ ## name ## _LT
-#include "armemu_switch/inc.c"
+#include "armemudec.c"
       break;
 
     case GT:
 #undef EMFUNCDECL26
 #define EMFUNCDECL26(name) ARMul_Emulate26_ ## name ## _GT
-#include "armemu_switch/inc.c"
+#include "armemudec.c"
       break;
 
     case LE:
 #undef EMFUNCDECL26
 #define EMFUNCDECL26(name) ARMul_Emulate26_ ## name ## _LE
-#include "armemu_switch/inc.c"
+#include "armemudec.c"
       break;
 
     default:

@@ -101,7 +101,7 @@ endif
 
 
 TARED = *.c *.s *.h README COPYING Makefile \
-        armemu_inscode armemu_switch X riscos riscos-single arch
+        X riscos riscos-single arch
 
 MODEL = arch/armarc
 
@@ -155,7 +155,7 @@ armos.o: armos.c armdefs.h armos.h armfpe.h
 armcopro.o: armcopro.c armdefs.h 
 	$(CC) $(CFLAGS) -c $*.c
 
-armemu26.o: armemu.c armdefs.h armemu.h armemu_inscode/include.c armemu_switch/inc.c
+armemu26.o: armemu.c armdefs.h armemu.h armemuinstr.c armemudec.c
 	$(CC) $(CFLAGS) -o armemu26.o -c armemu.c
 
 arm-support.o: arm-support.s instructions 
