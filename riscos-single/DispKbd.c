@@ -40,7 +40,6 @@
 
 static unsigned AutoKey(ARMul_State *state);
 static void UpdateCursorPos(ARMul_State *state);
-unsigned DisplayKbd_XPoll(ARMul_State *state);
 static void SelectROScreenMode(int x, int y, int bpp);
 
 
@@ -67,8 +66,8 @@ static unsigned AutoKey(ARMul_State *state) {
 
   return 0;
 };
-/*-----------------------------------------------------------------------------*/
-/* I'm not confident that this is completely correct - if its wrong all hell
+/*----------------------------------------------------------------------------*/
+/* I'm not confident that this is completely correct - if it's wrong all hell
    is bound to break loose! If it works however it should speed things up nicely!
 */
 static void MarkAsUpdated(ARMul_State *state, int end) {
@@ -83,10 +82,10 @@ static void MarkAsUpdated(ARMul_State *state, int end) {
 
 }; /* MarkAsUpdated */
 
-/*-----------------------------------------------------------------------------*/
-/* Check to see if the area of memory has changed.                             */
-/* Returns true if there is any chance that the given area has changed         */
-int QueryRamChange(ARMul_State *state,int offset, int len) {
+/*----------------------------------------------------------------------------*/
+/* Check to see if the area of memory has changed.                            */
+/* Returns true if there is any chance that the given area has changed        */
+static int QueryRamChange(ARMul_State *state,int offset, int len) {
   unsigned int Vinit=MEMC.Vinit;
   unsigned int Vstart=MEMC.Vstart;
   unsigned int Vend=MEMC.Vend;
@@ -335,7 +334,9 @@ static void RefreshMouse(ARMul_State *state) {
   UpdateCursorPos(state);
 }; /* RefreshMouse */
 
-/*-----------------------------------------------------------------------------*/
+
+#ifndef DIRECT_DISPLAY
+/*----------------------------------------------------------------------------*/
 static void RefreshDisplay_PseudoColor_1bpp(ARMul_State *state) {
   int DisplayHeight = VIDC.Vert_DisplayEnd - VIDC.Vert_DisplayStart;
   int DisplayWidth  = (VIDC.Horiz_DisplayEnd - VIDC.Horiz_DisplayStart) * 2;
@@ -563,7 +564,9 @@ static void RefreshDisplay_PseudoColor_8bpp(ARMul_State *state) {
   MarkAsUpdated(state,memoffset);
 }; /* RefreshDisplay_PseudoColor_8bpp */
 
-/*-----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
+#endif
+
 static void RefreshDisplay(ARMul_State *state) {
   DC.AutoRefresh=AUTOREFRESHPOLL;
   ioc.IRQStatus|=8; /* VSync */
@@ -984,11 +987,11 @@ static void MouseMoved(ARMul_State *state, int mousex, int mousey/*,XMotionEvent
 #endif
 }; /* MouseMoved */
 
-/*-----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 /* Called using an ARM_ScheduleEvent - it also sets itself up to be called
-   again.                                                                      */
-unsigned DisplayKbd_XPoll(ARMul_State *state) {
-  //XEvent e;
+   again.                                                                     */
+unsigned int DisplayKbd_XPoll(void *data) {
+  ARMul_State *state = data;
   int KbdSerialVal;
   static int KbdPollInt=0;
   static int discconttog=0;

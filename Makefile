@@ -15,26 +15,24 @@
 #    along with this program; if not, write to the Free Software
 #    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-# hacked for Archimedes emulation by Dave Gilbert (armul@treblig.org)
+# Hacked for Archimedes emulation by Dave Gilbert (armul@treblig.org)
+# Modified for different systems by Peter Naulls <peter@chocky.org>
 
 # These variables can be overridden
-
-#Default endianness of the emulated processor (LITTLEEND or BIGEND)
+# Default endianness of the *emulated* processor (LITTLEEND or BIGEND)
+# Should stay as LITTLEEND in most cases
 ENDIAN=LITTLEEND
-#Windowing System
-#SYSTEM=riscos-single
-#SYSTEM=riscos
-SYSTEM=X
 
-# Set this to yes if you want Archimedes screen memory
-# writes to go direct to host screen memory
-DIRECT_DISPLAY=no
+# Windowing System
+ifeq ($(SYSTEM),"")
+SYSTEM=X
+endif
 
 
 WARN = -Wall -Wno-return-type -Wno-unknown-pragmas -Wshadow -Wundef \
    -Wpointer-arith -Wcast-align -Wwrite-strings -Wstrict-prototypes \
    -Wmissing-prototypes -Wmissing-declarations -Wnested-externs \
-   -Wcast-qual   
+   -Wcast-qual -Werror   
 
 
 # add -DHOST_BIGENDIAN for big endian hosts, e.g. Sun, SGI, HP
@@ -77,13 +75,14 @@ TARGET=!ArcEm/armul-arc
 endif
 
 ifeq (${SYSTEM},riscos-single)
+DIRECT_DISPLAY=yes
 CFLAGS += -Iriscos-single -mpoke-function-name
 OBJS += arm-support.o rhs.o
 TARGET=!ArcEm/armul-arc
 endif
 
 ifeq (${SYSTEM},X)
-CFLAGS += -I/usr/X11/include
+CFLAGS += -I/usr/X11R6/include
 LIBS +=  -L/usr/X11R6/lib -lXext -lX11
 endif
 

@@ -6,6 +6,7 @@
 #include "archio.h"
 #include "armarc.h"
 #include "DispKbd.h"
+#include "ControlPane.h"
 
 #define CTRLPANEWIDTH 640
 #define CTRLPANEHEIGHT 100
