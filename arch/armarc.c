@@ -505,6 +505,9 @@ ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
     MEMC.Romfuncs[ROMWordNum] = ARMul_Emulate_DecodeInstr;
   }
 
+  /* Close Rom File */
+  fclose(ROMFile);
+
 #if defined(SYSTEM_X) || defined(MACOSX)
   /* Load extension ROM */
   dbug("Loading Extension ROM...\n");
