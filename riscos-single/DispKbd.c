@@ -39,7 +39,6 @@
 /*#define HD HOSTDISPLAY*/
 #define DC DISPLAYCONTROL
 
-static unsigned AutoKey(ARMul_State *state);
 static void UpdateCursorPos(ARMul_State *state);
 static void SelectROScreenMode(int x, int y, int bpp);
 
@@ -60,14 +59,7 @@ int ROScreenExtent;
 
 const char *__dynamic_da_name = "ArcEm Heap";
 
-
-/*-----------------------------------------------------------------------------*/
-static unsigned AutoKey(ARMul_State *state) {
-  fprintf(stderr,"AutoKey!\n");
-  KBD.TimerIntHasHappened+=2;
-
-  return 0;
-};
+#ifndef DIRECT_DISPLAY
 /*----------------------------------------------------------------------------*/
 /* I'm not confident that this is completely correct - if it's wrong all hell
    is bound to break loose! If it works however it should speed things up nicely!
@@ -123,6 +115,7 @@ static int QueryRamChange(ARMul_State *state,int offset, int len) {
   /* We've checked them all and their are no changes */
   return(0);
 }; /* QueryRamChange */
+
 /*-----------------------------------------------------------------------------*/
 /* Copy a lump of screen RAM into the buffer.  The section of screen ram is    */
 /* len bytes from the top left of the screen.  The routine takes into account
@@ -178,6 +171,7 @@ static void CopyScreenRAM(ARMul_State *state,int offset, int len, char *Buffer) 
   };
 #endif
 }; /* CopyScreenRAM */
+#endif
 
 /*-----------------------------------------------------------------------------*/
 /* Configure the colourmap for the standard 1 bpp modes                        */
