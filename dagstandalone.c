@@ -146,4 +146,5 @@ void dagstandalone(void) {
   /* Close and Finalise */
   i = armul_rdi.close();
   rdi_state = 0;
+  emu_state = NULL;
 }

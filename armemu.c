@@ -30,6 +30,9 @@
 
 ARMul_State statestr;
 
+// global used to terminate the emulator
+int kill_emulator;
+
 ARMword *armflags = &statestr.NFlag;
 
 ARMEmuFunc* pInstrFunc;  /* These are only used by the writeback of the instruction function pointer */
@@ -1367,8 +1370,8 @@ void ARMul_Emulate26(void)
 /***************************************************************************\
 *                        Execute the next instruction                       *
 \***************************************************************************/
-
- while (1) {
+  kill_emulator = 0;
+ while (kill_emulator == 0) {
 
    if (statestr.NextInstr < PRIMEPIPE) {
      decoded = statestr.decoded;
@@ -1460,6 +1463,8 @@ void ARMul_Emulate26(void)
    statestr.decoded = decoded;
    statestr.loaded = loaded;
    statestr.pc = pc;
+
   }
+ 
 } /* Emulate 26 in instruction based mode */
 
