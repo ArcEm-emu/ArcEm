@@ -1572,7 +1572,7 @@ static void CursorPane_Event(ARMul_State *state,XEvent *e) {
       break;
 
     default:
-      fprintf(stderr,"MainPane_Event type=%d\n",e->type);
+      fprintf(stderr,"CursorPane_Event type=%d\n",e->type);
       break;
   };
 }; /* CursorPane_Event */
