@@ -406,7 +406,6 @@ static void DoColourMap_256(ARMul_State *state) {
 /*----------------------------------------------------------------------------*/
 /* Configure the TrueColor pixelmap for the standard 1,2,4 bpp modes          */
 static void DoPixelMap_Standard(ARMul_State *state) {
-  char tmpstr[16];
   XColor tmp;
   int c;
 
@@ -416,7 +415,6 @@ static void DoPixelMap_Standard(ARMul_State *state) {
     tmp.red=(VIDC.Palette[c] & 15)<<12;
     tmp.green=((VIDC.Palette[c]>>4) & 15)<<12;
     tmp.blue=((VIDC.Palette[c]>>8) & 15)<<12;
-    sprintf(tmpstr,"#%4x%4x%4x",tmp.red,tmp.green,tmp.blue);
     tmp.pixel=c;
     /* I suppose I should do something with the supremacy bit....*/
     HD.pixelMap[c]=get_pixelval(tmp.red,tmp.green,tmp.blue);
