@@ -20,7 +20,7 @@
 
 #define LEDHEIGHT 15
 #define LEDWIDTH 15
-#define LEDTOPS 50
+#define LEDTOPS 70
 
 /* HOSTDISPLAY is too verbose here - but HD could be hard disc somewhere else! */
 #define HD HOSTDISPLAY
@@ -97,6 +97,9 @@ static void ControlPane_Redraw(ARMul_State *state,XExposeEvent *e) {
   XSetForeground(HD.disp,HD.ControlPaneGC,HD.Black.pixel);
   y=TextCenteredH(state,"Archimedes Emulation (c) 1995-1999 David Alan Gilbert",0,0,
                 CTRLPANEWIDTH);
+
+    y += 2;
+    y = TextCenteredH(state, "http://arcem.sf.net/", y, 0, CTRLPANEWIDTH);
 
   y+=2;
   XDrawLine(HD.disp,HD.ControlPane,HD.ControlPaneGC,
