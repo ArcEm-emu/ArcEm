@@ -105,38 +105,32 @@ static void GenInterrupt(ARMul_State *state, const char *reason) {
 
 
 /*--------------------------------------------------------------------------*/
-unsigned int FDC_Regular(ARMul_State *state) {
+unsigned int FDC_Regular(ARMul_State *state)
+{
   int ActualTrack;
 
   if (--FDC.DelayCount) return 0;
 
-  switch (FDC.LastCommand & 0xf0) {
-    case 0x0:
-      /* Restore command */
+    if (IS_CMD(FDC.LastCommand, RESTORE)) {
       FDC.StatusReg|=BIT_MOTORON | BIT_MOTORSPINUP | BIT_TR00;
       FDC.Track=0;
       GenInterrupt(state,"Restore complete");
       FDC.LastCommand=0xd0;
       FDC.StatusReg&=~BIT_BUSY;
-      break;
 
-    case 0x10:
-      /* Seek command - it will complete now */
+    } else if (IS_CMD(FDC.LastCommand, SEEK)) {
+      /* It will complete now. */
       FDC.LastCommand=0xd0;
       FDC.StatusReg&=~BIT_BUSY;
       FDC.StatusReg|=BIT_MOTORSPINUP|BIT_MOTORON;
       FDC.Track=FDC.Data; /* Got to the desired track */
       if (FDC.Track==0) FDC.StatusReg|=BIT_TR00;
       GenInterrupt(state,"Seek complete");
-      break;
 
-    case 0x20:
-    case 0x30:
-    case 0x40:
-    case 0x50:
-    case 0x60:
-    case 0x70:
-      /* Step in/out/same commands - it will complete now */
+    } else if (IS_CMD(FDC.LastCommand, STEP) ||
+        IS_CMD(FDC.LastCommand, STEP_IN) ||
+        IS_CMD(FDC.LastCommand, STEP_OUT)) {
+      /* It will complete now. */
       FDC.StatusReg&=~BIT_BUSY;
       FDC.StatusReg|=BIT_MOTORSPINUP|BIT_MOTORON;
       ActualTrack=FDC.Track+FDC.Direction;
@@ -145,31 +139,24 @@ unsigned int FDC_Regular(ARMul_State *state) {
       if (ActualTrack==0) FDC.StatusReg|=BIT_TR00;
       FDC.LastCommand=0xd0;
       GenInterrupt(state,"Step complete");
-      break;
 
-    case 0x80:
-    case 0x90:
-      /* Read sector next character */
+    } else if (IS_CMD(FDC.LastCommand, READ_SECTOR)) {
+      /* Next character. */
       if (FDC.BytesToGo) FDC_DoReadChar(state);
       FDC.DelayCount=FDC.DelayLatch;
-      break;
 
-    case 0xa0:
-    case 0xb0:
-      /* Write sector next character */
+    } else if (IS_CMD(FDC.LastCommand, WRITE_SECTOR)) {
+      /* Next character. */
       FDC_DoWriteChar(state);
       FDC.DelayCount=FDC.DelayLatch;
-      break;
 
-    case 0xc0:
+    } else if (IS_CMD(FDC.LastCommand, READ_ADDR)) {
       FDC_DoReadAddressChar(state);
       FDC.DelayCount=FDC.DelayLatch;
-      break;
+    }
 
-  }; /* FDC_Regular */
-
-  return 0;
-}; /* FDC_Regular */
+    return 0;
+}
 
 /*--------------------------------------------------------------------------*/
 static void ClearInterrupt(ARMul_State *state) {
@@ -304,22 +291,21 @@ void FDC_LatchBChange(ARMul_State *state) {
   }; /* bit loop */
 }; /* FDC_LatchBChange */
 /*--------------------------------------------------------------------------*/
-static void ReadDataRegSpecial(ARMul_State *state) {
-  switch (FDC.LastCommand & 0xf0) {
-    case 0x80:
-    case 0x90:
-      /* Read sector - if we just read the last piece of data we can issue
-         a completed interrupt */
+
+static void ReadDataRegSpecial(ARMul_State *state)
+{
+    if (IS_CMD(FDC.LastCommand, READ_SECTOR)) {
+      /* If we just read the last piece of data we can issue a completed
+       * interrupt. */
       if (!FDC.BytesToGo) {
         GenInterrupt(state,"Read end (b)");
         FDC.LastCommand=0xd0; /* Force int with no interrupt */
         FDC.StatusReg&=~BIT_BUSY;
       };
-      break;
 
-    case 0xc0:
-      /* Read Address - if we just read the last piece of data we can issue
-         a completed interrupt */
+    } else if (IS_CMD(FDC.LastCommand, READ_ADDR)) {
+      /* If we just read the last piece of data we can issue a completed
+       * interrupt. */
       if (!FDC.BytesToGo) {
         GenInterrupt(state,"Read addr end");
         FDC.LastCommand=0xd0; /* Force int with no interrupt */
@@ -327,10 +313,10 @@ static void ReadDataRegSpecial(ARMul_State *state) {
         /* Supposed to copy the track into the sector register */
         FDC.Sector=FDC.Track;
       };
-      break;
+    }
 
-  }; /* Last command type switch */
-}; /* ReadDataRegSpecial */
+    return;
+}
 
 /*--------------------------------------------------------------------------*/
 ARMword FDC_Read(ARMul_State *state, ARMword offset) {
@@ -729,9 +715,7 @@ ARMword FDC_Write(ARMul_State *state, ARMword offset, ARMword data, int bNw) {
     case 3: /* Data register */
       /* fprintf(stderr,"FDC_Write: Data reg=0x%x\n",data); */
       FDC.Data=data;
-      switch (FDC.LastCommand & 0xf0) {
-        case 0xa0: /* Write sector */
-        case 0xb0:
+        if (IS_CMD(FDC.LastCommand, WRITE_SECTOR)) {
           if (FDC.BytesToGo) {
             int err;
                 err = fputc(FDC.Data, FDC.drive[FDC.CurrentDisc].fp);
@@ -749,8 +733,7 @@ ARMword FDC_Write(ARMul_State *state, ARMword offset, ARMword data, int bNw) {
             fprintf(stderr,"FDC_Write: Data register written for write sector when the whole sector has been received!\n");
           }; /* Already full ? */
           ClearDRQ(state);
-          break;
-      }; /* Command type switch */
+        }
       break;
   };
   return 0;
