@@ -624,7 +624,7 @@ static void FDC_RestoreCommand(ARMul_State *state) {
 static void FDC_NewCommand(ARMul_State *state, ARMword data) {
   ClearInterrupt(state);
   switch (data & 0xf0) {
-    case 0x00: /* Restore */
+    case 0x00: /* Restore (Type I command) */
 #ifdef DEBUG_FDC
       fprintf(stderr,"FDC_NewCommand: Restore data=0x%x pc=%08x r[15]=%08x\n",
               data,state->pc,state->Reg[15]);
@@ -633,7 +633,7 @@ static void FDC_NewCommand(ARMul_State *state, ARMword data) {
       FDC_RestoreCommand(state);
       break;
 
-    case 0x10: /* Seek */
+    case 0x10: /* Seek (Type I command) */
 #ifdef DEBUG_FDC
       fprintf(stderr,"FDC_NewCommand: Seek data=0x%x\n",data);
 #endif
@@ -641,7 +641,7 @@ static void FDC_NewCommand(ARMul_State *state, ARMword data) {
       FDC_SeekCommand(state);
       break;
 
-    case 0x20:
+    case 0x20: /* Step (Type I command) */
     case 0x30:
 #ifdef DEBUG_FDC
       fprintf(stderr,"FDC_NewCommand: Step data=0x%x\n",data);
@@ -650,7 +650,7 @@ static void FDC_NewCommand(ARMul_State *state, ARMword data) {
       FDC_StepDirCommand(state,FDC.Direction);
       break;
 
-    case 0x40:
+    case 0x40: /* Step In (Type I command) */
     case 0x50:
 #ifdef DEBUG_FDC
     fprintf(stderr,"FDC_NewCommand: Step in data=0x%x\n",data);
@@ -661,7 +661,7 @@ static void FDC_NewCommand(ARMul_State *state, ARMword data) {
       FDC_StepDirCommand(state,+1);
       break;
 
-    case 0x60:
+    case 0x60: /* Step Out (Type I command) */
     case 0x70:
 #ifdef DEBUG_FDC
       fprintf(stderr,"FDC_NewCommand: Step out data=0x%x\n",data);
@@ -672,7 +672,7 @@ static void FDC_NewCommand(ARMul_State *state, ARMword data) {
       FDC_StepDirCommand(state,-1);
       break;
 
-    case 0x80:
+    case 0x80: /* Read Sector (Type II command) */
     case 0x90:
 #ifdef DEBUG_FDC
       fprintf(stderr,"FDC_NewCommand: Read sector data=0x%x\n",data);
@@ -688,7 +688,7 @@ static void FDC_NewCommand(ARMul_State *state, ARMword data) {
       FDC_ReadCommand(state);
       break;
 
-    case 0xa0:
+    case 0xa0: /* Write Sector (Type II command) */
     case 0xb0:
 #ifdef DEBUG_FDC
       fprintf(stderr,"FDC_NewCommand: Write sector data=0x%x\n",data);
@@ -697,7 +697,7 @@ static void FDC_NewCommand(ARMul_State *state, ARMword data) {
       FDC_WriteCommand(state);
       break;
 
-    case 0xc0:
+    case 0xc0: /* Read Address (Type III command) */
 #ifdef DEBUG_FDC
       fprintf(stderr,"FDC_NewCommand: Read address data=0x%x (PC=0x%x)\n",data,ARMul_GetPC(state));
 #endif
@@ -705,21 +705,21 @@ static void FDC_NewCommand(ARMul_State *state, ARMword data) {
       FDC_ReadAddressCommand(state);
       break;
 
-    case 0xd0:
+    case 0xd0: /* Force Interrupt (Type IV command) */
 #ifdef DEBUG_FDC
       fprintf(stderr,"FDC_NewCommand: Force interrupt data=0x%x\n",data);
 #endif
       FDC.LastCommand=data;
       break;
 
-    case 0xe0:
+    case 0xe0: /* Read Track (Type III command) */
 #ifdef DEBUG_FDC
       fprintf(stderr,"FDC_NewCommand: Read track data=0x%x\n",data);
 #endif
       FDC.LastCommand=data;
       break;
 
-    case 0xf0:
+    case 0xf0: /* Write Track (Type III command) */
 #ifdef DEBUG_FDC
       fprintf(stderr,"FDC_NewCommand: Write track data=0x%x\n",data);
 #endif
@@ -734,25 +734,25 @@ ARMword FDC_Write(ARMul_State *state, ARMword offset, ARMword data, int bNw) {
   int reg=(offset>>2) &3;
 
   switch (reg) {
-    case 0: /* Command */
+    case 0: /* Command/Status register */
       FDC_NewCommand(state,data);
       break;
 
-    case 1: /* Track */
+    case 1: /* Track register */
 #ifdef DEBUG_FDC
       fprintf(stderr,"FDC_Write: Track reg=0x%x\n",data);
 #endif
       FDC.Track=data;
       break;
 
-    case 2: /* Sector */
+    case 2: /* Sector register */
 #ifdef DEBUG_FDC
       fprintf(stderr,"FDC_Write: Sector reg=0x%x\n",data);
 #endif
       FDC.Sector=data;
       break;
 
-    case 3: /* Data */
+    case 3: /* Data register */
       /* fprintf(stderr,"FDC_Write: Data reg=0x%x\n",data); */
       FDC.Data=data;
       switch (FDC.LastCommand & 0xf0) {
