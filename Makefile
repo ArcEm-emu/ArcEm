@@ -36,11 +36,17 @@ WARN = -Wall -Wno-return-type -Wno-unknown-pragmas -Wshadow -Wundef \
 
 
 # add -DHOST_BIGENDIAN for big endian hosts, e.g. Sun, SGI, HP
-CFLAGS = -O3 -D$(ENDIAN) $(CFL) -DNOOS -DNOFPE $(WARN) \
- -I$(SYSTEM) -Iarch -I. -funroll-loops -fexpensive-optimizations -ffast-math \
- -fomit-frame-pointer -frerun-cse-after-loop
 
+ifeq ($(PROFILE),yes)
+CFLAGS = -O -g -pg -ftest-coverage -fprofile-arcs
+else
+CFLAGS = -O3 -funroll-loops -fexpensive-optimizations -ffast-math \
+    -fomit-frame-pointer -frerun-cse-after-loop
+endif
 
+CFLAGS += \
+    -D$(ENDIAN) $(CFL) -DNOOS -DNOFPE $(WARN) \
+    -I$(SYSTEM) -Iarch -I.
 
 prefix=/usr/local
 
