@@ -41,7 +41,11 @@ int ReadConfigFile(ARMul_State *state) {
     return 0;
   };
 
+#ifndef MACOSX
   sprintf(nameConf, "%s/.arcemrc", HomeVar);
+#else
+  sprintf(nameConf, "%s/arcem/arcemrc", HomeVar);
+#endif /* !MACOSX */
 #endif
 
   if (fConf = fopen(nameConf, "r"), fConf==NULL) {
