@@ -5,6 +5,8 @@
     Used to be based on ArmVirt.c
 
     Modified by Dave Gilbert (arcem@treblig.org) to emulate an Archimedes
+
+    Added support for 8MB and 16MB RAM configurations - Matthew Howkins
 */
 
 #include <signal.h>
@@ -143,7 +145,7 @@ GetPhysAddress(unsigned address)
       /* 32K */
       PhysPage = ((pagetabval >> 3) & 0xf) | ((pagetabval & 1) << 4) |
                  ((pagetabval & 2) << 5) | ((pagetabval & 4) << 3) |
-                 (pagetabval & 0x80);
+                 (pagetabval & 0x80) | ((pagetabval >> 4) & 0x100);
       return (address & 0x7fff) | (PhysPage << 15);
   } /* Page size switch */
 
@@ -899,12 +901,14 @@ PutVal(ARMul_State *state, ARMword address, ARMword data, int byteNotword,
       Entry |= (tmp << 3) & 0x20;
       Entry |= (tmp << 5) & 0x40;
       Entry |= tmp & 0x80;
+      Entry |= (tmp >> 4) & 0x100;
       fprintf(stderr,"PutVal: Pagetable write, address=0x%x entry=0x%x val=0x%x (logbaseaddress=0x%08x ppn=%d - for 32K size)\n",
-              address, address & 0xff, tmp & 0x0fffffff, logbaseaddr, Entry);
+              address, ((address >> 4) & 0x100) | (address & 0xff),
+              tmp & 0x0fffffff, logbaseaddr, Entry);
     }
 #endif
 
-    MEMC.PageTable[address & 0xff] = tmp & 0x0fffffff;
+    MEMC.PageTable[((address >> 4) & 0x100) | (address & 0xff)] = tmp & 0x0fffffff;
 
     return;
   }
