@@ -195,7 +195,9 @@ static keysym_to_arch_key keysym_to_arch_key_map[] = {
 
 /* ------------------------------------------------------------------ */
 
+#ifdef UNUSED__STOP_COMPILER_WARNINGS
 static unsigned AutoKey(ARMul_State *state);
+#endif
 
 static struct EventNode enodes[4];
 //static int autokeyenode=0; /* Flips between 0 and 1 */
@@ -237,12 +239,14 @@ static unsigned long get_pixelval(unsigned int red, unsigned int green, unsigned
 } /* get_pixval */
 
 /*----------------------------------------------------------------------------*/
+#ifdef UNUSED__STOP_COMPILER_WARNINGS
 static unsigned AutoKey(ARMul_State *state) {
   /*fprintf(stderr,"AutoKey!\n"); */
   KBD.TimerIntHasHappened+=2;
 
   return 0;
 };
+#endif
 /*-----------------------------------------------------------------------------*/
 /* I'm not confident that this is completely correct - if it's wrong all hell
   is bound to break loose! If it works however it should speed things up

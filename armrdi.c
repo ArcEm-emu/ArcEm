@@ -114,11 +114,13 @@ void ARMul_ConsolePrint(ARMul_State *state, const char *format, ...)
   }
 }
 
+#ifdef UNUSED__STOP_COMPILER_WARNINGS
 static void ARMul_DebugPause(ARMul_State *state)
 {
   if(!(rdi_log & 8))
   state->hostif->dbgpause(state->hostif->dbgarg);
 }
+#endif
 
 /***************************************************************************\
 *                                 RDI_open                                  *
@@ -278,12 +280,15 @@ static int RDI_CPUwrite(unsigned mode, unsigned long mask, ARMword const buffer[
 *            Internal functions for breakpoint table manipulation           *
 \***************************************************************************/
 
+#ifdef UNUSED__STOP_COMPILER_WARNINGS
 static void deletewatchnode(WatchNode **prevp)
 { WatchNode *p = *prevp;
   *prevp = p->next;
   free((char *)p);
 }
+#endif
 
+#ifdef UNUSED__STOP_COMPILER_WARNINGS
 static int removewatch(ARMword address, unsigned type)
 { WatchNode *p, **prevp = &WatchList;
   for (; (p = *prevp) != NULL; prevp = &p->next)
@@ -293,7 +298,9 @@ static int removewatch(ARMword address, unsigned type)
     }
   return FALSE; /* never found a match */
 }
+#endif
 
+#ifdef UNUSED__STOP_COMPILER_WARNINGS
 static WatchNode *installwatch(ARMword address, unsigned type, unsigned datatype,
                                ARMword bound)
 { WatchNode *p = (WatchNode *)malloc(sizeof(WatchNode));
@@ -305,6 +312,7 @@ static WatchNode *installwatch(ARMword address, unsigned type, unsigned datatype
   p->bound = bound;
   return p;
 }
+#endif
 
 /***************************************************************************\
 *                               RDI_execute                                 *
