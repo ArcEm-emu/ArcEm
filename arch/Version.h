@@ -1,1 +1,1 @@
-char Version[]="Version 0.50 (25/07/99)";
+const char Version[] = "Version 0.70 (05/05/2002)";

@@ -5,8 +5,11 @@
 
 #include "../armdefs.h"
 #include "../armopts.h"
+
+#ifndef __riscos__
 #include "X11/Xlib.h"
 #include "X11/Xutil.h"
+#endif
 
 #define KBDBUFFLEN 128
 

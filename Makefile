@@ -24,7 +24,7 @@
 ENDIAN=LITTLEEND
 
 # Windowing System
-ifeq ($(SYSTEM),"")
+ifeq ($(SYSTEM),)
 SYSTEM=X
 endif
 
@@ -85,6 +85,11 @@ ifeq (${SYSTEM},X)
 CFLAGS += -I/usr/X11R6/include
 LIBS +=  -L/usr/X11R6/lib -lXext -lX11
 endif
+
+ifeq (${SYSTEM},win)
+OBJS += win/gui.o
+endif
+
 
 ifeq (${DIRECT_DISPLAY},yes)
 CFLAGS += -DDIRECT_DISPLAY
@@ -208,4 +213,9 @@ $(SYSTEM)/ControlPane.o: $(SYSTEM)/ControlPane.c $(SYSTEM)/ControlPane.h $(SYSTE
 
 arch/ReadConfig.o: arch/ReadConfig.c arch/ReadConfig.h $(SYSTEM)/DispKbd.h arch/armarc.h
 	$(CC) $(CFLAGS) -c $*.c -o arch/ReadConfig.o
+
+win/gui.o: win/gui.rc win/gui.h win/gui.ico
+	windres $*.rc -o arch/gui.o
+
+
 # DO NOT DELETE

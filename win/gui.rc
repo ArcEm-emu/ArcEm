@@ -1,0 +1,21 @@
+#include "windows.h"
+#include "gui.h"
+
+GuiIcon ICON win/gui.ico
+
+GuiMenu MENU
+BEGIN
+    POPUP "&File"
+    BEGIN
+	MENUITEM "&Exit", IDM_EXIT
+    END
+    POPUP "&Edit"
+    BEGIN
+	MENUITEM "&Copy", IDM_COPY
+	MENUITEM "&Paste", IDM_PASTE
+    END
+    POPUP "&Help"
+    BEGIN
+	MENUITEM "&About", IDM_ABOUT
+    END
+END
