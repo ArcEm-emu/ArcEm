@@ -173,8 +173,6 @@
 				D1E0F9EF02B41B0301D1F43F,
 				D1E0F9F002B41B0301D1F43F,
 				D1E0F9F102B41B0301D1F43F,
-				D1E0F9F202B41B0301D1F43F,
-				D1E0F9F302B41B0301D1F43F,
 				D1E0F9F402B41B0301D1F43F,
 				D1E0F9F502B41B0301D1F43F,
 				D1E0F9F602B41B0301D1F43F,
@@ -320,7 +318,6 @@
 				D1E0FA1302B41B0301D1F43F,
 				D1E0FA1502B41B0301D1F43F,
 				D1E0FA1702B41B0301D1F43F,
-				D1E0FA1A02B41B0301D1F43F,
 				D1E0FA1C02B41B0301D1F43F,
 				D1E0FA1D02B41B0301D1F43F,
 				D1E0FA1E02B41B0301D1F43F,
@@ -364,7 +361,6 @@
 				D1E0FA1402B41B0301D1F43F,
 				D1E0FA1602B41B0301D1F43F,
 				D1E0FA1802B41B0301D1F43F,
-				D1E0FA1902B41B0301D1F43F,
 				D1E0FA1B02B41B0301D1F43F,
 			);
 			isa = PBXSourcesBuildPhase;
@@ -758,20 +754,6 @@
 			path = /Users/michael/Dev/arcem/clean/arcem/armsupp.c;
 			refType = 0;
 		};
-		D1E0F9F202B41B0301D1F43F = {
-			fileEncoding = 30;
-			isa = PBXFileReference;
-			name = bag.c;
-			path = /Users/michael/Dev/arcem/clean/arcem/bag.c;
-			refType = 0;
-		};
-		D1E0F9F302B41B0301D1F43F = {
-			fileEncoding = 30;
-			isa = PBXFileReference;
-			name = bag.h;
-			path = /Users/michael/Dev/arcem/clean/arcem/bag.h;
-			refType = 0;
-		};
 		D1E0F9F402B41B0301D1F43F = {
 			fileEncoding = 30;
 			isa = PBXFileReference;
@@ -972,18 +954,6 @@
 		};
 		D1E0FA1802B41B0301D1F43F = {
 			fileRef = D1E0F9F102B41B0301D1F43F;
-			isa = PBXBuildFile;
-			settings = {
-			};
-		};
-		D1E0FA1902B41B0301D1F43F = {
-			fileRef = D1E0F9F202B41B0301D1F43F;
-			isa = PBXBuildFile;
-			settings = {
-			};
-		};
-		D1E0FA1A02B41B0301D1F43F = {
-			fileRef = D1E0F9F302B41B0301D1F43F;
 			isa = PBXBuildFile;
 			settings = {
 			};
