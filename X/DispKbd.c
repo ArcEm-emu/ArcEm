@@ -79,6 +79,8 @@ static void set_video_8bpp_pixelmap(void);
 static void set_border_pixelmap(void);
 static void set_cursor_pixelmap(void);
 
+static void Resize_Window(void);
+
 static int (*prev_x_error_handler)(Display *, XErrorEvent *);
 
 static struct {
@@ -654,7 +656,7 @@ static void RefreshDisplay_TrueColor_1bpp(ARMul_State *state) {
   }
 
   if (DisplayHeight<=0) {
-    fprintf(stderr,"RefreshDisplay_TrueColor_1bpp: 0 or -ve display height\n");
+//    fprintf(stderr,"RefreshDisplay_TrueColor_1bpp: 0 or -ve display height\n");
     return;
   };
 
@@ -1907,6 +1909,7 @@ void VIDC_PutVal(ARMul_State *state,ARMword address, ARMword data,int bNw) {
       fprintf(stderr,"VIDC Horiz display start register val=%d\n",val>>14);
 #endif   
       VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Horiz_DisplayStart,((val>>14) & 0x3ff));
+      Resize_Window();
       break;
 
     case 0x90:
@@ -1914,7 +1917,7 @@ void VIDC_PutVal(ARMul_State *state,ARMword address, ARMword data,int bNw) {
       fprintf(stderr,"VIDC Horiz display end register val=%d\n",val>>14);
 #endif   
       VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Horiz_DisplayEnd,(val>>14) & 0x3ff);
-      
+      Resize_Window();      
       break;
 
     case 0x94:
@@ -1964,6 +1967,7 @@ void VIDC_PutVal(ARMul_State *state,ARMword address, ARMword data,int bNw) {
       fprintf(stderr,"VIDC Vert disp start register val=%d\n",val>>14);
 #endif   
       VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Vert_DisplayStart,((val>>14) & 0x3ff));
+      Resize_Window();
       break;
 
     case 0xb0:
@@ -1971,15 +1975,7 @@ void VIDC_PutVal(ARMul_State *state,ARMword address, ARMword data,int bNw) {
       fprintf(stderr,"VIDC Vert disp end register val=%d\n",val>>14);
 #endif   
       VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Vert_DisplayEnd,(val>>14) & 0x3ff);
-      assert((VIDC.Horiz_DisplayEnd - VIDC.Horiz_DisplayStart)*2 >= 0);
-      assert(VIDC.Vert_DisplayEnd - VIDC.Vert_DisplayStart >= 0);
-      
-      /* Resize the window to fit the new video mode.
-        This relies on OSes when resizing displays that they change the
-        Vertical Display End register last, RISC OS seems too */
-      XResizeWindow(HD.disp, HD.BackingWindow,
-                   ((VIDC.Horiz_DisplayEnd - VIDC.Horiz_DisplayStart)*2) + (VIDC_BORDER * 2),
-                   (VIDC.Vert_DisplayEnd - VIDC.Vert_DisplayStart) + (VIDC_BORDER * 2) );
+      Resize_Window();
       break;
 
     case 0xb4:
@@ -2035,4 +2031,21 @@ void hostdisplay_change_focus(int focus)
     (*(focus ? XInstallColormap : XUninstallColormap))(HD.disp, HD.ArcsColormap);
   }
   (*(focus ? XAutoRepeatOff : XAutoRepeatOn))(HD.disp);
+}
+
+/**
+ * Resize_Window
+ *
+ * Resize the window to fit the new video mode.
+ */
+static void Resize_Window(void)
+{
+  int x = (VIDC.Horiz_DisplayEnd - VIDC.Horiz_DisplayStart)*2;
+  int y = VIDC.Vert_DisplayEnd - VIDC.Vert_DisplayStart;
+
+  if(x > 0 && y > 0) {
+    XResizeWindow(HD.disp, HD.BackingWindow,
+                  x + (VIDC_BORDER * 2),
+                  y + (VIDC_BORDER * 2) );
+  }
 }
