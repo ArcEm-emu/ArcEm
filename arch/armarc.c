@@ -50,10 +50,12 @@ int Vendold;
 #endif
 
 
-#define MEMORY_ROM_HIGH   0x3800000
-#define MEMORY_ROM_LOW    0x3400000
+#define MEMORY_R_ROM_HIGH   0x3800000  /* Some sections of the memory map   */
+#define MEMORY_W_LOG2PHYS   0x3800000  /* have differnt fucntions when read */
+#define MEMORY_R_ROM_LOW    0x3400000  /* or written too.                   */ 
+#define MEMORY_W_DMA_GEN    0x3600000
+#define MEMORY_W_VIDEOCON   0x3400000
 
-#define MEMORY_DMA_GEN    0x3600000
 #define MEMORY_CON_IO     0x3000000
 
 #define MEMORY_RAM_PHYS   0x2000000
@@ -76,12 +78,6 @@ struct MEMCStruct memc;
 #define OSMODE(state) ((MEMC.ControlReg >> 12) & 1)
 
 static ARMul_State *sigavailablestate=NULL;
-static int Trace=0;
-
-/*------------------------------------------------------------------------------*/
-void EnableTrace(void) {
-  Trace = 1;
-};
 
 /*------------------------------------------------------------------------------*/
 /* OK - this is getting treated as an odds/sods engine - just hook up anything
@@ -91,17 +87,11 @@ static void DumpHandler(int sig) {
 
   exit(0);
 
-  EnableTrace();
-  return;
-
   fprintf(stderr,"SIGUSR2 at PC=0x%x R[15]=0x%x\n",(unsigned int)statestr.pc,
                                             (unsigned int)statestr.Reg[15]);
 #ifndef WIN32
   signal(SIGUSR2,DumpHandler);
 #endif
-
-  Trace=1;
-  return;
 
   exit(0);
   res=fopen("memdump","wb");
@@ -116,14 +106,21 @@ static void DumpHandler(int sig) {
   fclose(res);
 }; /* DumpHandler */
 
-/*----------------------------------------------------------------------------*/
-/* Uses MEMC.TmpPage which must have been previously been set up by a call to */
-/* checkabort                                                                 */
+/**
+ * GetPhysAddress
+ *
+ * Uses MEMC.TmpPage which must have been previously been set up by a call to
+ * checkabort 
+ *
+ * @param address
+ * @returns
+ */
 ARMword GetPhysAddress(unsigned int address) {
   ARMword pagetabval = MEMC.TmpPage;
   int PhysPage;
 
-  if (pagetabval == -1) return 0;
+  if (pagetabval == -1)
+    return 0;
 
   switch (MEMC.PageSizeFlags) {
     case 0:
@@ -146,15 +143,22 @@ ARMword GetPhysAddress(unsigned int address) {
       PhysPage = ((pagetabval >> 3) & 0xf) | ((pagetabval & 1) << 4) |
                  ((pagetabval & 2) << 5) | ((pagetabval & 4) << 3);
       return (address & 0x7fff) | (PhysPage << 15);
-  }; /* Page size switch */
+  } /* Page size switch */
 
   abort();
-}; /* GetPhysAddress */
+} /* GetPhysAddress */
 
 
-/*----------------------------------------------------------------------------*/
-/* Look up an address in the pagetable and return the raw entry               */
-/* Return 1 if we find it                                                     */
+/**
+ * FindPageTableEntry_Search
+ *
+ * Look up an address in the pagetable and return the raw entry
+ * Return 1 if we find it
+ * 
+ * @param address
+ * @param PageTabVal
+ * @returns 1 if we find it
+  */
 int FindPageTableEntry_Search(unsigned int address, ARMword *PageTabVal) {
   int Current;
   unsigned int matchaddr;
@@ -213,8 +217,14 @@ static int FindPageTableEntry(unsigned int address, ARMword *PageTabVal) {
 }
 
 
-/*----------------------------------------------------------------------------*/
-/* Return 0 if we should abort on this address */
+/**
+ * CheckAbortR
+ *
+ * Would a read to the address cause an abort?
+ *
+ * @param address Address to check 
+ * @returns 0 if we should abort. non zero if fine
+ */
 static int CheckAbortR(int address) {
   ARMword PageTabVal;
 
@@ -223,34 +233,35 @@ static int CheckAbortR(int address) {
   /* First check if we are doing ROM remapping and are accessing a remapped location */
   /* If it is then map it into the ROM space */
   if ((MEMC.ROMMapFlag) && (address <0xc00000))
-    address = MEMORY_ROM_LOW + address;
+    address = MEMORY_R_ROM_LOW + address;
 
   switch ((address >> 24) & 3) {
-    case 3:
+    case 3: /* 0x03000000 - 0x03FFFFFF - 16MB - IO Controllers (8MB) and ROM space 2 x 4MB */
       /* If we are in ROM and trying to read then there is no hassle */
-      if (address>=MEMORY_ROM_LOW) {
+      if (address >= MEMORY_R_ROM_LOW) {
         /* It's ROM read - no hassle */
         return(1);
-      };
+      }
       /* NOTE: No break, IOC has same permissions as physical RAM */
 
-    case 2:
+    case 2: /* 0x02000000 - 0x02FFFFFF - 16MB - Phyisically mapped Ram */
       /* Privileged only */
       return PRIVILEGED;
 
-    case 0:
+    case 0: /* 0x00000000 - 0x01FFFFFF - 32MB - Logically mapped Ram */
     case 1:
       /* OK - it's in logically mapped RAM */
       if (!FindPageTableEntry(address,&PageTabVal)) {
         MEMC.TmpPage=-1;
         dbug("ChecKAbortR at 0x%08x due to unmapped page\n",address);
         return(0);
-      };
+      }
 
       MEMC.TmpPage=PageTabVal;
 
       /* The page exists - so if it's supervisor then it's OK */
-      if (PRIVILEGED) return(1);
+      if (PRIVILEGED)
+        return(1);
 
       if (MEMC.ControlReg & (1<<12)) {
         /* OS mode */
@@ -265,37 +276,46 @@ static int CheckAbortR(int address) {
           return(0);
         } else
           return 1;
-      }; /* User mode */
-  };
+      } /* User mode */
+  }
   return 0;
-}; /* CheckAbortR */
+} /* CheckAbortR */
 
 
-/*----------------------------------------------------------------------------*/
-/* Return 0 if we should abort on this address */
+/**
+ * CheckAbortW
+ *
+ * Would a write to the address cause an abort?
+ *
+ * @param address Address to check 
+ * @returns 0 if we should abort, non zero if fine
+ */
 static int CheckAbortW(int address) {
   ARMword PageTabVal;
 
   /*printf("CheckAbort for address=0x%x\n",address);*/
 
-  /* If we are in ROM and trying to read then there is no hassle */
-  if (address >=MEMORY_ROM_LOW || address>=MEMORY_RAM_PHYS) {
-    /* Write - only allowed in privileged mode */
+  /* All writes to Physically mapped Ram, IO controllers, Video Controller
+     DMA Address Generator, MEMC control register, and to the Logical to
+     physical address translator all are only allowed in Supervisor mode
+     (PRIVELEGED) */
+  if (address >= MEMORY_RAM_PHYS) {
     /*fprintf(stderr,"Ntrans=%d\n",statestr.NtransSig); */
     return PRIVILEGED;
-  };
+  }
 
   /* OK - it's in logically mapped RAM */
   if (!FindPageTableEntry(address, &PageTabVal)) {
-    MEMC.TmpPage=-1;
-    dbug("Failed CheckAbortW at address0x%08x due to inability to find page\n",address);
+    MEMC.TmpPage = -1;
+    dbug("Failed CheckAbortW at address0x%08x due to inability to find page\n", address);
     return(0);
-  };
+  }
 
   MEMC.TmpPage=PageTabVal;
 
   /* The page exists - so if it's superviser then it's OK */
-  if (PRIVILEGED) return(1);
+  if (PRIVILEGED)
+    return(1);
 
   /* Extract page protection level */
   PageTabVal >>= 8;
@@ -306,11 +326,11 @@ static int CheckAbortW(int address) {
 
     /* it can only write if the top bit of the PPL is low */
     if (PageTabVal & 2) {
-      MEMC.TmpPage=-1;
+      MEMC.TmpPage = -1;
       return(0);
     } else {
       return(1);
-    };
+    }
 
   } else {
     /* User mode */
@@ -322,17 +342,25 @@ static int CheckAbortW(int address) {
       return 1;
     }
 
-  }; /* User mode */
+  } /* User mode */
 
   /* Hey - it shouldn't get here */
   abort();
   return(0);
-}; /* CheckAbort */
+} /* CheckAbort */
 
-/***************************************************************************\
-*                      Initialise the memory interface                      *
-\***************************************************************************/
 
+/**
+ * ARMul_MemoryInit
+ *
+ * Initialise the memory interface, Initialise memory map, load Rom,
+ * load extension Roms
+ *
+ * @param state
+ * @param initmemorysize If non zero, then use this for the ammount of physical ram
+ *                       in bytes. If 0 default to 4MB
+ * @returns
+ */
 unsigned ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
 {
   PrivateDataType *PrivDPtr;
@@ -495,10 +523,13 @@ unsigned ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
  return(TRUE);
 }
 
-/***************************************************************************\
-*                         Remove the memory interface                       *
-\***************************************************************************/
-
+/**
+ * ARMul_MemoryExit
+ *
+ * Remove the memory interface
+ *
+ * @param state
+ */
 void ARMul_MemoryExit(ARMul_State *state)
 {
   free(MEMC.PhysRam);
@@ -506,11 +537,16 @@ void ARMul_MemoryExit(ARMul_State *state)
   free(PRIVD);
 }
 
-/***************************************************************************\
-*                        Load Word, Sequential Cycle                        *
-\***************************************************************************/
-
-ARMword ARMul_LoadWordS(ARMul_State *state,ARMword address) {
+/**
+ * ARMul_LoadWordS
+ *
+ * Load Word, Sequential Cycle
+ *
+ * @param state
+ * @param address
+ * @returns
+ */
+ARMword ARMul_LoadWordS(ARMul_State *state, ARMword address) {
   statestr.NumCycles++;
 
   address &= 0x3ffffff;
@@ -527,11 +563,16 @@ ARMword ARMul_LoadWordS(ARMul_State *state,ARMword address) {
   return GetWord(address);
 }
 
-/***************************************************************************\
-*                      Load Word, Non Sequential Cycle                      *
-\***************************************************************************/
-
-ARMword ARMul_LoadWordN(ARMul_State *state,ARMword address)
+/**
+ * ARMul_LoadWordN
+ *
+ * Load Word, Non Sequential Cycle
+ *
+ * @param state
+ * @param address
+ * @returns
+ */
+ARMword ARMul_LoadWordN(ARMul_State *state, ARMword address)
 {
   statestr.NumCycles++;
   address &= 0x3ffffff;
@@ -543,16 +584,21 @@ ARMword ARMul_LoadWordN(ARMul_State *state,ARMword address)
          address, statestr.pc, statestr.Reg[15], PRIVILEGED, OSMODE(state), statestr.Mode);
     ARMul_DATAABORT(address);
     return(ARMul_ABORTWORD);
-  };
+  }
 
   return GetWord(address);
 }
 
-/***************************************************************************\
-*                     Load Byte, (Non Sequential Cycle)                     *
-\***************************************************************************/
-
-ARMword ARMul_LoadByte(ARMul_State *state,ARMword address) {
+/**
+ * ARMul_LoadByte
+ *
+ * Load Byte, (Non Sequential Cycle)
+ *
+ * @param state
+ * @param address
+ * @returns
+ */
+ARMword ARMul_LoadByte(ARMul_State *state, ARMword address) {
   unsigned int temp;
   int bytenum = address & 3;
 
@@ -563,12 +609,13 @@ ARMword ARMul_LoadByte(ARMul_State *state,ARMword address) {
   if (CheckAbortR(address)) {
    ARMul_CLEARABORT;
   } else {
-    dbug("ARMul_LoadByte abort on address 0x%08x PC=0x%x R[15]=0x%x priv=%d osmode=%d mode=%d\n",address,statestr.pc,statestr.Reg[15],PRIVILEGED,OSMODE(state),statestr.Mode);
+    dbug("ARMul_LoadByte abort on address 0x%08x PC=0x%x R[15]=0x%x priv=%d osmode=%d mode=%d\n",
+         address, statestr.pc, statestr.Reg[15], PRIVILEGED, OSMODE(state), statestr.Mode);
     ARMul_DATAABORT(address);
     return(ARMul_ABORTWORD);
-  };
+  }
 
-  temp=GetWord(address);
+  temp = GetWord(address);
 
   /* WARNING! Little endian only */
   temp>>=(bytenum*8);
@@ -576,50 +623,67 @@ ARMword ARMul_LoadByte(ARMul_State *state,ARMword address) {
   return(temp & 0xff);
 }
 
-/***************************************************************************\
-*                       Store Word, Sequential Cycle                        *
-\***************************************************************************/
-
-void ARMul_StoreWordS(ARMul_State *state,ARMword address, ARMword data)
+/**
+ * ARMul_StoreWordS
+ *
+ * Store Word, Sequential Cycle
+ *
+ * @param state
+ * @param address
+ * @param data
+ */
+void ARMul_StoreWordS(ARMul_State *state, ARMword address, ARMword data)
 {
   statestr.NumCycles++;
-  address&=0x3ffffff;
+  address &= 0x3ffffff;
 
   if (CheckAbortW(address)) {
     ARMul_CLEARABORT;
   } else {
-    dbug("ARMul_StoreWordS abort on address 0x%08x PC=0x%x R[15]=0x%x priv=%d osmode=%d mode=%d\n",address,statestr.pc,statestr.Reg[15],PRIVILEGED,OSMODE(state),statestr.Mode);
+    dbug("ARMul_StoreWordS abort on address 0x%08x PC=0x%x R[15]=0x%x priv=%d osmode=%d mode=%d\n",
+         address, statestr.pc, statestr.Reg[15], PRIVILEGED, OSMODE(state), statestr.Mode);
     ARMul_DATAABORT(address);
     return;
-  };
+  }
 
-  PutWord(state,address,data);
+  PutWord(state, address, data);
 }
 
-/***************************************************************************\
-*                       Store Word, Non Sequential Cycle                        *
-\***************************************************************************/
-
+/**
+ * ARMul_StoreWordN
+ *
+ * Store Word, Non Sequential Cycle
+ *
+ * @param state
+ * @param address
+ * @param data
+ */
 void ARMul_StoreWordN(ARMul_State *state, ARMword address, ARMword data)
 {
   statestr.NumCycles++;
-  address&=0x3ffffff;
+  address &= 0x3ffffff;
 
   if (CheckAbortW(address)) {
     ARMul_CLEARABORT;
   } else {
-    dbug("ARMul_StoreWordN abort on address 0x%08x PC=0x%x R[15]=0x%x priv=%d osmode=%d mode=%d\n",address,statestr.pc,statestr.Reg[15],PRIVILEGED,OSMODE(state),statestr.Mode);
+    dbug("ARMul_StoreWordN abort on address 0x%08x PC=0x%x R[15]=0x%x priv=%d osmode=%d mode=%d\n",
+         address, statestr.pc, statestr.Reg[15], PRIVILEGED, OSMODE(state), statestr.Mode);
     ARMul_DATAABORT(address);
     return;
-  };
+  }
 
-  PutWord(state,address,data);
+  PutWord(state, address, data);
 }
 
-/***************************************************************************\
-*                    Store Byte, (Non Sequential Cycle)                     *
-\***************************************************************************/
-
+/**
+ * ARMul_StoreByte
+ *
+ * Store Byte, (Non Sequential Cycle)
+ *
+ * @param state
+ * @param address
+ * @param data
+ */
 void ARMul_StoreByte(ARMul_State *state, ARMword address, ARMword data)
 {
   statestr.NumCycles++;
@@ -630,58 +694,79 @@ void ARMul_StoreByte(ARMul_State *state, ARMword address, ARMword data)
   } else {
     ARMul_DATAABORT(address);
     return;
-  };
+  }
 
-  PutVal(state,address,data,1,1,ARMul_Emulate_DecodeInstr);
+  PutVal(state, address, data, 1, 1, ARMul_Emulate_DecodeInstr);
 }
 
-/***************************************************************************\
-*                   Swap Word, (Two Non Sequential Cycles)                  *
-\***************************************************************************/
 
+/**
+ * ARMul_SwapWord
+ *
+ * Swap Word, (Two Non Sequential Cycles)
+ *
+ * @param state
+ * @param address
+ * @param data
+ * @returns 
+ */
 ARMword ARMul_SwapWord(ARMul_State *state, ARMword address, ARMword data)
 {
   ARMword temp;
 
   statestr.NumCycles++;
-  address&=0x3ffffff;
+  address &= 0x3ffffff;
 
   if (CheckAbortW(address)) {
-   ARMul_CLEARABORT;
+    ARMul_CLEARABORT;
   } else {
-   ARMul_DATAABORT(address);
-   return(ARMul_ABORTWORD);
-  };
+    ARMul_DATAABORT(address);
+    return(ARMul_ABORTWORD);
+  }
 
   temp = GetWord(address);
   statestr.NumCycles++;
-  PutWord(state,address,data);
+  PutWord(state, address, data);
   return(temp);
 }
 
-/***************************************************************************\
-*                   Swap Byte, (Two Non Sequential Cycles)                  *
-\***************************************************************************/
-
+/**
+ * ARMul_SwapByte
+ *
+ * Swap Byte, (Two Non Sequential Cycles)
+ *
+ * @param state
+ * @param address
+ * @param data
+ * @returns 
+ */
 ARMword ARMul_SwapByte(ARMul_State *state, ARMword address, ARMword data)
-{ARMword temp;
+{
+  ARMword temp;
 
- address&=0x3ffffff;
- if (CheckAbortW(address)) {
-  ARMul_CLEARABORT;
- } else {
-  ARMul_DATAABORT(address);
-  return(ARMul_ABORTWORD);
- };
+  address &= 0x3ffffff;
+  if (CheckAbortW(address)) {
+    ARMul_CLEARABORT;
+  } else {
+    ARMul_DATAABORT(address);
+    return(ARMul_ABORTWORD);
+  }
 
- temp = ARMul_LoadByte(state,address);
- ARMul_StoreByte(state,address,data);
- return(temp);
- }
+  temp = ARMul_LoadByte(state, address);
+  ARMul_StoreByte(state, address, data);
+  return(temp);
+}
 
-/*----------------------------------------------------------------------------*/
-/* The caller MUST perform a full abort check first - if only to ensure that  */
-/* a page in logical RAM does not abort.                                      */
+/**
+ * GetWord
+ *
+ * Return the contents of an address in the archimedes memory map.
+ * The caller MUST perform a full abort check first - if only to ensure that
+ * a page in logical RAM does not abort.                                      
+ *
+ * @param address Address to get value of
+ * @returns Content of address
+ */
 ARMword GetWord(ARMword address) {
 
   /* First check if we are doing ROM remapping and are accessing a remapped */
@@ -689,45 +774,45 @@ ARMword GetWord(ARMword address) {
   if ((MEMC.ROMMapFlag) && (address < 0xc00000)) {
     MEMC.ROMMapFlag = 2;
 
-    if (address >= MEMORY_ROM_HIGH - MEMORY_ROM_LOW)
-      address -= (MEMORY_ROM_HIGH - MEMORY_ROM_LOW);
+    if (address >= MEMORY_R_ROM_HIGH - MEMORY_R_ROM_LOW)
+      address -= (MEMORY_R_ROM_HIGH - MEMORY_R_ROM_LOW);
 
     /* A simple ROM wrap around */
     return MEMC.ROM[(address % MEMC.ROMSize) / 4];
-  };
+  }
 
   switch ((address >> 24) & 3) {
-    case 3:
-      if (address >= MEMORY_ROM_LOW) {
-        if (address >= MEMORY_ROM_HIGH)
-          address -= MEMORY_ROM_HIGH;
+    case 3: /* 0x03000000 - 0x03FFFFFF - 16MB - IO Controllers (8MB) and ROM space 2 x 4MB */ 
+      if (address >= MEMORY_R_ROM_LOW) {
+        if (address >= MEMORY_R_ROM_HIGH)
+          address -= MEMORY_R_ROM_HIGH;
         else
-          address -= MEMORY_ROM_LOW;
+          address -= MEMORY_R_ROM_LOW;
 
         if ((MEMC.ROMMapFlag == 2)) {
           MEMC.OldAddress1 = -1;
           MEMC.OldPage1 = -1;
           MEMC.ROMMapFlag = 0;
-        };
+        }
 
         /* A simple ROM wrap around */
         return MEMC.ROM[(address % MEMC.ROMSize) / 4];
-      };
+      }
 
       if ((MEMC.ROMMapFlag == 2)) {
         MEMC.ROMMapFlag = 0;
         MEMC.OldAddress1 = -1;
         MEMC.OldPage1 = -1;
-      };
+      }
 
       return GetWord_IO(emu_state,address);
 
-    case 2:
+    case 2: /* 0x02000000 - 0x02FFFFFF - 16MB - Phyisically mapped Ram */
       if (MEMC.ROMMapFlag == 2) {
         MEMC.ROMMapFlag = 0;
         MEMC.OldAddress1 =- 1;
         MEMC.OldPage1 =- 1;
-      };
+      }
       address -= MEMORY_RAM_PHYS;
 
       /* I used to think memory wrapped after the real RAM - but it doesn't */
@@ -735,11 +820,11 @@ ARMword GetWord(ARMword address) {
       if  (address >= MEMC.RAMSize) {
         dbug_memc("GetWord returning dead0bad - after PhysRam\n");
         return(0xdead0bad);
-      };
+      }
 
       return MEMC.PhysRam[address / 4];
 
-    case 0:
+    case 0: /* 0x00000000 - 0x01FFFFFF - 32MB - Logically mapped Ram */
     case 1:
       /* Logically mapped RAM */
       address = GetPhysAddress(address);
@@ -752,27 +837,40 @@ ARMword GetWord(ARMword address) {
       };
 
       return (MEMC.PhysRam[address / 4]);
-  };
+  }
   return 0;
-}; /* GetWord */
+} /* GetWord */
 
-/*----------------------------------------------------------------------------*/
-/* The caller MUST check for aborts before calling us!                        */
-static void PutVal(ARMul_State *state,ARMword address, ARMword data,
-                   int bNw,int Statechange, ARMEmuFunc newfunc) {
+/**
+ * PutVal
+ *
+ * Set a value of an address in the archimedes memory map
+ * The caller MUST check for aborts before calling us!                        
+ *
+ * @param state
+ * @param address     Address to write to
+ * @param data        Data to write 
+ * @param bNW
+ * @param Statechange
+ * @param newfunc
+ */
+static void PutVal(ARMul_State *state, ARMword address, ARMword data,
+                   int bNw, int Statechange, ARMEmuFunc newfunc) {
 
-  if (address >= MEMORY_ROM_HIGH) {
+  if (address >= MEMORY_W_LOG2PHYS) {
     /* Logical-to-physical address translation */
     int tmp;
 
-    if (!Statechange) return;
+    if (!Statechange)
+      return;
 
     MEMC.OldAddress1 = -1;
     MEMC.OldPage1 = -1;
 
-    if (MEMC.ROMMapFlag == 2) MEMC.ROMMapFlag = 0;
+    if (MEMC.ROMMapFlag == 2)
+      MEMC.ROMMapFlag = 0;
 
-    tmp = address - MEMORY_ROM_HIGH;
+    tmp = address - MEMORY_W_LOG2PHYS;
 #ifdef DEBUG_MEMC
     {
       unsigned int logbaseaddr;
@@ -793,15 +891,17 @@ static void PutVal(ARMul_State *state,ARMword address, ARMword data,
     MEMC.PageTable[address & 127] = tmp & 0x0fffffff;
 
     return;
-  };
+  }
 
-  if (address >= MEMORY_DMA_GEN) {
+  if (address >= MEMORY_W_DMA_GEN) {
     /* DMA address generation - MEMC Control reg */
     ARMword RegNum,RegVal;
 
-    if (!Statechange) return;
+    if (!Statechange)
+      return;
 
-    if (MEMC.ROMMapFlag == 2) MEMC.ROMMapFlag = 0;
+    if (MEMC.ROMMapFlag == 2)
+      MEMC.ROMMapFlag = 0;
 
     RegNum = (address >> 17) & 7;
     RegVal = (address >> 2) & 0x7fff;
@@ -843,45 +943,52 @@ static void PutVal(ARMul_State *state,ARMword address, ARMword data,
         break;
 
       case 7: /* MEMC Control register */
-        dbug_memc("MEMC Control register set to 0x%x by PC=0x%x R[15]=0x%x\n",address,(unsigned int)statestr.pc,(unsigned int)statestr.Reg[15]);
+        dbug_memc("MEMC Control register set to 0x%x by PC=0x%x R[15]=0x%x\n",
+                  address, (unsigned int)statestr.pc, (unsigned int)statestr.Reg[15]);
         MEMC.ControlReg = address;
         MEMC.PageSizeFlags = (MEMC.ControlReg & 12) >> 2;
         MEMC.OldAddress1 = -1;
         MEMC.OldPage1 = -1;
         break;
-    };
+    }
     return;
-  }; /* DMA address gen/MEMC control */
+  } /* DMA address gen/MEMC control */
 
+  /* VIDC Space */
+  if (address >= MEMORY_W_VIDEOCON) {
+    if (!Statechange)
+      return;
 
-  if (address >= MEMORY_ROM_LOW) {
-    if (!Statechange) return;
-
-    if (MEMC.ROMMapFlag == 2) MEMC.ROMMapFlag = 0;
+    if (MEMC.ROMMapFlag == 2)
+      MEMC.ROMMapFlag = 0;
     /* VIDC */
     VIDC_PutVal(state,address,data,bNw);
     return;
-  };
+  }
 
   if (address >= MEMORY_CON_IO) {
-    if (!Statechange) return;
+    if (!Statechange)
+      return;
 
-    if (MEMC.ROMMapFlag == 2) MEMC.ROMMapFlag = 0;
+    if (MEMC.ROMMapFlag == 2)
+      MEMC.ROMMapFlag = 0;
     /* IOC */
     PutValIO(state,address,data,bNw);
     return;
-  };
+  }
 
   if (address < MEMORY_RAM_PHYS) {
     /* Logically mapped RAM - shift the address so that the physical ram code will do it */
     address = GetPhysAddress(address);
   } else {
     /* Physical ram */
-    if (MEMC.ROMMapFlag == 2) MEMC.ROMMapFlag = 0;
+    if (MEMC.ROMMapFlag == 2)
+      MEMC.ROMMapFlag = 0;
     address -= MEMORY_RAM_PHYS;
-  };
+  }
 
-  if (address >= MEMC.RAMSize) return;
+  if (address >= MEMC.RAMSize)
+    return;
 
   /* Do updating for VIDC emulation */
   /* See if it's in DMAble ram */
@@ -889,15 +996,15 @@ static void PutVal(ARMul_State *state,ARMword address, ARMword data,
     MEMC.UpdateFlags[address/UPDATEBLOCKSIZE]++;
 
   if (bNw) {
-    static unsigned int masktab[]={0xffffff00,0xffff00ff,0xff00ffff,0x00ffffff};
+    static unsigned int masktab[]={ 0xffffff00, 0xffff00ff, 0xff00ffff, 0x00ffffff };
     ARMword mask;
     ARMword tmp;
     data&=0xff;
 
-    mask=masktab[address & 3];
-    tmp=MEMC.PhysRam[address/4] & mask;
-    data=tmp | (data << ((address & 3)*8));
-  };
+    mask = masktab[address & 3];
+    tmp = MEMC.PhysRam[address/4] & mask;
+    data = tmp | (data << ((address & 3)*8));
+  }
 
 #ifdef DIRECT_DISPLAY
   if (MEMC.Vstart!=Vstartold || MEMC.Vend!=Vendold)
