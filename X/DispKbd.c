@@ -1106,15 +1106,15 @@ static void ProcessKey(ARMul_State *state,XKeyEvent *key) {
   struct ArcKeyTrans *PresPtr;
   KeySym sym;
 
-  /* Just take the unshifted version of the key */
-  sym = XLookupKeysym(key,0);
+    XLookupString(key, NULL, 0, &sym, NULL);
 
   /* Trap the special key for mouse following */
   if (sym == MOUSEKEY) {
     /* And when it is pressed toggle the mouse follow mode */
     if (key->type == KeyPress) {
-      fprintf(stderr,"Doing Mouse tracking\n");
       DC.DoingMouseFollow^=1;
+      fprintf(stderr, "MOUSEKEY pressed, turning mouse tracking %s.\n",
+          DC.DoingMouseFollow ? "on" : "off");
       if (DC.DoingMouseFollow)
       {
 	XColor black, dummy;
@@ -1129,6 +1129,9 @@ static void ProcessKey(ARMul_State *state,XKeyEvent *key) {
     };
     return;
   };
+
+  /* Just take the unshifted version of the key */
+  sym = XLookupKeysym(key,0);
 
   if (KBD.BuffOcc>=KBDBUFFLEN) {
     fprintf(stderr,"KBD: Missed key - still busy sending another one\n");
