@@ -16,7 +16,7 @@
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 /* This file contains a model of Demon, ARM Ltd's Debug Monitor,
-including all the SWI's required to support the C library. The code in
+including all the SWIs required to support the C library. The code in
 it is not really for the faint-hearted (especially the abort handling
 code), but it is a complete example. Defining NOOS will disable all the
 fun, and definign VAILDATE will define SWI 1 to enter SVC mode, and SWI

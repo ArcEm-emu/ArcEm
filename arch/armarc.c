@@ -107,9 +107,9 @@ static void DumpHandler(int sig) {
   fclose(res);
 }; /* DumpHandler */
 
-/*------------------------------------------------------------------------------*/
-/* Uses MEMC.TmpPage which must have been previously been set up by a call to   */
-/* checkabort                                                                   */
+/*----------------------------------------------------------------------------*/
+/* Uses MEMC.TmpPage which must have been previously been set up by a call to */
+/* checkabort                                                                 */
 ARMword GetPhysAddress(unsigned int address) {
   ARMword pagetabval=MEMC.TmpPage;
   int PhysPage;
@@ -147,9 +147,9 @@ ARMword GetPhysAddress(unsigned int address) {
 }; /* GetPhysAddress */
 
 
-/*------------------------------------------------------------------------------*/
-/* Look up an address in the pagetable and return the raw entry                 */
-/* Return 1 if we find it                                                       */
+/*----------------------------------------------------------------------------*/
+/* Look up an address in the pagetable and return the raw entry               */
+/* Return 1 if we find it                                                     */
 int FindPageTableEntry_Search(unsigned int address, ARMword *PageTabVal) {
   int Current;
   unsigned int matchaddr;
@@ -208,7 +208,7 @@ static int FindPageTableEntry(unsigned int address, ARMword *PageTabVal) {
 }
 
 
-/*------------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 /* Return 0 if we should abort on this address */
 static int CheckAbortR(int address) {
   ARMword PageTabVal;
@@ -273,7 +273,7 @@ static int CheckAbortR(int address) {
 }; /* CheckAbortR */
 
 
-/*------------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 /* Return 0 if we should abort on this address */
 static int CheckAbortW(int address) {
   ARMword PageTabVal;
@@ -296,7 +296,7 @@ static int CheckAbortW(int address) {
     };
   };
 
-  /* OK - its in logically mapped RAM */
+  /* OK - it's in logically mapped RAM */
   if (!FindPageTableEntry(address,&PageTabVal)) {
     MEMC.TmpPage=-1;
 #ifdef DEBUG
@@ -668,9 +668,9 @@ ARMword ARMul_SwapByte(ARMul_State *state, ARMword address, ARMword data)
  return(temp);
  }
 
-/*-----------------------------------------------------------------------------*/
-/* The caller MUST perform a full abort check first - if only to ensure that   */
-/* a page in logical RAM does not abort.                                       */
+/*----------------------------------------------------------------------------*/
+/* The caller MUST perform a full abort check first - if only to ensure that  */
+/* a page in logical RAM does not abort.                                      */
 ARMword GetWord(ARMword address) {
   /*printf("GetWord for address=0x%x\n",address);*/
   /* First check if we are doing ROM remapping and are accessing a remapped location */
