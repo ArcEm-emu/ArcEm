@@ -76,7 +76,7 @@ endif
 
 ifeq (${SYSTEM},riscos-single)
 DIRECT_DISPLAY=yes
-CFLAGS += -DSYSTEM_riscos_single -Iriscos-single -mpoke-function-name
+CFLAGS += -I@ -DSYSTEM_riscos_single -Iriscos-single -mpoke-function-name
 OBJS += arm-support.o rhs.o
 TARGET=!ArcEm/arcem
 endif
