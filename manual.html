@@ -169,6 +169,24 @@ happily boot without a harddrive.</p>
      As for the Windows version, pressing the + key on the keypad will
      capture the mouse.
    </p>
+   <p>
+     If your keyboard doesn't generate the KP_Add keysym, use xmodmap(1)
+     to alter its configuration.
+   </p>
+   <pre>
+     #! /bin/sh
+     
+     xmodmap - &lt;&lt;\E
+     ! Make the Happy Hacker's two diamond keys into Mode_switch keys so I
+     ! can access KP_Add by pressing Shift-Diamond-equal.
+     
+     keycode 115 = Mode_switch
+     keycode 116 = Mode_switch
+     clear mod3
+     add mod3 = Mode_switch
+     keycode equal = equal plus KP_Equal KP_Add
+     E
+   </pre>
  </dd>
 </dl>
 
