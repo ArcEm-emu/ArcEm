@@ -20,7 +20,7 @@
 
 #define LEDHEIGHT 15
 #define LEDWIDTH 15
-#define LEDTOPS 70
+#define LEDTOPS 90
 
 /* HOSTDISPLAY is too verbose here - but HD could be hard disc somewhere else! */
 #define HD HOSTDISPLAY
@@ -28,6 +28,8 @@
 
 static void draw_keyboard_leds(int leds);
 static void draw_floppy_leds(int leds);
+
+static void insert_or_eject_floppy(int drive);
 
 /*-----------------------------------------------------------------------------*/
 static void TextAt(ARMul_State *state, const char *Text, int x, int y) {
@@ -95,6 +97,10 @@ static void ControlPane_Redraw(ARMul_State *state,XExposeEvent *e) {
     y += 2;
     y = TextCenteredH(state, "Type `q' to quit.", y, 0, CTRLPANEWIDTH);
 
+    y += 2;
+    y = TextCenteredH(state, "Type `0', `1', `2', or `3' to "
+        "insert/eject floppy image.", y, 0, CTRLPANEWIDTH);
+
   y+=2;
     draw_keyboard_leds(KBD.Leds);
     draw_floppy_leds(~ioc.LatchA & 0xf);
@@ -107,7 +113,20 @@ void ControlPane_Event(ARMul_State *state,XEvent *e) {
   switch (e->type) {
     case KeyPress:
         XLookupString(&e->xkey, NULL, 0, &sym, NULL);
-        if (sym == XK_q) {
+        switch (sym) {
+        case XK_0:
+            insert_or_eject_floppy(0);
+            break;
+        case XK_1:
+            insert_or_eject_floppy(1);
+            break;
+        case XK_2:
+            insert_or_eject_floppy(2);
+            break;
+        case XK_3:
+            insert_or_eject_floppy(3);
+            break;
+        case XK_q:
             fputs("arcem: user requested exit\n", stderr);
             hostdisplay_change_focus(&HD, FALSE);
             exit(0);
@@ -127,6 +146,7 @@ void ControlPane_Event(ARMul_State *state,XEvent *e) {
 void ControlPane_Init(ARMul_State *state) {
   XTextProperty name;
   char *tmpptr;
+    int drive;
 
   HD.ControlPane=XCreateWindow(HD.disp,
                                HD.RootWindow, /* HD.BackingWindow, */
@@ -166,6 +186,10 @@ void ControlPane_Init(ARMul_State *state) {
     KBD.leds_changed = draw_keyboard_leds;
     FDC.leds_changed = draw_floppy_leds;
 
+    for (drive = 0; drive < 4; drive++) {
+        insert_or_eject_floppy(drive);
+    }
+
     return;
 }; /* ControlPane_Init */
 
@@ -191,6 +215,30 @@ static void draw_floppy_leds(int leds)
         sprintf(s, "Floppy %d", i);
         DoLED(s, leds & 1 << i, LEDTOPS, 290 + i * 80);
     }
+
+    return;
+}
+
+/* ------------------------------------------------------------------ */
+
+static void insert_or_eject_floppy(int drive)
+{
+    static char got_disc[4];
+    static char image[] = "FloppyImage#";
+    char *err;
+
+    if (got_disc[drive]) {
+        err = fdc_eject_floppy(drive);
+        fprintf(stderr, "ejecting drive %d: %s\n", drive,
+            err ? err : "ok");
+    } else {
+        image[sizeof image - 2] = '0' + drive;
+        err = fdc_insert_floppy(drive, image);
+        fprintf(stderr, "inserting floppy image %s into drive %d: %s\n",
+            image, drive, err ? err : "ok");
+    }
+
+    got_disc[drive] ^= !err;
 
     return;
 }

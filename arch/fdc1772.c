@@ -5,6 +5,7 @@
 #define DBG(a) if (DEBUG_FDC1772) fprintf a
 
 #include <stdlib.h>
+#include <string.h>
 
 #define __USE_FIXED_PROTOTYPES__
 #include <errno.h>
@@ -35,31 +36,25 @@
 #define TYPE2_BIT_MOTORON (1<<2)
 #define TYPE2_BIT_MULTISECTOR (1<<4)
 
-typedef struct {
-    char *name;
-    int bytes_per_sector;
-    int sector_size_code;
-    int sectors_per_track;
-    int sector_base;
-    int num_tracks;
-} floppy_format;
-
 static floppy_format avail_format[] = {
     { "ADFS 800KB", 1024, 3, 5, 0, 80 },
     { "DOS 720KB", 512, 2, 9, 1, 80 },
 };
 
-/* points to an element of avail_format. */
-static floppy_format *format;
+/* A temporary method of getting the current drive's format. */
+#define CURRENT_FORMAT (FDC.drive[FDC.CurrentDisc].form)
 
 /* give the byte offset of a given sector. */
 #define SECTOR_LOC_TO_BYTE_OFF(track, side, sector) \
-    (((track * 2 + side) * format->sectors_per_track + \
-        (sector - format->sector_base)) * format->bytes_per_sector)
+    (((track * 2 + side) * CURRENT_FORMAT->sectors_per_track + \
+        (sector - CURRENT_FORMAT->sector_base)) * \
+        CURRENT_FORMAT->bytes_per_sector)
 
 static void FDC_DoWriteChar(ARMul_State *state);
 static void FDC_DoReadChar(ARMul_State *state);
 static void FDC_DoReadAddressChar(ARMul_State *state);
+
+static void efseek(FILE *fp, long offset, int whence);
 
 /*--------------------------------------------------------------------------*/
 static void GenInterrupt(ARMul_State *state, const char *reason) {
@@ -182,8 +177,14 @@ void FDC_LatchAChange(ARMul_State *state) {
         case 2:
         case 3:
           DBG((stderr,"Floppy drive select %d gone %s\n",bit,val?"High":"Low"));
-          if (!val)
-            FDC.CurrentDisc=bit;
+                if (!val) {
+                    FDC.CurrentDisc = bit;
+                    DBG((stderr, "setting FDC.Sector = "
+                        "FDC.Sector_ReadAddr = %d\n",
+                        FDC.drive[FDC.CurrentDisc].form->sector_base));
+                    FDC.Sector = FDC.Sector_ReadAddr = 
+                        FDC.drive[FDC.CurrentDisc].form->sector_base;
+                }
           break;
 
         case 4:
@@ -347,10 +348,11 @@ static void FDC_NextTrack(ARMul_State *state) {
 /*--------------------------------------------------------------------------*/
 static void FDC_NextSector(ARMul_State *state) {
   FDC.Sector++;
-  if (FDC.Sector == format->sectors_per_track + format->sector_base) {
-    FDC.Sector = format->sector_base;
-    FDC_NextTrack(state);
-  };
+    if (FDC.Sector == CURRENT_FORMAT->sectors_per_track +
+        CURRENT_FORMAT->sector_base) {
+        FDC.Sector = CURRENT_FORMAT->sector_base;
+        FDC_NextTrack(state);
+    }
 }; /* FDC_NextSector */
 /*--------------------------------------------------------------------------*/
 static void FDC_DoReadAddressChar(ARMul_State *state) {
@@ -368,12 +370,15 @@ static void FDC_DoReadAddressChar(ARMul_State *state) {
     case 4: /* sector addr */
       FDC.Data=FDC.Sector_ReadAddr;
       FDC.Sector_ReadAddr++;
-      if (FDC.Sector_ReadAddr >= format->sectors_per_track + format->sector_base)
-          FDC.Sector_ReadAddr = format->sector_base;
+        if (FDC.Sector_ReadAddr >= CURRENT_FORMAT->sectors_per_track +
+            CURRENT_FORMAT->sector_base) {
+            FDC.Sector_ReadAddr = CURRENT_FORMAT->sector_base;
+        }
       break;
 
     case 3: /* sector length */
-      FDC.Data = format->sector_size_code; /* 1K per sector (2=512, 1=256, 0=128 */
+        /* 1K per sector (2=512, 1=256, 0=128 */
+        FDC.Data = CURRENT_FORMAT->sector_size_code;
       break;
 
     case 2: /* CRC 1 */
@@ -407,10 +412,10 @@ static void FDC_DoReadAddressChar(ARMul_State *state) {
 /*--------------------------------------------------------------------------*/
 static void FDC_DoReadChar(ARMul_State *state) {
   int data;
-  if (FDC.FloppyFile[FDC.CurrentDisc]==NULL) {
+    if (FDC.drive[FDC.CurrentDisc].fp == NULL) {
     data=42;
   } else {
-    data=fgetc(FDC.FloppyFile[FDC.CurrentDisc]);
+    data = fgetc(FDC.drive[FDC.CurrentDisc].fp);
     if (data==EOF) {
       DBG((stderr,"FDC_DoReadChar: got EOF\n"));
     };
@@ -421,7 +426,7 @@ static void FDC_DoReadChar(ARMul_State *state) {
   if (!FDC.BytesToGo) {
     if (FDC.LastCommand & TYPE2_BIT_MULTISECTOR) {
       FDC_NextSector(state);
-      FDC.BytesToGo = format->bytes_per_sector;
+      FDC.BytesToGo = CURRENT_FORMAT->bytes_per_sector;
     } else {
       /* We'll actually terminate on next data read */
     }; /* Not multisector */
@@ -437,7 +442,7 @@ static void FDC_SeekCommand(ARMul_State *state) {
   ClearInterrupt(state);
   ClearDRQ(state);
 
-  if (FDC.Data >= format->num_tracks) {
+  if (FDC.Data >= CURRENT_FORMAT->num_tracks) {
     /* Fail!! */
     FDC.StatusReg|=BIT_RECNOTFOUND;
     GenInterrupt(state,"Seek fail");
@@ -459,7 +464,7 @@ static void FDC_StepDirCommand(ARMul_State *state,int Dir) {
 
   FDC.Direction=Dir;
 
-  if (DesiredTrack >= format->num_tracks || DesiredTrack < 0) {
+  if (DesiredTrack >= CURRENT_FORMAT->num_tracks || DesiredTrack < 0) {
     /* Fail!! */
     FDC.StatusReg|=BIT_RECNOTFOUND;
     GenInterrupt(state,"Step fail");
@@ -471,15 +476,18 @@ static void FDC_StepDirCommand(ARMul_State *state,int Dir) {
 
 /*--------------------------------------------------------------------------*/
 static void FDC_ReadAddressCommand(ARMul_State *state) {
-  unsigned long offset;
+    long offset;
   int Side=(ioc.LatchA & (1<<4))?0:1; /* Note: Inverted??? Yep!!! */
   FDC.StatusReg|=BIT_BUSY;
   FDC.StatusReg&=~(BIT_DRQ | BIT_LOSTDATA | (1<<5) | (1<<6) | BIT_RECNOTFOUND);
 
     offset = SECTOR_LOC_TO_BYTE_OFF(FDC.Track, Side, FDC.Sector);
+    if (offset < 0) {
+        offset = 0;
+    }
 
-  if (FDC.FloppyFile[FDC.CurrentDisc]!=NULL) {
-    fseek(FDC.FloppyFile[FDC.CurrentDisc],offset,SEEK_SET);
+    if (FDC.drive[FDC.CurrentDisc].fp) {
+        efseek(FDC.drive[FDC.CurrentDisc].fp, offset, SEEK_SET);
 
     FDC.BytesToGo=6; /* 6 bytes of data from a Read address command */
     FDC_DoReadAddressChar(state);
@@ -510,13 +518,11 @@ static void FDC_ReadCommand(ARMul_State *state) {
 
     offset = SECTOR_LOC_TO_BYTE_OFF(FDC.Track, Side, FDC.Sector);
 
-  if (FDC.FloppyFile[FDC.CurrentDisc]!=NULL) {
-    if (fseek(FDC.FloppyFile[FDC.CurrentDisc],offset,SEEK_SET)!=0) {
-      fprintf(stderr,"FDC_ReadCommand: fseek failed!\n");
-    };
-  };
+    if (FDC.drive[FDC.CurrentDisc].fp) {
+        efseek(FDC.drive[FDC.CurrentDisc].fp, offset, SEEK_SET);
+    }
 
-    FDC.BytesToGo = format->bytes_per_sector;
+    FDC.BytesToGo = CURRENT_FORMAT->bytes_per_sector;
   /* FDC_DoReadChar(state); - let the regular code do this */
   FDC.DelayCount=FDC.DelayLatch=READSPACING;
 }; /* FDC_ReadCommand */
@@ -528,10 +534,10 @@ static void FDC_ReadCommand(ARMul_State *state) {
 /* Essentially all this routine has to do is provide the DRQ's - the
    actual write is done when the data register is written to */
 static void FDC_DoWriteChar(ARMul_State *state) {
-  if (FDC.BytesToGo > format->bytes_per_sector) {
+  if (FDC.BytesToGo > CURRENT_FORMAT->bytes_per_sector) {
     /* Initial DRQ */
     FDC_DoDRQ(state);
-    FDC.BytesToGo = format->bytes_per_sector;
+    FDC.BytesToGo = CURRENT_FORMAT->bytes_per_sector;
     return;
   };
 
@@ -544,7 +550,7 @@ static void FDC_DoWriteChar(ARMul_State *state) {
   /* but if its a multi sector command then we just have to carry on */
   if (FDC.LastCommand & TYPE2_BIT_MULTISECTOR) {
      FDC_NextSector(state);
-     FDC.BytesToGo = format->bytes_per_sector;
+     FDC.BytesToGo = CURRENT_FORMAT->bytes_per_sector;
      FDC_DoDRQ(state);
   } else {
     /* really the end */
@@ -565,9 +571,9 @@ static void FDC_WriteCommand(ARMul_State *state) {
                  Side,FDC.Track,FDC.Sector));
 
     offset = SECTOR_LOC_TO_BYTE_OFF(FDC.Track, Side, FDC.Sector);
-  fseek(FDC.FloppyFile[FDC.CurrentDisc],offset,SEEK_SET);
+    efseek(FDC.drive[FDC.CurrentDisc].fp, offset, SEEK_SET);
 
-  FDC.BytesToGo = format->bytes_per_sector + 1;
+  FDC.BytesToGo = CURRENT_FORMAT->bytes_per_sector + 1;
   /*GenDRQ(state); */ /* Please mister host - give me some data! - no that should happen on the regular!*/
   FDC.DelayCount=FDC.DelayLatch=WRITESPACING;
 }; /* FDC_WriteCommand */
@@ -691,14 +697,16 @@ ARMword FDC_Write(ARMul_State *state, ARMword offset, ARMword data, int bNw) {
         case 0xb0:
           if (FDC.BytesToGo) {
             int err;
-            err=fputc(FDC.Data,FDC.FloppyFile[FDC.CurrentDisc]);
+                err = fputc(FDC.Data, FDC.drive[FDC.CurrentDisc].fp);
             if (err!=FDC.Data) {
               perror(NULL);
-              fprintf(stderr,"FDC_Write: fputc failed!! Data=%d err=%d errno=%d ferror=%d\n",FDC.Data,err,errno,ferror(FDC.FloppyFile[FDC.CurrentDisc]));
+              fprintf(stderr,"FDC_Write: fputc failed!! Data=%d err=%d errno=%d ferror=%d\n",FDC.Data,err,errno,ferror(FDC.drive[FDC.CurrentDisc].fp));
               abort();
             };
 
-            if (fflush(FDC.FloppyFile[FDC.CurrentDisc])) fprintf(stderr,"FDC_Write: fflush failed!!\n");
+                if (fflush(FDC.drive[FDC.CurrentDisc].fp)) {
+                    fprintf(stderr, "FDC_Write: fflush failed!!\n");
+                }
             FDC.BytesToGo--;
           } else {
             fprintf(stderr,"FDC_Write: Data register written for write sector when the whole sector has been received!\n");
@@ -727,97 +735,136 @@ void FDC_ReOpen(ARMul_State *state, int drive) {
     return;
   };
 
-  /* Close the file if it's open */
-  if (FDC.FloppyFile[drive]!=NULL) fclose(FDC.FloppyFile[drive]);
+    fdc_eject_floppy(drive);
 
-#ifndef MACOSX
-#ifdef __riscos__
-  sprintf(tmp, "<ArcEm$Dir>.^.FloppyImage%d", drive);
+#if defined(__riscos__)
+    sprintf(tmp, "<ArcEm$Dir>.^.FloppyImage%d", drive);
+#elif defined(MACOSX)
+    tmp = FDC.driveFiles[drive]; 
 #else
-  sprintf(tmp, "FloppyImage%d", drive);
-#endif
-#else
-  tmp = FDC.driveFiles[drive]; 
+    sprintf(tmp, "FloppyImage%d", drive);
 #endif
 
-  {
-    FILE *isThere = fopen(tmp, "rb");
+    fdc_insert_floppy(drive, tmp);
 
-    if (isThere) {
-      fclose(isThere);
-      FDC.FloppyFile[drive] = fopen(tmp,"rb+");
-    } else {
-      FDC.FloppyFile[drive] = NULL;
-    }
-  }
-
-  if (FDC.FloppyFile[drive]==NULL) {
-    /* If it failed for r/w try read only */
-    FDC.FloppyFile[drive]=fopen(tmp,"rb");
-  };
-
-  DBG((stderr,"FDC_ReOpen: Drive %d %s\n",drive,(FDC.FloppyFile[drive]==NULL)?"unable to reopen":"reopened"));
+    DBG((stderr, "FDC_ReOpen: Drive %d %s\n", drive,
+        (FDC.drive[drive].fp == NULL) ? "unable to reopen" :
+        "reopened"));
 }; /* FDC_ReOpen */
 
 /*--------------------------------------------------------------------------*/
 void FDC_Init(ARMul_State *state) {
-    char *env;
-    int disc;
-
-    if ((env = getenv("ARCEMFLOPPYFORM")) == NULL) {
-        env = "0";
-    }
-    format = avail_format + atoi(env);
-    fprintf(stderr, "floppy format: %s\n", format->name);
+    int drive;
 
   FDC.StatusReg=0;
   FDC.Track=0;
-  FDC.Sector = format->sector_base;
+  FDC.Sector = 0;
   FDC.Data=0;
   FDC.LastCommand=0xd0; /* force interrupt - but actuall not doing */
   FDC.Direction=1;
   FDC.CurrentDisc=0;
     FDC.leds_changed = NULL;
-  FDC.Sector_ReadAddr = format->sector_base;
+  FDC.Sector_ReadAddr = 0;
 
-#ifndef MACOSX
-  /* Read only at the moment */
-  for (disc=0;disc<4;disc++) {
-    char tmp[256];
-#ifdef __riscos__
-    sprintf(tmp, "<ArcEm$Dir>.^.FloppyImage%d", disc);
-
-    {
-      FILE *isThere = fopen(tmp, "rb");
-  
-      if (isThere) {
-        fclose(isThere);
-        FDC.FloppyFile[disc] = fopen(tmp,"rb+");
-      } else {
-        FDC.FloppyFile[disc] = NULL;
-      }
+    for (drive = 0; drive < 4; drive++) {
+#if defined(MACOSX)
+        FDC.driveFiles[drive] = NULL;
+#endif
+        FDC.drive[drive].fp = NULL;
+        FDC.drive[drive].form = avail_format;
     }
-#else
-    sprintf(tmp,"FloppyImage%d",disc);
-    FDC.FloppyFile[disc] = fopen(tmp,"rb+");
-#endif
 
-    if (FDC.FloppyFile[disc] == NULL) {
-      /* If it failed for r/w try read only */
-      FDC.FloppyFile[disc] = fopen(tmp,"rb");
-    };
-  };
+#if !defined(MACOSX) && !defined(SYSTEM_X)
+    for (drive = 0; drive < 4; drive++) {
+        char tmp[256];
+
+#if defined(__riscos__)
+        sprintf(tmp, "<ArcEm$Dir>.^.FloppyImage%d", drive);
 #else
-  // Don't load any disc images initially
-  for (disc = 0; disc < 4; disc++)
-      FDC.driveFiles[disc] = NULL;
+        sprintf(tmp, "FloppyImage%d", drive);
 #endif
-  
+        fdc_insert_floppy(drive, tmp);
+    }
+#endif
 
   FDC.DelayCount=10000;
   FDC.DelayLatch=10000;
-    DBG((stderr, "FDC_Init: SectorSize=%d Sectors/Track=%d Tracks/Disc=%d Sector offset=%d\n",
-        format->bytes_per_sector, format->sectors_per_track,
-        format->num_tracks, format->sector_base));
 }; /* FDC_Init */
-/*--------------------------------------------------------------------------*/
+
+/* ------------------------------------------------------------------ */
+
+char *fdc_insert_floppy(int drive, char *image)
+{
+    floppy_drive *dr;
+    FILE *fp;
+    int len;
+    floppy_format *ff;
+
+    dr = FDC.drive + drive;
+
+    /* FIXME:  shouldn't the read-only status of the file be reflected
+     * in the `write protect' state of the floppy? */
+    if ((fp = fopen(image, "rb+")) == NULL &&
+        (fp = fopen(image, "rb")) == NULL) {
+        fprintf(stderr, "couldn't open disc image %s on drive %d\n",
+            image, drive);
+        return "couldn't open disc image";
+    }
+
+    if (fseek(fp, 0, SEEK_END) == -1 || (len = ftell(fp)) == -1 ||
+        fseek(fp, 0, SEEK_SET) == -1) {
+        fprintf(stderr, "couldn't get length of disc image %s on drive "
+            "%d\n", image, drive);
+        return "couldn't get length of disc image";
+    }
+
+    dr->fp = fp;
+    dr->form = avail_format;
+    for (ff = avail_format; ff < avail_format +
+        (sizeof avail_format / sizeof(avail_format[0])); ff++) {
+        if (len == 2 * ff->num_tracks * ff->sectors_per_track *
+            ff->bytes_per_sector) {
+            dr->form = ff;
+            break;
+        }
+    }
+    fprintf(stderr, "floppy format %s used for drive %d's %d length "
+        "image.\n", dr->form->name, drive, len);
+
+    return NULL;
+}
+
+/* ------------------------------------------------------------------ */
+
+char *fdc_eject_floppy(int drive)
+{
+    floppy_drive *dr;
+
+    dr = FDC.drive + drive;
+
+    if (fclose(dr->fp)) {
+        fprintf(stderr, "error closing floppy drive %d: %s\n",
+            drive, strerror(errno));
+    }
+
+    dr->fp = NULL;
+    /* The code assumes that the format of an, even empty, drive is
+     * always known.  Rather than fix all that code, just pretend an
+     * empty drive has a known format for the moment. */
+    dr->form = avail_format;
+
+    return NULL;
+}
+
+/* ------------------------------------------------------------------ */
+
+static void efseek(FILE *fp, long offset, int whence)
+{
+    if (fseek(fp, offset, whence)) {
+        fprintf(stderr, "efseek(%p, %ld, %d) failed.\n", fp, offset,
+            whence);
+        exit(1);
+    }
+
+    return;
+}
