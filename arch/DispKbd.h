@@ -124,7 +124,7 @@ typedef struct {
 
 #endif
 
-  struct {
+  struct arch_keyboard {
     KbdStates KbdState;
     int MouseXCount,MouseYCount;
     int KeyColToSend,KeyRowToSend,KeyUpNDown;

@@ -37,7 +37,7 @@ WARN = -Wall -Wno-return-type -Wno-unknown-pragmas -Wshadow -Wundef \
 
 # add -DHOST_BIGENDIAN for big endian hosts, e.g. Sun, SGI, HP
 CFLAGS = -O3 -D$(ENDIAN) $(CFL) -DNOOS -DNOFPE $(WARN) \
- -I$(SYSTEM) -Iarch -funroll-loops -fexpensive-optimizations -ffast-math \
+ -I$(SYSTEM) -Iarch -I. -funroll-loops -fexpensive-optimizations -ffast-math \
  -fomit-frame-pointer -frerun-cse-after-loop
 
 
@@ -53,19 +53,20 @@ INSTALL=cp
 OBJS = armcopro.o armemu.o arminit.o \
 	armsupp.o main.o dagstandalone.o armos.o \
 		bag.o armrdi.o $(SYSTEM)/DispKbd.o arch/i2c.o arch/archio.o \
-    arch/fdc1772.o $(SYSTEM)/ControlPane.o arch/hdc63463.o arch/ReadConfig.o
+    arch/fdc1772.o $(SYSTEM)/ControlPane.o arch/hdc63463.o arch/ReadConfig.o \
+    arch/keyboard.o
 
 SRCS = armcopro.c armemu.c arminit.c arch/armarc.c \
 	armsupp.c main.c dagstandalone.c armos.c  \
 	arm-support.s conditions.s rhs.s \
 	bag.c armrdi.c $(SYSTEM)/DispKbd.c arch/i2c.c arch/archio.c \
 	arch/fdc1772.c $(SYSTEM)/ControlPane.c arch/hdc63463.c \
-	arch/ReadConfig.c
+	arch/ReadConfig.c arch/keyboard.c
 
 INCS = armdefs.h armemu.h armfpe.h armopts.h bag.h armos.h \
 	dbg_conf.h dbg_cp.h dbg_hif.h dbg_rdi.h $(SYSTEM)/KeyTable.h \
   arch/i2c.h arch/archio.h arch/fdc1772.h arch/ControlPane.h \
-  arch/hdc63463.h
+  arch/hdc63463.h arch/keyboard.h
 
 TARGET=arcem
 
@@ -222,6 +223,9 @@ $(SYSTEM)/ControlPane.o: $(SYSTEM)/ControlPane.c arch/ControlPane.h \
 arch/ReadConfig.o: arch/ReadConfig.c arch/ReadConfig.h arch/DispKbd.h \
 	arch/armarc.h
 	$(CC) $(CFLAGS) -c $*.c -o arch/ReadConfig.o
+
+arch/keyboard.o: arch/keyboard.c
+	$(CC) $(CFLAGS) -c $*.c -o arch/keyboard.o
 
 win/gui.o: win/gui.rc win/gui.h win/arc.ico
 	windres $*.rc -o win/gui.o

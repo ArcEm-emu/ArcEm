@@ -35,6 +35,7 @@
 #include "KeyTable.h"
 #include "archio.h"
 #include "hdc63463.h"
+#include "arch/keyboard.h"
 
 #include "ControlPane.h" 
 
@@ -1133,37 +1134,11 @@ static void ProcessKey(ARMul_State *state,XKeyEvent *key) {
   /* Just take the unshifted version of the key */
   sym = XLookupKeysym(key,0);
 
-  if (KBD.BuffOcc>=KBDBUFFLEN) {
-#ifdef DEBUG_KBD
-    fprintf(stderr,"KBD: Missed key - still busy sending another one\n");
-#endif
-    return;
-  };
-
-
   /* Should set up KeyColToSend and KeyRowToSend and KeyUpNDown */
   for(PresPtr=transTable;PresPtr->row!=-1;PresPtr++) {
     if (PresPtr->sym==sym) {
-      /* Found the key */
-      /* Now add it to the buffer */
-      KBD.Buffer[KBD.BuffOcc].KeyColToSend=PresPtr->col;
-      KBD.Buffer[KBD.BuffOcc].KeyRowToSend=PresPtr->row;
-      KBD.Buffer[KBD.BuffOcc].KeyUpNDown = key->type == KeyRelease;
-#ifdef DEBUG_KBD
-            {
-                char *s;
-
-                s = XKeysymToString(sym);
-                fprintf(stderr, "ProcessKey: found Keysym %-12s at "
-                    "%2d, %2d going %-4s.  BuffOcc=%d\n",
-                    s ? s : "unknown",
-                    KBD.Buffer[KBD.BuffOcc].KeyColToSend,
-                    KBD.Buffer[KBD.BuffOcc].KeyRowToSend,
-                    KBD.Buffer[KBD.BuffOcc].KeyUpNDown ? "up" : "down",
-                    KBD.BuffOcc);
-            }
-#endif
-      KBD.BuffOcc++;
+            keyboard_key_changed(&KBD, PresPtr->row, PresPtr->col,
+                key->type == KeyRelease);
       return;
     };
   }; /* Key search loop */
@@ -1187,25 +1162,8 @@ static void ProcessButton(ARMul_State *state,XButtonEvent *button) {
         return;
     }
 
-  if (KBD.BuffOcc>=KBDBUFFLEN) {
-#ifdef DEBUG_KBD
-    fprintf(stderr,"KBD: Missed mouse event - buffer full\n");
-#endif
-    return;
-  };
-
-  /* Now add it to the buffer */
-    KBD.Buffer[KBD.BuffOcc].KeyColToSend = arch_button;
-  KBD.Buffer[KBD.BuffOcc].KeyRowToSend=7;
-  KBD.Buffer[KBD.BuffOcc].KeyUpNDown = button->type == ButtonRelease;
-#ifdef DEBUG_KBD
-  fprintf(stderr,"ProcessButton: Got Col,Row=%d,%d UpNDown=%d BuffOcc=%d\n", 
-          KBD.Buffer[KBD.BuffOcc].KeyColToSend,
-           KBD.Buffer[KBD.BuffOcc].KeyRowToSend,
-           KBD.Buffer[KBD.BuffOcc].KeyUpNDown,
-          KBD.BuffOcc);
-#endif
-  KBD.BuffOcc++;
+    keyboard_key_changed(&KBD, 7, arch_button,
+        button->type == ButtonRelease);
 }; /* ProcessButton */
 
 /*----------------------------------------------------------------------------*/
