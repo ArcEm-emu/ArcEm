@@ -67,18 +67,18 @@ INCS = armdefs.h armemu.h armfpe.h armopts.h bag.h armos.h \
   arch/i2c.h arch/archio.h arch/fdc1772.h arch/ControlPane.h \
   arch/hdc63463.h
 
-TARGET=armul-arc
+TARGET=arcem
 
 ifeq (${SYSTEM},riscos)
 CFLAGS += -Iriscos-single
-TARGET=!ArcEm/armul-arc
+TARGET=!ArcEm/arcem
 endif
 
 ifeq (${SYSTEM},riscos-single)
 DIRECT_DISPLAY=yes
 CFLAGS += -Iriscos-single -mpoke-function-name
 OBJS += arm-support.o rhs.o
-TARGET=!ArcEm/armul-arc
+TARGET=!ArcEm/arcem
 endif
 
 ifeq (${SYSTEM},X)
@@ -114,7 +114,7 @@ $(TARGET): $(OBJS) $(MODEL).o
  
 
 clean:
-	rm -f *.o arch/*.o armul-arc core *.bb *.bbg *.da
+	rm -f *.o arch/*.o arcem core *.bb *.bbg *.da
 
 distclean: clean
 	rm -f *~
@@ -125,18 +125,18 @@ realclean: distclean
 depend:
 	makedepend $(SRCS)
 
-armul.tar.gz: 
-	rm -rf armul-$(VER)
-	mkdir armul-$(VER)
-	cd armul-$(VER) ; \
+arcem.tar.gz: 
+	rm -rf arcem-$(VER)
+	mkdir arcem-$(VER)
+	cd arcem-$(VER) ; \
 	for file in $(TARED) ; do \
 	  cp -a ../$${file} . ; \
 	done ; \
 	find -type d | grep CVS | xargs rm -r; \
 	touch dummy.o ; find -type f | grep '\.o$$' | xargs rm -r 2>/dev/null
-	tar cf armul.tar armul-$(VER)
-	gzip armul.tar
-	mv armul.tar.gz armul-$(VER).tar.gz
+	tar cf arcem.tar arcem-$(VER)
+	gzip arcem.tar
+	mv arcem.tar.gz arcem-$(VER).tar.gz
 
 # memory models
 
