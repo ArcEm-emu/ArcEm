@@ -40,7 +40,7 @@ struct IOCStruct {
 
 extern struct IOCStruct ioc;
 
-#define TIMERSCALE 2
+#define TIMERSCALE 10
 #define IOCTIMERSTEP 1
 
 /*------------------------------------------------------------------------------*/
