@@ -359,12 +359,8 @@
 
         // One assumes it we managed to select a file then it exists...
         
-        // Note the name of the disk image
-        FDC.driveFiles[mountDrive] = (char*)malloc([path length] + 1);
-        [path getCString: FDC.driveFiles[mountDrive]];
-
         // Force the FDC to reload that drive
-        FDC_ReOpen((struct ARMul_State*)NULL, mountDrive);
+        fdc_insert_floppy(mountDrive, [path cString]);
 
         // Now disable the insert menu option and enable the eject menu option
         [menuItemsMount[mountDrive] setEnabled: NO];
@@ -409,12 +405,8 @@
 {
     mountDrive = 0;
 
-    // Remove the filename
-    free(FDC.driveFiles[mountDrive]);
-    FDC.driveFiles[mountDrive] = NULL;
-
     // Update the sim
-    FDC_ReOpen((struct ARMul_State*)NULL, mountDrive);
+    fdc_eject_floppy(mountDrive);
     
     // Now disable the insert menu option and enable the eject menu option
     [menuItemsMount[mountDrive] setEnabled: YES];
@@ -429,12 +421,8 @@
 {
     mountDrive = 1;
 
-    // Remove the filename
-    free(FDC.driveFiles[mountDrive]);
-    FDC.driveFiles[mountDrive] = NULL;
-
     // Update the sim
-    FDC_ReOpen((struct ARMul_State*)NULL, mountDrive);
+    fdc_eject_floppy(mountDrive);
 
     // Now disable the insert menu option and enable the eject menu option
     [menuItemsMount[mountDrive] setEnabled: YES];
@@ -450,12 +438,8 @@
 {
     mountDrive = 2;
 
-    // Remove the filename
-    free(FDC.driveFiles[mountDrive]);
-    FDC.driveFiles[mountDrive] = NULL;
-
     // Update the sim
-    FDC_ReOpen((struct ARMul_State*)NULL, mountDrive);
+    fdc_eject_floppy(mountDrive);
 
     // Now disable the insert menu option and enable the eject menu option
     [menuItemsMount[mountDrive] setEnabled: YES];
@@ -471,12 +455,8 @@
 {
     mountDrive = 3;
 
-    // Remove the filename
-    free(FDC.driveFiles[mountDrive]);
-    FDC.driveFiles[mountDrive] = NULL;
-
     // Update the sim
-    FDC_ReOpen((struct ARMul_State*)NULL, mountDrive);
+    fdc_eject_floppy(mountDrive);
 
     // Now disable the insert menu option and enable the eject menu option
     [menuItemsMount[mountDrive] setEnabled: YES];
