@@ -359,7 +359,7 @@ unsigned ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
  FILE *ROMFile;
  unsigned int ROMWordNum,ROMWord;
  int PresPage;
- unsigned int index;
+    unsigned int i;
 
  PrivDPtr = (PrivateDataType *)malloc(sizeof(PrivateDataType));
  if (PrivDPtr == NULL) {
@@ -396,8 +396,9 @@ unsigned ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
   exit(3);
  };
 
- for (index = 0; index < (MEMC.RAMSize / 4); index++)
-   MEMC.PhysRamfuncs[index]=ARMul_Emulate_DecodeInstr;
+    for (i = 0; i < MEMC.RAMSize / 4; i++) {
+        MEMC.PhysRamfuncs[i] = ARMul_Emulate_DecodeInstr;
+    }
 
  MEMC.ROMMapFlag=1; /* Map ROM to address 0 */
  MEMC.ControlReg=0; /* Defaults */
@@ -475,9 +476,9 @@ unsigned ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
  PRIVD->irqflags = 0;
  PRIVD->fiqflags = 0;
 
- for(index = 0;index < (512 * 1024) / UPDATEBLOCKSIZE; index++) {
-   MEMC.UpdateFlags[index] = 1;
- }
+    for (i = 0; i < 512 * 1024 / UPDATEBLOCKSIZE; i++) {
+        MEMC.UpdateFlags[i] = 1;
+    }
 
  MEMC.OldAddress1 = -1;
  MEMC.OldPage1    = -1;
