@@ -1106,8 +1106,7 @@ void DisplayKbd_Init(ARMul_State *state) {
   };
 
 
-  XSelectInput(HD.disp,HD.BackingWindow,ExposureMask |
-                                   KeyPressMask | KeyReleaseMask);
+    XSelectInput(HD.disp, HD.BackingWindow, ExposureMask);
   XSelectInput(HD.disp,HD.MainPane,ExposureMask |
                                    PointerMotionMask |
                                    EnterWindowMask | LeaveWindowMask | /* For changing colour maps */
