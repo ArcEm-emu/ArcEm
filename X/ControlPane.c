@@ -165,7 +165,7 @@ void ControlPane_Init(ARMul_State *state) {
   XCopyGC(HD.disp,DefaultGC(HD.disp,HD.ScreenNum),GCPlaneMask|GCSubwindowMode,
           HD.ControlPaneGC);
 
-  HD.ButtonFont=XLoadQueryFont(HD.disp,"-*-lucida-bold-*-*-*-*-120-*-*-*-*-*-*");
+  HD.ButtonFont=XLoadQueryFont(HD.disp,"-*-lucida-bold-r-*-*-*-120-*-*-*-*-*-*");
   if (HD.ButtonFont==NULL) {
     fprintf(stderr,"Couldn't get font for buttons\n");
     exit(1);
