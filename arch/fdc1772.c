@@ -37,8 +37,8 @@
 #define TYPE2_BIT_MULTISECTOR (1<<4)
 
 static floppy_format avail_format[] = {
-    { "ADFS 800KB", 1024, 3, 5, 0, 80 },
-    { "DOS 720KB", 512, 2, 9, 1, 80 },
+    { "ADFS 800KB", 1024, 5, 0, 80 },
+    { "DOS 720KB", 512, 9, 1, 80 },
 };
 
 /* A temporary method of getting the current drive's format. */
@@ -356,6 +356,8 @@ static void FDC_NextSector(ARMul_State *state) {
 }; /* FDC_NextSector */
 /*--------------------------------------------------------------------------*/
 static void FDC_DoReadAddressChar(ARMul_State *state) {
+    int bps;
+
   DBG((stderr,"FDC_DoReadAddressChar: BytesToGo=%x\n",FDC.BytesToGo));
 
   switch (FDC.BytesToGo) {
@@ -377,8 +379,11 @@ static void FDC_DoReadAddressChar(ARMul_State *state) {
       break;
 
     case 3: /* sector length */
-        /* 1K per sector (2=512, 1=256, 0=128 */
-        FDC.Data = CURRENT_FORMAT->sector_size_code;
+        FDC.Data = 0;
+        for (bps = CURRENT_FORMAT->bytes_per_sector >> 8; bps;
+            bps >>= 1) {
+            FDC.Data++;
+        }
       break;
 
     case 2: /* CRC 1 */

@@ -10,8 +10,6 @@ typedef struct {
     /* User-visible name. */
     char *name;
     int bytes_per_sector;
-    /* FIXME:  this duplicates bytes_per_sector. */
-    int sector_size_code;
     int sectors_per_track;
     int sector_base;
     /* FIXME:  this is really num_cyl. */
