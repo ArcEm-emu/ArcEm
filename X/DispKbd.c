@@ -231,17 +231,15 @@ static unsigned AutoKey(ARMul_State *state);
 #endif
 
 static struct EventNode enodes[4];
-//static int autokeyenode=0; /* Flips between 0 and 1 */
-static int xpollenode=2; /* Flips between 2 and 3 */
+static int xpollenode = 2; /* Flips between 2 and 3 */
 
 
 /*----------------------------------------------------------------------------*/
 /* From the GIMP Drawing Kit, in the GTK+ toolkit from GNOME                  */
 /* Given a colour mask from a visual extract shift and bit precision values   */
+
 static void
-gdk_visual_decompose_mask (unsigned long  mask,
-         int   *shift,
-         int   *prec)
+gdk_visual_decompose_mask (unsigned long mask, int *shift, int *prec)
 { 
   *shift = 0;
   *prec = 0;
@@ -263,9 +261,9 @@ gdk_visual_decompose_mask (unsigned long  mask,
 /* Also borrowed from GDK (with a little rework).  Get the XPixel value (as
    passed to XPutPixel) based on 16 bit colour values                         */
 static unsigned long get_pixelval(unsigned int red, unsigned int green, unsigned int blue) {
-    return (((red >> (16 - HD.red_prec)) << HD.red_shift) +
-           ((green >> (16 - HD.green_prec)) << HD.green_shift) +
-           ((blue >> (16 - HD.blue_prec)) << HD.blue_shift));
+    return (((red   >> (16 - HD.red_prec))   << HD.red_shift)   +
+            ((green >> (16 - HD.green_prec)) << HD.green_shift) +
+            ((blue  >> (16 - HD.blue_prec))  << HD.blue_shift));
 
 } /* get_pixval */
 
@@ -318,7 +316,7 @@ static int QueryRamChange(ARMul_State *state,int offset, int len) {
     };
   } else {
     /* Vstart-Vinit */
-    /* its all in one place */
+    /* it's all in one place */
     offset-=((Vend-Vinit)+1)*16; /* Thats the bit after Vinit */
     offset+=Vstart*16; /* so the bit we copy is somewhere after Vstart */
   };
@@ -1218,7 +1216,6 @@ void DisplayKbd_Init(ARMul_State *state) {
   int prescol;
   int mindex;
   XTextProperty name;
-  char *tmpptr;
   int shape_event_base, shape_error_base;
 
   HD.disp=XOpenDisplay(NULL);
@@ -1244,13 +1241,13 @@ void DisplayKbd_Init(ARMul_State *state) {
         fprintf(stderr, "mouse_key is %s\n", mouse_key.name);
     }
 
-  HD.xScreen=XDefaultScreenOfDisplay(HD.disp);
-  HD.ScreenNum=XScreenNumberOfScreen(HD.xScreen);
-  HD.RootWindow=DefaultRootWindow(HD.disp);
+  HD.xScreen    = XDefaultScreenOfDisplay(HD.disp);
+  HD.ScreenNum  = XScreenNumberOfScreen(HD.xScreen);
+  HD.RootWindow = DefaultRootWindow(HD.disp);
 
   /* Try and find a visual we can work with */
   if (XMatchVisualInfo(HD.disp,HD.ScreenNum,8,PseudoColor,&(HD.visInfo))) {
-    /* Its 8 bpp, Pseudo colour - the easiest to deal with */
+    /* It's 8 bpp, Pseudo colour - the easiest to deal with */
     printf("Ah - a nice easy 8bpp visual....\n");
   } else {
     /* Could probably cope with a wider range of visuals - particularly
@@ -1304,17 +1301,22 @@ void DisplayKbd_Init(ARMul_State *state) {
         0, HD.visInfo.depth, InputOutput, HD.visInfo.visual, attrmask,
         &attr);
 
-  tmpptr = strdup("Arc emulator - Main display");
-  if (XStringListToTextProperty(&tmpptr,1,&name)==0) {
-    fprintf(stderr,"Could not allocate window name\n");
-    exit(1);
-  };
-  XSetWMName(HD.disp,HD.BackingWindow,&name);
-  XFree(name.value);
+  {
+    char *title = strdup("Arc emulator - Main display");
 
-    HD.MainPane = XCreateWindow(HD.disp, HD.BackingWindow, VIDC_BORDER,
-        VIDC_BORDER, MonitorWidth, MonitorHeight, 0, CopyFromParent,
-        InputOutput, CopyFromParent, 0, NULL);
+    if (XStringListToTextProperty(&title, 1, &name) == 0) {
+      fprintf(stderr,"Could not allocate window name\n");
+      exit(1);
+    }
+
+    XSetWMName(HD.disp,HD.BackingWindow,&name);
+    XFree(name.value);
+  };
+
+
+  HD.MainPane = XCreateWindow(HD.disp, HD.BackingWindow, VIDC_BORDER,
+      VIDC_BORDER, MonitorWidth, MonitorHeight, 0, CopyFromParent,
+      InputOutput, CopyFromParent, 0, NULL);
 
   HD.CursorPane=XCreateWindow(HD.disp,
                               HD.MainPane,
@@ -1331,16 +1333,17 @@ void DisplayKbd_Init(ARMul_State *state) {
 
   /* Allocate the memory for the actual display image */
   //TODO!! Need to allocate more for truecolour
-  HD.ImageData=malloc(4*(MonitorWidth+32)*MonitorHeight);
-  if (HD.ImageData==NULL) {
+  HD.ImageData = malloc(4 * (MonitorWidth+ 32) * MonitorHeight);
+
+  if (HD.ImageData == NULL) {
     fprintf(stderr,"DisplayKbd_Init: Couldn't allocate image memory\n");
     exit(1);
   };
 
-  HD.DisplayImage=XCreateImage(HD.disp,DefaultVisual(HD.disp,HD.ScreenNum),
-                               HD.visInfo.depth,ZPixmap,0,HD.ImageData,
-                               MonitorWidth,MonitorHeight,32,
-                               0);
+  HD.DisplayImage = XCreateImage(HD.disp,DefaultVisual(HD.disp,HD.ScreenNum),
+                                 HD.visInfo.depth,ZPixmap,0,HD.ImageData,
+                                 MonitorWidth,MonitorHeight,32,
+                                 0);
   if (HD.DisplayImage==NULL) {
     fprintf(stderr,"DisplayKbd_Init: Couldn't create image\n");
     exit(1);
@@ -1354,9 +1357,9 @@ void DisplayKbd_Init(ARMul_State *state) {
   };
 
   HD.CursorImage=XCreateImage(HD.disp,DefaultVisual(HD.disp,HD.ScreenNum),
-                               HD.visInfo.depth,ZPixmap,0,HD.CursorImageData,
-                               32,MonitorHeight,32,
-                               0);
+                              HD.visInfo.depth,ZPixmap,0,HD.CursorImageData,
+                              32,MonitorHeight,32,
+                              0);
   if (HD.CursorImage==NULL) {
     fprintf(stderr,"DisplayKbd_Init: Couldn't create cursor image\n");
     exit(1);
@@ -1384,9 +1387,10 @@ void DisplayKbd_Init(ARMul_State *state) {
     fprintf(stderr,"Failed to allocate colour 'gray10'\n");
   if (!XAllocNamedColor(HD.disp,HD.DefaultColormap,"gray90",&(HD.GreyLight),&tmpcol))
     fprintf(stderr,"Failed to allocate colour 'gray90'\n");
+
   if (!XAllocNamedColor(HD.disp,HD.DefaultColormap,"PapayaWhip",&(HD.OffWhite),&tmpcol)) {
-    /* A great shame - a rather nice colour.... */
-    HD.OffWhite=HD.White;
+    /* A great shame - a rather nice colour */
+    HD.OffWhite = HD.White;
     fprintf(stderr,"Failed to allocate colour 'PapayaWhip'\n");
   };
 
@@ -1425,10 +1429,10 @@ void DisplayKbd_Init(ARMul_State *state) {
     };
   };
 
-    HD.MainPaneGC = XCreateGC(HD.disp, HD.MainPane, 0, NULL);
+  HD.MainPaneGC = XCreateGC(HD.disp, HD.MainPane, 0, NULL);
 
   /* Calloc to clear it as well */
-  HD.ShapePixmapData=(char *)calloc(32*MonitorHeight,1);
+  HD.ShapePixmapData = calloc(32*MonitorHeight,1);
   if (HD.ShapePixmapData==NULL) {
     fprintf(stderr,"Couldn't allocate memory for pixmap data\n");
     exit(0);
@@ -1445,12 +1449,13 @@ void DisplayKbd_Init(ARMul_State *state) {
     HD.shape_mask=XCreatePixmapFromBitmapData(HD.disp,HD.CursorPane,HD.ShapePixmapData,
                                              32,MonitorHeight,0,1,1);
     /* Eek - a lot of this is copied from XEyes - unfortunatly the manual
-    page for this call is somewhat lacking.  To quote its bugs entry:
+       page for this call is somewhat lacking.  To quote its bugs entry:
       'This manual page needs a lot more work' */
     XShapeCombineMask(HD.disp,HD.CursorPane,ShapeBounding,0,0,HD.shape_mask,
                       ShapeSet);
     XFreePixmap(HD.disp,HD.shape_mask);
   };
+
   DC.PollCount=0;
   KBD.KbdState=KbdState_JustStarted;
   KBD.MouseTransEnable=0;
@@ -1464,7 +1469,7 @@ void DisplayKbd_Init(ARMul_State *state) {
   KBD.BuffOcc=0;
   KBD.TimerIntHasHappened=0; /* if using AutoKey should be 2 Otherwise it never reinitialises the event routines */
   KBD.Leds=0;
-    KBD.leds_changed = NULL;
+  KBD.leds_changed = NULL;
   DC.DoingMouseFollow=0;
 
   /* Note the memory model sets it to 1 - note the ordering */
@@ -1479,16 +1484,21 @@ void DisplayKbd_Init(ARMul_State *state) {
 
   ControlPane_Init(state);
 
-  ARMul_ScheduleEvent(&(enodes[xpollenode]), POLLGAP, DisplayKbd_XPoll);
+  ARMul_ScheduleEvent(&enodes[xpollenode], POLLGAP, DisplayKbd_XPoll);
   xpollenode^=1;
 }; /* DisplayKbd_Init */
 
+
 /*----------------------------------------------------------------------------*/
+
 static void BackingWindow_Event(ARMul_State *state,XEvent *e) {
     fprintf(stderr, "unwanted BackingWindow_Event type=%d\n", e->type);
 }; /* BackingWindow_Event */
 
+
+
 /*----------------------------------------------------------------------------*/
+
 static void ProcessKey(ARMul_State *state,XKeyEvent *key) {
   KeySym sym;
     keysym_to_arch_key *ktak;
@@ -1512,7 +1522,7 @@ static void ProcessKey(ARMul_State *state,XKeyEvent *key) {
        XDefineCursor(HD.disp, HD.MainPane, XCreatePixmapCursor(HD.disp, bm_no, bm_no, &black, &black,0, 0));
       }
       else
-                XUndefineCursor(HD.disp, HD.MainPane);
+        XUndefineCursor(HD.disp, HD.MainPane);
     };
     return;
   };
@@ -1530,6 +1540,7 @@ static void ProcessKey(ARMul_State *state,XKeyEvent *key) {
 
   fprintf(stderr,"ProcessKey: Unknown key sym=%ld!\n",sym);
 }; /* ProcessKey */
+
 
 /*----------------------------------------------------------------------------*/
 
@@ -1552,12 +1563,12 @@ static void ProcessButton(ARMul_State *state, XButtonEvent *button)
     }
 
     keyboard_key_changed(&KBD, kid, button->type == ButtonRelease);
-
-    return;
 }
+
 
 /*----------------------------------------------------------------------------*/
 /* Move the Control pane window                                                */
+
 static void UpdateCursorPos(ARMul_State *state) {
   int HorizPos=(int)VIDC.Horiz_CursorStart-(int)VIDC.Horiz_DisplayStart*2;
   int VertPos,tmp;
@@ -1582,14 +1593,16 @@ static void UpdateCursorPos(ARMul_State *state) {
   XMoveResizeWindow(HD.disp,HD.CursorPane,HorizPos,VertPos,32,Height);
 }; /* UpdateCursorPos */
 
+
 /*----------------------------------------------------------------------------*/
 /* Called on an X motion event */
+
 static void MouseMoved(ARMul_State *state,XMotionEvent *xmotion) {
   int xdiff,ydiff;
   /* Well the coordinates of the mouse cursor are now in xmotion->x and
-    xmotion->y, I'm going to compare those against the cursor position
-    and transmit the difference.  This can't possibly take care of the OS's
-    hotspot offsets */
+     xmotion->y, I'm going to compare those against the cursor position
+     and transmit the difference.  This can't possibly take care of the OS's
+     hotspot offsets */
 
   /* We are now only using differences from the reference position */
   if ((xmotion->x==MonitorWidth/2) && (xmotion->y==MonitorHeight/2)) return;
@@ -1634,7 +1647,10 @@ static void MouseMoved(ARMul_State *state,XMotionEvent *xmotion) {
   fprintf(stderr,"MouseMoved: generated counts %d,%d xdiff=%d ydifff=%d\n",KBD.MouseXCount,KBD.MouseYCount,xdiff,ydiff);
 #endif
 }; /* MouseMoved */
+
+
 /*----------------------------------------------------------------------------*/
+
 static void MainPane_Event(ARMul_State *state,XEvent *e) {
   switch (e->type) {
     case EnterNotify:
@@ -1681,7 +1697,9 @@ static void MainPane_Event(ARMul_State *state,XEvent *e) {
   };
 }; /* MainPane_Event */
 
+
 /*----------------------------------------------------------------------------*/
+
 static void CursorPane_Event(ARMul_State *state,XEvent *e) {
   /*fprintf(stderr,"CursorPane_Event type=%d\n",e->type); */
   switch (e->type) {
@@ -1719,9 +1737,11 @@ static void CursorPane_Event(ARMul_State *state,XEvent *e) {
   };
 }; /* CursorPane_Event */
 
+
 /*----------------------------------------------------------------------------*/
 /* Called using an ARM_ScheduleEvent - it also sets itself up to be called
    again.                                                                     */
+
 unsigned int DisplayKbd_XPoll(void *data) {
   ARMul_State *state = data;
   XEvent e;
@@ -1746,36 +1766,37 @@ unsigned int DisplayKbd_XPoll(void *data) {
     };
   };
 
-    if (XCheckMaskEvent(HD.disp, ULONG_MAX, &e)) {
+
+  if (XCheckMaskEvent(HD.disp, ULONG_MAX, &e)) {
 #ifdef DEBUG_X_PROTOCOL
-        if (e.xany.window == HD.BackingWindow) {
-            printf("backingwindow ");
-        } else if (e.xany.window == HD.MainPane) {
-            printf("mainpane ");
-        } else if (e.xany.window == HD.ControlPane) {
-            printf("controlpane ");
-        } else if (e.xany.window == HD.CursorPane) {
-            printf("cursorpane ");
-        } else {
-            printf("unknown window ");
-        }
-        printf("= %d\n", e.type);
+    if (e.xany.window == HD.BackingWindow) {
+        printf("backingwindow ");
+    } else if (e.xany.window == HD.MainPane) {
+        printf("mainpane ");
+    } else if (e.xany.window == HD.ControlPane) {
+        printf("controlpane ");
+    } else if (e.xany.window == HD.CursorPane) {
+        printf("cursorpane ");
+    } else {
+        printf("unknown window ");
+    }
+    printf("= %d\n", e.type);
 #endif
 
-        if (e.xany.window == HD.BackingWindow) {
-            BackingWindow_Event(state, &e);
-        } else if (e.xany.window == HD.MainPane) {
-            MainPane_Event(state, &e);
-        } else if (e.xany.window == HD.ControlPane) {
-            ControlPane_Event(state, &e);
-        } else if (e.xany.window == HD.CursorPane) {
-            CursorPane_Event(state, &e);
-        } else {
-            fprintf(stderr, "event on unknown window: %#lx %d\n",
-                e.xany.window, e.type);
-            exit(1);
-        }
+    if (e.xany.window == HD.BackingWindow) {
+        BackingWindow_Event(state, &e);
+    } else if (e.xany.window == HD.MainPane) {
+        MainPane_Event(state, &e);
+    } else if (e.xany.window == HD.ControlPane) {
+        ControlPane_Event(state, &e);
+    } else if (e.xany.window == HD.CursorPane) {
+        CursorPane_Event(state, &e);
+    } else {
+        fprintf(stderr, "event on unknown window: %#lx %d\n",
+            e.xany.window, e.type);
+        exit(1);
     }
+  }
 
   if (--(DC.AutoRefresh)<0) RefreshDisplay(state);
 
@@ -1784,7 +1805,10 @@ unsigned int DisplayKbd_XPoll(void *data) {
 
   return 0;
 }; /* DisplayKbd_XPoll */
+
+
 /*----------------------------------------------------------------------------*/
+
 void VIDC_PutVal(ARMul_State *state,ARMword address, ARMword data,int bNw) {
   unsigned int addr, val;
 
@@ -1792,19 +1816,19 @@ void VIDC_PutVal(ARMul_State *state,ARMword address, ARMword data,int bNw) {
   val=data & 0xffffff;
 
   if (!(addr & 0xc0)) {
-        int Log;
+    int Log;
 
-    /* This lot presumes its not 8bpp mode! */
+    /* This lot presumes it's not 8bpp mode! */
     Log=(addr>>2) & 15;
 #ifdef DEBUG_VIDCREGS
     {
-        int Sup,Red,Green,Blue;
-    Sup=(val >> 12) & 1;
-    Blue=(val >> 8) & 15;
-    Green=(val >> 4) & 15;
-    Red=val & 15;
-    fprintf(stderr,"VIDC Palette write: Logical=%d Physical=(%d,%d,%d,%d)\n",
-      Log,Sup,Red,Green,Blue);
+      int Sup,Red,Green,Blue;
+      Sup   = (val >> 12) & 1;
+      Blue  = (val >> 8) & 15;
+      Green = (val >> 4) & 15;
+      Red   =  val & 15;
+      fprintf(stderr, "VIDC Palette write: Logical=%d Physical=(%d,%d,%d,%d)\n",
+                      Log,Sup,Red,Green,Blue);
     }
 #endif
         IF_DIFF_THEN_ASSIGN_AND_SET_FLAG(VIDC.Palette[Log],
@@ -1997,6 +2021,7 @@ void VIDC_PutVal(ARMul_State *state,ARMword address, ARMword data,int bNw) {
 
 /* ------------------------------------------------------------------ */
 
+
 void hostdisplay_change_focus(struct host_display *hd, int focus)
 {
     if (hd->visInfo.class == PseudoColor) {
@@ -2004,6 +2029,4 @@ void hostdisplay_change_focus(struct host_display *hd, int focus)
             hd->ArcsColormap);
     }
     (*(focus ? XAutoRepeatOff : XAutoRepeatOn))(hd->disp);
-
-    return;
 }

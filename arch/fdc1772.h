@@ -44,7 +44,7 @@ struct FDCStruct{
     floppy_drive drive[4];
     /* The bottom four bits of leds holds their current state.  If the
      * bit is set the LED should be emitting. */
-    void (*leds_changed)(int leds);
+    void (*leds_changed)(unsigned int leds);
 };
 
 ARMword FDC_Read(ARMul_State *state, ARMword offset);

@@ -1,5 +1,6 @@
 /* Display and keyboard interface for the Arc emulator */
 /* (c) David Alan Gilbert 1995-1999 - see Readme file for copying info */
+
 #ifndef DISPKBD_HEADER
 #define DISPKBD_HEADER
 
@@ -14,7 +15,7 @@
 #define KBDBUFFLEN 128
 
 typedef struct {
-  int KeyColToSend,KeyRowToSend,KeyUpNDown;
+  int KeyColToSend, KeyRowToSend, KeyUpNDown;
 } KbdEntry;
 
 
@@ -40,12 +41,12 @@ typedef struct {
   struct {
     int MustRedraw;       /* Set to 1 by emulator if something major changes */
 #if defined(SYSTEM_X)
-        /* These three flags indicate VIDC's palette registers have
-         * changed without the host's equivalent structure being updated
-         * to match. */
-        char video_palette_dirty;
-        char border_palette_dirty;
-        char cursor_palette_dirty;
+    /* These three flags indicate VIDC's palette registers have
+     * changed without the host's equivalent structure being updated
+     * to match. */
+    char video_palette_dirty;
+    char border_palette_dirty;
+    char cursor_palette_dirty;
 #else
     int MustResetPalette; /* Set to 1 by emulator if something major changes */
 #endif
@@ -145,7 +146,7 @@ typedef struct {
     int Leds;
         /* The bottom three bits of leds holds their current state.  If
          * the bit is set the LED should be emitting. */
-        void (*leds_changed)(int leds);
+        void (*leds_changed)(unsigned int leds);
 
     /* Double buffering - update the others while sending this */
         unsigned char MouseXToSend;
@@ -158,6 +159,7 @@ typedef struct {
   } Kbd;
 } DisplayInfo;
 
+
 #define DISPLAYINFO (PRIVD->Display)
 #define VIDC (DISPLAYINFO.Vidc)
 /* Use this in gdb: ((PrivateDataType *)state->MemDataPtr)->Display->HostDisplay */
@@ -165,12 +167,14 @@ typedef struct {
 #define DISPLAYCONTROL (DISPLAYINFO.Control)
 #define KBD (DISPLAYINFO.Kbd)
 
-#define VideoRelUpdateAndForce(FLAG,WRITETO,FROM) {\
-                                               if ((WRITETO)!=(FROM)) { \
-                                                 (WRITETO)=(FROM);\
-                                                 FLAG=1;\
-                                               };\
-                                             };
+
+#define VideoRelUpdateAndForce(flag, writeto, from) \
+{\
+  if ((writeto) != (from)) { \
+    (writeto) = (from);\
+    flag = 1;\
+  };\
+};
 
 /*----------------------------------------------------------------------------*/
 
@@ -180,7 +184,7 @@ void VIDC_PutVal(ARMul_State *state,ARMword address, ARMword data,int bNw);
 
 #ifdef SYSTEM_X
 
-/* adjust to gaining or losing the keyboard and pointer focus. */
+/* Adjust to gaining or losing the keyboard and pointer focus. */
 void hostdisplay_change_focus(struct host_display *hd, int focus);
 
 #endif
