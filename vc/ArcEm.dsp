@@ -43,7 +43,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /YX /FD /c
-# ADD CPP /nologo /W3 /GX /O2 /I "../arch" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "SYSTEM_win" /D "NOOS" /D "NOFPE" /FR /YX /FD /c
+# ADD CPP /nologo /W3 /GX /O2 /I "../arch" /I "../win" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "SYSTEM_win" /D "NOOS" /D "NOFPE" /FR /YX /FD /c
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x809 /d "NDEBUG"
@@ -107,6 +107,14 @@ SOURCE=..\win\DispKbd.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\win\filecalls.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\win\filecalls_internal.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\win\gui.h
 # End Source File
 # Begin Source File
@@ -155,11 +163,23 @@ SOURCE=..\arch\DispKbd.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\arch\extnrom.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\arch\extnrom.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\arch\fdc1772.c
 # End Source File
 # Begin Source File
 
 SOURCE=..\arch\fdc1772.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\arch\filecalls.h
 # End Source File
 # Begin Source File
 
