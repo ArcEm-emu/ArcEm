@@ -509,6 +509,7 @@ static void RefreshMouse(ARMul_State *state) {
   int HorizPos = (int)VIDC.Horiz_CursorStart - (int)VIDC.Horiz_DisplayStart*2;
   int Height = (int)VIDC.Vert_CursorEnd - (int)VIDC.Vert_CursorStart; //+1;
   int VertPos;
+  int diboffs;
 
   VertPos = (int)VIDC.Vert_CursorStart;
   VertPos -= (signed int)VIDC.Vert_DisplayStart;
@@ -533,9 +534,12 @@ static void RefreshMouse(ARMul_State *state) {
 
         for(x=0;x<32;x++,ImgPtr++) {
 	    pix = ((tmp[x/16]>>((x & 15)*2)) & 3);
-	    if (pix) curbmp[x+(MonitorHeight-y)*32] = (unsigned short)HD.cursorPixelMap[pix];
-	    else curbmp[x+(MonitorHeight-y)*32] = dibbmp[rMouseX+x+(MonitorHeight-rMouseY-y)*MonitorWidth];
-//curbmp[x+(MonitorHeight-y)*32] = HD.cursorPixelMap[((tmp[x/16]>>((x & 15)*2)) & 3)];
+            diboffs = rMouseX + x + (MonitorHeight - rMouseY - y) *
+                MonitorWidth;
+
+            curbmp[x + (MonitorHeight - y) * 32] =
+                (pix || diboffs < 0) ?
+                (unsigned short)HD.cursorPixelMap[pix] : dibbmp[diboffs];
         }; /* x */
     } else return;
   }; /* y */
