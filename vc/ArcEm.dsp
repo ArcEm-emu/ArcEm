@@ -179,6 +179,10 @@ SOURCE=..\arch\i2c.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\arch\keyboard.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\arch\ReadConfig.c
 # End Source File
 # Begin Source File
