@@ -145,6 +145,7 @@ static keysym_to_arch_key keysym_to_arch_key_map[] = {
     X(equal, equal)
     X(f, f)
     X(g, g)
+    X(grave, grave)
     X(greater, period)
     X(h, h)
     X(i, i)
