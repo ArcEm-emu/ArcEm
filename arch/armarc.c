@@ -396,7 +396,7 @@ ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
   int PresPage;
   unsigned int i;
   unsigned extnrom_size = 0;
-#if defined(SYSTEM_X) || defined(MACOSX)
+#if defined(SYSTEM_X) || defined(MACOSX) || defined(SYSTEM_win)
   unsigned extnrom_entry_count;
 #endif
 
@@ -479,7 +479,7 @@ ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
 
   fseek(ROMFile, 0l, SEEK_SET);
 
-#if defined(SYSTEM_X) || defined(MACOSX)
+#if defined(SYSTEM_X) || defined(MACOSX) || defined(SYSTEM_win)
   /* Add the space required by an Extension Rom */
   extnrom_size = extnrom_calculate_size(&extnrom_entry_count);
   fprintf(stderr, "extnrom_size = %u, extnrom_entry_count= %u\n",
@@ -529,7 +529,7 @@ ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
       fprintf(stderr,"Couldn't allocate space for ROM Low\n");
       exit(3);
     }
-#if defined(SYSTEM_X) || defined(MACOSX)
+#if defined(SYSTEM_X) || defined(MACOSX) || defined(SYSTEM_win)
     /* Load extension ROM */
     dbug("Loading Extension ROM...\n");
     extnrom_load(extnrom_size, extnrom_entry_count,
@@ -542,8 +542,6 @@ ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
   }
 
   dbug(" ..Done\n ");
-
-//  MEMC.ROMHighSize += extnrom_size;
 
   IO_Init(state);
   DisplayKbd_Init(state);
@@ -999,7 +997,6 @@ PutVal(ARMul_State *state, ARMword address, ARMword data, int byteNotword,
         break;
 
       case 6: /* Sptr */
-
         dbug_memc("Write to MEMC Sptr register\n");
         /* Note this never actually sets Sptr directly, instead
          * it causes a first buffer to be swapped in. */
