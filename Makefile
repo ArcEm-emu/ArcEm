@@ -60,7 +60,7 @@ OBJS = armcopro.o armemu.o arminit.o \
 	armsupp.o main.o dagstandalone.o armos.o \
 		armrdi.o $(SYSTEM)/DispKbd.o arch/i2c.o arch/archio.o \
     arch/fdc1772.o $(SYSTEM)/ControlPane.o arch/hdc63463.o arch/ReadConfig.o \
-    arch/keyboard.o
+    arch/keyboard.o arch/extnrom.o
 
 SRCS = armcopro.c armemu.c arminit.c arch/armarc.c \
 	armsupp.c main.c dagstandalone.c armos.c  \

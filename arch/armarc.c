@@ -9,6 +9,7 @@
 
 #include <signal.h>
 #include <stdio.h>
+#include <string.h>
 //#include <unistd.h>
 
 #include "../armopts.h"
@@ -24,6 +25,7 @@
 #include "fdc1772.h"
 #include "ReadConfig.h"
 #include "Version.h"
+#include "extnrom.h"
 
 
 #ifdef MACOSX
@@ -234,7 +236,7 @@ static int CheckAbortR(int address) {
 
     case 2:
       /* Privileged only */
-      return PRIVILEGED; 
+      return PRIVILEGED;
 
     case 0:
     case 1:
@@ -338,15 +340,19 @@ unsigned ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
   unsigned int ROMWordNum,ROMWord;
   int PresPage;
   unsigned int i;
+  unsigned extnrom_size = 0;
+#ifdef SYSTEM_X
+  unsigned extnrom_entry_count;
+#endif
 
   PrivDPtr = calloc(sizeof(PrivateDataType), 1);
   if (PrivDPtr == NULL) {
     fprintf(stderr,"ARMul_MemoryInit: malloc of PrivateDataType failed\n");
     exit(3);
   };
- 
+
   statestr.MemDataPtr = (unsigned char *)PrivDPtr;
- 
+
  dbug("Reading config file....\n");
  ReadConfigFile(state);
 
@@ -414,33 +420,58 @@ unsigned ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
 
  fseek(ROMFile, 0l, SEEK_SET);
 
+#ifdef SYSTEM_X
+  /* Add the space required by an Extension Rom */
+  extnrom_size = extnrom_calculate_size(&extnrom_entry_count);
+  fprintf(stderr, "extnrom_size = %u, extnrom_entry_count= %u\n",
+          extnrom_size, extnrom_entry_count);
+#endif /* SYSTEM_X */
+  dbug("Total ROM size required = %u KB\n",
+       (MEMC.ROMSize + extnrom_size) / 1024);
+
  /* Allocate the ROM space */
  /* 128 is to try and ensure gap with next malloc to stop cache thrashing */
- MEMC.ROM = malloc(MEMC.ROMSize + 128);
- MEMC.Romfuncs = malloc((MEMC.ROMSize / 4) * sizeof(ARMEmuFunc));
+  /* calloc() now used to ensure that Extension ROM space is zero'ed */
+  MEMC.ROM = malloc(MEMC.ROMSize + extnrom_size + 128);
+  memset(MEMC.ROM, 0x00, MEMC.ROMSize + extnrom_size + 128);
+  MEMC.Romfuncs = malloc(((MEMC.ROMSize + extnrom_size) / 4) * sizeof(ARMEmuFunc));
 
  if ((MEMC.ROM==NULL) || (MEMC.Romfuncs==NULL)) {
   fprintf(stderr,"Couldn't allocate space for ROM\n");
   exit(3);
- };
+ }
 
- for (ROMWordNum = 0; ROMWordNum < MEMC.ROMSize / 4; ROMWordNum++) {
+  for (ROMWordNum = 0; ROMWordNum < MEMC.ROMSize / 4; ROMWordNum++) {
 #ifdef DEBUG
-   if (!(ROMWordNum & 0x1ff)) {
-     fprintf(stderr, ".");
-     fflush(stderr);
-   };
+    if (!(ROMWordNum & 0x1ff)) {
+      fprintf(stderr, ".");
+      fflush(stderr);
+    }
 #endif
 
-   ROMWord  =  fgetc(ROMFile);
-   ROMWord |= (fgetc(ROMFile) << 8);
-   ROMWord |= (fgetc(ROMFile) << 16);
-   ROMWord |= (fgetc(ROMFile) << 24);
-   MEMC.ROM[ROMWordNum] = ROMWord;
-   MEMC.Romfuncs[ROMWordNum] = ARMul_Emulate_DecodeInstr;
- };
+    ROMWord  =  fgetc(ROMFile);
+    ROMWord |= (fgetc(ROMFile) << 8);
+    ROMWord |= (fgetc(ROMFile) << 16);
+    ROMWord |= (fgetc(ROMFile) << 24);
+    MEMC.ROM[ROMWordNum] = ROMWord;
+  }
 
- dbug(" ..Done\n ");
+  for (ROMWordNum = 0; ROMWordNum < (MEMC.ROMSize + extnrom_size) / 4;
+       ROMWordNum++)
+  {
+    MEMC.Romfuncs[ROMWordNum] = ARMul_Emulate_DecodeInstr;
+  }
+
+#ifdef SYSTEM_X
+  /* Load extension ROM */
+  dbug("Loading Extension ROM...\n");
+  extnrom_load(extnrom_size, extnrom_entry_count,
+               ((unsigned char *) MEMC.ROM) + MEMC.ROMSize);
+#endif
+
+  dbug(" ..Done\n ");
+
+  MEMC.ROMSize += extnrom_size;
 
   IO_Init(state);
   DisplayKbd_Init(state);
@@ -593,14 +624,14 @@ void ARMul_StoreByte(ARMul_State *state, ARMword address, ARMword data)
 {
   statestr.NumCycles++;
   address &= 0x3ffffff;
- 
+
   if (CheckAbortW(address)) {
     ARMul_CLEARABORT;
   } else {
     ARMul_DATAABORT(address);
     return;
   };
- 
+
   PutVal(state,address,data,1,1,ARMul_Emulate_DecodeInstr);
 }
 
