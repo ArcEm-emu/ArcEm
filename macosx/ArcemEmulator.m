@@ -33,6 +33,8 @@
 #import "dagstandalone.h"
 #import "ArcemView.h"
 
+#import <pthread.h>
+
 extern unsigned char *screenbmp;
 extern unsigned char *cursorbmp;
 ArcemView* disp;
@@ -55,9 +57,11 @@ int resizeWindow(int hWidth, int hHeight)
 
 
 /*------------------------------------------------------------------------------
- * updateDisplay - called when ArcEm wants to refresh the display. 
+ * updateDisplay - called when ArcEm wants to refresh the display. If yield
+ *                 is non-zero then we yield so that we have a more responsive
+ *                 interactive env (well, that's the theory anyway).
  */
-void updateDisplay(int x, int y, int width, int height)
+void updateDisplay(int x, int y, int width, int height, int yield)
 {
     NSRect rect;
 
@@ -66,9 +70,10 @@ void updateDisplay(int x, int y, int width, int height)
     rect.size.width = width;
     rect.size.height = height;
     
-    //[disp setNeedsDisplay: YES];
     [disp setNeedsDisplayInRect: rect];
-    //[NSThread sleepUntilDate: [[NSDate date] addTimeInterval: 0.00000001]];
+    
+    if (yield)
+        sched_yield();
 }
 
 

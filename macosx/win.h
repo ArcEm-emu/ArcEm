@@ -57,5 +57,5 @@ extern int nMouseWrite;
 #endif
 
 extern int createWindow(int w, int h);
-extern int updateDisplay(int, int, int, int);
+extern int updateDisplay(int, int, int, int, int);
 extern int resizeWindow(int hWidth, int hHeight);

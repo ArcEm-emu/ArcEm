@@ -24,6 +24,8 @@
 #import "ArcemView.h"
 #import "macarcem.h"
 #include <ApplicationServices/ApplicationServices.h>
+#import <pthread.h>
+
 
 // Welcome to the wonderful world of object orientated programming, but alas
 // we're merging lots of imperative C code from ArcEm, so here are a bunch
@@ -423,7 +425,8 @@ extern int rMouseHeight;
         nMouseX += x;
         nMouseY -= y;
     }
-    [NSThread sleepUntilDate: [[NSDate date] addTimeInterval: 0.00000001]];
+    //[NSThread sleepUntilDate: [[NSDate date] addTimeInterval: 0.00000001]];
+    sched_yield();
 }
 
 

@@ -713,7 +713,7 @@ static void RefreshMouse(ARMul_State *state) {
     } else return;
   }; /* y */
 
-  updateDisplay(0, 0, 800, 600);
+  updateDisplay(0, 0, 800, 600, 1);
 }; /* RefreshMouse */
 
 
@@ -748,7 +748,7 @@ static void RefreshDisplay(ARMul_State *state)
     /* Only tell viewer to redisplay those bits which we've replotted into the image */
     if (DC.miny<DC.maxy)
     {
-        updateDisplay(0, DC.miny, 800, (DC.maxy - DC.miny) + 1);
+        updateDisplay(0, DC.miny, 800, (DC.maxy - DC.miny) + 1, 0);
     }
 } /* RefreshDisplay */
 
