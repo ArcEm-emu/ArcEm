@@ -1608,6 +1608,21 @@ unsigned int DisplayKbd_XPoll(void *data) {
 
   /* See if there is an event - if there is deal with it */
   if (XCheckMaskEvent(HD.disp,ULONG_MAX,&e)) {
+#ifdef DEBUG_X_PROTOCOL
+        if (e.xany.window == HD.BackingWindow) {
+            printf("backingwindow ");
+        } else if (e.xany.window == HD.MainPane) {
+            printf("mainpane ");
+        } else if (e.xany.window == HD.ControlPane) {
+            printf("controlpane ");
+        } else if (e.xany.window == HD.CursorPane) {
+            printf("cursorpane ");
+        } else {
+            printf("unknown window ");
+        }
+        printf("= %d\n", e.type);
+#endif
+
     /* Handle event */
     if (e.xany.window==HD.BackingWindow) BackingWindow_Event(state,&e);
     if (e.xany.window==HD.MainPane) MainPane_Event(state,&e);
