@@ -1,0 +1,1051 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 38;
+	objects = {
+		080E96DCFE201CFB7F000001 = {
+			fileRef = 29B97318FDCFA39411CA2CEA;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		080E96DDFE201D6D7F000001 = {
+			children = (
+				D157A5F10291D6F801123251,
+				D157A5F20291D6F801123251,
+				D157A5F50291D94401123251,
+				D157A5F60291D94401123251,
+				D157A5F90291DA6C01123251,
+				D157A5FA0291DA6C01123251,
+				D167869C029D98DC01D1F43F,
+				D167869D029D98DC01D1F43F,
+			);
+			isa = PBXGroup;
+			name = Classes;
+			refType = 4;
+		};
+		089C165CFE840E0CC02AAC07 = {
+			children = (
+				089C165DFE840E0CC02AAC07,
+			);
+			isa = PBXVariantGroup;
+			name = InfoPlist.strings;
+			refType = 4;
+		};
+		089C165DFE840E0CC02AAC07 = {
+			fileEncoding = 10;
+			isa = PBXFileReference;
+			name = English;
+			path = English.lproj/InfoPlist.strings;
+			refType = 4;
+		};
+		089C165EFE840E0CC02AAC07 = {
+			fileRef = 089C165CFE840E0CC02AAC07;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+//080
+//081
+//082
+//083
+//084
+//100
+//101
+//102
+//103
+//104
+		1058C7A0FEA54F0111CA2CBB = {
+			children = (
+				1058C7A1FEA54F0111CA2CBB,
+			);
+			isa = PBXGroup;
+			name = "Linked Frameworks";
+			refType = 4;
+		};
+		1058C7A1FEA54F0111CA2CBB = {
+			isa = PBXFrameworkReference;
+			name = Cocoa.framework;
+			path = /System/Library/Frameworks/Cocoa.framework;
+			refType = 0;
+		};
+		1058C7A2FEA54F0111CA2CBB = {
+			children = (
+				29B97325FDCFA39411CA2CEA,
+				29B97324FDCFA39411CA2CEA,
+			);
+			isa = PBXGroup;
+			name = "Other Frameworks";
+			refType = 4;
+		};
+		1058C7A3FEA54F0111CA2CBB = {
+			fileRef = 1058C7A1FEA54F0111CA2CBB;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+//100
+//101
+//102
+//103
+//104
+//170
+//171
+//172
+//173
+//174
+		17587328FF379C6511CA2CBB = {
+			isa = PBXApplicationReference;
+			path = ArcEm.app;
+			refType = 3;
+		};
+//170
+//171
+//172
+//173
+//174
+//190
+//191
+//192
+//193
+//194
+		19C28FACFE9D520D11CA2CBB = {
+			children = (
+				17587328FF379C6511CA2CBB,
+			);
+			isa = PBXGroup;
+			name = Products;
+			refType = 4;
+		};
+//190
+//191
+//192
+//193
+//194
+//290
+//291
+//292
+//293
+//294
+		29B97313FDCFA39411CA2CEA = {
+			buildStyles = (
+				4A9504CCFFE6A4B311CA0CBA,
+				4A9504CDFFE6A4B311CA0CBA,
+			);
+			isa = PBXProject;
+			mainGroup = 29B97314FDCFA39411CA2CEA;
+			projectDirPath = "";
+			targets = (
+				29B97326FDCFA39411CA2CEA,
+			);
+		};
+		29B97314FDCFA39411CA2CEA = {
+			children = (
+				080E96DDFE201D6D7F000001,
+				29B97315FDCFA39411CA2CEA,
+				29B97317FDCFA39411CA2CEA,
+				29B97323FDCFA39411CA2CEA,
+				19C28FACFE9D520D11CA2CBB,
+			);
+			isa = PBXGroup;
+			name = ArcEm;
+			path = "";
+			refType = 4;
+		};
+		29B97315FDCFA39411CA2CEA = {
+			children = (
+				D1F01D8302931F6101CDBB35,
+				29B97316FDCFA39411CA2CEA,
+				D1E0F9CF02B41B0301D1F43F,
+				D1E0F9DF02B41B0301D1F43F,
+				D1E0F9E202B41B0301D1F43F,
+				D1E0F9E302B41B0301D1F43F,
+				D1E0F9E802B41B0301D1F43F,
+				D1E0F9E902B41B0301D1F43F,
+				D1E0F9EA02B41B0301D1F43F,
+				D1E0F9EB02B41B0301D1F43F,
+				D1E0F9EC02B41B0301D1F43F,
+				D1E0F9ED02B41B0301D1F43F,
+				D1E0F9EE02B41B0301D1F43F,
+				D1E0F9EF02B41B0301D1F43F,
+				D1E0F9F002B41B0301D1F43F,
+				D1E0F9F102B41B0301D1F43F,
+				D1E0F9F202B41B0301D1F43F,
+				D1E0F9F302B41B0301D1F43F,
+				D1E0F9F402B41B0301D1F43F,
+				D1E0F9F502B41B0301D1F43F,
+				D1E0F9F602B41B0301D1F43F,
+				D1E0F9F702B41B0301D1F43F,
+				D1E0F9F802B41B0301D1F43F,
+				D1E0F9F902B41B0301D1F43F,
+				D1F01DD50293336E01CDBB35,
+			);
+			isa = PBXGroup;
+			name = "Other Sources";
+			path = "";
+			refType = 4;
+		};
+		29B97316FDCFA39411CA2CEA = {
+			isa = PBXFileReference;
+			path = main.m;
+			refType = 4;
+		};
+		29B97317FDCFA39411CA2CEA = {
+			children = (
+				29B97318FDCFA39411CA2CEA,
+				089C165CFE840E0CC02AAC07,
+				D1CA0AAF029C4D9401D1F43F,
+				D1E92BDF02A5470B01D1F43F,
+			);
+			isa = PBXGroup;
+			name = Resources;
+			path = "";
+			refType = 4;
+		};
+		29B97318FDCFA39411CA2CEA = {
+			children = (
+				29B97319FDCFA39411CA2CEA,
+			);
+			isa = PBXVariantGroup;
+			name = MainMenu.nib;
+			path = "";
+			refType = 4;
+		};
+		29B97319FDCFA39411CA2CEA = {
+			isa = PBXFileReference;
+			name = English;
+			path = English.lproj/MainMenu.nib;
+			refType = 4;
+		};
+		29B97323FDCFA39411CA2CEA = {
+			children = (
+				1058C7A0FEA54F0111CA2CBB,
+				1058C7A2FEA54F0111CA2CBB,
+			);
+			isa = PBXGroup;
+			name = Frameworks;
+			path = "";
+			refType = 4;
+		};
+		29B97324FDCFA39411CA2CEA = {
+			isa = PBXFrameworkReference;
+			name = AppKit.framework;
+			path = /System/Library/Frameworks/AppKit.framework;
+			refType = 0;
+		};
+		29B97325FDCFA39411CA2CEA = {
+			isa = PBXFrameworkReference;
+			name = Foundation.framework;
+			path = /System/Library/Frameworks/Foundation.framework;
+			refType = 0;
+		};
+		29B97326FDCFA39411CA2CEA = {
+			buildPhases = (
+				29B97327FDCFA39411CA2CEA,
+				29B97328FDCFA39411CA2CEA,
+				29B9732BFDCFA39411CA2CEA,
+				29B9732DFDCFA39411CA2CEA,
+			);
+			buildSettings = {
+				DEBUGGING_SYMBOLS = NO;
+				FRAMEWORK_SEARCH_PATHS = "";
+				HEADER_SEARCH_PATHS = "";
+				INSTALL_PATH = "$(HOME)/Applications";
+				LIBRARY_SEARCH_PATHS = "";
+				OPTIMIZATION_CFLAGS = "-O3";
+				OTHER_CFLAGS = "-DBIGEND -DNOOS -DNOFPE -DMACOSX -I..";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = ArcEm;
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = "-Wmost -Wno-four-char-constants -Wno-unknown-pragmas";
+				WRAPPER_EXTENSION = app;
+			};
+			dependencies = (
+			);
+			isa = PBXApplicationTarget;
+			name = ArcEm;
+			productInstallPath = "$(HOME)/Applications";
+			productName = ArcEm;
+			productReference = 17587328FF379C6511CA2CBB;
+			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
+<!DOCTYPE plist SYSTEM \"file://localhost/System/Library/DTDs/PropertyList.dtd\">
+<plist version=\"0.9\">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>English</string>
+	<key>CFBundleExecutable</key>
+	<string>ArcEm</string>
+	<key>CFBundleIconFile</key>
+	<string>arcem.icns</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleSignature</key>
+	<string>????</string>
+	<key>CFBundleVersion</key>
+	<string>0.1</string>
+	<key>NSMainNibFile</key>
+	<string>MainMenu</string>
+	<key>NSPrincipalClass</key>
+	<string>NSApplication</string>
+</dict>
+</plist>
+";
+			shouldUseHeadermap = 1;
+		};
+		29B97327FDCFA39411CA2CEA = {
+			buildActionMask = 2147483647;
+			files = (
+				D157A5F30291D70101123251,
+				D157A5F80291D94401123251,
+				D157A5FC0291DA6C01123251,
+				D1F01D8402931F6101CDBB35,
+				D1F01DD9029333DB01CDBB35,
+				D1F01DDB0293D79C01CDBB35,
+				D167869F029D98DC01D1F43F,
+				D1E0F9FB02B41B0301D1F43F,
+				D1E0F9FD02B41B0301D1F43F,
+				D1E0F9FE02B41B0301D1F43F,
+				D1E0F9FF02B41B0301D1F43F,
+				D1E0FA0102B41B0301D1F43F,
+				D1E0FA0302B41B0301D1F43F,
+				D1E0FA0502B41B0301D1F43F,
+				D1E0FA0702B41B0301D1F43F,
+				D1E0FA0802B41B0301D1F43F,
+				D1E0FA0C02B41B0301D1F43F,
+				D1E0FA1002B41B0301D1F43F,
+				D1E0FA1102B41B0301D1F43F,
+				D1E0FA1302B41B0301D1F43F,
+				D1E0FA1502B41B0301D1F43F,
+				D1E0FA1702B41B0301D1F43F,
+				D1E0FA1A02B41B0301D1F43F,
+				D1E0FA1C02B41B0301D1F43F,
+				D1E0FA1D02B41B0301D1F43F,
+				D1E0FA1E02B41B0301D1F43F,
+				D1E0FA1F02B41B0301D1F43F,
+				D1E0FA2002B41B0301D1F43F,
+			);
+			isa = PBXHeadersBuildPhase;
+		};
+		29B97328FDCFA39411CA2CEA = {
+			buildActionMask = 2147483647;
+			files = (
+				080E96DCFE201CFB7F000001,
+				089C165EFE840E0CC02AAC07,
+				D1CA0AB0029C4D9401D1F43F,
+				D1E92BE002A5470B01D1F43F,
+				D1E0FA0902B41B0301D1F43F,
+			);
+			isa = PBXResourcesBuildPhase;
+		};
+		29B9732BFDCFA39411CA2CEA = {
+			buildActionMask = 2147483647;
+			files = (
+				29B9732CFDCFA39411CA2CEA,
+				D157A5F40291D70101123251,
+				D157A5F70291D94401123251,
+				D157A5FB0291DA6C01123251,
+				D1F01DD70293339001CDBB35,
+				D1F01DDD0293E0E601CDBB35,
+				D167869E029D98DC01D1F43F,
+				D1E0F9FA02B41B0301D1F43F,
+				D1E0F9FC02B41B0301D1F43F,
+				D1E0FA0002B41B0301D1F43F,
+				D1E0FA0202B41B0301D1F43F,
+				D1E0FA0402B41B0301D1F43F,
+				D1E0FA0602B41B0301D1F43F,
+				D1E0FA0B02B41B0301D1F43F,
+				D1E0FA0F02B41B0301D1F43F,
+				D1E0FA1202B41B0301D1F43F,
+				D1E0FA1402B41B0301D1F43F,
+				D1E0FA1602B41B0301D1F43F,
+				D1E0FA1802B41B0301D1F43F,
+				D1E0FA1902B41B0301D1F43F,
+				D1E0FA1B02B41B0301D1F43F,
+			);
+			isa = PBXSourcesBuildPhase;
+		};
+		29B9732CFDCFA39411CA2CEA = {
+			fileRef = 29B97316FDCFA39411CA2CEA;
+			isa = PBXBuildFile;
+			settings = {
+				ATTRIBUTES = (
+				);
+			};
+		};
+		29B9732DFDCFA39411CA2CEA = {
+			buildActionMask = 2147483647;
+			files = (
+				1058C7A3FEA54F0111CA2CBB,
+			);
+			isa = PBXFrameworksBuildPhase;
+		};
+//290
+//291
+//292
+//293
+//294
+//4A0
+//4A1
+//4A2
+//4A3
+//4A4
+		4A9504CCFFE6A4B311CA0CBA = {
+			buildRules = (
+			);
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				OPTIMIZATION_CFLAGS = "-O0";
+			};
+			isa = PBXBuildStyle;
+			name = Development;
+		};
+		4A9504CDFFE6A4B311CA0CBA = {
+			buildRules = (
+			);
+			buildSettings = {
+				COPY_PHASE_STRIP = YES;
+			};
+			isa = PBXBuildStyle;
+			name = Deployment;
+		};
+//4A0
+//4A1
+//4A2
+//4A3
+//4A4
+//D10
+//D11
+//D12
+//D13
+//D14
+		D157A5F10291D6F801123251 = {
+			isa = PBXFileReference;
+			path = ArcemView.h;
+			refType = 4;
+		};
+		D157A5F20291D6F801123251 = {
+			isa = PBXFileReference;
+			path = ArcemView.m;
+			refType = 4;
+		};
+		D157A5F30291D70101123251 = {
+			fileRef = D157A5F10291D6F801123251;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D157A5F40291D70101123251 = {
+			fileRef = D157A5F20291D6F801123251;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D157A5F50291D94401123251 = {
+			isa = PBXFileReference;
+			path = ArcemController.m;
+			refType = 4;
+		};
+		D157A5F60291D94401123251 = {
+			isa = PBXFileReference;
+			path = ArcemController.h;
+			refType = 4;
+		};
+		D157A5F70291D94401123251 = {
+			fileRef = D157A5F50291D94401123251;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D157A5F80291D94401123251 = {
+			fileRef = D157A5F60291D94401123251;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D157A5F90291DA6C01123251 = {
+			isa = PBXFileReference;
+			path = ArcemEmulator.m;
+			refType = 4;
+		};
+		D157A5FA0291DA6C01123251 = {
+			isa = PBXFileReference;
+			path = ArcemEmulator.h;
+			refType = 4;
+		};
+		D157A5FB0291DA6C01123251 = {
+			fileRef = D157A5F90291DA6C01123251;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D157A5FC0291DA6C01123251 = {
+			fileRef = D157A5FA0291DA6C01123251;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D167869C029D98DC01D1F43F = {
+			isa = PBXFileReference;
+			path = PreferenceController.m;
+			refType = 4;
+		};
+		D167869D029D98DC01D1F43F = {
+			isa = PBXFileReference;
+			path = PreferenceController.h;
+			refType = 4;
+		};
+		D167869E029D98DC01D1F43F = {
+			fileRef = D167869C029D98DC01D1F43F;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D167869F029D98DC01D1F43F = {
+			fileRef = D167869D029D98DC01D1F43F;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D1CA0AAF029C4D9401D1F43F = {
+			isa = PBXFileReference;
+			path = Credits.rtf;
+			refType = 4;
+		};
+		D1CA0AB0029C4D9401D1F43F = {
+			fileRef = D1CA0AAF029C4D9401D1F43F;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D1E0F9CF02B41B0301D1F43F = {
+			children = (
+				D1E0F9D002B41B0301D1F43F,
+				D1E0F9D102B41B0301D1F43F,
+				D1E0F9D202B41B0301D1F43F,
+				D1E0F9D302B41B0301D1F43F,
+				D1E0F9D402B41B0301D1F43F,
+				D1E0F9D502B41B0301D1F43F,
+				D1E0F9D602B41B0301D1F43F,
+				D1E0F9D702B41B0301D1F43F,
+				D1E0F9D802B41B0301D1F43F,
+				D1E0F9D902B41B0301D1F43F,
+				D1E0F9DA02B41B0301D1F43F,
+				D1E0F9DB02B41B0301D1F43F,
+				D1E0F9DC02B41B0301D1F43F,
+				D1E0F9DD02B41B0301D1F43F,
+				D1E0F9DE02B41B0301D1F43F,
+			);
+			isa = PBXGroup;
+			name = arch;
+			path = /Users/michael/Dev/arcem/clean/arcem/arch;
+			refType = 0;
+		};
+		D1E0F9D002B41B0301D1F43F = {
+			isa = PBXFileReference;
+			path = archio.c;
+			refType = 4;
+		};
+		D1E0F9D102B41B0301D1F43F = {
+			isa = PBXFileReference;
+			path = archio.h;
+			refType = 4;
+		};
+		D1E0F9D202B41B0301D1F43F = {
+			isa = PBXFileReference;
+			path = armarc.c;
+			refType = 4;
+		};
+		D1E0F9D302B41B0301D1F43F = {
+			isa = PBXFileReference;
+			path = armarc.h;
+			refType = 4;
+		};
+		D1E0F9D402B41B0301D1F43F = {
+			isa = PBXFileReference;
+			path = ControlPane.h;
+			refType = 4;
+		};
+		D1E0F9D502B41B0301D1F43F = {
+			isa = PBXFileReference;
+			path = DispKbd.h;
+			refType = 4;
+		};
+		D1E0F9D602B41B0301D1F43F = {
+			isa = PBXFileReference;
+			path = fdc1772.c;
+			refType = 4;
+		};
+		D1E0F9D702B41B0301D1F43F = {
+			isa = PBXFileReference;
+			path = fdc1772.h;
+			refType = 4;
+		};
+		D1E0F9D802B41B0301D1F43F = {
+			isa = PBXFileReference;
+			path = hdc63463.c;
+			refType = 4;
+		};
+		D1E0F9D902B41B0301D1F43F = {
+			isa = PBXFileReference;
+			path = hdc63463.h;
+			refType = 4;
+		};
+		D1E0F9DA02B41B0301D1F43F = {
+			isa = PBXFileReference;
+			path = i2c.c;
+			refType = 4;
+		};
+		D1E0F9DB02B41B0301D1F43F = {
+			isa = PBXFileReference;
+			path = i2c.h;
+			refType = 4;
+		};
+		D1E0F9DC02B41B0301D1F43F = {
+			isa = PBXFileReference;
+			path = ReadConfig.c;
+			refType = 4;
+		};
+		D1E0F9DD02B41B0301D1F43F = {
+			isa = PBXFileReference;
+			path = ReadConfig.h;
+			refType = 4;
+		};
+		D1E0F9DE02B41B0301D1F43F = {
+			isa = PBXFileReference;
+			path = Version.h;
+			refType = 4;
+		};
+		D1E0F9DF02B41B0301D1F43F = {
+			children = (
+				D1E0F9E002B41B0301D1F43F,
+			);
+			isa = PBXGroup;
+			name = arm_code;
+			path = /Users/michael/Dev/arcem/clean/arcem/arm_code;
+			refType = 0;
+		};
+		D1E0F9E002B41B0301D1F43F = {
+			isa = PBXFileReference;
+			path = .cvsignore;
+			refType = 4;
+		};
+		D1E0F9E202B41B0301D1F43F = {
+			isa = PBXFileReference;
+			name = armcopro.c;
+			path = /Users/michael/Dev/arcem/clean/arcem/armcopro.c;
+			refType = 0;
+		};
+		D1E0F9E302B41B0301D1F43F = {
+			isa = PBXFileReference;
+			name = armdefs.h;
+			path = /Users/michael/Dev/arcem/clean/arcem/armdefs.h;
+			refType = 0;
+		};
+		D1E0F9E802B41B0301D1F43F = {
+			isa = PBXFileReference;
+			name = armemu.c;
+			path = /Users/michael/Dev/arcem/clean/arcem/armemu.c;
+			refType = 0;
+		};
+		D1E0F9E902B41B0301D1F43F = {
+			isa = PBXFileReference;
+			name = armemu.h;
+			path = /Users/michael/Dev/arcem/clean/arcem/armemu.h;
+			refType = 0;
+		};
+		D1E0F9EA02B41B0301D1F43F = {
+			isa = PBXFileReference;
+			name = armfpe.h;
+			path = /Users/michael/Dev/arcem/clean/arcem/armfpe.h;
+			refType = 0;
+		};
+		D1E0F9EB02B41B0301D1F43F = {
+			isa = PBXFileReference;
+			name = arminit.c;
+			path = /Users/michael/Dev/arcem/clean/arcem/arminit.c;
+			refType = 0;
+		};
+		D1E0F9EC02B41B0301D1F43F = {
+			isa = PBXFileReference;
+			name = armopts.h;
+			path = /Users/michael/Dev/arcem/clean/arcem/armopts.h;
+			refType = 0;
+		};
+		D1E0F9ED02B41B0301D1F43F = {
+			isa = PBXFileReference;
+			name = armos.c;
+			path = /Users/michael/Dev/arcem/clean/arcem/armos.c;
+			refType = 0;
+		};
+		D1E0F9EE02B41B0301D1F43F = {
+			isa = PBXFileReference;
+			name = armos.h;
+			path = /Users/michael/Dev/arcem/clean/arcem/armos.h;
+			refType = 0;
+		};
+		D1E0F9EF02B41B0301D1F43F = {
+			isa = PBXFileReference;
+			name = armrdi.c;
+			path = /Users/michael/Dev/arcem/clean/arcem/armrdi.c;
+			refType = 0;
+		};
+		D1E0F9F002B41B0301D1F43F = {
+			isa = PBXFileReference;
+			name = armrdi.h;
+			path = /Users/michael/Dev/arcem/clean/arcem/armrdi.h;
+			refType = 0;
+		};
+		D1E0F9F102B41B0301D1F43F = {
+			isa = PBXFileReference;
+			name = armsupp.c;
+			path = /Users/michael/Dev/arcem/clean/arcem/armsupp.c;
+			refType = 0;
+		};
+		D1E0F9F202B41B0301D1F43F = {
+			isa = PBXFileReference;
+			name = bag.c;
+			path = /Users/michael/Dev/arcem/clean/arcem/bag.c;
+			refType = 0;
+		};
+		D1E0F9F302B41B0301D1F43F = {
+			isa = PBXFileReference;
+			name = bag.h;
+			path = /Users/michael/Dev/arcem/clean/arcem/bag.h;
+			refType = 0;
+		};
+		D1E0F9F402B41B0301D1F43F = {
+			isa = PBXFileReference;
+			name = dagstandalone.c;
+			path = /Users/michael/Dev/arcem/clean/arcem/dagstandalone.c;
+			refType = 0;
+		};
+		D1E0F9F502B41B0301D1F43F = {
+			isa = PBXFileReference;
+			name = dagstandalone.h;
+			path = /Users/michael/Dev/arcem/clean/arcem/dagstandalone.h;
+			refType = 0;
+		};
+		D1E0F9F602B41B0301D1F43F = {
+			isa = PBXFileReference;
+			name = dbg_conf.h;
+			path = /Users/michael/Dev/arcem/clean/arcem/dbg_conf.h;
+			refType = 0;
+		};
+		D1E0F9F702B41B0301D1F43F = {
+			isa = PBXFileReference;
+			name = dbg_cp.h;
+			path = /Users/michael/Dev/arcem/clean/arcem/dbg_cp.h;
+			refType = 0;
+		};
+		D1E0F9F802B41B0301D1F43F = {
+			isa = PBXFileReference;
+			name = dbg_hif.h;
+			path = /Users/michael/Dev/arcem/clean/arcem/dbg_hif.h;
+			refType = 0;
+		};
+		D1E0F9F902B41B0301D1F43F = {
+			isa = PBXFileReference;
+			name = dbg_rdi.h;
+			path = /Users/michael/Dev/arcem/clean/arcem/dbg_rdi.h;
+			refType = 0;
+		};
+		D1E0F9FA02B41B0301D1F43F = {
+			fileRef = D1E0F9D002B41B0301D1F43F;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D1E0F9FB02B41B0301D1F43F = {
+			fileRef = D1E0F9D102B41B0301D1F43F;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D1E0F9FC02B41B0301D1F43F = {
+			fileRef = D1E0F9D202B41B0301D1F43F;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D1E0F9FD02B41B0301D1F43F = {
+			fileRef = D1E0F9D302B41B0301D1F43F;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D1E0F9FE02B41B0301D1F43F = {
+			fileRef = D1E0F9D402B41B0301D1F43F;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D1E0F9FF02B41B0301D1F43F = {
+			fileRef = D1E0F9D502B41B0301D1F43F;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D1E0FA0002B41B0301D1F43F = {
+			fileRef = D1E0F9D602B41B0301D1F43F;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D1E0FA0102B41B0301D1F43F = {
+			fileRef = D1E0F9D702B41B0301D1F43F;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D1E0FA0202B41B0301D1F43F = {
+			fileRef = D1E0F9D802B41B0301D1F43F;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D1E0FA0302B41B0301D1F43F = {
+			fileRef = D1E0F9D902B41B0301D1F43F;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D1E0FA0402B41B0301D1F43F = {
+			fileRef = D1E0F9DA02B41B0301D1F43F;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D1E0FA0502B41B0301D1F43F = {
+			fileRef = D1E0F9DB02B41B0301D1F43F;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D1E0FA0602B41B0301D1F43F = {
+			fileRef = D1E0F9DC02B41B0301D1F43F;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D1E0FA0702B41B0301D1F43F = {
+			fileRef = D1E0F9DD02B41B0301D1F43F;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D1E0FA0802B41B0301D1F43F = {
+			fileRef = D1E0F9DE02B41B0301D1F43F;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D1E0FA0902B41B0301D1F43F = {
+			fileRef = D1E0F9E002B41B0301D1F43F;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D1E0FA0B02B41B0301D1F43F = {
+			fileRef = D1E0F9E202B41B0301D1F43F;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D1E0FA0C02B41B0301D1F43F = {
+			fileRef = D1E0F9E302B41B0301D1F43F;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D1E0FA0F02B41B0301D1F43F = {
+			fileRef = D1E0F9E802B41B0301D1F43F;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D1E0FA1002B41B0301D1F43F = {
+			fileRef = D1E0F9E902B41B0301D1F43F;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D1E0FA1102B41B0301D1F43F = {
+			fileRef = D1E0F9EA02B41B0301D1F43F;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D1E0FA1202B41B0301D1F43F = {
+			fileRef = D1E0F9EB02B41B0301D1F43F;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D1E0FA1302B41B0301D1F43F = {
+			fileRef = D1E0F9EC02B41B0301D1F43F;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D1E0FA1402B41B0301D1F43F = {
+			fileRef = D1E0F9ED02B41B0301D1F43F;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D1E0FA1502B41B0301D1F43F = {
+			fileRef = D1E0F9EE02B41B0301D1F43F;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D1E0FA1602B41B0301D1F43F = {
+			fileRef = D1E0F9EF02B41B0301D1F43F;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D1E0FA1702B41B0301D1F43F = {
+			fileRef = D1E0F9F002B41B0301D1F43F;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D1E0FA1802B41B0301D1F43F = {
+			fileRef = D1E0F9F102B41B0301D1F43F;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D1E0FA1902B41B0301D1F43F = {
+			fileRef = D1E0F9F202B41B0301D1F43F;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D1E0FA1A02B41B0301D1F43F = {
+			fileRef = D1E0F9F302B41B0301D1F43F;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D1E0FA1B02B41B0301D1F43F = {
+			fileRef = D1E0F9F402B41B0301D1F43F;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D1E0FA1C02B41B0301D1F43F = {
+			fileRef = D1E0F9F502B41B0301D1F43F;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D1E0FA1D02B41B0301D1F43F = {
+			fileRef = D1E0F9F602B41B0301D1F43F;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D1E0FA1E02B41B0301D1F43F = {
+			fileRef = D1E0F9F702B41B0301D1F43F;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D1E0FA1F02B41B0301D1F43F = {
+			fileRef = D1E0F9F802B41B0301D1F43F;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D1E0FA2002B41B0301D1F43F = {
+			fileRef = D1E0F9F902B41B0301D1F43F;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D1E92BDF02A5470B01D1F43F = {
+			isa = PBXFileReference;
+			path = arcem.icns;
+			refType = 4;
+		};
+		D1E92BE002A5470B01D1F43F = {
+			fileRef = D1E92BDF02A5470B01D1F43F;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D1F01D8302931F6101CDBB35 = {
+			isa = PBXFileReference;
+			path = macarcem.h;
+			refType = 4;
+		};
+		D1F01D8402931F6101CDBB35 = {
+			fileRef = D1F01D8302931F6101CDBB35;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D1F01DD50293336E01CDBB35 = {
+			children = (
+				D1F01DD60293339001CDBB35,
+				D1F01DD8029333DB01CDBB35,
+				D1F01DDA0293D79C01CDBB35,
+				D1F01DDC0293E0E601CDBB35,
+			);
+			isa = PBXGroup;
+			name = mac;
+			refType = 4;
+		};
+		D1F01DD60293339001CDBB35 = {
+			isa = PBXFileReference;
+			path = DispKbd.c;
+			refType = 4;
+		};
+		D1F01DD70293339001CDBB35 = {
+			fileRef = D1F01DD60293339001CDBB35;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D1F01DD8029333DB01CDBB35 = {
+			isa = PBXFileReference;
+			path = win.h;
+			refType = 4;
+		};
+		D1F01DD9029333DB01CDBB35 = {
+			fileRef = D1F01DD8029333DB01CDBB35;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D1F01DDA0293D79C01CDBB35 = {
+			isa = PBXFileReference;
+			path = KeyTable.h;
+			refType = 4;
+		};
+		D1F01DDB0293D79C01CDBB35 = {
+			fileRef = D1F01DDA0293D79C01CDBB35;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D1F01DDC0293E0E601CDBB35 = {
+			isa = PBXFileReference;
+			path = ControlPane.c;
+			refType = 4;
+		};
+		D1F01DDD0293E0E601CDBB35 = {
+			fileRef = D1F01DDC0293E0E601CDBB35;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+	};
+	rootObject = 29B97313FDCFA39411CA2CEA;
+}
