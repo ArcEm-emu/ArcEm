@@ -102,15 +102,27 @@ static void ControlPane_Redraw(ARMul_State *state,XExposeEvent *e) {
   XDrawLine(HD.disp,HD.ControlPane,HD.ControlPaneGC,
             0,y,CTRLPANEWIDTH-1,y);
 
-  y+=2;
+    y += 2;
+    y = TextCenteredH(state, "Type `q' to quit.", y, 0, CTRLPANEWIDTH);
 
+  y+=2;
   ControlPane_RedrawLeds(state);
 
 }; /* ControlPane_Redraw */
 
 /*----------------------------------------------------------------------------*/
 void ControlPane_Event(ARMul_State *state,XEvent *e) {
+    KeySym sym;
+
   switch (e->type) {
+    case KeyPress:
+        XLookupString(&e->xkey, NULL, 0, &sym, NULL);
+        if (sym == XK_q) {
+            fputs("arcem: user requested exit\n", stderr);
+            hostdisplay_change_focus(&HD, FALSE);
+            exit(0);
+        }
+        break;
     case Expose:
       ControlPane_Redraw(state,&(e->xexpose));
       break;

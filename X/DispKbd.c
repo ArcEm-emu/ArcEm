@@ -1493,15 +1493,13 @@ static void MainPane_Event(ARMul_State *state,XEvent *e) {
   switch (e->type) {
     case EnterNotify:
       /*fprintf(stderr,"MainPane: Enter notify!\n"); */
-      if (HD.visInfo.class==PseudoColor) XInstallColormap(HD.disp,HD.ArcsColormap);
+        hostdisplay_change_focus(&HD, TRUE);
       DC.PollCount=0;
-      XAutoRepeatOff(HD.disp);
       break;
 
     case LeaveNotify:
       /*fprintf(stderr,"MainPane: Leave notify!\n"); */
-      if (HD.visInfo.class==PseudoColor) XUninstallColormap(HD.disp,HD.ArcsColormap);
-      XAutoRepeatOn(HD.disp);
+        hostdisplay_change_focus(&HD, FALSE);
       DC.PollCount=0;
       break;
 
@@ -1543,14 +1541,12 @@ static void CursorPane_Event(ARMul_State *state,XEvent *e) {
   switch (e->type) {
     case EnterNotify:
       fprintf(stderr,"CursorPane: Enter notify!\n");
-      if (HD.visInfo.class==PseudoColor) XInstallColormap(HD.disp,HD.ArcsColormap);
-      XAutoRepeatOff(HD.disp);
+        hostdisplay_change_focus(&HD, TRUE);
       break;
 
     case LeaveNotify:
       fprintf(stderr,"CursorPane: Leave notify!\n");
-      if (HD.visInfo.class==PseudoColor) XUninstallColormap(HD.disp,HD.ArcsColormap);
-      XAutoRepeatOn(HD.disp);
+        hostdisplay_change_focus(&HD, FALSE);
       DC.PollCount=0;
       break;
 
@@ -1839,3 +1835,16 @@ void VIDC_PutVal(ARMul_State *state,ARMword address, ARMword data,int bNw) {
 
   }; /* Register switch */
 }; /* PutValVIDC */
+
+/* ------------------------------------------------------------------ */
+
+void hostdisplay_change_focus(struct host_display *hd, int focus)
+{
+    if (hd->visInfo.class == PseudoColor) {
+        (*(focus ? XInstallColormap : XUninstallColormap))(hd->disp,
+            hd->ArcsColormap);
+    }
+    (*(focus ? XAutoRepeatOff : XAutoRepeatOn))(hd->disp);
+
+    return;
+}
