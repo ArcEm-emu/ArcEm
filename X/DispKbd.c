@@ -995,7 +995,6 @@ static int DisplayKbd_XError(Display* disp, XErrorEvent *err)
 void DisplayKbd_Init(ARMul_State *state) {
     XSetWindowAttributes attr;
   XColor tmpcol;
-  XGCValues gctmpval;
   int prescol;
   int mindex;
   XTextProperty name;
@@ -1197,10 +1196,7 @@ void DisplayKbd_Init(ARMul_State *state) {
     };
   };
 
-  gctmpval.function=GXcopy;
-  HD.MainPaneGC=XCreateGC(HD.disp,HD.MainPane,GCFunction,&gctmpval);
-  XCopyGC(HD.disp,DefaultGC(HD.disp,HD.ScreenNum),GCPlaneMask|GCSubwindowMode,
-          HD.MainPaneGC);
+    HD.MainPaneGC = XCreateGC(HD.disp, HD.MainPane, 0, NULL);
 
   /* Calloc to clear it as well */
   HD.ShapePixmapData=(char *)calloc(32*MonitorHeight,1);
