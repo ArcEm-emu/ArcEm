@@ -9,7 +9,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
-#include <unistd.h>
+//#include <unistd.h>
 
 #include "../armopts.h"
 #include "../armdefs.h"
@@ -325,8 +325,9 @@ static ARMword HDC_DMARead(ARMul_State *state, int offset) {
 
 /*---------------------------------------------------------------------------*/
 static void PrintParams(ARMul_State *state) {
-  int ptr;
+  unsigned int ptr;
   fprintf(stderr,"HDC: Param block contents: ");
+
   for(ptr=0;ptr<HDC.PBPtr;ptr++)
     fprintf(stderr," 0x%x ",HDC.ParamBlock[ptr]); 
   fprintf(stderr,"\n");
@@ -361,18 +362,18 @@ static int GetParams(ARMul_State *state, const int NParams, ...) {
   int param;
   char *resptr;
 
-  if (NParams>16) {
+  if (NParams > 16) {
     fprintf(stderr,"HDC:GetParams - invalid number of parameters requested\n");
     abort();
   };
 
-  if (HDC.PBPtr<(NParams-1)) {
+  if ((int)HDC.PBPtr < (NParams - 1)) {
     fprintf(stderr,"HDC:GetParams - not enough parameters passed to HDC (required=%d got=%d)\n",
             NParams,HDC.PBPtr);
     return(0);
   };
 
-  if (HDC.PBPtr>NParams) {
+  if ((int)HDC.PBPtr > NParams) {
 #ifdef DEBUG_DATA
     fprintf(stderr,"HDC:GetParams - warning: Too many parameters passed to hdc\n");
 #endif
@@ -398,23 +399,23 @@ static void Cause_Error(ARMul_State *state, int errcode) {
 /*---------------------------------------------------------------------------*/
 /* Sets the pointer in the appropriate data file - returns 1 if it succeeded */
 static int SetFilePtr(ARMul_State *state,int drive,
-                      int head,
-                      int Cylinder,
-                      int Sector)  {
+                      unsigned int head,
+                      unsigned int Cylinder,
+                      unsigned int Sector)  {
   unsigned long ptr;
 
   /* Validate destination - and produce errors as appropriate */
-  if (Cylinder>=HDC.configshape[drive].NCyls) {
+  if (Cylinder >= HDC.configshape[drive].NCyls) {
     Cause_Error(state,ERR_NSC);
     return 0;
   };
 
-  if (head>=HDC.configshape[drive].NHeads) {
+  if (head >= HDC.configshape[drive].NHeads) {
     Cause_Error(state,ERR_IPH); /* I think this error is actually supposed to be used against specified value not physical */
     return 0;
   };
 
-  if (Sector>=HDC.configshape[drive].NSectors) {
+  if (Sector >= HDC.configshape[drive].NSectors) {
     Cause_Error(state,ERR_TOV);  /* ID not found in time */
     return 0;
   };

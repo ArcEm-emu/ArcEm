@@ -293,6 +293,8 @@ int createWindow(int x, int y)
 	     NULL,
 	     0,
 	     &tid);
+
+   return 0;
 }
 
 int updateDisplay()
@@ -311,6 +313,8 @@ int updateDisplay()
  */
   InvalidateRect(mainWin,NULL,0);
   UpdateWindow(mainWin);
+
+  return 0;
 }
 
 int resizeWindow(int hWidth, int hHeight)
@@ -341,4 +345,6 @@ int resizeWindow(int hWidth, int hHeight)
 //  r.bottom = r.top+h;
 //  ClipCursor(&r);
 //  SetCursorPos(r.left+w/2, r.top+h/2);
+
+  return 0;
 }

@@ -6,7 +6,7 @@
 #define __USE_FIXED_PROTOTYPES__
 #include <errno.h>
 #include <stdio.h>
-#include <unistd.h>
+//#include <unistd.h>
 
 #include "../armopts.h"
 #include "../armdefs.h"
@@ -67,10 +67,10 @@ static void GenInterrupt(ARMul_State *state, const char *reason) {
 
 
 /*--------------------------------------------------------------------------*/
-unsigned FDC_Regular(ARMul_State *state) {
+unsigned int FDC_Regular(ARMul_State *state) {
   int ActualTrack;
 
-  if (--FDC.DelayCount) return;
+  if (--FDC.DelayCount) return 0;
 
   switch (FDC.LastCommand & 0xf0) {
     case 0x0:
@@ -130,7 +130,7 @@ unsigned FDC_Regular(ARMul_State *state) {
 
   }; /* FDC_Regular */
 
-  return(0);
+  return 0;
 }; /* FDC_Regular */
 
 /*--------------------------------------------------------------------------*/
@@ -766,7 +766,7 @@ ARMword FDC_Write(ARMul_State *state, ARMword offset, ARMword data, int bNw) {
       }; /* Command type switch */
       break;
   };
-
+  return 0;
 }; /* FDC_Write */
 
 /*--------------------------------------------------------------------------*/

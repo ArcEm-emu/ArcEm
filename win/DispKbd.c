@@ -1,3 +1,6 @@
+
+#include <string.h>
+
 #include "../armdefs.h"
 #include "armarc.h"
 #include "DispKbd.h"
@@ -91,11 +94,11 @@ unsigned int DisplayKbd_XPoll(void *data)
     KbdPollInt=0;
     /* Keyboard check */
     if (KbdSerialVal=IOC_ReadKbdTx(state),KbdSerialVal!=-1) {
-      Kbd_CodeFromHost(state,KbdSerialVal);
+      Kbd_CodeFromHost(state, (unsigned char)KbdSerialVal);
     } else {
       if (KBD.TimerIntHasHappened>2) {
         KBD.TimerIntHasHappened=0;
-        if (KBD.KbdState==KbdState_Idle) Kbd_StartToHost(state);
+        if (KBD.KbdState == KbdState_Idle) Kbd_StartToHost(state);
       };
     };
   };
@@ -129,14 +132,15 @@ static void MarkAsUpdated(ARMul_State *state, int end) {
 /*----------------------------------------------------------------------------*/
 /* Check to see if the area of memory has changed.                            */
 /* Returns true if there is any chance that the given area has changed        */
-static int QueryRamChange(ARMul_State *state,int offset, int len) {
+static int QueryRamChange(ARMul_State *state, unsigned int offset, int len) {
   unsigned int Vinit=MEMC.Vinit;
   unsigned int Vstart=MEMC.Vstart;
   unsigned int Vend=MEMC.Vend;
   unsigned int startblock,endblock,currentblock;
 
   /* Figure out if 'offset' starts between Vinit-Vend or Vstart-Vinit */
-  if ((offset)<(((Vend-Vinit)+1)*16)) {
+
+  if (offset < (((Vend-Vinit)+1)*16)) {
     /* Vinit-Vend */
     /* Now check to see if the whole buffer is in that area */
     if ((offset+len)>=(((Vend-Vinit)+1)*16)) {
@@ -170,7 +174,7 @@ static int QueryRamChange(ARMul_State *state,int offset, int len) {
 /* len bytes from the top left of the screen.  The routine takes into account
    all scrolling etc.                                                          */
 /* This routine may be burdened with undoing endianness                        */
-static void CopyScreenRAM(ARMul_State *state,int offset, int len, char *Buffer) {
+static void CopyScreenRAM(ARMul_State *state, unsigned int offset, int len, char *Buffer) {
   unsigned int Vinit=MEMC.Vinit;
   unsigned int Vstart=MEMC.Vstart;
   unsigned int Vend=MEMC.Vend;
@@ -330,14 +334,14 @@ static void RefreshDisplay_TrueColor_1bpp(ARMul_State *state) {
       for(x=0;x<VisibleDisplayWidth;x+=8) {
 	int xl = x+yp;
 	int pixel = Buffer[x>>3];
-	dibbmp[xl]=HD.pixelMap[pixel &1];
-	dibbmp[xl+1]=HD.pixelMap[(pixel>>1) &1];
-	dibbmp[xl+2]=HD.pixelMap[(pixel>>2) &1];
-	dibbmp[xl+3]=HD.pixelMap[(pixel>>3) &1];
-	dibbmp[xl+4]=HD.pixelMap[(pixel>>4) &1];
-	dibbmp[xl+5]=HD.pixelMap[(pixel>>5) &1];
-	dibbmp[xl+6]=HD.pixelMap[(pixel>>6) &1];
-	dibbmp[xl+7]=HD.pixelMap[(pixel>>7) &1];
+	dibbmp[xl]   = (unsigned short)HD.pixelMap[pixel &1];
+	dibbmp[xl+1] = (unsigned short)HD.pixelMap[(pixel>>1) &1];
+	dibbmp[xl+2] = (unsigned short)HD.pixelMap[(pixel>>2) &1];
+	dibbmp[xl+3] = (unsigned short)HD.pixelMap[(pixel>>3) &1];
+	dibbmp[xl+4] = (unsigned short)HD.pixelMap[(pixel>>4) &1];
+	dibbmp[xl+5] = (unsigned short)HD.pixelMap[(pixel>>5) &1];
+	dibbmp[xl+6] = (unsigned short)HD.pixelMap[(pixel>>6) &1];
+	dibbmp[xl+7] = (unsigned short)HD.pixelMap[(pixel>>7) &1];
       }; /* x */
     }; /* Refresh test */
   }; /* y */
@@ -387,10 +391,10 @@ static void RefreshDisplay_TrueColor_2bpp(ARMul_State *state) {
 	int pixs = yp + x;
         int pixel = Buffer[x>>2];
 
-	dibbmp[pixs  ]=HD.pixelMap[pixel      &3];
-	dibbmp[pixs+1]=HD.pixelMap[(pixel>>2) &3];
-	dibbmp[pixs+2]=HD.pixelMap[(pixel>>4) &3];
-	dibbmp[pixs+3]=HD.pixelMap[(pixel>>6) &3];
+	dibbmp[pixs  ] = (unsigned short)HD.pixelMap[pixel      &3];
+	dibbmp[pixs+1] = (unsigned short)HD.pixelMap[(pixel>>2) &3];
+	dibbmp[pixs+2] = (unsigned short)HD.pixelMap[(pixel>>4) &3];
+	dibbmp[pixs+3] = (unsigned short)HD.pixelMap[(pixel>>6) &3];
 
       }; /* x */
     }; /* Update test */
@@ -442,8 +446,9 @@ static void RefreshDisplay_TrueColor_4bpp(ARMul_State *state) {
       for(x=0;x<VisibleDisplayWidth;x+=2) {
 	int pixs = x + yp;
 	int pixel = Buffer[x>>1];
-	dibbmp[pixs]=HD.pixelMap[pixel &15];
-	dibbmp[pixs+1]=HD.pixelMap[(pixel>>4) &15];
+
+	dibbmp[pixs]     = (unsigned short)HD.pixelMap[pixel &15];
+	dibbmp[pixs + 1] = (unsigned short)HD.pixelMap[(pixel>>4) &15];
       }; /* x */
     }; /* Refresh test */
   }; /* y */
@@ -490,7 +495,8 @@ static void RefreshDisplay_TrueColor_8bpp(ARMul_State *state) {
 
 
       for(x=0;x<VisibleDisplayWidth;x++) {
-	dibbmp[x+yp]=HD.pixelMap[Buffer[x]];
+
+		dibbmp[x+yp] = (unsigned short)HD.pixelMap[Buffer[x]];
       }; /* X loop */
     }; /* Refresh test */
   }; /* y */
@@ -532,7 +538,7 @@ static void RefreshMouse(ARMul_State *state) {
 
         for(x=0;x<32;x++,ImgPtr++) {
 	    pix = ((tmp[x/16]>>((x & 15)*2)) & 3);
-	    if (pix) curbmp[x+(MonitorHeight-y)*32] = HD.cursorPixelMap[pix];
+	    if (pix) curbmp[x+(MonitorHeight-y)*32] = (unsigned short)HD.cursorPixelMap[pix];
 	    else curbmp[x+(MonitorHeight-y)*32] = dibbmp[rMouseX+x+(MonitorHeight-rMouseY-y)*MonitorWidth];
 //curbmp[x+(MonitorHeight-y)*32] = HD.cursorPixelMap[((tmp[x/16]>>((x & 15)*2)) & 3)];
         }; /* x */
@@ -693,7 +699,7 @@ printf("Mouse request! ------------------\n");
 getchar();
       KBD.MouseXToSend=KBD.MouseXCount;
       KBD.MouseYToSend=KBD.MouseYCount;
-      if (IOC_WriteKbdRx(state,KBD.MouseXToSend)!=-1) {
+      if (IOC_WriteKbdRx(state, (unsigned char)KBD.MouseXToSend)!=-1) {
         KBD.KbdState=KbdState_SentMouseByte1;
         KBD.HostCommand=0;
       };
@@ -717,7 +723,7 @@ getchar();
     for(loop=1;loop<KBD.BuffOcc;loop++)
       KBD.Buffer[loop-1]=KBD.Buffer[loop];
 
-    if (IOC_WriteKbdRx(state,(KBD.KeyUpNDown?0xd0:0xc0) | KBD.KeyRowToSend)!=-1) {
+    if (IOC_WriteKbdRx(state, (unsigned char)((KBD.KeyUpNDown ? 0xd0 : 0xc0) | KBD.KeyRowToSend))!=-1) {
       KBD.KbdState=KbdState_SentKeyByte1;
     };
     KBD.BuffOcc--;
@@ -731,7 +737,7 @@ getchar();
     KBD.MouseYToSend=KBD.MouseYCount;
     KBD.MouseXCount=0;
     KBD.MouseYCount=0;
-    if (IOC_WriteKbdRx(state,KBD.MouseXToSend)!=-1) {
+    if (IOC_WriteKbdRx(state, (unsigned char)KBD.MouseXToSend)!=-1) {
       KBD.KbdState=KbdState_SentMouseByte1;
     };
     return;
@@ -740,7 +746,7 @@ getchar();
 }; /* Kbd_StartToHost */
 
 /*-----------------------------------------------------------------------------*/
-/* Called when their is some data in the serial tx register on the IOC         */
+/* Called when there is some data in the serial tx register on the IOC         */
 static void Kbd_CodeFromHost(ARMul_State *state, unsigned char FromHost) {
 #ifdef DEBUG_KBD
   fprintf(stderr,"Kbd_CodeFromHost: FromHost=0x%x State=%d\n",FromHost,KBD.KbdState);
@@ -874,14 +880,14 @@ static void Kbd_CodeFromHost(ARMul_State *state, unsigned char FromHost) {
 #endif
               } else {
                 if (KBD.KbdState==KbdState_SentMouseByte1) {
-                  if (IOC_WriteKbdRx(state,KBD.MouseYToSend)==-1) {
+                  if (IOC_WriteKbdRx(state, (unsigned char)KBD.MouseYToSend)==-1) {
 #ifdef DEBUG_KBD
                     fprintf(stderr,"KBD: Couldn't send 2nd byte of mouse value - Kart full\n");
 #endif
                   };
                   KBD.KbdState=KbdState_SentMouseByte2;
                 } else {
-                  if (IOC_WriteKbdRx(state,(KBD.KeyUpNDown?0xd0:0xc0) | KBD.KeyColToSend)==-1) {
+                  if (IOC_WriteKbdRx(state, (unsigned char)((KBD.KeyUpNDown?0xd0:0xc0) | KBD.KeyColToSend))==-1) {
 #ifdef DEBUG_KBD
                     fprintf(stderr,"KBD: Couldn't send 2nd byte of key value - Kart full\n");
 #endif

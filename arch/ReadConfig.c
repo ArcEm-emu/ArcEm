@@ -58,7 +58,11 @@ int ReadConfigFile(ARMul_State *state) {
     for(tptr=(tmpbuf+strlen(tmpbuf));(tptr>=tmpbuf) && (*tptr<33);tptr--)
       *tptr='\0';
 
+#ifdef WIN32
+    if (strcmp(tmpbuf,"MFM disc") == 0) {
+#else
     if (strcasecmp(tmpbuf,"MFM disc") == 0) {
+#endif
       /* The format of these lines is 
         drive number (0..3)
         Number of cylinders

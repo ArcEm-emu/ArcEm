@@ -109,7 +109,7 @@ static int GetCurrentTimerVal(int toget) {
 void UpdateTimerRegisters(void) {
   long timeSinceLastUpdate=ARMul_Time-ioc.TimersLastUpdated;
   long scaledTimeSlip=timeSinceLastUpdate/TIMERSCALE;
-  long tmpL;
+  unsigned long tmpL;
 
   ioc.NextTimerTrigger = ARMul_Time + 8192; /* Doesn't let things wrap */
 
@@ -431,6 +431,8 @@ static ARMword PutVal_IOCReg(ARMul_State *state, int Register, ARMword data, int
               Register,data);
       break;
   }; /* Register */
+
+  return 0;
 }; /* PutVal_IOCReg */
 
 /*-----------------------------------------------------------------------------*/

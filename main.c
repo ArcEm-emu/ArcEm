@@ -17,9 +17,22 @@
 
 #include "dagstandalone.h"
 
+#ifdef WIN32
+
+#include <windows.h>
+
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd) {
+  dagstandalone();
+  return 0;
+}
+
+#else
+
 int main(int argc, char *argv[]) {
   dagstandalone();
-  return 1;
+  return 0;
 }
+
+#endif
 
 

@@ -15,8 +15,9 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. */
 
+#include <stdarg.h>
 #include <string.h>
-#include <ctype.h>
+//#include <ctype.h>
 
 #include "arch/Version.h"
 #include "armdefs.h"

@@ -9,7 +9,7 @@
 
 #include <signal.h>
 #include <stdio.h>
-#include <unistd.h>
+//#include <unistd.h>
 
 #include "../armopts.h"
 #include "../armdefs.h"
@@ -269,6 +269,7 @@ static int CheckAbortR(int address) {
           return 1;
       }; /* User mode */
   };
+  return 0;
 }; /* CheckAbortR */
 
 
@@ -354,7 +355,7 @@ unsigned ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
  FILE *ROMFile;
  unsigned int ROMWordNum,ROMWord;
  int PresPage;
- int index;
+ unsigned int index;
 
  PrivDPtr = (PrivateDataType *)malloc(sizeof(PrivateDataType));
  if (PrivDPtr == NULL) {
@@ -390,7 +391,8 @@ unsigned ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
   fprintf(stderr,"Couldn't allocate RAM space\n");
   exit(3);
  };
- for(index=0;index<(MEMC.RAMSize/4);index++)
+
+ for (index = 0; index < (MEMC.RAMSize / 4); index++)
    MEMC.PhysRamfuncs[index]=ARMul_Emulate_DecodeInstr;
 
  MEMC.ROMMapFlag=1; /* Map ROM to address 0 */
@@ -749,6 +751,7 @@ ARMword GetWord(ARMword address) {
 
       return(MEMC.PhysRam[address/4]);
   };
+  return 0;
 }; /* GetWord */
 
 /*-----------------------------------------------------------------------------*/
