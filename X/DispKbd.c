@@ -1101,7 +1101,7 @@ void DisplayKbd_Init(ARMul_State *state) {
 
 /*----------------------------------------------------------------------------*/
 static void BackingWindow_Event(ARMul_State *state,XEvent *e) {
-  fprintf(stderr,"BackingWindow_Event type=%d\n",e->type);
+    fprintf(stderr, "unwanted BackingWindow_Event type=%d\n", e->type);
 }; /* BackingWindow_Event */
 
 /*----------------------------------------------------------------------------*/
@@ -1580,7 +1580,7 @@ static void MainPane_Event(ARMul_State *state,XEvent *e) {
       break;
 
     default:
-      /*fprintf(stderr,"MainPane_Event type=%d\n",e->type); */
+      fprintf(stderr, "unwanted MainPane_Event type=%d\n", e->type);
       break;
   };
 }; /* MainPane_Event */
@@ -1618,7 +1618,7 @@ static void CursorPane_Event(ARMul_State *state,XEvent *e) {
       break;
 
     default:
-      fprintf(stderr,"CursorPane_Event type=%d\n",e->type);
+        fprintf(stderr, "unwanted CursorPane_Event type=%d\n", e->type);
       break;
   };
 }; /* CursorPane_Event */

@@ -131,7 +131,7 @@ void ControlPane_Event(ARMul_State *state,XEvent *e) {
       break;
 
     default:
-      fprintf(stderr,"ControlPane_Event type=%d\n",e->type);
+        fprintf(stderr, "unwanted ControlPane_Event type=%d\n", e->type);
       break;
   };
 }; /* ControlPane_Event */
