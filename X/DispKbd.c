@@ -993,6 +993,7 @@ static int DisplayKbd_XError(Display* disp, XErrorEvent *err)
 
 /*----------------------------------------------------------------------------*/
 void DisplayKbd_Init(ARMul_State *state) {
+    XSetWindowAttributes attr;
   XColor tmpcol;
   XGCValues gctmpval;
   int prescol;
@@ -1056,16 +1057,17 @@ void DisplayKbd_Init(ARMul_State *state) {
     }
 #endif
 
-  HD.BackingWindow=XCreateWindow(HD.disp,
-                                          HD.RootWindow,
-                                          500,500, /* Position on root */
-                                          MonitorWidth,MonitorHeight,
-                                          0, /* border width */
-                                          HD.visInfo.depth, /* depth */
-                                          InputOutput,
-                                          HD.visInfo.visual,
-                                          0, /* valuemask */
-                                          NULL /* attribs */);
+    HD.ArcsColormap = XCreateColormap(HD.disp, HD.RootWindow,
+        HD.visInfo.visual, HD.visInfo.class == PseudoColor ? AllocAll :
+        AllocNone);
+
+    attr.border_pixel = 0;
+    attr.colormap = HD.ArcsColormap;
+
+    HD.BackingWindow = XCreateWindow(HD.disp, HD.RootWindow, 500, 500,
+        MonitorWidth, MonitorHeight, 0, HD.visInfo.depth, InputOutput,
+        HD.visInfo.visual, CWBorderPixel | CWColormap, &attr);
+
   tmpptr = strdup("Arc emulator - Main display");
   if (XStringListToTextProperty(&tmpptr,1,&name)==0) {
     fprintf(stderr,"Could not allocate window name\n");
@@ -1163,8 +1165,6 @@ void DisplayKbd_Init(ARMul_State *state) {
   /* I think the main monitor window will need its own colourmap
      since we need at least 256 colours for 256 colour mode */
   if (HD.visInfo.class==PseudoColor) {
-    HD.ArcsColormap=XCreateColormap(HD.disp,HD.MainPane,DefaultVisual(HD.disp,HD.ScreenNum),
-                                    AllocAll);
 
     for(prescol=0;prescol<256;prescol++) {
       tmpcol.flags=DoRed|DoGreen|DoBlue;
@@ -1186,8 +1186,6 @@ void DisplayKbd_Init(ARMul_State *state) {
     /*HD.ArcsColormap=DefaultColormapOfScreen(HD.xScreen); */
   } else {
     /* TrueColor - the colourmap is actually a fixed thing */
-    HD.ArcsColormap=XCreateColormap(HD.disp,HD.MainPane,HD.visInfo.visual,
-                                    AllocNone);
     for(prescol=0;prescol<256;prescol++) {
       tmpcol.flags=DoRed|DoGreen|DoBlue;
       tmpcol.red=(prescol &1)?65535:0;
