@@ -19,7 +19,7 @@
 
 #define READSPACING 1
 #define WRITESPACING 1
-#define READADDRSTART 250
+#define READADDRSTART 50
 #define SEEKDELAY 1
 
 #define BIT_BUSY 1
