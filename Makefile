@@ -30,7 +30,7 @@ endif
 
 
 WARN = -Wall -Wno-return-type -Wno-unknown-pragmas -Wshadow -Wundef \
-   -Wpointer-arith -Wcast-align -Wwrite-strings -Wstrict-prototypes \
+   -Wpointer-arith -Wcast-align -Wstrict-prototypes \
    -Wmissing-prototypes -Wmissing-declarations -Wnested-externs \
    -Wcast-qual -Werror   
 
