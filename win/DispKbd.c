@@ -671,7 +671,7 @@ static void ProcessButton(ARMul_State *state) {
 
 void DisplayKbd_Init(ARMul_State *state)
 {
-  int index;
+  int block;
   HD.ImageData=malloc(4*(MonitorWidth+32)*MonitorHeight);
   if (HD.ImageData==NULL) {
     fprintf(stderr,"DisplayKbd_Init: Couldn't allocate image memory\n");
@@ -714,8 +714,8 @@ void DisplayKbd_Init(ARMul_State *state)
 
   /* Note the memory model sets its to 1 - note the ordering */
   /* i.e. it must be updated */
-  for(index=0;index<(512*1024)/UPDATEBLOCKSIZE;index++)
-    DC.UpdateFlags[index]=0;
+  for(block=0;block<(512*1024)/UPDATEBLOCKSIZE;block++)
+    DC.UpdateFlags[block]=0;
 
   ARMul_ScheduleEvent(&(enodes[xpollenode]),POLLGAP,DisplayKbd_XPoll);
   xpollenode^=1;
