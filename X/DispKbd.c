@@ -1280,7 +1280,6 @@ static void UpdateCursorPos(ARMul_State *state) {
   if (Height<1) Height=1;
   
   if (VertPos<0) VertPos=0;
-  if (HorizPos<0) HorizPos=0;
 
 #ifdef DEBUG_CURSOR
   fprintf(stderr,"UpdateCursorPos: Height=%d VertPos=%d HorizPos=%d\n",Height,VertPos,HorizPos);
