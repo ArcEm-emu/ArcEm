@@ -453,7 +453,7 @@ void ARMul_CDP(ARMul_State *state,ARMword instr)
 }
 
 /***************************************************************************\
-*      This function handles Undefined instructions, as CP isntruction      *
+*      This function handles Undefined instructions, as CP instruction      *
 \***************************************************************************/
 
 void ARMul_UndefInstr(ARMul_State *state,ARMword instr)

@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include "armdefs.h"
 #include "armemu.h"
+#include "armarc.h"
 
 extern ARMword *armflags;
 
@@ -143,6 +144,16 @@ ARMword ARMul_DoProg(ARMul_State *state) {
   return(pc);
 }
 
+
+static void SWI_Report(ARMul_State *state) {
+  ARMword pc = ARMul_GetPC(state);
+  ARMword value = GetWord(pc) & 0xfdffff;
+
+  if ((value & 0xfdffc0) == 0x41200) {
+    printf("%x\n", value);
+  }
+}
+
 /***************************************************************************\
 * This routine causes an Abort to occur, including selecting the correct    *
 * mode, register bank, and the saving of registers.  Call with the          *
@@ -183,6 +194,7 @@ void ARMul_Abort(ARMul_State *state, ARMword vector) {
        break;
  
     case ARMul_SWIV : /* Software Interrupt */
+       SWI_Report(state);
        state->Spsr[SVCBANK] = CPSR;
        SETABORT(IBIT,SVC26MODE);
        ARMul_CPSRAltered(state);

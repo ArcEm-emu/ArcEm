@@ -12,6 +12,9 @@
 /* Erm - this has to be 256....*/
 #define UPDATEBLOCKSIZE 256
 
+ARMword GetWord(ARMword address);
+
+
 typedef void (*ARMWriteFunc)(ARMul_State* state, ARMword addr, ARMword data, int bNw);
 typedef ARMword (*ARMReadFunc)(ARMul_State* state, ARMword addr);
 typedef void (*ARMEmuFunc)(ARMword instr, ARMword pc);

@@ -24,11 +24,11 @@
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd) {
   
-//  AllocConsole( );  
+  AllocConsole( );  
 
-//  freopen("CONIN$","rb",stdin);   
-//  freopen("CONOUT$","wb",stdout); 
-//  freopen("CONOUT$","wb",stderr); 
+  freopen("CONIN$","rb",stdin);   
+  freopen("CONOUT$","wb",stdout); 
+  freopen("CONOUT$","wb",stderr); 
 	
   dagstandalone();
   return 0;

@@ -33,7 +33,7 @@
 #define TYPE2_BIT_MULTISECTOR (1<<4)
 
 /* COMMENT this out for E-format discs */
-#define DOSDISC
+//#define DOSDISC
 
 #ifndef DOSDISC
 #define SECTORSIZE 1024
