@@ -166,7 +166,7 @@ static void CopyScreenRAM(ARMul_State *state,int offset, int len, char *Buffer) 
     /* Vinit-Vend */
     /* Now check to see if the whole buffer is in that area */
     if ((offset+len)>=(((Vend-Vinit)+1)*16)) {
-      /* Its split - so copy the bit upto Vend and then the rest */
+      /* It's split - so copy the bit upto Vend and then the rest */
       int tmplen;
 
       offset+=Vinit*16;
@@ -175,15 +175,15 @@ static void CopyScreenRAM(ARMul_State *state,int offset, int len, char *Buffer) 
       memcpy(Buffer,MEMC.PhysRam+(offset/sizeof(ARMword)),tmplen);
       memcpy(Buffer+tmplen,MEMC.PhysRam+((Vstart*16)/sizeof(ARMword)),len-tmplen);
     } else {
-      /* Its all their */
+      /* It's all there */
       /*fprintf(stderr,"CopyScreenRAM: All in one piece between Vinit..Vend offset=0x%x\n",offset); */
       offset+=Vinit*16;
       memcpy(Buffer,MEMC.PhysRam+(offset/sizeof(ARMword)),len);
     };
   } else {
     /* Vstart-Vinit */
-    /* its all in one place */
-    offset-=((Vend-Vinit)+1)*16; /* Thats the bit after Vinit */
+    /* It's all in one place */
+    offset-=((Vend-Vinit)+1)*16; /* That's the bit after Vinit */
     offset+=Vstart*16; /* so the bit we copy is somewhere after Vstart */
     /*fprintf(stderr,"CopyScreenRAM: All in one piece between Vstart..Vinit offset=0x%x\n",offset); */
     memcpy(Buffer,MEMC.PhysRam+(offset/sizeof(ARMword)),len);
@@ -191,7 +191,7 @@ static void CopyScreenRAM(ARMul_State *state,int offset, int len, char *Buffer) 
 
 #ifdef HOST_BIGENDIAN
 /* Hacking of the buffer now - OK - I know that I should do this neater */
-  for(offset=0;offset<len;offset+=4) {
+  for(offset = 0; offset < len; offset += 4) {
     unsigned char tmp;
 
     tmp=Buffer[offset];
