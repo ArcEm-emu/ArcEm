@@ -13,6 +13,8 @@ extern char arcemDir[256];
 #include "armarc.h"
 #include "i2c.h"
 
+#include "dbugsys.h"
+
 /*
 static const char *I2CStateNameTrans[] = {"Idle",
                                           "GotStart",
@@ -110,9 +112,7 @@ void I2C_Update(ARMul_State *state) {
       /* Yep - its a start or a stop - lets find out which! */
       if (I2C.OldDataState!=0) {
         /* Its a start */
-#ifdef DEBUG_I2C    
-        fprintf(stderr,"I2C Start!\n");
-#endif    
+        dbug_i2c("I2C Start!\n");
         I2C.state=I2CChipState_GotStart;
         I2C.IAmTransmitter=0;
         I2CDATAWRITE(1);
@@ -124,9 +124,7 @@ void I2C_Update(ARMul_State *state) {
         return;
       } else {
         /* Its a stop */
-#ifdef DEBUG_I2C    
-        fprintf(stderr,"I2C Stop!\n");
-#endif    
+        dbug_i2c("I2C Stop!\n");
         I2C.state=I2CChipState_Idle;
         I2C.IAmTransmitter=0;
         I2CDATAWRITE(1);
@@ -160,9 +158,7 @@ void I2C_Update(ARMul_State *state) {
             /* Ah - we have got the whole of the slave address - well except for the last
                bit we are going to ignore it; the last bit tells us rNw */
             I2C.LastrNw=I2C.DataBuffer & 1;
-#ifdef DEBUG_I2C      
-            fprintf(stderr,"I2C simulator got slave address 0x%x\n",I2C.DataBuffer);
-#endif      
+            dbug_i2c("I2C simulator got slave address 0x%x\n",I2C.DataBuffer);
             if ((I2C.DataBuffer & 0xfe)!=0xa0) {
               /* Hey - its a request for a different I2C peripheral - like an A500's timer
                  chip */
@@ -192,10 +188,8 @@ void I2C_Update(ARMul_State *state) {
             I2C.NumberOfBitsSoFar=0;
             I2C.state=I2CChipState_AckAfterWordAddr;
             I2CDATAWRITE(0);
-#ifdef DEBUG_I2C      
-            fprintf(stderr,"I2C simulator got word address 0x%x (=%d -64=%d) (pres content=0x%x)\n",I2C.WordAddress,
+            dbug_i2c("I2C simulator got word address 0x%x (=%d -64=%d) (pres content=0x%x)\n",I2C.WordAddress,
                            I2C.WordAddress,I2C.WordAddress-64,I2C.Data[I2C.WordAddress]);
-#endif      
           };
           break;
 
@@ -206,10 +200,8 @@ void I2C_Update(ARMul_State *state) {
           if (I2C.NumberOfBitsSoFar==8) {
             /* Got the data */
             I2C.Data[I2C.WordAddress]=I2C.DataBuffer;
-#ifdef DEBUG_I2C      
-            fprintf(stderr,"I2C simulator got write into address %d value=%d\n",I2C.WordAddress,
+            dbug_i2c("I2C simulator got write into address %d value=%d\n",I2C.WordAddress,
                     I2C.DataBuffer);
-#endif      
             SaveCMOS(state); /* RY */
             I2C.WordAddress++; /* Auto inc address */
             I2C.DataBuffer=0;
@@ -306,9 +298,7 @@ void I2C_Update(ARMul_State *state) {
             /* We've sent that byte - besides incrementing the address
                we have to figure out if the master wants to get another byte - if it does it will acknowledge
                correctly */
-#ifdef DEBUG_I2C       
-            fprintf(stderr,"I2C simulator - just finished sending data byte at address 0x%x\n",I2C.WordAddress);
-#endif      
+            dbug_i2c("I2C simulator - just finished sending data byte at address 0x%x\n",I2C.WordAddress);
             I2C.WordAddress++;
             I2C.DataBuffer=0;
             I2C.state=I2CChipState_AckAfterTransmitData;

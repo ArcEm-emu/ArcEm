@@ -7,6 +7,8 @@
 #include "../armopts.h"
 #include "../armdefs.h"
 
+#include "dbugsys.h"
+
 #include "armarc.h"
 #include "fdc1772.h"
 #include "hdc63463.h"
@@ -166,10 +168,8 @@ void UpdateTimerRegisters(void) {
    C0 is I2C clock, C1 is I2C data */
 static void IOC_ControlLinesUpdate(ARMul_State *state) {
 
-#ifdef IOC_TRACE
-  fprintf(stderr,"IOC_ControlLines: Clk=%d Data=%d\n",(ioc.ControlReg & 2)!=0,
+  dbug_ioc("IOC_ControlLines: Clk=%d Data=%d\n",(ioc.ControlReg & 2)!=0,
     ioc.ControlReg & 1);
-#endif
   I2C_Update(state);
 
 }; /* IOC_ControlLinesUpdate */
@@ -200,81 +200,59 @@ static ARMword GetWord_IOCReg(ARMul_State *state, int Register) {
   switch (Register) {
     case 0: /* Control reg */
       Result=ioc.ControlRegInputData & ioc.ControlReg;
-#ifdef IOC_TRACE
-      fprintf(stderr,"IOCRead: ControlReg=0x%x\n",(unsigned int)Result);
-#endif
+      dbug_ioc("IOCRead: ControlReg=0x%x\n",(unsigned int)Result);
       break;
 
     case 1: /* Serial Rx data */
       Result=ioc.SerialRxData;
       ioc.IRQStatus &=0x7fff; /* Clear receive reg full */
-#ifdef IOC_TRACE   
-      fprintf(stderr,"IOCRead: SerialRxData=0x%x\n",(unsigned int)Result);
-#endif   
+      dbug_ioc("IOCRead: SerialRxData=0x%x\n",(unsigned int)Result);
       IO_UpdateNirq();
       break;
 
     case 4: /* IRQ Status A */
       Result=ioc.IRQStatus & 0xff;
-#ifdef IOC_TRACE   
-      fprintf(stderr,"IOCRead: IRQStatusA=0x%x\n",(unsigned int)Result);
-#endif   
+      dbug_ioc("IOCRead: IRQStatusA=0x%x\n",(unsigned int)Result);
       break;
 
     case 5: /* IRQ Request A */
       Result=(ioc.IRQStatus & ioc.IRQMask) & 0xff;
-#ifdef IOC_TRACE   
-      fprintf(stderr,"IOCRead: IRQRequestA=0x%x\n",(unsigned int)Result);
-#endif   
+      dbug_ioc("IOCRead: IRQRequestA=0x%x\n",(unsigned int)Result);
       break;
 
     case 6: /* IRQ Mask A */
       Result=ioc.IRQMask & 0xff;
-#ifdef IOC_TRACE   
-      fprintf(stderr,"IOCRead: IRQMaskA=0x%x\n",(unsigned int)Result);
-#endif   
+      dbug_ioc("IOCRead: IRQMaskA=0x%x\n",(unsigned int)Result);
       break;
 
     case 8: /* IRQ Status B */
       Result=ioc.IRQStatus >> 8;
-#ifdef IOC_TRACE   
-      fprintf(stderr,"IOCRead: IRQStatusB=0x%x\n",(unsigned int)Result);
-#endif   
+      dbug_ioc("IOCRead: IRQStatusB=0x%x\n",(unsigned int)Result);
       break;
 
     case 9: /* IRQ Request B */
       Result=(ioc.IRQStatus & ioc.IRQMask) >> 8;
-#ifdef IOC_TRACE   
-      fprintf(stderr,"IOCRead: IRQRequestB=0x%x\n",(unsigned int)Result);
-#endif   
+      dbug_ioc("IOCRead: IRQRequestB=0x%x\n",(unsigned int)Result);
       break;
 
     case 0xa: /* IRQ Mask B */
       Result=ioc.IRQMask >> 8;
-#ifdef IOC_TRACE   
-      fprintf(stderr,"IOCRead: IRQMaskB=0x%x\n",(unsigned int)Result);
-#endif   
+      dbug_ioc("IOCRead: IRQMaskB=0x%x\n",(unsigned int)Result);
       break;
 
     case 0xc: /* FIRQ Status */
       Result=ioc.FIRQStatus;
-#ifdef IOC_TRACE   
-      fprintf(stderr,"IOCRead: FIRQStatus=0x%x\n",(unsigned int)Result);
-#endif   
+      dbug_ioc("IOCRead: FIRQStatus=0x%x\n",(unsigned int)Result);
       break;
 
     case 0xd: /* FIRQ Request */
       Result=ioc.FIRQStatus & ioc.FIRQMask;
-#ifdef IOC_TRACE   
-      fprintf(stderr,"IOCRead: FIRQRequest=0x%x\n",(unsigned int)Result);
-#endif   
+      dbug_ioc("IOCRead: FIRQRequest=0x%x\n",(unsigned int)Result);
       break;
 
     case 0xe: /* FIRQ mask */
       Result=ioc.FIRQMask;
-#ifdef IOC_TRACE   
       fprintf(stderr,"IOCRead: FIRQMask=0x%x\n",(unsigned int)Result);
-#endif   
       break;
 
     case 0x10: /* T0 count low */
@@ -283,11 +261,9 @@ static ARMword GetWord_IOCReg(ARMul_State *state, int Register) {
     case 0x1c: /* T3 count low */
       Timer=(Register & 0xf)/4;
       Result=ioc.TimerOutputLatch[Timer] & 0xff;
-#ifdef IOC_TRACE   
-      /*fprintf(stderr,"IOCRead: Timer %d low counter read=0x%x\n",Timer,(unsigned int)Result);
-      fprintf(stderr,"SPECIAL: R0=0x%x R1=0x%x R14=0x%x\n",statestr.Reg[0],
+      /*dbug_ioc("IOCRead: Timer %d low counter read=0x%x\n",Timer,(unsigned int)Result);
+      dbug_ioc("SPECIAL: R0=0x%x R1=0x%x R14=0x%x\n",statestr.Reg[0],
               statestr.Reg[1],statestr.Reg[14]); */
-#endif       
       break;
 
     case 0x11: /* T0 count high */
@@ -296,9 +272,7 @@ static ARMword GetWord_IOCReg(ARMul_State *state, int Register) {
     case 0x1a: /* T3 count high */
       Timer=(Register & 0xf)/4;
       Result=(ioc.TimerOutputLatch[Timer]/256) & 0xff;
-#ifdef IOC_TRACE   
-      fprintf(stderr,"IOCRead: Timer %d high counter read=0x%x\n",Timer,(unsigned int)Result);
-#endif   
+      dbug_ioc("IOCRead: Timer %d high counter read=0x%x\n",Timer,(unsigned int)Result);
       break;
 
     default:
@@ -318,24 +292,18 @@ static ARMword PutVal_IOCReg(ARMul_State *state, int Register, ARMword data, int
     case 0: /* Control reg */
       ioc.ControlReg = (data & 0x3f) | 0xc0; /* Needs more work */
       IOC_ControlLinesUpdate(state);
-#ifdef IOC_TRACE   
-      fprintf(stderr,"IOC Write: Control reg val=0x%x\n",(unsigned int)data);
-#endif   
+      dbug_ioc("IOC Write: Control reg val=0x%x\n",(unsigned int)data);
       break;
 
     case 1: /* Serial Tx Data */
       ioc.SerialTxData=data; /* Should tell the keyboard about this */
       ioc.IRQStatus &=0xbfff; /* Clear KART Tx empty */
-#ifdef IOC_TRACE   
-      fprintf(stderr,"IOC Write: Serial Tx Reg Val=0x%x\n",(unsigned int)data);
-#endif   
+      dbug_ioc("IOC Write: Serial Tx Reg Val=0x%x\n",(unsigned int)data);
       IO_UpdateNirq();
       break;
 
     case 5: /* IRQ Clear */
-#ifdef IOC_TRACE  
-      fprintf(stderr,"IOC Write: Clear Ints Val=0x%x\n",(unsigned int)data);
-#endif   
+      dbug_ioc("IOC Write: Clear Ints Val=0x%x\n",(unsigned int)data);
       /* Clear appropriate interrupts */
       data&=0x7c;
       ioc.IRQStatus&=~data;
@@ -348,27 +316,21 @@ static ARMword PutVal_IOCReg(ARMul_State *state, int Register, ARMword data, int
       ioc.IRQMask=ioc.IRQMask & 0xff00;
       ioc.IRQMask|=(data & 0xff);
       CalcCanTimerInt();
-#ifdef IOC_TRACE   
-      fprintf(stderr,"IOC Write: IRQ Mask A Val=0x%x\n",(unsigned int)data);
-#endif   
+      dbug_ioc("IOC Write: IRQ Mask A Val=0x%x\n",(unsigned int)data);
       IO_UpdateNirq();
       break;
       
     case 0xa: /* IRQ mask B */
       ioc.IRQMask&=0xff;
       ioc.IRQMask|=(data &0xff)<<8;
-#ifdef IOC_TRACE   
-      fprintf(stderr,"IOC Write: IRQ Mask B Val=0x%x\n",(unsigned int)data);
-#endif   
+      dbug_ioc("IOC Write: IRQ Mask B Val=0x%x\n",(unsigned int)data);
       IO_UpdateNirq();
       break;
       
     case 0xe: /* FIRQ Mask */
       ioc.FIRQMask=data;
       IO_UpdateNfiq();
-#ifdef IOC_TRACE   
-      fprintf(stderr,"IOC Write: FIRQ Mask Val=0x%x\n",(unsigned int)data);
-#endif   
+      dbug_ioc("IOC Write: FIRQ Mask Val=0x%x\n",(unsigned int)data);
       break;
       
     case 0x10: /* T0 latch low */
@@ -380,10 +342,8 @@ static ARMword PutVal_IOCReg(ARMul_State *state, int Register, ARMword data, int
       ioc.TimerInputLatch[Timer]&=0xff00;
       ioc.TimerInputLatch[Timer]|=data;
       UpdateTimerRegisters();
-#ifdef IOC_TRACE
-      fprintf(stderr,"IOC Write: Timer %d latch write low Val=0x%x InpLatch=0x%x\n",
+      dbug_ioc("IOC Write: Timer %d latch write low Val=0x%x InpLatch=0x%x\n",
               Timer,data,ioc.TimerInputLatch[Timer]);
-#endif
       break;
 
     case 0x11: /* T0 latch High */
@@ -395,10 +355,8 @@ static ARMword PutVal_IOCReg(ARMul_State *state, int Register, ARMword data, int
       ioc.TimerInputLatch[Timer]&=0xff;
       ioc.TimerInputLatch[Timer]|=data<<8;
       UpdateTimerRegisters();
-#ifdef IOC_TRACE
-      fprintf(stderr,"IOC Write: Timer %d latch write high Val=0x%x InpLatch=0x%x\n",
+      dbug_ioc("IOC Write: Timer %d latch write high Val=0x%x InpLatch=0x%x\n",
               Timer,data,ioc.TimerInputLatch[Timer]);
-#endif
       break;
 
     case 0x12: /* T0 Go */
@@ -409,10 +367,8 @@ static ARMword PutVal_IOCReg(ARMul_State *state, int Register, ARMword data, int
       UpdateTimerRegisters();
       ioc.TimerCount[Timer]= ioc.TimerInputLatch[Timer];
       UpdateTimerRegisters();
-#ifdef IOC_TRACE
-      fprintf(stderr,"IOC Write: Timer %d Go! Counter=0x%x\n",
+      dbug_ioc("IOC Write: Timer %d Go! Counter=0x%x\n",
               Timer,ioc.TimerCount[Timer]);
-#endif
       break;
 
     case 0x13: /* T0 Latch command */
@@ -421,8 +377,8 @@ static ARMword PutVal_IOCReg(ARMul_State *state, int Register, ARMword data, int
     case 0x1f: /* T3 Latch command */
       Timer=(Register & 0xf)/4;
       ioc.TimerOutputLatch[Timer]=GetCurrentTimerVal(Timer) & 0xffff;
-      /*fprintf(stderr,"(T%dLc)",Timer); */
-      /*fprintf(stderr,"IOC Write: Timer %d Latch command Output Latch=0x%x\n",
+      /*dbug_ioc("(T%dLc)",Timer); */
+      /*dbug_ioc("IOC Write: Timer %d Latch command Output Latch=0x%x\n",
         Timer, ioc.TimerOutputLatch[Timer]); */
       break;
 
@@ -461,43 +417,33 @@ ARMword GetWord_IO(ARMul_State *state, ARMword address) {
         break;
 
       case 2:
-#ifdef IOC_TRACE
-        fprintf(stderr,"Read from Econet register (addr=0x%x speed=0x%x offset=0x%x)\n",
+        dbug_ioc("Read from Econet register (addr=0x%x speed=0x%x offset=0x%x)\n",
                         (unsigned int)address,speed,offset);
-#endif
         break;
 
       case 3:
-#ifdef IOC_TRACE
-        fprintf(stderr,"Read from Serial port register (addr=0x%x speed=0x%x offset=0x%x)\n",
+        dbug_ioc("Read from Serial port register (addr=0x%x speed=0x%x offset=0x%x)\n",
                         (unsigned int)address,speed,offset);
-#endif
         break;
 
       case 4:
-#ifdef IOC_TRACE
-        fprintf(stderr,"Read from Internal expansion card (addr=0x%x speed=0x%x offset=0x%x)\n",
+        dbug_ioc("Read from Internal expansion card (addr=0x%x speed=0x%x offset=0x%x)\n",
                         (unsigned int)address,speed,offset);
-#endif
         break;
 
       case 5:
-        /*fprintf(stderr,"HDC read: address=0x%x speed=%d\n",address,speed); */
+        /*dbug_ioc("HDC read: address=0x%x speed=%d\n",address,speed); */
         return(HDC_Read(state,offset));
         break;
         
       case 6:
-#ifdef IOC_TRACE
-        fprintf(stderr,"Read from Bank 6 (addr=0x%x speed=0x%x offset=0x%x)\n",
+        dbug_ioc("Read from Bank 6 (addr=0x%x speed=0x%x offset=0x%x)\n",
                         (unsigned int)address,speed,offset);
-#endif
         break;
 
       case 7:
-#ifdef IOC_TRACE
-        fprintf(stderr,"Read from External expansion card (addr=0x%x speed=0x%x offset=0x%x)\n",
+        dbug_ioc("Read from External expansion card (addr=0x%x speed=0x%x offset=0x%x)\n",
                         (unsigned int)address,speed,offset);
-#endif
         break;
     }; /* Bank switch */
   }; /* Yep - IOC space */
@@ -537,23 +483,21 @@ void PutValIO(ARMul_State *state,ARMword address, ARMword data,int bNw) {
         FDC_Write(state,offset,data & 0xff,bNw);
         break;
 
-#ifdef IOC_TRACE
       case 2:
-        fprintf(stderr,"Write to Econet register (addr=0x%x speed=0x%x offset=0x%x data=0x%x %c\n",
+        dbug_ioc("Write to Econet register (addr=0x%x speed=0x%x offset=0x%x data=0x%x %c\n",
                         (unsigned int)address,speed,offset,(unsigned int)data,
                         isprint((data & 0xff))?data:32);
         break;
 
       case 3:
-        fprintf(stderr,"Write to Serial port register (addr=0x%x speed=0x%x offset=0x%x data=0x%x\n",
+        dbug_ioc("Write to Serial port register (addr=0x%x speed=0x%x offset=0x%x data=0x%x\n",
                         (unsigned int)address,speed,offset,(unsigned int)data);
         break;
 
       case 4:
-        fprintf(stderr,"Write to Internal expansion card (addr=0x%x speed=0x%x offset=0x%x data=0x%x\n",
+        dbug_ioc("Write to Internal expansion card (addr=0x%x speed=0x%x offset=0x%x data=0x%x\n",
                         (unsigned int)address,speed,offset,(unsigned int)data);
         break;
-#endif
 
       case 5:
         /* It's either Latch A/B, printer DATA  or the HDC */
@@ -568,24 +512,18 @@ void PutValIO(ARMul_State *state,ARMword address, ARMword data,int bNw) {
             break;
 
           case 0x10:
-#ifdef IOC_TRACE
-            fprintf(stderr,"Write to Printer data latch offset=0x%x data=0x%x\n",offset,(unsigned int)data);
-#endif
+            dbug_ioc("Write to Printer data latch offset=0x%x data=0x%x\n",offset,(unsigned int)data);
             break;
 
           case 0x18:
-#ifdef IOC_TRACE
-            fprintf(stderr,"Write to Latch B offset=0x%x data=0x%x\n",offset,(unsigned int)data);
-#endif
+            dbug_ioc("Write to Latch B offset=0x%x data=0x%x\n",offset,(unsigned int)data);
             ioc.LatchB=data & 0xff;
             FDC_LatchBChange(state);
             ioc.LatchBold=data & 0xff;
             break;
 
           case 0x40:
-#ifdef IOC_TRACE
-            fprintf(stderr,"Write to Latch A offset=0x%x data=0x%x\n",offset,(unsigned int)data);
-#endif
+            dbug_ioc("Write to Latch A offset=0x%x data=0x%x\n",offset,(unsigned int)data);
             ioc.LatchA=data & 0xff;
             FDC_LatchAChange(state);
             ioc.LatchAold=data & 0xff;
@@ -593,25 +531,21 @@ void PutValIO(ARMul_State *state,ARMword address, ARMword data,int bNw) {
 
 
           default:
-#ifdef IOC_TRACE
-            fprintf(stderr,"Writing to non-defined bank 5 address offset=0x%x data=0x%x\n",
+            dbug_ioc("Writing to non-defined bank 5 address offset=0x%x data=0x%x\n",
                     offset,(unsigned int)data);
-#endif
             break;
         };
         break;
         
-#ifdef IOC_TRACE
       case 6:
-        fprintf(stderr,"Write to Bank 6 (addr=0x%x speed=0x%x offset=0x%x data=0x%x\n",
+        dbug_ioc("Write to Bank 6 (addr=0x%x speed=0x%x offset=0x%x data=0x%x\n",
                         (unsigned int)address,speed,offset,(unsigned int)data);
         break;
 
       case 7:
-        fprintf(stderr,"Write to External expansion card (addr=0x%x speed=0x%x offset=0x%x data=0x%x\n",
+        dbug_ioc("Write to External expansion card (addr=0x%x speed=0x%x offset=0x%x data=0x%x\n",
                         (unsigned int)address,speed,offset,(unsigned int)data);
         break;
-#endif
     }; /* Bank switch */
   }; /* Yep - IOC space */
 }; /* PutValIO */

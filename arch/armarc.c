@@ -15,6 +15,8 @@
 #include "../armdefs.h"
 #include "../armrdi.h"
 
+#include "dbugsys.h"
+
 #include "armarc.h"
 #include "archio.h"
 #include "DispKbd.h"
@@ -239,9 +241,7 @@ static int CheckAbortR(int address) {
       /* OK - it's in logically mapped RAM */
       if (!FindPageTableEntry(address,&PageTabVal)) {
         MEMC.TmpPage=-1;
-#ifdef DEBUG
-        printf("ChecKAbortR at 0x%08x due to unmapped page\n",address);
-#endif
+        dbug("ChecKAbortR at 0x%08x due to unmapped page\n",address);
         return(0);
       };
 
@@ -259,9 +259,7 @@ static int CheckAbortR(int address) {
         /* Extract page protection level */
         if (PageTabVal & 512) {
           MEMC.TmpPage=-1;
-#ifdef DEBUG
-          printf("CheckAbortR at 0x%08x due to bad user mode PPL PageTabVal=0x%x\n",address,PageTabVal);
-#endif
+          dbug("CheckAbortR at 0x%08x due to bad user mode PPL PageTabVal=0x%x\n",address,PageTabVal);
           return(0);
         } else
           return 1;
@@ -288,9 +286,7 @@ static int CheckAbortW(int address) {
   /* OK - it's in logically mapped RAM */
   if (!FindPageTableEntry(address, &PageTabVal)) {
     MEMC.TmpPage=-1;
-#ifdef DEBUG
-    printf("Failed CheckAbortW at address0x%08x due to inability to find page\n",address);
-#endif
+    dbug("Failed CheckAbortW at address0x%08x due to inability to find page\n",address);
     return(0);
   };
 
@@ -351,9 +347,7 @@ unsigned ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
  
   statestr.MemDataPtr = (unsigned char *)PrivDPtr;
  
-#ifdef DEBUG
- fprintf(stderr,"Reading config file....\n");
-#endif
+ dbug("Reading config file....\n");
  ReadConfigFile(state);
 
  if (initmemsize) {
@@ -390,9 +384,7 @@ unsigned ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
  for (PresPage = 0; PresPage <128; PresPage++)
    MEMC.PageTable[PresPage]=0xffffffff;
 
-#ifdef DEBUG
- fprintf(stderr," Loading ROM....\n ");
-#endif
+ dbug(" Loading ROM....\n ");
 
 
 #ifdef __riscos__
@@ -448,9 +440,7 @@ unsigned ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
    MEMC.Romfuncs[ROMWordNum] = ARMul_Emulate_DecodeInstr;
  };
 
-#ifdef DEBUG
- fprintf(stderr," ..Done\n ");
-#endif
+ dbug(" ..Done\n ");
 
   IO_Init(state);
   DisplayKbd_Init(state);
@@ -497,9 +487,8 @@ ARMword ARMul_LoadWordS(ARMul_State *state,ARMword address) {
   if (CheckAbortR(address)) {
     ARMul_CLEARABORT;
   } else {
-#ifdef DEBUG
-   printf("ARMul_LoadWordS abort on address 0x%08x PC=0x%x R[15]=0x%x priv=%d osmode=%d mode=%d\n",address,statestr.pc,statestr.Reg[15],PRIVELIGED,OSMODE(state),statestr.Mode);
-#endif
+    dbug("ARMul_LoadWordS abort on address 0x%08x PC=0x%x R[15]=0x%x priv=%d osmode=%d mode=%d\n",
+         address, statestr.pc, statestr.Reg[15], PRIVILEGED, OSMODE(state), statestr.Mode);
     ARMul_DATAABORT(address);
     return(ARMul_ABORTWORD);
   };
@@ -519,9 +508,8 @@ ARMword ARMul_LoadWordN(ARMul_State *state,ARMword address)
   if (CheckAbortR(address)) {
     ARMul_CLEARABORT;
   } else {
-#ifdef DEBUG
-    printf("ARMul_LoadWordN abort on address 0x%08x PC=0x%x R[15]=0x%x priv=%d osmode=%d mode=%d\n",address,statestr.pc,statestr.Reg[15],PRIVELIGED,OSMODE(state),statestr.Mode);
-#endif
+    dbug("ARMul_LoadWordN abort on address 0x%08x PC=0x%x R[15]=0x%x priv=%d osmode=%d mode=%d\n",
+         address, statestr.pc, statestr.Reg[15], PRIVILEGED, OSMODE(state), statestr.Mode);
     ARMul_DATAABORT(address);
     return(ARMul_ABORTWORD);
   };
@@ -544,9 +532,7 @@ ARMword ARMul_LoadByte(ARMul_State *state,ARMword address) {
   if (CheckAbortR(address)) {
    ARMul_CLEARABORT;
   } else {
-#ifdef DEBUG
-    printf("ARMul_LoadByte abort on address 0x%08x PC=0x%x R[15]=0x%x priv=%d osmode=%d mode=%d\n",address,statestr.pc,statestr.Reg[15],PRIVELIGED,OSMODE(state),statestr.Mode);
-#endif
+    dbug("ARMul_LoadByte abort on address 0x%08x PC=0x%x R[15]=0x%x priv=%d osmode=%d mode=%d\n",address,statestr.pc,statestr.Reg[15],PRIVILEGED,OSMODE(state),statestr.Mode);
     ARMul_DATAABORT(address);
     return(ARMul_ABORTWORD);
   };
@@ -571,9 +557,7 @@ void ARMul_StoreWordS(ARMul_State *state,ARMword address, ARMword data)
   if (CheckAbortW(address)) {
     ARMul_CLEARABORT;
   } else {
-#ifdef DEBUG
-    printf("ARMul_StoreWordS abort on address 0x%08x PC=0x%x R[15]=0x%x priv=%d osmode=%d mode=%d\n",address,statestr.pc,statestr.Reg[15],PRIVELIGED,OSMODE(state),statestr.Mode);
-#endif
+    dbug("ARMul_StoreWordS abort on address 0x%08x PC=0x%x R[15]=0x%x priv=%d osmode=%d mode=%d\n",address,statestr.pc,statestr.Reg[15],PRIVILEGED,OSMODE(state),statestr.Mode);
     ARMul_DATAABORT(address);
     return;
   };
@@ -593,9 +577,7 @@ void ARMul_StoreWordN(ARMul_State *state, ARMword address, ARMword data)
   if (CheckAbortW(address)) {
     ARMul_CLEARABORT;
   } else {
-#ifdef DEBUG
-    printf("ARMul_StoreWordN abort on address 0x%08x PC=0x%x R[15]=0x%x priv=%d osmode=%d mode=%d\n",address,statestr.pc,statestr.Reg[15],PRIVELIGED,OSMODE(state),statestr.Mode);
-#endif
+    dbug("ARMul_StoreWordN abort on address 0x%08x PC=0x%x R[15]=0x%x priv=%d osmode=%d mode=%d\n",address,statestr.pc,statestr.Reg[15],PRIVILEGED,OSMODE(state),statestr.Mode);
     ARMul_DATAABORT(address);
     return;
   };
@@ -720,9 +702,7 @@ ARMword GetWord(ARMword address) {
       /* I used to think memory wrapped after the real RAM - but it doesn't */
       /* appear to */
       if  (address >= MEMC.RAMSize) {
-#ifdef DEBUG_MEMC
-        fprintf(stderr,"GetWord returning dead0bad - after PhysRam\n");
-#endif
+        dbug_memc("GetWord returning dead0bad - after PhysRam\n");
         return(0xdead0bad);
       };
 
@@ -736,9 +716,7 @@ ARMword GetWord(ARMword address) {
       /* I used to think memory wrapped after the real RAM - but it doesn't */
       /* appear to */
       if (address >= MEMC.RAMSize) {
-#ifdef DEBUG_MEMC
-        fprintf(stderr,"GetWord returning dead0bad - after PhysRam (from log ram)\n");
-#endif
+        dbug_memc("GetWord returning dead0bad - after PhysRam (from log ram)\n");
         return(0xdead0bad);
       };
 
@@ -797,9 +775,7 @@ static void PutVal(ARMul_State *state,ARMword address, ARMword data,
     RegNum = (address >> 17) & 7;
     RegVal = (address >> 2) & 0x7fff;
 
-#ifdef DEBUG_MEMC
-    fprintf(stderr,"Write to MEMC register: Reg=%d Val=0x%x\n",RegNum,RegVal);
-#endif
+    dbug_memc("Write to MEMC register: Reg=%d Val=0x%x\n",RegNum,RegVal);
 
     switch (RegNum) {
       case 0: /* Vinit */
@@ -822,29 +798,21 @@ static void PutVal(ARMul_State *state,ARMword address, ARMword data,
         MEMC.Sstart = RegVal;
         ioc.IRQStatus &= ~0x20; /* Take sound interrupt off */
         IO_UpdateNirq();
-#ifdef DEBUG_MEMC
-        fprintf(stderr,"Write to MEMC Sstart register\n");
-#endif
+        dbug_memc("Write to MEMC Sstart register\n");
         break;
 
       case 5: /* SendN */
         MEMC.SendN = RegVal;
-#ifdef DEBUG_MEMC
-        fprintf(stderr,"Write to MEMC Send register\n");
-#endif
+        dbug_memc("Write to MEMC Send register\n");
         break;
 
       case 6: /* Sptr */
-#ifdef DEBUG_MEMC
-        fprintf(stderr,"Write to MEMC Sptr register\n");
-#endif
+        dbug_memc("Write to MEMC Sptr register\n");
         MEMC.Sptr = RegVal; /* NO. Should just cause a sound buffer swap? */
         break;
 
       case 7: /* MEMC Control register */
-#ifdef DEBUG_MEMC
-        fprintf(stderr,"MEMC Control register set to 0x%x by PC=0x%x R[15]=0x%x\n",address,(unsigned int)statestr.pc,(unsigned int)statestr.Reg[15]);
-#endif
+        dbug_memc("MEMC Control register set to 0x%x by PC=0x%x R[15]=0x%x\n",address,(unsigned int)statestr.pc,(unsigned int)statestr.Reg[15]);
         MEMC.ControlReg = address;
         MEMC.PageSizeFlags = (MEMC.ControlReg & 12) >> 2;
         MEMC.OldAddress1 = -1;

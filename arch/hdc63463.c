@@ -17,6 +17,7 @@
 #include "archio.h"   
 #include "armarc.h"   
 #include "ControlPane.h"
+#include "dbugsys.h"
 #include "hdc63463.h"
 #include "fdc1772.h"
 
@@ -130,14 +131,10 @@ unsigned int HDC_Regular(ARMul_State *state) {
     case 0x40: /* Read data */
       if (HDC.DBufPtrs[HDC.CommandData.ReadData.NextDestBuffer ^1]>255) {
         ReadData_DoNextBufferFull(state);
-#ifdef DEBUG_DATA
-        fprintf(stderr,"HDC_Regular: Read data buffer full case\n");
-#endif
+        dbug_data("HDC_Regular: Read data buffer full case\n");
       } else {
         HDC.DelayCount=HDC.DelayLatch;
-#ifdef DEBUG_DATA
-        fprintf(stderr,"HDC_Regular: Read data buffer not full case\n");
-#endif
+        dbug_data("HDC_Regular: Read data buffer not full case\n");
       };
       break;
 
@@ -149,14 +146,10 @@ unsigned int HDC_Regular(ARMul_State *state) {
     case 0x87: /* Write data */
       if (HDC.DBufPtrs[HDC.CommandData.WriteData.CurrentSourceBuffer]>255) {
         WriteData_DoNextBufferFull(state);
-#ifdef DEBUG_DATA
-        fprintf(stderr,"HDC_Regular: Write data buffer full case\n");
-#endif
+        dbug_data("HDC_Regular: Write data buffer full case\n");
       } else {
         HDC.DelayCount=HDC.DelayLatch;
-#ifdef DEBUG_DATA
-        fprintf(stderr,"HDC_Regular: Write data buffer not full case\n");
-#endif
+        dbug_data("HDC_Regular: Write data buffer not full case\n");
       };
       break;
 
@@ -208,10 +201,8 @@ static void UpdateInterrupt(ARMul_State *state) {
   int mask=(HDC.CEDint?0:BIT_COMEND) | (HDC.SEDint?0:BIT_SEEKEND) |
            (HDC.DERint?0:BIT_DRIVEERR);
 
-#ifdef DEBUG_INTS
-  fprintf(stderr,"HDC-UpdateInterrupt mask=0x%x StatusReg=0x%x &=0x%x DREQ=%d\n",
+  dbug_ints("HDC-UpdateInterrupt mask=0x%x StatusReg=0x%x &=0x%x DREQ=%d\n",
                  mask,HDC.StatusReg,HDC.StatusReg & mask,HDC.DREQ);
-#endif
   if ((HDC.StatusReg & mask) || HDC.DREQ) {
     ioc.IRQStatus|=(1<<11);
   } else {
@@ -236,9 +227,7 @@ static void Clear_IntFlags(ARMul_State *state) {
 
 /*---------------------------------------------------------------------------*/
 static void HDC_DMAWrite(ARMul_State *state, int offset, int data) {
-#ifdef DEBUG_DMAWRITE
-  fprintf(stderr,"HDC DMA Write offset=0x%x data=0x%x r15=0x%x\n",offset,data,PCVAL);
-#endif
+  dbug_dmawrite("HDC DMA Write offset=0x%x data=0x%x r15=0x%x\n",offset,data,PCVAL);
 
   if (HDC.CurrentlyOpenDataBuffer==-1) {
     fprintf(stderr,"HDC_DMAWrite: DTR - to non-open data buffer\n");
@@ -262,9 +251,7 @@ static void HDC_DMAWrite(ARMul_State *state, int offset, int data) {
 
     HDC.DBufPtrs[db]=off;
 
-#ifdef DEBUG_DMAWRITE
-    fprintf(stderr,"HDC_DMAWrite: DTR to data buffer %d - got 0x%x\n",db,data);
-#endif
+    dbug_dmawrite("HDC_DMAWrite: DTR to data buffer %d - got 0x%x\n",db,data);
 
     if (off>254) {
       /* Just finished off a block - lets fire the next one off - but lets drop
@@ -281,14 +268,10 @@ static void HDC_DMAWrite(ARMul_State *state, int offset, int data) {
 static ARMword HDC_DMARead(ARMul_State *state, int offset) {
   int tmpres;
 
-#ifdef DEBUG_DMAREAD
-  fprintf(stderr,"HDC DMA Read offset=0x%x PCVAL=0x%x\n",offset,PCVAL);
-#endif
+  dbug_dmaread("HDC DMA Read offset=0x%x PCVAL=0x%x\n",offset,PCVAL);
 
   if (HDC.CurrentlyOpenDataBuffer==-1) {
-#ifdef DEBUG
-    fprintf(stderr,"HDC_DMARead: DTR - from non-open data buffer\n");
-#endif
+    dbug("HDC_DMARead: DTR - from non-open data buffer\n");
     return(0x5aa5);
   };
 
@@ -307,9 +290,7 @@ static ARMword HDC_DMARead(ARMul_State *state, int offset) {
 
     HDC.DBufPtrs[db]=off;
 
-#ifdef DEBUG_DMAREAD
-    fprintf(stderr,"HDC_DMARead: DTR - from data buffer %d - returning 0x%x\n",db,(unsigned int)tmpres);
-#endif
+    dbug_dmaread("HDC_DMARead: DTR - from data buffer %d - returning 0x%x\n",db,(unsigned int)tmpres);
 
     if (off>254) {
       /* Ooh - just finished reading a block - lets fire the next one off
@@ -374,9 +355,7 @@ static int GetParams(ARMul_State *state, const int NParams, ...) {
   };
 
   if ((int)HDC.PBPtr > NParams) {
-#ifdef DEBUG_DATA
-    fprintf(stderr,"HDC:GetParams - warning: Too many parameters passed to hdc\n");
-#endif
+    dbug_data("HDC:GetParams - warning: Too many parameters passed to hdc\n");
   };
 
   va_start(args,NParams);
@@ -422,25 +401,21 @@ static int SetFilePtr(ARMul_State *state,int drive,
 
   ptr=(((Cylinder*HDC.configshape[drive].NHeads)+head)*HDC.configshape[drive].NSectors + Sector)*HDC.configshape[drive].RecordLength;
 
-#ifdef DEBUG
-  fprintf(stderr,"HDC:SetFilePtr; drive=%d head=%d cylinder=%d sector=%d ptr=0x%lx\n",
+  dbug("HDC:SetFilePtr; drive=%d head=%d cylinder=%d sector=%d ptr=0x%lx\n",
           drive,head,Cylinder,Sector,ptr);
-  fprintf(stderr,"                NHeads=%d NSectors=%d RecordLength=%d\n",
+  dbug("                NHeads=%d NSectors=%d RecordLength=%d\n",
                  HDC.configshape[drive].NHeads,HDC.configshape[drive].NSectors,HDC.configshape[drive].RecordLength);
-#endif
 
   if (HDC.HardFile[drive]==NULL) {
 #ifdef DEBUG_DATA
-    fprintf(stderr,"HDC:SetFilePtr - file handle was NULL\n");
+    dbug_data("HDC:SetFilePtr - file handle was NULL\n");
 #endif
     Cause_Error(state,ERR_NRY);
     return(0);
   };
 
   if (fseek(HDC.HardFile[drive],ptr,SEEK_SET)!=0) {
-#ifdef DEBUG_DATA
-    fprintf(stderr,"HDC:SetFilePtr - fseek failed (errno=%d)\n",errno);
-#endif
+    dbug_data("HDC:SetFilePtr - fseek failed (errno=%d)\n",errno);
     Cause_Error(state,ERR_NRY);
     return(0);
   };
@@ -459,9 +434,7 @@ static int SetFilePtr(ARMul_State *state,int drive,
 static void CheckDriveCommand(ARMul_State *state) {
   unsigned char Must00,US;
 
-#ifdef DEBUG
-  fprintf(stderr,"HDC New command: Check drive\n");
-#endif
+  dbug("HDC New command: Check drive\n");
 
   if (!GetParams(state,2,&Must00,&US)) {
     fprintf(stderr,"Check drive command exiting due to insufficient parameters\n");
@@ -476,9 +449,7 @@ static void CheckDriveCommand(ARMul_State *state) {
     ReturnParams(state,2,0,HDC.SSB);
     return;
   };
-#ifdef DEBUG
-  fprintf(stderr," Check drive on US=%d\n",US);
-#endif
+  dbug(" Check drive on US=%d\n",US);
 
   US&=3; /* only 2 bits of drive select */
 
@@ -507,9 +478,7 @@ static void SpecifyCommand(ARMul_State *state) {
   unsigned char OM0,OM1,OM2,CUL,TONCH,NCL,NH,NS,SHRL,
                 GPL1,GPL2,GPL3,LCCH,LCCL,PCCH,PCCL;
 
-#ifdef DEBUG
-  fprintf(stderr,"HDC New command: Specify\n");
-#endif
+  dbug("HDC New command: Specify\n");
 
   /*kill(getpid(),SIGUSR2); *//* Turn on tracing ! */
 
@@ -523,8 +492,7 @@ static void SpecifyCommand(ARMul_State *state) {
 
   /* Print the values out in a structured format for debugging */
 
-#ifdef DEBUG
-  fprintf(stderr,"HDC-Specify: OM0=%s,%s,%s,padp=%d,%s,crcp=%d,crci=%d acor=%d\n",
+  dbug("HDC-Specify: OM0=%s,%s,%s,padp=%d,%s,crcp=%d,crci=%d acor=%d\n",
                                (OM0 & 128)?"hard sector":"soft  sector",
                                (OM0 & 64)?"NRZ":"Modified FM",
                                (OM0 & 32)?"SMD":"ST506",
@@ -534,7 +502,7 @@ static void SpecifyCommand(ARMul_State *state) {
                                (OM0 & 2)?1:0,
                                (OM0 & 1));
 
-  fprintf(stderr,"             OM1=%s,%s,CED=%s,SED=%s,DER=%s,AMEX=%d,%s\n",
+  dbug("             OM1=%s,%s,CED=%s,SED=%s,DER=%s,AMEX=%d,%s\n",
                                (OM1 & 128)?"DMA":"PIO",
                                (OM1 & 64)?"Burst mode":"Cycle steal mode",
                                (OM1 & 32)?"no int":"int",
@@ -542,7 +510,6 @@ static void SpecifyCommand(ARMul_State *state) {
                                (OM1 & 8)?"no int":"int",
                                (OM1 & 2)?1:0,
                                (OM1 & 1)?"Parallel seek":"Normal seek");
-#endif
 
   if (OM0 & 32) {
     fprintf(stderr,"HDC-Specify: SMD not supported\n");
@@ -552,19 +519,17 @@ static void SpecifyCommand(ARMul_State *state) {
     return;
   };
 
-#ifdef DEBUG
-  fprintf(stderr,"            OM2=Step pulse low width=%d\n",OM2);
-  fprintf(stderr,"            CUL=0x%x\n",CUL);
-  fprintf(stderr,"            Read/write time over=%d\n",TONCH>>2);
-  fprintf(stderr,"            Number of cylinders=%d\n",NCL | ((TONCH & 3)<<8));
-  fprintf(stderr,"            Number of heads=%d\n",NH);
-  fprintf(stderr,"            Number of sectors/track=%d\n",NS);
-  fprintf(stderr,"            Step pulse high width=%d\n",SHRL>>3);
-  fprintf(stderr,"            Record length code=%d\n",SHRL & 7);
-  fprintf(stderr,"            GPL1..3=%d,%d,%d\n",GPL1,GPL2,GPL3);
-  fprintf(stderr,"            Low current cylinder=%d\n",LCCL | (LCCH << 8));
-  fprintf(stderr,"            Precompensation cylinder=%d\n",PCCL | (PCCH << 8));
-#endif
+  dbug("            OM2=Step pulse low width=%d\n",OM2);
+  dbug("            CUL=0x%x\n",CUL);
+  dbug("            Read/write time over=%d\n",TONCH>>2);
+  dbug("            Number of cylinders=%d\n",NCL | ((TONCH & 3)<<8));
+  dbug("            Number of heads=%d\n",NH);
+  dbug("            Number of sectors/track=%d\n",NS);
+  dbug("            Step pulse high width=%d\n",SHRL>>3);
+  dbug("            Record length code=%d\n",SHRL & 7);
+  dbug("            GPL1..3=%d,%d,%d\n",GPL1,GPL2,GPL3);
+  dbug("            Low current cylinder=%d\n",LCCL | (LCCH << 8));
+  dbug("            Precompensation cylinder=%d\n",PCCL | (PCCH << 8));
 
   /* Lets figure out what all those parameters meant */
   HDC.dmaNpio=(OM1 & 128)?1:0;
@@ -630,9 +595,7 @@ static void SeekCommand(ARMul_State *state) {
   unsigned char Must00,US,NCAH,NCAL;
   unsigned int DesiredCylinder;
 
-#ifdef DEBUG
-  fprintf(stderr,"HDC New command: Seek\n");
-#endif
+  dbug("HDC New command: Seek\n");
 
   if (!HDC.HaveGotSpecify) {
     fprintf(stderr,"HDC - Seek - not had specify\n");
@@ -684,9 +647,7 @@ static void SeekCommand(ARMul_State *state) {
   /* OK - move the head - very quickly at the moment :-) */
   HDC.Track[US]=DesiredCylinder;
 
-#ifdef DEBUG
-  fprintf(stderr,"HDC:SeekCommand to cylinder %d on drive %d\n",DesiredCylinder,US);
-#endif
+  dbug("HDC:SeekCommand to cylinder %d on drive %d\n",DesiredCylinder,US);
 
   /* OK - return all fine */
   ReturnParams(state,4,0,HDC.SSB,US,HDC.CUL);
@@ -705,9 +666,7 @@ static void SeekCommand(ARMul_State *state) {
 static void RecalibrateCommand(ARMul_State *state) {
   unsigned char Must00,US;
 
-#ifdef DEBUG
-  fprintf(stderr,"HDC New command: Recalibrate\n");
-#endif
+  dbug("HDC New command: Recalibrate\n");
 
   if (!HDC.HaveGotSpecify) {
     fprintf(stderr,"HDC - Recalibrate - not had specify\n");
@@ -771,8 +730,8 @@ static void ReadData_DoNextBufferFull(ARMul_State *state) {
     fread(HDC.DBufs[HDC.CommandData.ReadData.NextDestBuffer],
           1,256,HDC.HardFile[HDC.CommandData.ReadData.US]);
 
+    dbug_data("HDC:ReadData_DoNextBufferFull - just got\n");
 #ifdef DEBUG_DATA
-    fprintf(stderr,"HDC:ReadData_DoNextBufferFull - just got\n");
     Dump256Block(HDC.DBufs[HDC.CommandData.ReadData.NextDestBuffer]);
 #endif
 
@@ -793,9 +752,7 @@ static void ReadDataCommand(ARMul_State *state) {
   static int exitcount=0;
 #endif
 
-#ifdef DEBUG
-  fprintf(stderr,"HDC New command: Read data\n");
-#endif
+  dbug("HDC New command: Read data\n");
 
 #ifdef BENCHMARKEXIT
   /* TMP for timing!! */
@@ -835,10 +792,8 @@ static void ReadDataCommand(ARMul_State *state) {
   HDC.CommandData.ReadData.SCNTH=SCNTH;
   HDC.CommandData.ReadData.SCNTL=SCNTL;
 
-#ifdef DEBUG
-  fprintf(stderr,"HDC:ReadData command: US=%d PHA=%d LCA=%d LDA=%d LSA=%d SCNT=%d\n",
+  dbug("HDC:ReadData command: US=%d PHA=%d LCA=%d LDA=%d LSA=%d SCNT=%d\n",
           US,PHA,LCAL | (LCAH<<8),LHA,LSA,SCNTL | (SCNTH<<8));
-#endif
 
   /* Couldn't set file ptr - off the end? */
   if (!SetFilePtr(state,US,PHA,LCAL | (LCAH<<8),LSA)) {
@@ -868,9 +823,7 @@ static void ReadDataCommand(ARMul_State *state) {
 static void WriteDataCommand(ARMul_State *state) {
   unsigned char US,PHA,LCAH,LCAL,LHA,LSA,SCNTH,SCNTL;
 
-#ifdef DEBUG
-  fprintf(stderr,"HDC New command: Write data\n");
-#endif
+  dbug("HDC New command: Write data\n");
 
   if (!HDC.HaveGotSpecify) {
     fprintf(stderr,"HDC - Write data - not had specify\n");
@@ -901,10 +854,8 @@ static void WriteDataCommand(ARMul_State *state) {
   HDC.CommandData.WriteData.SCNTH=SCNTH;
   HDC.CommandData.WriteData.SCNTL=SCNTL;
 
-#ifdef DEBUG
-  fprintf(stderr,"HDC:WriteData command: US=%d PHA=%d LCA=%d LDA=%d LSA=%d SCNT=%d\n",
+  dbug("HDC:WriteData command: US=%d PHA=%d LCA=%d LDA=%d LSA=%d SCNT=%d\n",
           US,PHA,LCAL | (LCAH<<8),LHA,LSA,SCNTL | (SCNTH<<8));
-#endif
 
   /* Couldn't set file ptr - off the end? */
   if (!SetFilePtr(state,US,PHA,LCAL | (LCAH<<8),LSA)) {
@@ -937,8 +888,8 @@ static void WriteData_DoNextBufferFull(ARMul_State *state) {
   HDC.CurrentlyOpenDataBuffer^=1;
   HDC.DBufPtrs[HDC.CurrentlyOpenDataBuffer]=0;
 
+  dbug_data("HDC:WriteData_DoNextBufferFull - about to throw the following to disc:\n");
 #ifdef DEBUG_DATA
-  fprintf(stderr,"HDC:WriteData_DoNextBufferFull - about to throw the following to disc:\n");
   Dump256Block(HDC.DBufs[HDC.CommandData.WriteData.CurrentSourceBuffer]);
 #endif
 
@@ -978,9 +929,7 @@ static void WriteData_DoNextBufferFull(ARMul_State *state) {
 static void CompareDataCommand(ARMul_State *state) {
   unsigned char US,PHA,LCAH,LCAL,LHA,LSA,SCNTH,SCNTL;
 
-#ifdef DEBUG
-  fprintf(stderr,"HDC New command: Compare data\n");
-#endif
+  dbug("HDC New command: Compare data\n");
 
   if (!HDC.HaveGotSpecify) {
     fprintf(stderr,"HDC - Compare data - not had specify\n");
@@ -1044,8 +993,8 @@ static void CompareData_DoNextBufferFull(ARMul_State *state) {
   HDC.CurrentlyOpenDataBuffer^=1;
   HDC.DBufPtrs[HDC.CurrentlyOpenDataBuffer]=0;
 
+  dbug_data("HDC:CompareData_DoNextBufferFull - about to check the following against the disc:\n");
 #ifdef DEBUG_DATA
-  fprintf(stderr,"HDC:CompareData_DoNextBufferFull - about to check the following against the disc:\n");
   Dump256Block(HDC.DBufs[HDC.CommandData.WriteData.CurrentSourceBuffer]);
 #endif
 
@@ -1155,9 +1104,7 @@ static void CheckData_DoNextBufferFull(ARMul_State *state) {
 static void CheckDataCommand(ARMul_State *state) {
   unsigned char US,PHA,LCAH,LCAL,LHA,LSA,SCNTH,SCNTL;
 
-#ifdef DEBUG
-  fprintf(stderr,"HDC New command: Check data\n");
-#endif
+  dbug("HDC New command: Check data\n");
 
   if (!HDC.HaveGotSpecify) {
     fprintf(stderr,"HDC - Check data - not had specify\n");
@@ -1188,10 +1135,8 @@ static void CheckDataCommand(ARMul_State *state) {
   HDC.CommandData.ReadData.SCNTH=SCNTH;
   HDC.CommandData.ReadData.SCNTL=SCNTL;
 
-#ifdef DEBUG
-  fprintf(stderr,"HDC:CheckData command: US=%d PHA=%d LCA=%d LDA=%d LSA=%d SCNT=%d\n",
+  dbug("HDC:CheckData command: US=%d PHA=%d LCA=%d LDA=%d LSA=%d SCNT=%d\n",
           US,PHA,LCAL | (LCAH<<8),LHA,LSA,SCNTL | (SCNTH<<8));
-#endif
 
   /* Couldn't set file ptr - off the end? */
   if (!SetFilePtr(state,US,PHA,LCAL | (LCAH<<8),LSA)) {
@@ -1223,9 +1168,7 @@ static void CheckDataCommand(ARMul_State *state) {
 static void WriteFormatCommand(ARMul_State *state) {
   unsigned char US,PHA,SCNTH,SCNTL;
 
-#ifdef DEBUG
-  fprintf(stderr,"HDC New command: Write format\n");
-#endif
+  dbug("HDC New command: Write format\n");
 
   if (!HDC.HaveGotSpecify) {
     fprintf(stderr,"HDC - write format - not had specify\n");
@@ -1252,9 +1195,7 @@ static void WriteFormatCommand(ARMul_State *state) {
   HDC.CommandData.WriteFormat.SCNTH=SCNTH;
   HDC.CommandData.WriteFormat.SCNTL=SCNTL;
 
-#ifdef DEBUG
-  fprintf(stderr,"HDC:WriteFormat command: US=%d PHA=%d SCNT=%d\n",US,PHA,SCNTL | (SCNTH<<8));
-#endif
+  dbug("HDC:WriteFormat command: US=%d PHA=%d SCNT=%d\n",US,PHA,SCNTL | (SCNTH<<8));
 
   /* Couldn't set file ptr - hmm - I hope this doesn't cause problems for formatting arbitary parts of the disc */
   if (!SetFilePtr(state,US,PHA,HDC.Track[US],0)) {
@@ -1331,9 +1272,7 @@ static void WriteFormat_DoNextBufferFull(ARMul_State *state) {
 static void HDC_StartNewCommand(ARMul_State *state, int data) {
   if ((data & 0xf0)==0xf0) {
     /* Abort command */
-#ifdef DEBUG
-    fprintf(stderr,"HDC: Abort command\n");
-#endif
+    dbug("HDC: Abort command\n");
     Clear_IntFlags(state);
     Cause_CED(state); 
     /*HDC.StatusReg|=BIT_BUSY; */
@@ -1347,9 +1286,7 @@ static void HDC_StartNewCommand(ARMul_State *state, int data) {
 
   /* 'recall */
   if (data==0x8) {
-#ifdef DEBUG
-    fprintf(stderr,"HDC: Recall command\n");
-#endif
+    dbug("HDC: Recall command\n");
     HDC.LastCommand=-1;
     HDC.PBPtr=0;
     HDC.StatusReg&=~(BIT_BUSY | BIT_ABNEND | BIT_COMPARAMREJECT);
@@ -1373,16 +1310,12 @@ static void HDC_StartNewCommand(ARMul_State *state, int data) {
 
   switch (data) {
     case 0x10:
-#ifdef DEBUG
-      fprintf(stderr,"HDC enable polling - !!!!!not supported!!!!!\n");
-#endif
+      dbug("HDC enable polling - !!!!!not supported!!!!!\n");
       HDC.StatusReg&=~BIT_COMPARAMREJECT;
       break;
 
     case 0x18:
-#ifdef DEBUG
-      fprintf(stderr,"HDC disable polling - !!!!!not supported!!!!!\n");
-#endif
+      dbug("HDC disable polling - !!!!!not supported!!!!!\n");
       HDC.StatusReg&=~BIT_COMPARAMREJECT;
       break;
 
@@ -1436,9 +1369,7 @@ void HDC_Write(ARMul_State *state, int offset, int data) {
   int rs=offset & 4;
   int rNw=offset & 32;
 
-#ifdef DEBUG
-  fprintf(stderr,"HDC_Write: offset=0x%x data=0x%x\n",offset,data);
-#endif
+  dbug("HDC_Write: offset=0x%x data=0x%x\n",offset,data);
   if (offset & 0x8) {
     HDC_DMAWrite(state,offset,data);
   } else {
@@ -1463,9 +1394,7 @@ void HDC_Write(ARMul_State *state, int offset, int data) {
         }; /* Not rejecting parameters */
         return;
       } else {
-#ifdef DEBUG
-        fprintf(stderr,"HDC Write offset=0x%x data=0x%x\n",offset,data);
-#endif
+        dbug("HDC Write offset=0x%x data=0x%x\n",offset,data);
 
         if (HDC.CurrentlyOpenDataBuffer==-1) {
           fprintf(stderr,"HDC_Write: DTR - to non-open data buffer\n");
@@ -1489,9 +1418,7 @@ void HDC_Write(ARMul_State *state, int offset, int data) {
 
           HDC.DBufPtrs[db]=off;
 
-#ifdef DEBUG
-          fprintf(stderr,"HDC_Write: DTR to data buffer %d - got 0x%x\n",db,data);
-#endif
+          dbug("HDC_Write: DTR to data buffer %d - got 0x%x\n",db,data);
 
           if (off>254) {
             /* Just finished off a block - lets fire the next one off - but lets drop
@@ -1504,9 +1431,7 @@ void HDC_Write(ARMul_State *state, int offset, int data) {
         }; /* buffer not full at first */
       }; /* write data */
     } else {
-#ifdef DEBUG
-      fprintf(stderr,"HDC_Write: Command reg = 0x%x pc=0x%x\n",data,(unsigned int)(PCVAL));
-#endif
+      dbug("HDC_Write: Command reg = 0x%x pc=0x%x\n",data,(unsigned int)(PCVAL));
       if (!(HDC.StatusReg & BIT_BUSY)) {
         HDC_StartNewCommand(state,data);
       };
@@ -1522,9 +1447,7 @@ ARMword HDC_Read(ARMul_State *state, int offset) {
   int rs=offset & 4;
   int rNw=offset & 32;
 
-#ifdef DEBUG
-  fprintf(stderr,"HDC_Read: offset=0x%x\n",offset);
-#endif
+  dbug("HDC_Read: offset=0x%x\n",offset);
 
   if (offset & 0x8) {
     return(HDC_DMARead(state,offset));
@@ -1532,9 +1455,7 @@ ARMword HDC_Read(ARMul_State *state, int offset) {
 
   /* Read of HDC registers */
   if (!rNw) {
-#ifdef DEBUG
-    fprintf(stderr,"HDC_Read: Read but address means write\n");
-#endif
+    dbug("HDC_Read: Read but address means write\n");
     return(0xff);
   };
 
@@ -1553,25 +1474,19 @@ ARMword HDC_Read(ARMul_State *state, int offset) {
         /*fprintf(stderr,"HDC_Read: DTR - from param buffer - 0x%x\n",tmpres);*/
         return(tmpres);
       } else {
-#ifdef DEBUG
-        fprintf(stderr,"HDC_Read: DTR - from parameter buffer - but read past end!\n");
-#endif
+        dbug("HDC_Read: DTR - from parameter buffer - but read past end!\n");
         return(0xa55a);
       };
     } else {
       /* One of the data buffers */
       if (HDC.CurrentlyOpenDataBuffer==-1) {
-#ifdef DEBUG
-        fprintf(stderr,"HDC_Read: DTR - from non-open data buffer\n");
-#endif
+        dbug("HDC_Read: DTR - from non-open data buffer\n");
         return(0x5a);
       };
 
       if (HDC.DBufPtrs[HDC.CurrentlyOpenDataBuffer]>254) {
-#ifdef DEBUG
-        fprintf(stderr,"HDC_Read: DTR - from data buffer %d - off end!\n",
+        dbug("HDC_Read: DTR - from data buffer %d - off end!\n",
                 HDC.CurrentlyOpenDataBuffer);
-#endif
         HDC.DREQ=0;
         UpdateInterrupt(state);
         return(0x1223);
@@ -1598,9 +1513,7 @@ ARMword HDC_Read(ARMul_State *state, int offset) {
     }; /* Data buffer or Param buffer ? */
   } else {
     /* Should I copy the command register in here? */
-#ifdef DEBUG
-    fprintf(stderr,"HDC_Read: Status (=0x%x) (PC=0x%x)\n",HDC.StatusReg<<8,(unsigned int)(PCVAL));
-#endif
+    dbug("HDC_Read: Status (=0x%x) (PC=0x%x)\n",HDC.StatusReg<<8,(unsigned int)(PCVAL));
     return(HDC.StatusReg<<8);
   };
 }; /* HDC_Read */
