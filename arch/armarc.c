@@ -24,6 +24,10 @@
 #include "Version.h"
 
 
+#ifdef MACOSX
+#include <unistd.h>
+#endif
+
 #ifdef __riscos__
 #include "kernel.h"
 #include "swis.h"
@@ -416,7 +420,11 @@ unsigned ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
  }
 #else
 #ifdef MACOSX
- if (ROMFile = fopen("/tmp/ROM", "rb"), ROMFile == NULL) {
+ {
+     char* homedir = getenv("HOME");
+     chdir(homedir);
+ }
+ if (ROMFile = fopen("arcem/ROM", "rb"), ROMFile == NULL) {
 #else
  if (ROMFile = fopen("ROM", "rb"), ROMFile == NULL) {
 #endif

@@ -5,6 +5,10 @@
 #include "../armopts.h"
 #include "../armdefs.h"
 
+#ifdef MACOSX
+#include <unistd.h>
+#endif
+
 #include "armarc.h"
 #include "i2c.h"
 
@@ -60,7 +64,11 @@ static void SaveCMOS(ARMul_State *state) {
   }
 #else
 #ifdef MACOSX
-  OutFile = fopen("/tmp/hexcmos","w");
+  {
+      char* homedir = getenv("HOME");
+      chdir(homedir);
+      OutFile = fopen("arcem/hexcmos","w");
+  }
 #else
   OutFile = fopen("hexcmos","w");
 #endif
@@ -327,7 +335,11 @@ static void SetUpCMOS(ARMul_State *state) {
   InFile = fopen("<ArcEm$Dir>.hexcmos", "r");
 #else
 #ifdef MACOSX
-  InFile = fopen("/tmp/hexcmos", "r");
+  {
+      char* homedir = getenv("HOME");
+      chdir(homedir);
+      InFile = fopen("arcem/hexcmos", "r");
+  }
 #else
   InFile = fopen("hexcmos", "r");
 #endif
