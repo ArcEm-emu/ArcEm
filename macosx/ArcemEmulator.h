@@ -34,9 +34,10 @@
 
 
 @interface ArcemEmulator : NSObject {
-
+    NSAutoreleasePool *pool;
 }
 - (void)threadStart:(id)anObject;  // Where the thread is launched
+- (void)threadKill;
 
 
 @end

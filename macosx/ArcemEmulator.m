@@ -70,7 +70,7 @@ void updateDisplay(int x, int y, int width, int height, int yield)
     rect.size.width = width;
     rect.size.height = height;
     
-    [disp setNeedsDisplayInRect: rect];
+    [disp setNeedsScaledDisplayInRect: rect];
     
     if (yield)
         sched_yield();
@@ -88,7 +88,7 @@ void updateDisplay(int x, int y, int width, int height, int yield)
     NSArray *params = anObject;
     NSMutableData *screen, *cursor;
     
-    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+    pool = [[NSAutoreleasePool alloc] init];
 
     disp = [params objectAtIndex: 0];
     screen = [params objectAtIndex: 1];
@@ -103,7 +103,16 @@ void updateDisplay(int x, int y, int width, int height, int yield)
     [pool release];
     [NSThread exit];
 
-    return;  
+    return;
+}
+
+/*------------------------------------------------------------------------------
+ * threadKill
+ */
+- (void)threadKill
+{
+    [pool release];
+    [NSThread exit];
 }
 
 @end

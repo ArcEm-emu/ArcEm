@@ -78,6 +78,8 @@
 - (IBAction)menuDoubleX:(id)sender;
 - (IBAction)menuDoubleY:(id)sender;
 
+- (IBAction)menuReset:(id)sender;
+
 - (void)applicationHide:(NSNotification*)aNotification;
 
 - (void)openPanelDidEnd: (NSOpenPanel *)openPanel

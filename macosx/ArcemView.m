@@ -23,6 +23,7 @@
 
 #import "ArcemView.h"
 #import "macarcem.h"
+#import "PreferenceController.h"
 #include <ApplicationServices/ApplicationServices.h>
 #import <pthread.h>
 
@@ -125,6 +126,8 @@ extern int rMouseHeight;
         nXScale = nYScale = 1;
         fXScale = fYScale = 1.0;
         bXScale = bYScale = NO;
+
+        // Note: we can't geet prefs yet as the controller init hasn't finished yet
     }
 
     return self;
@@ -156,7 +159,26 @@ extern int rMouseHeight;
     recttag = [self addTrackingRect: [self bounds]
                               owner: self
                            userData: NULL
-                       assumeInside: YES];    
+                       assumeInside: YES];
+
+
+    [self prefsUpdated];
+}
+
+
+/*------------------------------------------------------------------------------
+ * setNeedsScaledDisplayInRect - should be called on the view rather than
+ *                               setNeedsDisplayInRect when we need to conside
+ *                               the scaling.
+ */
+- (void)setNeedsScaledDisplayInRect: (NSRect)rect
+{
+    rect.origin.x *= fXScale;
+    rect.origin.y *= fYScale;
+    rect.size.width *= fXScale;
+    rect.size.height *= fYScale;
+
+    [self setNeedsDisplayInRect: rect];
 }
 
 
@@ -437,18 +459,25 @@ extern int rMouseHeight;
 - (void)mouseDown: (NSEvent *)theEvent
 {
     int button;
-
+    
     // Whoa! Only bother then we're in capture mode
     if (!captureMouse)
         return;
 
     // Work out which mouse button it should be
-    if (keyState[55])
-        button = 0x02;
-    else if (keyState[58])
-        button = 0x01;
+    if (mouseEmulation)
+    {
+        if (keyState[adjustModifier])
+            button = 0x02;
+        else if (keyState[menuModifier])
+            button = 0x01;
+        else
+            button = 0x00;
+    }
     else
+    {
         button = 0x00;
+    }
 
     // Record the button press in the mouse event queue
     MOUSE_EVENT(button);
@@ -472,6 +501,58 @@ extern int rMouseHeight;
     MOUSE_EVENT(nMouse | 0x80);
 
     //NSLog(@"nMouse up = %d\n", nButton);
+}
+
+
+/*------------------------------------------------------------------------------
+ * rightMouseDown - Should be adjust, if we're not using mouse emulation 
+ */
+- (void)rightMouseDown: (NSEvent *)theEvent
+{
+    NSLog(@"Right mouse button down\n");
+    
+    if (mouseEmulation)
+        return;
+
+    MOUSE_EVENT(0x2);
+}
+
+
+/*------------------------------------------------------------------------------
+ * rightMouseUp - Inverse of rightMouseDown!
+ */
+- (void)rightMouseUp: (NSEvent *)theEvent
+{
+    if (mouseEmulation)
+        return;
+
+    MOUSE_EVENT(0x82);
+}
+
+
+/*------------------------------------------------------------------------------
+ * otherMouseDown - Should be menu, if we're not using mouse emulation
+ */
+- (void)otherMouseDown: (NSEvent *)theEvent
+{
+    NSLog(@"Other mouse down\n");
+    
+    if (mouseEmulation)
+        return;
+
+    MOUSE_EVENT(0x1);
+}
+
+
+/*------------------------------------------------------------------------------
+ * otherMouseUp - Inverse of rightMouseDown!
+ */
+- (void)otherMouseUp: (NSEvent *)theEvent
+{
+    if (mouseEmulation)
+        return;
+
+    MOUSE_EVENT(0x81);
 }
 
 
@@ -548,7 +629,23 @@ extern int rMouseHeight;
 
     // Force a resize
     [self resizeToWidth: dispFrame.size.width
-               toHeight: dispFrame.size.height];    
+               toHeight: dispFrame.size.height];
+}
+
+
+/*------------------------------------------------------------------------------
+ * prefsUpdated - Called by the preference panel when the user updates
+ *                something we should know about. Also called by the view
+ *                constructor.
+ */
+- (void)prefsUpdated
+{
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    
+    // Get some of the prefs
+    mouseEmulation = [defaults boolForKey: AEUseMouseEmulationKey];
+    adjustModifier = [defaults integerForKey: AEAdjustModifierKey];
+    menuModifier = [defaults integerForKey: AEMenuModifierKey];
 }
 
 

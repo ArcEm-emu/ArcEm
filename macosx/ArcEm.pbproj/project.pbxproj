@@ -13,8 +13,8 @@
 		};
 		080E96DDFE201D6D7F000001 = {
 			children = (
-				D157A5F10291D6F801123251,
 				D157A5F20291D6F801123251,
+				D157A5F10291D6F801123251,
 				D157A5F50291D94401123251,
 				D157A5F60291D94401123251,
 				D157A5F90291DA6C01123251,
@@ -198,6 +198,7 @@
 				089C165CFE840E0CC02AAC07,
 				D1CA0AAF029C4D9401D1F43F,
 				D1E92BDF02A5470B01D1F43F,
+				D19819E202CA867701D1F43F,
 			);
 			isa = PBXGroup;
 			name = Resources;
@@ -338,6 +339,7 @@
 				D1CA0AB0029C4D9401D1F43F,
 				D1E92BE002A5470B01D1F43F,
 				D1E0FA0902B41B0301D1F43F,
+				D19819E402CA867701D1F43F,
 			);
 			isa = PBXResourcesBuildPhase;
 		};
@@ -506,6 +508,27 @@
 		};
 		D167869F029D98DC01D1F43F = {
 			fileRef = D167869D029D98DC01D1F43F;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D19819E202CA867701D1F43F = {
+			children = (
+				D19819E302CA867701D1F43F,
+			);
+			isa = PBXVariantGroup;
+			name = Preferences.nib;
+			path = "";
+			refType = 4;
+		};
+		D19819E302CA867701D1F43F = {
+			isa = PBXFileReference;
+			name = English;
+			path = English.lproj/Preferences.nib;
+			refType = 4;
+		};
+		D19819E402CA867701D1F43F = {
+			fileRef = D19819E202CA867701D1F43F;
 			isa = PBXBuildFile;
 			settings = {
 			};

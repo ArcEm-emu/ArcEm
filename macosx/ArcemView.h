@@ -48,6 +48,9 @@
     BOOL bXScale, bYScale;
     float fXScale, fYScale;
     int nXScale, nYScale;
+
+    BOOL mouseEmulation;
+    int adjustModifier, menuModifier;
 }
 - (void)setBitmapsWithScreen: (NSBitmapImageRep *)si
                   withCursor: (NSBitmapImageRep *)ci;
@@ -57,5 +60,7 @@
 - (void)removeMouseLock;
 - (void)toggleXScale;
 - (void)toggleYScale;
+- (void)prefsUpdated;
+- (void)setNeedsScaledDisplayInRect: (NSRect)rect;
 
 @end

@@ -24,6 +24,7 @@
 #import "ArcemController.h"
 #import "PreferenceController.h"
 #import "ArcemView.h"
+#import "KeyTable.h"
 
 #import "arch/armarc.h"
 #import "arch/fdc1772.h"
@@ -39,6 +40,7 @@
 {
     if (self = [super init])
     {
+        NSMutableDictionary *defaultValues;
         
         // Create the screen bitmap and image
         screenBmp = [[NSMutableData alloc] initWithLength: 800 * 600 * 3];
@@ -76,6 +78,21 @@
 
         bFullScreen = NO;
         preferenceController = nil;
+
+        // Defaults
+        defaultValues = [NSMutableDictionary dictionary];
+
+        // ...
+        [defaultValues setObject: [NSNumber numberWithBool: YES]
+                          forKey: AEUseMouseEmulationKey];
+        [defaultValues setObject: [NSNumber numberWithInt: VK_ALT]
+                          forKey: AEMenuModifierKey];
+        [defaultValues setObject: [NSNumber numberWithInt: VK_COMMAND]
+                          forKey: AEAdjustModifierKey];
+        [defaultValues setObject: [NSString stringWithCString: "/Users/michael/arcem"]
+                          forKey: AEDirectoryKey];
+
+        [[NSUserDefaults standardUserDefaults] registerDefaults: defaultValues];
     }
     
     return self;
@@ -83,14 +100,11 @@
 
 
 /*------------------------------------------------------------------------------
- * awakeFromNib - called when the window has been created. Now is the time to
- *                set up display related stuff. I also use this as an excuse to
- *                create the emulator thread.
+ * createEmulatorThread
  */
-- (void)awakeFromNib
+- (void)createEmulatorThread
 {
     NSArray *params;
-    int i;
 
     // Create the thread for the enumlator to run in
     emuThread = [[ArcemEmulator alloc] init];
@@ -106,7 +120,30 @@
     // Pass the images to the view
     [arcemView setBitmapsWithScreen: screenImg
                          withCursor: cursorImg];
-    
+
+}
+
+
+/*------------------------------------------------------------------------------
+ * destroyEmulatorThread
+ */
+- (void)destroyEmulatorThread
+{
+    [emuThread threadKill];
+}
+
+/*------------------------------------------------------------------------------
+ * awakeFromNib - called when the window has been created. Now is the time to
+ *                set up display related stuff. I also use this as an excuse to
+ *                create the emulator thread.
+ */
+- (void)awakeFromNib
+{
+    int i;
+
+    // Create an initial emulator thread
+    [self createEmulatorThread];
+
     // Bring that window to the front
     [[arcemView window] makeKeyAndOrderFront: self];
     [[arcemView window] makeFirstResponder: arcemView];
@@ -195,9 +232,10 @@
  */
 - (IBAction)showPreferencePanel:(id)sender
 {
-    if (preferenceController != nil)
+    if (preferenceController == nil)
     {
         preferenceController = [[PreferenceController alloc] init];
+        [preferenceController setView: arcemView];
     }
     [preferenceController showWindow: self];
 }
@@ -418,8 +456,8 @@
 
 
 /*------------------------------------------------------------------------------
-*
-*/
+ *
+ */
 - (IBAction)menuDoubleY:(id)sender
 {
     [arcemView toggleYScale];
@@ -432,10 +470,22 @@
 
 
 /*------------------------------------------------------------------------------
+ * menuReset - kill the current emulator thread and restart it.
+ */
+- (IBAction)menuReset:(id)sender
+{
+    [self destroyEmulatorThread];
+
+    [self createEmulatorThread];
+}
+
+
+/*------------------------------------------------------------------------------
  * destructor - 
  */
 - (void)dealloc
 {
+
     [preferenceController release];
     
     if (screenPlanes)
@@ -446,6 +496,8 @@
     [cursorBmp release];
     [screenImg release];
     [cursorImg release];
+
+    [super dealloc];
 }
 
 @end
