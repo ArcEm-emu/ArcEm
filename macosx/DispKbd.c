@@ -676,6 +676,10 @@ static void RefreshMouse(ARMul_State *state) {
   memptr=MEMC.Cinit*16;
   height=(VIDC.Vert_CursorEnd-VIDC.Vert_CursorStart)+1;
   ImgPtr=(unsigned short *) HD.CursorImageData;
+  // Although technically the cursor can be the entire screen height, practically we limit it to
+  // 32 pixels
+  if (height > 32)
+      height = 32;
   for(y=0;y<height;y++,memptr+=8,offset+=8) {
     if (offset<512*1024) {
       ARMword tmp[2];
@@ -696,7 +700,7 @@ static void RefreshMouse(ARMul_State *state) {
                 cursorbmp[loc] = GETRED(pic);
                 cursorbmp[loc + 1] = GETGREEN(pic);
                 cursorbmp[loc + 2] = GETBLUE(pic);
-                cursorbmp[loc + 3] = 0xff;
+                cursorbmp[loc + 3] = 0xff;                
             }
             else
             {

@@ -83,6 +83,7 @@ extern int rMouseY;
 extern int rMouseHeight;
 
 #define MAX_SCREEN_HEIGHT 600
+#define CURSOR_HEIGHT 32
 
 @implementation ArcemView
 
@@ -141,7 +142,7 @@ extern int rMouseHeight;
     screenImage = [[NSImage alloc] initWithSize: size1];
 
     size2.width = 32.0;
-    size2.height = SCREEN_HEIGHT;
+    size2.height = CURSOR_HEIGHT;
     cursorImage = [[NSImage alloc] initWithSize: size2];
 
     [screenImage addRepresentation: si];
@@ -178,10 +179,10 @@ extern int rMouseHeight;
     r.origin.x = bounds.origin.x + (rMouseX * nXScale) - 1;
     r.origin.y = bounds.origin.y + (bounds.size.height - ((rMouseY + rMouseHeight) * nYScale)) + 1;
     
-    bounds.size.width = 32;
-    bounds.size.height = rMouseHeight;
-    bounds.origin.x = 0;
-    bounds.origin.y = 600 - rMouseHeight;
+    bounds.size.width = 32.0;
+    bounds.size.height = (float)rMouseHeight;
+    bounds.origin.x = 0.0;
+    bounds.origin.y = (float)(CURSOR_HEIGHT - rMouseHeight);
     
     if (cursorImage)
     {
@@ -363,7 +364,7 @@ extern int rMouseHeight;
     int c = [theEvent keyCode];
     
     keyState[c] = (keyState[c] == 0) ? 1 : 0;
-    NSLog(@"set %d to %d\n", c, keyState[c]);
+    //NSLog(@"set %d to %d\n", c, keyState[c]);
 
     KEY_EVENT(c, keyState[c] == 1 ? 0 : 1);
 
@@ -422,6 +423,7 @@ extern int rMouseHeight;
         nMouseX += x;
         nMouseY -= y;
     }
+    [NSThread sleepUntilDate: [[NSDate date] addTimeInterval: 0.00000001]];
 }
 
 

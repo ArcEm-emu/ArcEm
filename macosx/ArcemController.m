@@ -28,6 +28,8 @@
 #import "arch/armarc.h"
 #import "arch/fdc1772.h"
 
+#define CURSOR_HEIGHT 600
+
 @implementation ArcemController
 
 /*------------------------------------------------------------------------------
@@ -56,14 +58,14 @@
                                                           bitsPerPixel: 24];
 
         // Create the cursor bitmap and image
-        cursorBmp = [[NSMutableData alloc] initWithLength: 32 * 600 * 4];
+        cursorBmp = [[NSMutableData alloc] initWithLength: 32 * 32 * 4];
         cursorPlanes = (unsigned char**)malloc(sizeof(char*) * 2);
         cursorPlanes[0] = [cursorBmp mutableBytes];
         cursorPlanes[1] = NULL;
-        memset(cursorPlanes[0], 0, 32 * 600 * 4);
+        memset(cursorPlanes[0], 0, 32 * 32 * 4);
         cursorImg = [[NSBitmapImageRep alloc] initWithBitmapDataPlanes: cursorPlanes
                                                             pixelsWide: 32
-                                                            pixelsHigh: 600
+                                                            pixelsHigh: 32
                                                          bitsPerSample: 8
                                                        samplesPerPixel: 4
                                                               hasAlpha: YES

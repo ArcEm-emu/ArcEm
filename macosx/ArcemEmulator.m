@@ -68,6 +68,7 @@ void updateDisplay(int x, int y, int width, int height)
     
     //[disp setNeedsDisplay: YES];
     [disp setNeedsDisplayInRect: rect];
+    //[NSThread sleepUntilDate: [[NSDate date] addTimeInterval: 0.00000001]];
 }
 
 
