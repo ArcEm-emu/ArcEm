@@ -228,9 +228,11 @@ void FDC_LatchAChange(ARMul_State *state) {
     }; /* Difference if */
   }; /* bit loop */
 
-  /* Redraw floppy LEDs if necessary */
-  if (diffmask & 0xf)
-    ControlPane_RedrawLeds(state);
+    if (diffmask & 0xf && FDC.leds_changed) {
+        (*FDC.leds_changed)(~ioc.LatchA & 0xf);
+    }
+
+    return;
 }; /* FDC_LatchAChange */
 
 /*--------------------------------------------------------------------------*/
@@ -846,6 +848,7 @@ void FDC_Init(ARMul_State *state) {
   FDC.LastCommand=0xd0; /* force interrupt - but actuall not doing */
   FDC.Direction=1;
   FDC.CurrentDisc=0;
+    FDC.leds_changed = NULL;
   FDC.Sector_ReadAddr = format->sector_base;
 
 #ifndef MACOSX

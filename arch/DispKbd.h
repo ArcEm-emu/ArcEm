@@ -129,6 +129,9 @@ typedef struct {
     int MouseXCount,MouseYCount;
     int KeyColToSend,KeyRowToSend,KeyUpNDown;
     int Leds;
+        /* The bottom three bits of leds holds their current state.  If
+         * the bit is set the LED should be emitting. */
+        void (*leds_changed)(int leds);
 
     /* Double buffering - update the others while sending this */
     int MouseXToSend,MouseYToSend; 

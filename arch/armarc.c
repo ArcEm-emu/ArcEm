@@ -473,9 +473,8 @@ unsigned ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
  fprintf(stderr," ..Done\n ");
 #endif
 
- DisplayKbd_Init(state);
-
- IO_Init(state);
+    IO_Init(state);
+    DisplayKbd_Init(state);
 
  PRIVD->irqflags = 0;
  PRIVD->fiqflags = 0;

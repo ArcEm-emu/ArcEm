@@ -22,6 +22,9 @@ struct FDCStruct{
 #ifdef MACOSX
   char* driveFiles[4];  // In MAE, we use *real* filenames for disks
 #endif
+    /* The bottom four bits of leds holds their current state.  If the
+     * bit is set the LED should be emitting. */
+    void (*leds_changed)(int leds);
 };
 
 ARMword FDC_Read(ARMul_State *state, ARMword offset);

@@ -129,7 +129,12 @@ enum {
 };
 typedef unsigned char arch_key_id;
 
+/* ------------------------------------------------------------------ */
+
 /* Tell the Archimedes that key `kid' has changed state, this includes
  * mouse buttons. */
 void keyboard_key_changed(struct arch_keyboard *kb, arch_key_id kid,
     int up);
+
+void Kbd_StartToHost(ARMul_State *state);
+void Kbd_CodeFromHost(ARMul_State *state, unsigned char FromHost);

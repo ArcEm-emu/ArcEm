@@ -26,6 +26,9 @@
 #define HD HOSTDISPLAY
 #define DC DISPLAYCONTROL
 
+static void draw_keyboard_leds(int leds);
+static void draw_floppy_leds(int leds);
+
 /*-----------------------------------------------------------------------------*/
 static void TextAt(ARMul_State *state, const char *Text, int x, int y) {
   XDrawImageString(HD.disp,HD.ControlPane,HD.ControlPaneGC,x,y,
@@ -56,11 +59,12 @@ static int TextCenteredH(ARMul_State *state, const char *Text, int ty,int lx,int
 }; /* TextCenteredH */
 
 /*----------------------------------------------------------------------------*/
-static void DoLED(ARMul_State *state, const char *Text,int On,int ty, int lx) {
+static void DoLED(const char *Text, int On, int ty, int lx)
+{
   XSetBackground(HD.disp,HD.ControlPaneGC,HD.OffWhite.pixel);
   XSetForeground(HD.disp,HD.ControlPaneGC,HD.Black.pixel);
 
-  TextAt(state,Text,lx+LEDWIDTH+2,ty);
+    TextAt(NULL, Text, lx + LEDWIDTH + 2, ty);
 
   XSetForeground(HD.disp,HD.ControlPaneGC,HD.Black.pixel);
   XSetFillStyle(HD.disp,HD.ControlPaneGC,FillSolid);
@@ -72,23 +76,6 @@ static void DoLED(ARMul_State *state, const char *Text,int On,int ty, int lx) {
   XFillArc(HD.disp,HD.ControlPane,HD.ControlPaneGC,lx+2,ty+6-(LEDHEIGHT+4),LEDWIDTH-4,(LEDHEIGHT-4),
            0,360*64);
 }; /* DoLED */
-
-/*----------------------------------------------------------------------------*/
-void ControlPane_RedrawLeds(ARMul_State *state) {
-  int Drive;
-  char Temp[32];
-
-  DoLED(state,"Caps Lock",KBD.Leds & 1,LEDTOPS,0);
-  DoLED(state,"Num Lock",KBD.Leds & 2,LEDTOPS,90);
-  DoLED(state,"Scroll Lock",KBD.Leds & 4,LEDTOPS,180);
-
-  for(Drive=3;Drive>=0;Drive--) {
-    sprintf(Temp,"Floppy %d",Drive);
-
-    DoLED(state,Temp,!(ioc.LatchA & (1<<Drive)),LEDTOPS,290+Drive*80);
-  };
-
-}; /* DoAllLEDs */
 
 /*-----------------------------------------------------------------------------*/
 static void ControlPane_Redraw(ARMul_State *state,XExposeEvent *e) {
@@ -109,8 +96,8 @@ static void ControlPane_Redraw(ARMul_State *state,XExposeEvent *e) {
     y = TextCenteredH(state, "Type `q' to quit.", y, 0, CTRLPANEWIDTH);
 
   y+=2;
-  ControlPane_RedrawLeds(state);
-
+    draw_keyboard_leds(KBD.Leds);
+    draw_floppy_leds(~ioc.LatchA & 0xf);
 }; /* ControlPane_Redraw */
 
 /*----------------------------------------------------------------------------*/
@@ -177,5 +164,35 @@ void ControlPane_Init(ARMul_State *state) {
     XSelectInput(HD.disp, HD.ControlPane, KeyPressMask | ExposureMask);
 
   XMapWindow(HD.disp,HD.ControlPane);
+
+    KBD.leds_changed = draw_keyboard_leds;
+    FDC.leds_changed = draw_floppy_leds;
+
+    return;
 }; /* ControlPane_Init */
 
+/*----------------------------------------------------------------------------*/
+
+static void draw_keyboard_leds(int leds)
+{
+    DoLED("Caps Lock", leds & 1, LEDTOPS, 0);
+    DoLED("Num Lock", leds & 2, LEDTOPS, 90);
+    DoLED("Scroll Lock", leds & 4, LEDTOPS, 180);
+
+    return;
+}
+
+/*----------------------------------------------------------------------------*/
+
+static void draw_floppy_leds(int leds)
+{
+    int i;
+    char s[32];
+
+    for (i = 0; i < 4; i++) {
+        sprintf(s, "Floppy %d", i);
+        DoLED(s, leds & 1 << i, LEDTOPS, 290 + i * 80);
+    }
+
+    return;
+}
