@@ -33,7 +33,6 @@
 #include "dbg_conf.h"
 #include "dbg_hif.h"
 #include "dbg_rdi.h"
-#include "bag.h"
 
 /* RDI interface */
 
@@ -112,9 +111,6 @@ void dagstandalone(void) {
   
   sigaction(SIGUSR1, &action, (struct sigaction *) 0);
 #endif
-
-  /* Open and/or Initialise */
-  BAG_newbag();
 
   config.processor = ARM2;
   config.memorysize = 4096 * 1024; /* 1M doesn't work */

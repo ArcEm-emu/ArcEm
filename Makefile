@@ -52,18 +52,18 @@ INSTALL=cp
 
 OBJS = armcopro.o armemu.o arminit.o \
 	armsupp.o main.o dagstandalone.o armos.o \
-		bag.o armrdi.o $(SYSTEM)/DispKbd.o arch/i2c.o arch/archio.o \
+		armrdi.o $(SYSTEM)/DispKbd.o arch/i2c.o arch/archio.o \
     arch/fdc1772.o $(SYSTEM)/ControlPane.o arch/hdc63463.o arch/ReadConfig.o \
     arch/keyboard.o
 
 SRCS = armcopro.c armemu.c arminit.c arch/armarc.c \
 	armsupp.c main.c dagstandalone.c armos.c  \
 	arm-support.s conditions.s rhs.s \
-	bag.c armrdi.c $(SYSTEM)/DispKbd.c arch/i2c.c arch/archio.c \
+	armrdi.c $(SYSTEM)/DispKbd.c arch/i2c.c arch/archio.c \
 	arch/fdc1772.c $(SYSTEM)/ControlPane.c arch/hdc63463.c \
 	arch/ReadConfig.c arch/keyboard.c
 
-INCS = armdefs.h armemu.h armfpe.h armopts.h bag.h armos.h \
+INCS = armdefs.h armemu.h armfpe.h armopts.h armos.h \
 	dbg_conf.h dbg_cp.h dbg_hif.h dbg_rdi.h $(SYSTEM)/KeyTable.h \
   arch/i2c.h arch/archio.h arch/fdc1772.h arch/ControlPane.h \
   arch/hdc63463.h arch/keyboard.h
@@ -193,9 +193,6 @@ dagstandalone.o: dagstandalone.c armdefs.h dbg_conf.h dbg_hif.h dbg_rdi.h
 	$(CC) $(CFLAGS) -c $*.c
 
 main.o: main.c armdefs.h dbg_rdi.h dbg_conf.h
-	$(CC) $(CFLAGS) -c $*.c
-
-bag.o: bag.c bag.h
 	$(CC) $(CFLAGS) -c $*.c
 
 $(SYSTEM)/DispKbd.o: $(SYSTEM)/DispKbd.c arch/DispKbd.h $(SYSTEM)/KeyTable.h \

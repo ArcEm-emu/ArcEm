@@ -240,14 +240,6 @@ SOURCE=..\armsupp.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\bag.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\bag.h
-# End Source File
-# Begin Source File
-
 SOURCE=..\dagstandalone.c
 # End Source File
 # Begin Source File
