@@ -1,9 +1,18 @@
+
+06/05/2002
+
+This file is out of date.  It is kept for historical and technical
+reference.  Refer to the top level README and index.html.
+Do not contact Dave Gilbert regarding current versions of ArcEm.
+
+Peter Naulls <peter@chocky.org>
+
+===========================================================================
+
 Archimedes emulator by David Alan Gilbert
 (arcem@treblig.org)
 
 Version 0.60
-
-Please refer to the file "Building" for building arcem.
 
 Archimedes hardware emulation code (c) David Alan Gilbert 1995-1999
 It uses the GPL release of the ARMulator V1.0 by ARM Ltd
@@ -45,7 +54,7 @@ Dave (arcem@treblig.org)
 Changes since 0.50
 ------------------
   Support for running RISC OS, by Alex Macfarlane Smith and Peter Naulls
-  Splitting of the windowing ascpects of the code, to allow independent
+  Splitting of the windowing aspects of the code, to allow independent
   development.
   Some small speed ups.
   Source code tidying and warning fixes. 
