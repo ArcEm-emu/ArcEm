@@ -51,12 +51,6 @@ static floppy_format avail_format[] = {
 /* points to an element of avail_format. */
 static floppy_format *format;
 
-#define SECTORSIZE (format->bytes_per_sector)
-#define SECTORSIZECODE (format->sector_size_code)
-#define SECTORSPERTRACK (format->sectors_per_track)
-#define SECTOROFFSET (format->sector_base)
-#define TRACKSONDISC (format->num_tracks)
-
 static void FDC_DoWriteChar(ARMul_State *state);
 static void FDC_DoReadChar(ARMul_State *state);
 static void FDC_DoReadAddressChar(ARMul_State *state);
@@ -377,8 +371,8 @@ static void FDC_NextTrack(ARMul_State *state) {
 /*--------------------------------------------------------------------------*/
 static void FDC_NextSector(ARMul_State *state) {
   FDC.Sector++;
-  if (FDC.Sector==(SECTORSPERTRACK+SECTOROFFSET)) {
-    FDC.Sector=SECTOROFFSET;
+  if (FDC.Sector == format->sectors_per_track + format->sector_base) {
+    FDC.Sector = format->sector_base;
     FDC_NextTrack(state);
   };
 }; /* FDC_NextSector */
@@ -400,11 +394,12 @@ static void FDC_DoReadAddressChar(ARMul_State *state) {
     case 4: /* sector addr */
       FDC.Data=FDC.Sector_ReadAddr;
       FDC.Sector_ReadAddr++;
-      if (FDC.Sector_ReadAddr>=(SECTORSPERTRACK+SECTOROFFSET)) FDC.Sector_ReadAddr=SECTOROFFSET;
+      if (FDC.Sector_ReadAddr >= format->sectors_per_track + format->sector_base)
+          FDC.Sector_ReadAddr = format->sector_base;
       break;
 
     case 3: /* sector length */
-      FDC.Data=SECTORSIZECODE; /* 1K per sector (2=512, 1=256, 0=128 */
+      FDC.Data = format->sector_size_code; /* 1K per sector (2=512, 1=256, 0=128 */
       break;
 
     case 2: /* CRC 1 */
@@ -458,7 +453,7 @@ static void FDC_DoReadChar(ARMul_State *state) {
   if (!FDC.BytesToGo) {
     if (FDC.LastCommand & TYPE2_BIT_MULTISECTOR) {
       FDC_NextSector(state);
-      FDC.BytesToGo=SECTORSIZE;
+      FDC.BytesToGo = format->bytes_per_sector;
     } else {
       /* We'll actually terminate on next data read */
     }; /* Not multisector */
@@ -474,7 +469,7 @@ static void FDC_SeekCommand(ARMul_State *state) {
   ClearInterrupt(state);
   ClearDRQ(state);
 
-  if (FDC.Data>=TRACKSONDISC) {
+  if (FDC.Data >= format->num_tracks) {
     /* Fail!! */
     FDC.StatusReg|=BIT_RECNOTFOUND;
     GenInterrupt(state,"Seek fail");
@@ -496,7 +491,7 @@ static void FDC_StepDirCommand(ARMul_State *state,int Dir) {
 
   FDC.Direction=Dir;
 
-  if ((DesiredTrack>=TRACKSONDISC) || (DesiredTrack<0)) {
+  if (DesiredTrack >= format->num_tracks || DesiredTrack < 0) {
     /* Fail!! */
     FDC.StatusReg|=BIT_RECNOTFOUND;
     GenInterrupt(state,"Step fail");
@@ -513,7 +508,8 @@ static void FDC_ReadAddressCommand(ARMul_State *state) {
   FDC.StatusReg|=BIT_BUSY;
   FDC.StatusReg&=~(BIT_DRQ | BIT_LOSTDATA | (1<<5) | (1<<6) | BIT_RECNOTFOUND);
 
-  offset=((Side+FDC.Track*2)*SECTORSPERTRACK+(FDC.Sector-SECTOROFFSET))*SECTORSIZE;
+    offset = ((Side + FDC.Track * 2) * format->sectors_per_track +
+        (FDC.Sector - format->sector_base)) * format->bytes_per_sector;
 
   if (FDC.FloppyFile[FDC.CurrentDisc]!=NULL) {
     fseek(FDC.FloppyFile[FDC.CurrentDisc],offset,SEEK_SET);
@@ -547,7 +543,8 @@ static void FDC_ReadCommand(ARMul_State *state) {
                  Side,FDC.Track,FDC.Sector,FDC.CurrentDisc);
 #endif
 
-  offset=((Side+FDC.Track*2)*SECTORSPERTRACK+(FDC.Sector-SECTOROFFSET))*SECTORSIZE;
+    offset = ((Side + FDC.Track * 2) * format->sectors_per_track +
+        (FDC.Sector - format->sector_base)) * format->bytes_per_sector;
 
   if (FDC.FloppyFile[FDC.CurrentDisc]!=NULL) {
     if (fseek(FDC.FloppyFile[FDC.CurrentDisc],offset,SEEK_SET)!=0) {
@@ -555,7 +552,7 @@ static void FDC_ReadCommand(ARMul_State *state) {
     };
   };
 
-  FDC.BytesToGo=SECTORSIZE;
+    FDC.BytesToGo = format->bytes_per_sector;
   /* FDC_DoReadChar(state); - let the regular code do this */
   FDC.DelayCount=FDC.DelayLatch=READSPACING;
 }; /* FDC_ReadCommand */
@@ -567,10 +564,10 @@ static void FDC_ReadCommand(ARMul_State *state) {
 /* Essentially all this routine has to do is provide the DRQ's - the
    actual write is done when the data register is written to */
 static void FDC_DoWriteChar(ARMul_State *state) {
-  if (FDC.BytesToGo>SECTORSIZE) {
+  if (FDC.BytesToGo > format->bytes_per_sector) {
     /* Initial DRQ */
     FDC_DoDRQ(state);
-    FDC.BytesToGo=SECTORSIZE;
+    FDC.BytesToGo = format->bytes_per_sector;
     return;
   };
 
@@ -583,7 +580,7 @@ static void FDC_DoWriteChar(ARMul_State *state) {
   /* but if its a multi sector command then we just have to carry on */
   if (FDC.LastCommand & TYPE2_BIT_MULTISECTOR) {
      FDC_NextSector(state);
-     FDC.BytesToGo=SECTORSIZE;
+     FDC.BytesToGo = format->bytes_per_sector;
      FDC_DoDRQ(state);
   } else {
     /* really the end */
@@ -604,11 +601,12 @@ static void FDC_WriteCommand(ARMul_State *state) {
   fprintf(stderr,"FDC_WriteCommand: Starting with Side=%d Track=%d Sector=%d\n",
                  Side,FDC.Track,FDC.Sector);
 #endif
-  offset=((Side+FDC.Track*2)*SECTORSPERTRACK+(FDC.Sector-SECTOROFFSET))*SECTORSIZE;
+    offset = ((Side + FDC.Track * 2) * format->sectors_per_track +
+        (FDC.Sector - format->sector_base)) * format->bytes_per_sector;
 
   fseek(FDC.FloppyFile[FDC.CurrentDisc],offset,SEEK_SET);
 
-  FDC.BytesToGo=SECTORSIZE+1;
+  FDC.BytesToGo = format->bytes_per_sector + 1;
   /*GenDRQ(state); */ /* Please mister host - give me some data! - no that should happen on the regular!*/
   FDC.DelayCount=FDC.DelayLatch=WRITESPACING;
 }; /* FDC_WriteCommand */
@@ -841,12 +839,12 @@ void FDC_Init(ARMul_State *state) {
 
   FDC.StatusReg=0;
   FDC.Track=0;
-  FDC.Sector=SECTOROFFSET;
+  FDC.Sector = format->sector_base;
   FDC.Data=0;
   FDC.LastCommand=0xd0; /* force interrupt - but actuall not doing */
   FDC.Direction=1;
   FDC.CurrentDisc=0;
-  FDC.Sector_ReadAddr=SECTOROFFSET;
+  FDC.Sector_ReadAddr = format->sector_base;
 
 #ifndef MACOSX
   /* Read only at the moment */
@@ -885,8 +883,9 @@ void FDC_Init(ARMul_State *state) {
   FDC.DelayCount=10000;
   FDC.DelayLatch=10000;
 #ifdef DEBUG_FDC
-  fprintf(stderr,"FDC_Init: SectorSize=%d Sectors/Track=%d Tracks/Disc=%d Sector offset=%d\n",
-          SECTORSIZE,SECTORSPERTRACK,TRACKSONDISC,SECTOROFFSET);
+    fprintf(stderr, "FDC_Init: SectorSize=%d Sectors/Track=%d Tracks/Disc=%d Sector offset=%d\n",
+        format->bytes_per_sector, format->sectors_per_track,
+        format->num_tracks, format->sector_base);
 #endif
 }; /* FDC_Init */
 /*--------------------------------------------------------------------------*/
