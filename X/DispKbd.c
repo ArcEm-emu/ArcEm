@@ -45,6 +45,13 @@
 #define HD HOSTDISPLAY
 #define DC DISPLAYCONTROL
 
+/* 0 <= x < 0x10. */
+#define MULT_BY_0x1111(x) \
+    x |= x << 4; \
+    x |= x << 8
+
+static void set_cursor_pixelmap(void);
+
 static int (*prev_x_error_handler)(Display *, XErrorEvent *);
 
 /* ------------------------------------------------------------------ */
@@ -403,69 +410,114 @@ static void DoColourMap_256(ARMul_State *state) {
   DC.MustResetPalette=0;
 }; /* DoColourMap_Standard */
 
-/*----------------------------------------------------------------------------*/
-/* Configure the TrueColor pixelmap for the standard 1,2,4 bpp modes          */
-static void DoPixelMap_Standard(ARMul_State *state) {
-  XColor tmp;
-  int c;
+/* ------------------------------------------------------------------ */
 
-  if (!(DC.MustRedraw || DC.MustResetPalette)) return;
+/* Configure the TrueColor pixelmap for the standard 1/2/4bpp modes. */
 
-  for(c=0;c<16;c++) {
-    tmp.red=(VIDC.Palette[c] & 15)<<12;
-    tmp.green=((VIDC.Palette[c]>>4) & 15)<<12;
-    tmp.blue=((VIDC.Palette[c]>>8) & 15)<<12;
-    tmp.pixel=c;
-    /* I suppose I should do something with the supremacy bit....*/
-    HD.pixelMap[c]=get_pixelval(tmp.red,tmp.green,tmp.blue);
-  };
+static void DoPixelMap_Standard(ARMul_State *state)
+{
+    int c;
+    unsigned int pal;
+    unsigned short r;
+    unsigned short g;
+    unsigned short b;
 
-  /* Now do the ones for the cursor */
-  for(c=0;c<3;c++) {
-    tmp.red=(VIDC.CursorPalette[c] &15)<<12;
-    tmp.green=((VIDC.CursorPalette[c]>>4) &15)<<12;
-    tmp.blue=((VIDC.CursorPalette[c]>>8) &15)<<12;
+    if (!DC.MustRedraw && !DC.MustResetPalette) {
+        return;
+    }
 
-    /* Entry 0 is transparent */
-    HD.cursorPixelMap[c+1]=get_pixelval(tmp.red,tmp.green,tmp.blue);
-  };
+    for (c = 0; c < 16; c++) {
+        pal = VIDC.Palette[c];
 
-  DC.MustResetPalette=0;
-}; /* DoPixelMap_Standard */
-/*----------------------------------------------------------------------------*/
-/* Configure the true colour pixel map for the 8bpp modes                     */
-static void DoPixelMap_256(ARMul_State *state) {
-  XColor tmp;
-  int c;
+        r = pal & 0xf;
+        g = pal >> 4 & 0xf;
+        b = pal >> 8 & 0xf;
+        MULT_BY_0x1111(r);
+        MULT_BY_0x1111(g);
+        MULT_BY_0x1111(b);
 
-  if (!(DC.MustRedraw || DC.MustResetPalette)) return;
+        /* I suppose I should do something with the supremacy bit... */
+        HD.pixelMap[c] = get_pixelval(r, g, b);
+    }
 
-  for(c=0;c<256;c++) {
-    int palentry=c &15;
-    int L4=(c>>4) &1;
-    int L65=(c>>5) &3;
-    int L7=(c>>7) &1;
+    set_cursor_pixelmap();
 
-    tmp.red=((VIDC.Palette[palentry] & 7) | (L4<<3))<<12;
-    tmp.green=(((VIDC.Palette[palentry] >> 4) & 3) | (L65<<2))<<12;
-    tmp.blue=(((VIDC.Palette[palentry] >> 8) & 7) | (L7<<3))<<12;
-    /* I suppose I should do something with the supremacy bit....*/
-    HD.pixelMap[c]=get_pixelval(tmp.red,tmp.green,tmp.blue);
-  };
+    DC.MustResetPalette = 0;
 
-  /* Now do the ones for the cursor */
-  for(c=0;c<3;c++) {
-    tmp.flags=DoRed|DoGreen|DoBlue;
-    tmp.pixel=c+CURSORCOLBASE;
-    tmp.red=(VIDC.CursorPalette[c] &15)<<12;
-    tmp.green=((VIDC.CursorPalette[c]>>4) &15)<<12;
-    tmp.blue=((VIDC.CursorPalette[c]>>8) &15)<<12;
+    return;
+}
 
-    HD.cursorPixelMap[c+1]=get_pixelval(tmp.red,tmp.green,tmp.blue);
-  };
+/* ------------------------------------------------------------------ */
 
-  DC.MustResetPalette=0;
-}; /* DoPixelMap_256 */
+/* Configure the TrueColor pixel map for the 8bpp modes. */
+
+static void DoPixelMap_256(ARMul_State *state)
+{
+    int c;
+    int b4;
+    int b65;
+    int b7;
+    unsigned int pal;
+    unsigned short r;
+    unsigned short g;
+    unsigned short b;
+
+    if (!DC.MustRedraw && !DC.MustResetPalette) {
+        return;
+    }
+
+    for (c = 0; c < 256; c++) {
+        b4 = c >> 1 & 8;
+        b65 = c >> 3 & 0xc;
+        b7 = c >> 4 & 8;
+
+        pal = VIDC.Palette[c & 0xf];
+        r = b4 | (pal & 7);
+        g = b65 | (pal >> 4 & 3);
+        b = b7 | (pal >> 8 & 7);
+
+        MULT_BY_0x1111(r);
+        MULT_BY_0x1111(g);
+        MULT_BY_0x1111(b);
+
+        /* I suppose I should do something with the supremacy bit... */
+        HD.pixelMap[c] = get_pixelval(r, g, b);
+    }
+
+    set_cursor_pixelmap();
+
+    DC.MustResetPalette = 0;
+
+    return;
+}
+
+/* ------------------------------------------------------------------ */
+
+static void set_cursor_pixelmap(void)
+{
+    int c;
+    unsigned int pal;
+    unsigned short r;
+    unsigned short g;
+    unsigned short b;
+
+    for (c = 0; c < 3; c++) {
+        pal = VIDC.CursorPalette[c];
+
+        r = pal & 0xf;
+        g = pal >> 4 & 0xf;
+        b = pal >> 8 & 0xf;
+
+        MULT_BY_0x1111(r);
+        MULT_BY_0x1111(g);
+        MULT_BY_0x1111(b);
+
+        /* Entry 0 is transparent. */
+        HD.cursorPixelMap[c + 1] = get_pixelval(r, g, b);
+    }
+
+    return;
+}
 
 /*----------------------------------------------------------------------------*/
 /* Refresh the mouses image                                                   */
