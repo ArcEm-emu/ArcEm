@@ -238,11 +238,6 @@ static void ARMul_LoadInstrTriplet(ARMword address,ARMword* pw1, ARMword* pw2, A
           *pw1 = GetWord_IO(emu_state, address);
           *pw2 = GetWord_IO(emu_state, address + 4);
           *pw3 = GetWord_IO(emu_state, address + 8);
-          badfunc = ARMul_Emulate_DecodeInstr;
-          *func1 = &badfunc;
-          *func2 = &badfunc;
-          *func3 = &badfunc;
-          return;
         } else {
           ARMul_PREFETCHABORT(address);
           ARMul_PREFETCHABORT((address + 4));
@@ -250,12 +245,12 @@ static void ARMul_LoadInstrTriplet(ARMword address,ARMword* pw1, ARMword* pw2, A
           *pw1 = ARMul_ABORTWORD;
           *pw2 = ARMul_ABORTWORD;
           *pw3 = ARMul_ABORTWORD;
-          badfunc=ARMul_Emulate_DecodeInstr;
-          *func1 = &badfunc;
-          *func2 = &badfunc;
-          *func3 = &badfunc;
-          return;
         };
+        badfunc = ARMul_Emulate_DecodeInstr;
+        *func1 = &badfunc;
+        *func2 = &badfunc;
+        *func3 = &badfunc;
+        return;
       };
       /* NOTE: No break, IOC has same permissions as physical RAM */
 
