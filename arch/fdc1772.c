@@ -772,8 +772,12 @@ ARMword FDC_Write(ARMul_State *state, ARMword offset, ARMword data, int bNw) {
 /*--------------------------------------------------------------------------*/
 /* Reopen a floppy drive's image file - mainly so you can flip discs         */
 void FDC_ReOpen(ARMul_State *state, int drive) {
+#ifdef MACOSX
+    char* tmp;
+#else
   char tmp[256];
-
+#endif
+  
   if (drive>3) return;
 
   if (FDC.LastCommand!=0xd0) {
@@ -784,11 +788,15 @@ void FDC_ReOpen(ARMul_State *state, int drive) {
   /* Close the file if it's open */
   if (FDC.FloppyFile[drive]!=NULL) fclose(FDC.FloppyFile[drive]);
 
+#ifndef MACOSX
 #ifdef __riscos__
   sprintf(tmp, "<ArcEm$Dir>.^.FloppyImage%d", drive);
 #else
   sprintf(tmp, "FloppyImage%d", drive);
-#endif  
+#endif
+#else
+  tmp = FDC.driveFiles[drive]; 
+#endif
 
   {
     FILE *isThere = fopen(tmp, "r");
@@ -822,6 +830,8 @@ int disc;
   FDC.Direction=1;
   FDC.CurrentDisc=0;
   FDC.Sector_ReadAddr=SECTOROFFSET;
+
+#ifndef MACOSX
   /* Read only at the moment */
   for (disc=0;disc<4;disc++) {
     char tmp[256];
@@ -848,6 +858,12 @@ int disc;
       FDC.FloppyFile[disc] = fopen(tmp,"r");
     };
   };
+#else
+  // Don't load any disc images initially
+  for (disc = 0; disc < 4; disc++)
+      FDC.driveFiles[disc] = NULL;
+#endif
+  
 
   FDC.DelayCount=10000;
   FDC.DelayLatch=10000;

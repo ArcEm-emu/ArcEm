@@ -19,6 +19,9 @@ struct FDCStruct{
   int DelayCount;
   int DelayLatch;
   int CurrentDisc;
+#ifdef MACOSX
+  char* driveFiles[4];  // In MAE, we use *real* filenames for disks
+#endif
 };
 
 ARMword FDC_Read(ARMul_State *state, ARMword offset);
