@@ -56,16 +56,17 @@ void FDC_LatchBChange(ARMul_State *state);
 
 void FDC_Init(ARMul_State *state);
 
+/* Deprecated.  See fdc_insert_floppy() and fdc_eject_floppy(). */
 void FDC_ReOpen(ARMul_State *state,int drive);
 
 unsigned FDC_Regular(ARMul_State *state);
 
-/* Associate disc image with drive.  Return static error message, if not
- * NULL. */
+/* Associate disc image with drive.  Drive must be empty.  Return static
+ * error message, if not NULL. */
 char *fdc_insert_floppy(int drive, char *image);
 
-/* Close and forget about any disc image associated with drive.  Return
- * static error message, if not NULL. */
+/* Close and forget about the disc image associated with drive.  Disc
+ * must be inserted.  Return static error message, if not NULL. */
 char *fdc_eject_floppy(int drive);
 
 #define FDC (PRIVD->FDCData)
