@@ -1,3 +1,7 @@
+armsuppmov.s
+armsuppmovs.s
+armsuppmvn.s
+armsuppmvns.s
 ROM*
 *,ff8
 HardImage?
@@ -6,5 +10,3 @@ hexcmos*
 arcem*
 cygwin1.dll
 index.html
-
-
