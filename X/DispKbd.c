@@ -8,8 +8,9 @@
 #define KEYREENABLEDELAY 1000
 #define POLLGAP 125
 //#define POLLGAP 1250
-/*#define DEBUG_VIDCREGS*/
-/* #define DEBUG_KBD */
+/*#define DEBUG_VIDCREGS */
+/*#define DEBUG_KBD */
+/*#define DEBUG_MOUSEMOVEMENT */
 
 /* NOTE: Can't use ARMul's refresh function because it has a small limit on the
    time delay from posting the event to it executing */
@@ -17,6 +18,7 @@
    scheduler */
 #define AUTOREFRESHPOLL 2500
 
+#include <assert.h>
 #include <string.h>
 #include <stdio.h>
 #include <limits.h>
@@ -1208,10 +1210,10 @@ static int DisplayKbd_XError(Display* disp, XErrorEvent *err)
 
 /*----------------------------------------------------------------------------*/
 void DisplayKbd_Init(ARMul_State *state) {
-    char *s;
-    KeySym ks;
-    XSetWindowAttributes attr;
-    unsigned long attrmask;
+  char *s;
+  KeySym ks;
+  XSetWindowAttributes attr;
+  unsigned long attrmask;
   XColor tmpcol;
   int prescol;
   int mindex;
@@ -1224,22 +1226,22 @@ void DisplayKbd_Init(ARMul_State *state) {
     exit(1);
   };
 
-    prev_x_error_handler = XSetErrorHandler(DisplayKbd_XError);
+  prev_x_error_handler = XSetErrorHandler(DisplayKbd_XError);
 
-    if (getenv("ARCEMXSYNC")) {
-        XSynchronize(HD.disp, 1);
-        fputs("arcem: synchronous X protocol selected.\n", stderr);
-    }
+  if (getenv("ARCEMXSYNC")) {
+    XSynchronize(HD.disp, 1);
+    fputs("arcem: synchronous X protocol selected.\n", stderr);
+  }
 
-    if ((s = getenv("ARCEMXMOUSEKEY"))) {
-        if ((ks = XStringToKeysym(s))) {
-            mouse_key.name = s;
-            mouse_key.keysym = ks;
-        } else {
-            fprintf(stderr, "unknown mouse_key keysym: %s\n", s);
-        }
-        fprintf(stderr, "mouse_key is %s\n", mouse_key.name);
+  if ((s = getenv("ARCEMXMOUSEKEY"))) {
+    if ((ks = XStringToKeysym(s))) {
+      mouse_key.name = s;
+      mouse_key.keysym = ks;
+    } else {
+      fprintf(stderr, "unknown mouse_key keysym: %s\n", s);
     }
+    fprintf(stderr, "mouse_key is %s\n", mouse_key.name);
+  }
 
   HD.xScreen    = XDefaultScreenOfDisplay(HD.disp);
   HD.ScreenNum  = XScreenNumberOfScreen(HD.xScreen);
@@ -1271,33 +1273,36 @@ void DisplayKbd_Init(ARMul_State *state) {
   };
 
 #ifdef DEBUG_X_INIT
-    {
-        XVisualInfo *vi;
+  {
+    XVisualInfo *vi;
 
-        vi = &HD.visInfo;
-        fprintf(stderr, "XVisualInfo: %p, %#lx, %d, %d, %d, %#lx, "
+    vi = &HD.visInfo;
+    fprintf(stderr, "XVisualInfo: %p, %#lx, %d, %d, %d, %#lx, "
             "%#lx, %#lx, %d, %d)\n", vi->visual, vi->visualid,
             vi->screen, vi->depth, vi->class, vi->red_mask,
             vi->green_mask, vi->blue_mask, vi->colormap_size,
             vi->bits_per_rgb);
-    }
+  }
 #endif
 
-    HD.ArcsColormap = XCreateColormap(HD.disp, HD.RootWindow,
+  HD.ArcsColormap = XCreateColormap(HD.disp, HD.RootWindow,
         HD.visInfo.visual, HD.visInfo.class == PseudoColor ? AllocAll :
         AllocNone);
 
-    attr.border_pixel = 0;
-    attr.colormap = HD.ArcsColormap;
-    attrmask = CWBorderPixel | CWColormap;
+  attr.border_pixel = 0;
+  attr.colormap = HD.ArcsColormap;
+  attrmask = CWBorderPixel | CWColormap;
 
-    if (HD.visInfo.class == PseudoColor) {
-        attr.background_pixel = BORDER_COLOURMAP_ENTRY;
-        attrmask |= CWBackPixel;
-    }
+  if (HD.visInfo.class == PseudoColor) {
+    attr.background_pixel = BORDER_COLOURMAP_ENTRY;
+    attrmask |= CWBackPixel;
+  }
 
-    HD.BackingWindow = XCreateWindow(HD.disp, HD.RootWindow, 500, 500,
-        MonitorWidth + VIDC_BORDER * 2, MonitorHeight + VIDC_BORDER * 2,
+  /* Create the main arcem pane, create it small, it will be
+     pushed bigger when the VIDC recieves instructions to change video 
+     mode */
+  HD.BackingWindow = XCreateWindow(HD.disp, HD.RootWindow, 500, 500,
+        VIDC_BORDER * 2, VIDC_BORDER * 2,
         0, HD.visInfo.depth, InputOutput, HD.visInfo.visual, attrmask,
         &attr);
 
@@ -1311,7 +1316,7 @@ void DisplayKbd_Init(ARMul_State *state) {
 
     XSetWMName(HD.disp,HD.BackingWindow,&name);
     XFree(name.value);
-  };
+  }
 
 
   HD.MainPane = XCreateWindow(HD.disp, HD.BackingWindow, VIDC_BORDER,
@@ -1338,7 +1343,7 @@ void DisplayKbd_Init(ARMul_State *state) {
   if (HD.ImageData == NULL) {
     fprintf(stderr,"DisplayKbd_Init: Couldn't allocate image memory\n");
     exit(1);
-  };
+  }
 
   HD.DisplayImage = XCreateImage(HD.disp,DefaultVisual(HD.disp,HD.ScreenNum),
                                  HD.visInfo.depth,ZPixmap,0,HD.ImageData,
@@ -1347,7 +1352,7 @@ void DisplayKbd_Init(ARMul_State *state) {
   if (HD.DisplayImage==NULL) {
     fprintf(stderr,"DisplayKbd_Init: Couldn't create image\n");
     exit(1);
-  };
+  }
 
   /* Now the same for the cursor image */
   HD.CursorImageData=malloc(4*64*MonitorHeight);
@@ -1499,11 +1504,12 @@ static void BackingWindow_Event(ARMul_State *state,XEvent *e) {
 
 /*----------------------------------------------------------------------------*/
 
-static void ProcessKey(ARMul_State *state,XKeyEvent *key) {
+static void ProcessKey(ARMul_State *state, XKeyEvent *key)
+{
   KeySym sym;
-    keysym_to_arch_key *ktak;
+  keysym_to_arch_key *ktak;
 
-    XLookupString(key, NULL, 0, &sym, NULL);
+  XLookupString(key, NULL, 0, &sym, NULL);
 
   /* Trap the special key for mouse following */
   if (sym == mouse_key.keysym) {
@@ -1511,35 +1517,40 @@ static void ProcessKey(ARMul_State *state,XKeyEvent *key) {
     if (key->type == KeyPress) {
       DC.DoingMouseFollow^=1;
       fprintf(stderr, "%s pressed, turning mouse tracking %s.\n",
-          mouse_key.name, DC.DoingMouseFollow ? "on" : "off");
+              mouse_key.name, DC.DoingMouseFollow ? "on" : "off");
+
       if (DC.DoingMouseFollow)
       {
-	XColor black, dummy;
-	Pixmap bm_no;
-	static unsigned char bm_no_data[] = { 0,0,0,0, 0,0,0,0 };
-       XAllocNamedColor(HD.disp,HD.ArcsColormap,"black",&black,&dummy);
-	bm_no = XCreateBitmapFromData(HD.disp, HD.MainPane, bm_no_data, 8,8);
-       XDefineCursor(HD.disp, HD.MainPane, XCreatePixmapCursor(HD.disp, bm_no, bm_no, &black, &black,0, 0));
+        /* Create a blank cursor and use that */
+        XColor black, dummy;
+        Pixmap bm_no;
+        static unsigned char bm_no_data[] = { 0,0,0,0, 0,0,0,0 };
+        XAllocNamedColor(HD.disp, HD.ArcsColormap, "black", &black, &dummy);
+        bm_no = XCreateBitmapFromData(HD.disp, HD.MainPane, bm_no_data, 8, 8);
+        XDefineCursor(HD.disp, HD.MainPane,
+                      XCreatePixmapCursor(HD.disp, bm_no, bm_no, &black, &black, 0, 0));
       }
-      else
+      else 
+      {
+        /* Restore the original cursor */
         XUndefineCursor(HD.disp, HD.MainPane);
-    };
+      }
+    }
     return;
-  };
+  }
 
   /* Just take the unshifted version of the key */
   sym = XLookupKeysym(key,0);
 
-    for (ktak = keysym_to_arch_key_map; ktak->sym; ktak++) {
-        if (ktak->sym == sym) {
-            keyboard_key_changed(&KBD, ktak->kid,
-                key->type == KeyRelease);
-            return;
-        }
+  for (ktak = keysym_to_arch_key_map; ktak->sym; ktak++) {
+    if (ktak->sym == sym) {
+      keyboard_key_changed(&KBD, ktak->kid, key->type == KeyRelease);
+      return;
     }
+  }
 
   fprintf(stderr,"ProcessKey: Unknown key sym=%ld!\n",sym);
-}; /* ProcessKey */
+} /* ProcessKey */
 
 
 /*----------------------------------------------------------------------------*/
@@ -1570,83 +1581,100 @@ static void ProcessButton(ARMul_State *state, XButtonEvent *button)
 /* Move the Control pane window                                                */
 
 static void UpdateCursorPos(ARMul_State *state) {
-  int HorizPos=(int)VIDC.Horiz_CursorStart-(int)VIDC.Horiz_DisplayStart*2;
-  int VertPos,tmp;
-  int Height=(int)VIDC.Vert_CursorEnd-(int)VIDC.Vert_CursorStart+1;
+  int HorizPos = (int)VIDC.Horiz_CursorStart - (int)VIDC.Horiz_DisplayStart * 2;
+  int VertPos, tmp;
+  int Height = (int)VIDC.Vert_CursorEnd - (int)VIDC.Vert_CursorStart + 1;
 #ifdef DEBUG_CURSOR
-  fprintf(stderr,"UpdateCursorPos: Horiz_CursorStart=0x%x\n",VIDC.Horiz_CursorStart);
-  fprintf(stderr,"UpdateCursorPos: Vert_CursorStart=0x%x\n",VIDC.Vert_CursorStart);
-  fprintf(stderr,"UpdateCursorPos: Vert_CursorEnd=0x%x\n",VIDC.Vert_CursorEnd);
-  fprintf(stderr,"UpdateCursorPos: Horiz_DisplayStart=0x%x\n",VIDC.Horiz_DisplayStart);
-  fprintf(stderr,"UpdateCursorPos: Vert_DisplayStart=0x%x\n",VIDC.Vert_DisplayStart);
+  fprintf(stderr, "UpdateCursorPos: Horiz_CursorStart=0x%x\n",  VIDC.Horiz_CursorStart);
+  fprintf(stderr, "UpdateCursorPos: Vert_CursorStart=0x%x\n",   VIDC.Vert_CursorStart);
+  fprintf(stderr, "UpdateCursorPos: Vert_CursorEnd=0x%x\n",     VIDC.Vert_CursorEnd);
+  fprintf(stderr, "UpdateCursorPos: Horiz_DisplayStart=0x%x\n", VIDC.Horiz_DisplayStart);
+  fprintf(stderr, "UpdateCursorPos: Vert_DisplayStart=0x%x\n",  VIDC.Vert_DisplayStart);
 #endif
-  VertPos=(int)VIDC.Vert_CursorStart;
-  tmp=(signed int)VIDC.Vert_DisplayStart;
-  VertPos-=tmp;
-  if (Height<1) Height=1;
+  VertPos = (int)VIDC.Vert_CursorStart;
+  tmp = (signed int)VIDC.Vert_DisplayStart;
+  VertPos -= tmp;
+  if (Height < 1) 
+    Height = 1;
   
-  if (VertPos<0) VertPos=0;
+  if (VertPos < 0)
+    VertPos = 0;
 
 #ifdef DEBUG_CURSOR
   fprintf(stderr,"UpdateCursorPos: Height=%d VertPos=%d HorizPos=%d\n",Height,VertPos,HorizPos);
 #endif
-  XMoveResizeWindow(HD.disp,HD.CursorPane,HorizPos,VertPos,32,Height);
+  XMoveResizeWindow(HD.disp, HD.CursorPane, HorizPos, VertPos, 32, Height);
 }; /* UpdateCursorPos */
 
 
 /*----------------------------------------------------------------------------*/
-/* Called on an X motion event */
+/* Called on an X motion event when we are in mouse tracking mode */
 
-static void MouseMoved(ARMul_State *state,XMotionEvent *xmotion) {
-  int xdiff,ydiff;
+static void MouseMoved(ARMul_State *state,XMotionEvent *xmotion)
+{
+  int xdiff, ydiff;
+  unsigned ScreenWidth  = (VIDC.Horiz_DisplayEnd - VIDC.Horiz_DisplayStart) * 2;
+  unsigned ScreenHeight = VIDC.Vert_DisplayEnd - VIDC.Vert_DisplayStart;
+  
   /* Well the coordinates of the mouse cursor are now in xmotion->x and
      xmotion->y, I'm going to compare those against the cursor position
      and transmit the difference.  This can't possibly take care of the OS's
      hotspot offsets */
 
   /* We are now only using differences from the reference position */
-  if ((xmotion->x==MonitorWidth/2) && (xmotion->y==MonitorHeight/2)) return;
+  if ((xmotion->x == ScreenWidth / 2) && (xmotion->y == ScreenHeight / 2))
+    return;
 
-  XWarpPointer(HD.disp,None,HD.MainPane,0,0,9999,9999,MonitorWidth/2,MonitorHeight/2);
-
+  /* Keep the mouse pointer under our window */
+  XWarpPointer(HD.disp,
+               None,                               /* src window for relative coords (NOT USED) */
+               HD.MainPane,                        /* Destination window to move cursor in */
+               0, 0,                               /* relative coords (NOT USED) */
+               9999, 9999,                         /* src width and height (NOT USED) */ 
+               ScreenWidth / 2, ScreenHeight / 2); /* Coordinates in the destination window */
+               
 #ifdef DEBUG_MOUSEMOVEMENT
   fprintf(stderr,"MouseMoved: CursorStart=%d xmotion->x=%d\n",
           VIDC.Horiz_CursorStart,xmotion->x);
 #endif
-  xdiff=xmotion->x-MonitorWidth/2;
-  if (KBD.MouseXCount!=0) {
+  xdiff = xmotion->x - ScreenWidth / 2;
+  if (KBD.MouseXCount != 0) {
     if (KBD.MouseXCount & 64) {
       signed char tmpC;
       int tmpI;
-      tmpC=KBD.MouseXCount | 128;
-      tmpI=(signed int)tmpC;
-      xdiff+=tmpI;
+      tmpC = KBD.MouseXCount | 128;
+      tmpI = (signed int)tmpC;
+      xdiff += tmpI;
     } else {
-      xdiff+=KBD.MouseXCount;
-    };
-  };
+      xdiff += KBD.MouseXCount;
+    }
+  }
 
-  if (xdiff>63) xdiff=63;
-  if (xdiff<-63) xdiff=-63;
+  if (xdiff > 63) 
+    xdiff = 63;
+  if (xdiff < -63)
+    xdiff = -63;
 
-  ydiff=MonitorHeight/2-xmotion->y;
+  ydiff = ScreenHeight / 2 - xmotion->y;
   if (KBD.MouseYCount & 64) {
     signed char tmpC;
-    tmpC=KBD.MouseYCount | 128; /* Sign extend */
-    ydiff+=tmpC;
+    tmpC = KBD.MouseYCount | 128; /* Sign extend */
+    ydiff += tmpC;
   } else {
-    ydiff+=KBD.MouseYCount;
-  };
-  if (ydiff>63) ydiff=63;
-  if (ydiff<-63) ydiff=-63;
+    ydiff += KBD.MouseYCount;
+  }
+  if (ydiff > 63)
+    ydiff = 63;
+  if (ydiff < -63)
+    ydiff = -63;
 
-  KBD.MouseXCount=xdiff & 127;
-  KBD.MouseYCount=ydiff & 127;
+  KBD.MouseXCount = xdiff & 127;
+  KBD.MouseYCount = ydiff & 127;
 
 #ifdef DEBUG_MOUSEMOVEMENT
-  fprintf(stderr,"MouseMoved: generated counts %d,%d xdiff=%d ydifff=%d\n",KBD.MouseXCount,KBD.MouseYCount,xdiff,ydiff);
+  fprintf(stderr, "MouseMoved: generated counts %d,%d xdiff=%d ydifff=%d\n", KBD.MouseXCount, KBD.MouseYCount, xdiff, ydiff);
 #endif
-}; /* MouseMoved */
+} /* MouseMoved */
 
 
 /*----------------------------------------------------------------------------*/
@@ -1687,8 +1715,8 @@ static void MainPane_Event(ARMul_State *state,XEvent *e) {
       fprintf(stderr,"Motion Notify in mainpane\n");
 #endif
       if (DC.DoingMouseFollow) {
-        MouseMoved(state,&(e->xmotion));
-      };
+        MouseMoved(state, &(e->xmotion));
+      }
       break;
 
     default:
@@ -1917,6 +1945,7 @@ void VIDC_PutVal(ARMul_State *state,ARMword address, ARMword data,int bNw) {
       fprintf(stderr,"VIDC Horiz display end register val=%d\n",val>>14);
 #endif   
       VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Horiz_DisplayEnd,(val>>14) & 0x3ff);
+      
       break;
 
     case 0x94:
@@ -1973,6 +2002,15 @@ void VIDC_PutVal(ARMul_State *state,ARMword address, ARMword data,int bNw) {
       fprintf(stderr,"VIDC Vert disp end register val=%d\n",val>>14);
 #endif   
       VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Vert_DisplayEnd,(val>>14) & 0x3ff);
+      assert((VIDC.Horiz_DisplayEnd - VIDC.Horiz_DisplayStart)*2 >= 0);
+      assert(VIDC.Vert_DisplayEnd - VIDC.Vert_DisplayStart >= 0);
+      
+      /* Resize the window to fit the new video mode.
+        This relies on OSes when resizing displays that they change the
+        Vertical Display End register last, RISC OS seems too */
+      XResizeWindow(HD.disp, HD.BackingWindow,
+                   ((VIDC.Horiz_DisplayEnd - VIDC.Horiz_DisplayStart)*2) + (VIDC_BORDER * 2),
+                   (VIDC.Vert_DisplayEnd - VIDC.Vert_DisplayStart) + (VIDC_BORDER * 2) );
       break;
 
     case 0xb4:
@@ -2016,17 +2054,16 @@ void VIDC_PutVal(ARMul_State *state,ARMword address, ARMword data,int bNw) {
       fprintf(stderr,"Write to unknown VIDC register reg=0x%x val=0x%x\n",addr,val);
       break;
 
-  }; /* Register switch */
-}; /* PutValVIDC */
+  } /* Register switch */
+} /* PutValVIDC */
 
 /* ------------------------------------------------------------------ */
 
 
 void hostdisplay_change_focus(struct host_display *hd, int focus)
 {
-    if (hd->visInfo.class == PseudoColor) {
-        (*(focus ? XInstallColormap : XUninstallColormap))(hd->disp,
-            hd->ArcsColormap);
-    }
-    (*(focus ? XAutoRepeatOff : XAutoRepeatOn))(hd->disp);
+  if (hd->visInfo.class == PseudoColor) {
+    (*(focus ? XInstallColormap : XUninstallColormap))(hd->disp, hd->ArcsColormap);
+  }
+  (*(focus ? XAutoRepeatOff : XAutoRepeatOn))(hd->disp);
 }
