@@ -22,13 +22,13 @@
 #Default endianness of the emulated processor (LITTLEEND or BIGEND)
 ENDIAN=LITTLEEND
 #Windowing System
-SYSTEM=riscos-single
+#SYSTEM=riscos-single
 #SYSTEM=riscos
-#SYSTEM=X
+SYSTEM=X
 
 # Set this to yes if you want Archimedes screen memory
 # writes to go direct to host screen memory
-DIRECT_DISPLAY=yes
+DIRECT_DISPLAY=no
 
 
 WARN = -Wall -Wno-return-type -Wno-unknown-pragmas -Wshadow -Wundef \
@@ -83,8 +83,8 @@ TARGET=!ArcEm/armul-arc
 endif
 
 ifeq (${SYSTEM},X)
-CFLAGS += -I/usr/X11/include -L/usr/X11R6/lib
-LIBS += -lXext -lX11
+CFLAGS += -I/usr/X11/include
+LIBS +=  -L/usr/X11R6/lib -lXext -lX11
 endif
 
 ifeq (${DIRECT_DISPLAY},yes)
