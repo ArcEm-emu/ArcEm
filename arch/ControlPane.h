@@ -2,10 +2,15 @@
 #ifndef CONTROLPANE_HEADER
 #define CONTROLPANE_HEADER
 
+#ifdef SYSTEM_X 
+#include "X11/Xlib.h"
+#include "X11/Xutil.h"
+#endif
+
 void ControlPane_Init(ARMul_State *state);
 
 #ifdef SYSTEM_X 
-void ControlPane_Event(ARMul_State *state,XEvent *e);
+void ControlPane_Event(ARMul_State *state, XEvent *e);
 #endif
 
 #endif

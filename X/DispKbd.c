@@ -35,6 +35,7 @@
 #include "DispKbd.h"
 #include "archio.h"
 #include "hdc63463.h"
+#include "platform.h"
 
 #include "ControlPane.h" 
 
@@ -55,8 +56,6 @@
 #define BORDER_COLOURMAP_ENTRY 249
 #define CURSORCOLBASE 250
 
-/* HOSTDISPLAY is too verbose here - but HD could be hard disc somewhere else */
-#define HD HOSTDISPLAY
 #define DC DISPLAYCONTROL
 
 /* 0 <= x < 0x10. */
@@ -89,6 +88,10 @@ static struct {
     "KP_Add",
     XK_KP_Add
 };
+
+/* Structure to hold most of the X windows values, shared with ControlPane.c */
+struct host_display HD;
+
 
 /* ------------------------------------------------------------------ */
 
@@ -394,44 +397,40 @@ static void CopyScreenRAM(ARMul_State *state,int offset, int len, char *Buffer) 
 
 /* Refresh the mouses image                                                   */
 static void RefreshMouse(ARMul_State *state) {
-  int x,y,height,offset;
-  int memptr,TransBit;
-  char *ImgPtr,*TransPtr;
+  int x, y, height, offset;
+  int memptr, TransBit;
+  char *ImgPtr, *TransPtr;
 
-  offset=0;
-  memptr=MEMC.Cinit*16;
-  height=(VIDC.Vert_CursorEnd-VIDC.Vert_CursorStart)+1;
-  ImgPtr=HD.CursorImageData;
-  TransPtr=HD.ShapePixmapData;
-  TransBit=0;
-  for(y=0;y<height;y++,memptr+=8,offset+=8,TransPtr+=4) {
-    if (offset<512*1024) {
+  offset   = 0;
+  memptr   = MEMC.Cinit * 16;
+  height   = (VIDC.Vert_CursorEnd - VIDC.Vert_CursorStart) + 1;
+  ImgPtr   = HD.CursorImageData;
+  TransPtr = HD.ShapePixmapData;
+  TransBit = 0;
+  
+  for(y=0; y<height; y++,memptr+=8,offset+=8,TransPtr+=4) {
+    if (offset < 512*1024) {
       ARMword tmp[2];
 
-      tmp[0]=MEMC.PhysRam[memptr/4];
-      tmp[1]=MEMC.PhysRam[memptr/4+1];
+      tmp[0] = MEMC.PhysRam[memptr/4];
+      tmp[1] = MEMC.PhysRam[memptr/4+1];
 
-      if (HD.visInfo.class==PseudoColor) {
-        for(x=0;x<32;x++,ImgPtr++,TransBit<<=1) {
-          *ImgPtr=CURSORCOLBASE+-1+((tmp[x/16]>>((x & 15)*2)) & 3);
-          if ((x&7)==0) {
-            TransPtr[x/8]=0xff;
-            TransBit=1;
-          };
-          TransPtr[x/8]&=((tmp[x/16]>>((x & 15)*2)) & 3)?~TransBit:0xff;
-        }; /* x */
-      } else {
-        for(x=0;x<32;x++,ImgPtr++,TransBit<<=1) {
-          XPutPixel(HD.CursorImage,x,y,HD.cursorPixelMap[((tmp[x/16]>>((x & 15)*2)) & 3)]);
-          if ((x&7)==0) {
-            TransPtr[x/8]=0xff;
-            TransBit=1;
-          };
-          TransPtr[x/8]&=((tmp[x/16]>>((x & 15)*2)) & 3)?~TransBit:0xff;
-        }; /* x */
-      }; /* True color */
-    } else return;
-  }; /* y */
+      for(x=0; x<32; x++,ImgPtr++,TransBit<<=1) {
+        if (HD.visInfo.class == PseudoColor) {
+          *ImgPtr = CURSORCOLBASE + -1 + ((tmp[x / 16] >> ((x & 15) * 2)) & 3);
+        } else {
+          XPutPixel(HD.CursorImage, x, y, HD.cursorPixelMap[((tmp[x / 16] >> ((x & 15) * 2)) & 3)]);
+        } /* True color */
+        if ((x & 7) == 0) {
+          TransPtr[x / 8] = 0xff;
+          TransBit = 1;
+        }
+        TransPtr[x / 8] &= ((tmp[x / 16]>>((x & 15) * 2)) & 3) ? ~TransBit : 0xff;
+      } /* x */
+    } else {
+      return;
+    }
+  } /* y */
 
   if (HD.ShapeEnabled) {
     HD.shape_mask=XCreatePixmapFromBitmapData(HD.disp,HD.CursorPane,HD.ShapePixmapData,
@@ -454,15 +453,9 @@ static void RefreshDisplay_PseudoColor_1bpp(ARMul_State *state) {
   char Buffer[MonitorWidth/8];
   char *ImgPtr=HD.ImageData;
 
-    if (DC.video_palette_dirty) {
-        set_video_4bpp_colourmap();
-    }
-    if (DC.border_palette_dirty) {
-        set_border_colourmap();
-    }
-    if (DC.cursor_palette_dirty) {
-        set_cursor_colourmap();
-    }
+  if (DC.video_palette_dirty) {
+    set_video_4bpp_colourmap();
+  }
 
   if (DisplayHeight<=0) {
     fprintf(stderr,"RefreshDisplay_PseudoColor_1bpp: 0 or -ve display height\n");
@@ -511,15 +504,9 @@ static void RefreshDisplay_PseudoColor_2bpp(ARMul_State *state) {
   char Buffer[MonitorWidth/4];
   char *ImgPtr=HD.ImageData;
 
-    if (DC.video_palette_dirty) {
-        set_video_4bpp_colourmap();
-    }
-    if (DC.border_palette_dirty) {
-        set_border_colourmap();
-    }
-    if (DC.cursor_palette_dirty) {
-        set_cursor_colourmap();
-    }
+  if (DC.video_palette_dirty) {
+    set_video_4bpp_colourmap();
+  }
 
   if (DisplayHeight<=0) {
     fprintf(stderr,"RefreshDisplay_PseudoColor_2bpp: 0 or -ve display height\n");
@@ -568,15 +555,9 @@ static void RefreshDisplay_PseudoColor_4bpp(ARMul_State *state) {
   char Buffer[MonitorWidth/2];
   char *ImgPtr=HD.ImageData;
 
-    if (DC.video_palette_dirty) {
-        set_video_4bpp_colourmap();
-    }
-    if (DC.border_palette_dirty) {
-        set_border_colourmap();
-    }
-    if (DC.cursor_palette_dirty) {
-        set_cursor_colourmap();
-    }
+  if (DC.video_palette_dirty) {
+    set_video_4bpp_colourmap();
+  }
 
   if (DisplayHeight<=0) {
     fprintf(stderr,"RefreshDisplay_PseudoColor_4bpp: 0 or -ve display height\n");
@@ -626,15 +607,9 @@ static void RefreshDisplay_PseudoColor_8bpp(ARMul_State *state) {
   int VisibleDisplayWidth;
   char *ImgPtr=HD.ImageData;
  
-    if (DC.video_palette_dirty) {
-        set_video_8bpp_colourmap();
-    }
-    if (DC.border_palette_dirty) {
-        set_border_colourmap();
-    }
-    if (DC.cursor_palette_dirty) {
-        set_cursor_colourmap();
-    }
+  if (DC.video_palette_dirty) {
+    set_video_8bpp_colourmap();
+  }
 
   if (DisplayHeight<=0) {
     fprintf(stderr,"RefreshDisplay_PseudoColor_8bpp: 0 or -ve display height\n");
@@ -674,15 +649,9 @@ static void RefreshDisplay_TrueColor_1bpp(ARMul_State *state) {
   char Buffer[MonitorWidth/8];
   char *ImgPtr=HD.ImageData;
 
-    if (DC.video_palette_dirty) {
-        set_video_4bpp_pixelmap();
-    }
-    if (DC.border_palette_dirty) {
-        set_border_pixelmap();
-    }
-    if (DC.cursor_palette_dirty) {
-        set_cursor_pixelmap();
-    }
+  if (DC.video_palette_dirty) {
+    set_video_4bpp_pixelmap();
+  }
 
   if (DisplayHeight<=0) {
     fprintf(stderr,"RefreshDisplay_TrueColor_1bpp: 0 or -ve display height\n");
@@ -731,15 +700,9 @@ static void RefreshDisplay_TrueColor_2bpp(ARMul_State *state) {
   char Buffer[MonitorWidth/4];
   char *ImgPtr=HD.ImageData;
 
-    if (DC.video_palette_dirty) {
-        set_video_4bpp_pixelmap();
-    }
-    if (DC.border_palette_dirty) {
-        set_border_pixelmap();
-    }
-    if (DC.cursor_palette_dirty) {
-        set_cursor_pixelmap();
-    }
+  if (DC.video_palette_dirty) {
+    set_video_4bpp_pixelmap();
+  }
 
   if (DisplayHeight<=0) {
     fprintf(stderr,"RefreshDisplay_TrueColor_2bpp: 0 or -ve display height\n");
@@ -788,15 +751,9 @@ static void RefreshDisplay_TrueColor_4bpp(ARMul_State *state) {
   char Buffer[MonitorWidth/2];
   char *ImgPtr=HD.ImageData;
 
-    if (DC.video_palette_dirty) {
-        set_video_4bpp_pixelmap();
-    }
-    if (DC.border_palette_dirty) {
-        set_border_pixelmap();
-    }
-    if (DC.cursor_palette_dirty) {
-        set_cursor_pixelmap();
-    }
+  if (DC.video_palette_dirty) {
+    set_video_4bpp_pixelmap();
+  }
 
   if (DisplayHeight<=0) {
     fprintf(stderr,"RefreshDisplay_TrueColor_4bpp: 0 or -ve display height\n");
@@ -847,15 +804,9 @@ static void RefreshDisplay_TrueColor_8bpp(ARMul_State *state) {
   unsigned char Buffer[MonitorWidth];
   char *ImgPtr=HD.ImageData;
   
-    if (DC.video_palette_dirty) {
-        set_video_8bpp_pixelmap();
-    }
-    if (DC.border_palette_dirty) {
-        set_border_pixelmap();
-    }
-    if (DC.cursor_palette_dirty) {
-        set_cursor_pixelmap();
-    }
+  if (DC.video_palette_dirty) {
+    set_video_8bpp_pixelmap();
+  }
 
   if (DisplayHeight<=0) {
     fprintf(stderr,"RefreshDisplay_TrueColor_8bpp: 0 or -ve display height\n");
@@ -903,8 +854,15 @@ static void RefreshDisplay(ARMul_State *state) {
   DC.maxy=0;
 
   /* First figure out number of BPP */
-  if (HD.visInfo.class==PseudoColor) {
-    switch ((VIDC.ControlReg & 0xc)>>2) {
+  if (HD.visInfo.class == PseudoColor) {
+    if (DC.border_palette_dirty) {
+      set_border_colourmap();
+    }
+    if (DC.cursor_palette_dirty) {
+      set_cursor_colourmap();
+    }
+
+    switch ((VIDC.ControlReg & 0xC)>>2) {
       case 0: /* 1bpp */
         RefreshDisplay_PseudoColor_1bpp(state);
         break;
@@ -919,7 +877,14 @@ static void RefreshDisplay(ARMul_State *state) {
         break;
     };
   } else {
-    switch ((VIDC.ControlReg & 0xc)>>2) {
+    if (DC.border_palette_dirty) {
+      set_border_pixelmap();
+    }
+    if (DC.cursor_palette_dirty) {
+      set_cursor_pixelmap();
+    }
+
+    switch ((VIDC.ControlReg & 0xC)>>2) {
       case 0: /* 1bpp */
         RefreshDisplay_TrueColor_1bpp(state);
         break;
@@ -938,17 +903,17 @@ static void RefreshDisplay(ARMul_State *state) {
   /*fprintf(stderr,"RefreshDisplay: Refreshed %d-%d\n",DC.miny,DC.maxy); */
   /* Only tell X to redisplay those bits which we've replotted into the image */
   if (DC.miny<DC.maxy) {
-    XPutImage(HD.disp,HD.MainPane,HD.MainPaneGC,HD.DisplayImage,
-              0,DC.miny, /* source pos. in image */
-              0,DC.miny, /* Position on window */
-              MonitorWidth,(DC.maxy-DC.miny)+1);
-  };
+    XPutImage(HD.disp, HD.MainPane, HD.MainPaneGC, HD.DisplayImage,
+              0, DC.miny, /* source pos. in image */
+              0, DC.miny, /* Position on window */
+              MonitorWidth, (DC.maxy - DC.miny) + 1);
+  }
 
-  XPutImage(HD.disp,HD.CursorPane,HD.MainPaneGC,HD.CursorImage,
-              0,0,
-              0,0,
-              32,((VIDC.Vert_CursorEnd-VIDC.Vert_CursorStart)-1));
-}; /* RefreshDisplay */
+  XPutImage(HD.disp, HD.CursorPane, HD.MainPaneGC, HD.CursorImage,
+              0, 0,
+              0, 0,
+              32, ((VIDC.Vert_CursorEnd - VIDC.Vert_CursorStart) - 1));
+} /* RefreshDisplay */
 
 /* ------------------------------------------------------------------ */
 
@@ -1302,7 +1267,7 @@ void DisplayKbd_Init(ARMul_State *state) {
      pushed bigger when the VIDC recieves instructions to change video 
      mode */
   HD.BackingWindow = XCreateWindow(HD.disp, HD.RootWindow, 500, 500,
-        VIDC_BORDER * 2, VIDC_BORDER * 2,
+        MonitorWidth + VIDC_BORDER * 2, MonitorHeight + VIDC_BORDER * 2,
         0, HD.visInfo.depth, InputOutput, HD.visInfo.visual, attrmask,
         &attr);
 
@@ -1403,13 +1368,13 @@ void DisplayKbd_Init(ARMul_State *state) {
      since we need at least 256 colours for 256 colour mode */
   if (HD.visInfo.class==PseudoColor) {
 
-    for(prescol=0;prescol<256;prescol++) {
-      tmpcol.flags=DoRed|DoGreen|DoBlue;
-      tmpcol.pixel=prescol;
-      tmpcol.red=(prescol &1)?65535:0;
-      tmpcol.green=(prescol &2)?65535:0;
-      tmpcol.blue=(prescol &2)?65535:0;
-      XStoreColor(HD.disp,HD.ArcsColormap,&tmpcol); /* Should use XStoreColors */
+    for(prescol=0; prescol<256; prescol++) {
+      tmpcol.flags = DoRed | DoGreen | DoBlue;
+      tmpcol.pixel = prescol;
+      tmpcol.red   = (prescol & 1) ? 65535 : 0;
+      tmpcol.green = (prescol & 2) ? 65535 : 0;
+      tmpcol.blue  = (prescol & 2) ? 65535 : 0;
+      XStoreColor(HD.disp, HD.ArcsColormap, &tmpcol); /* Should use XStoreColors */
     };
 
     XSetWindowColormap(HD.disp,HD.MainPane,HD.ArcsColormap);
@@ -1424,11 +1389,11 @@ void DisplayKbd_Init(ARMul_State *state) {
   } else {
     /* TrueColor - the colourmap is actually a fixed thing */
     for(prescol=0;prescol<256;prescol++) {
-      tmpcol.flags=DoRed|DoGreen|DoBlue;
-      tmpcol.red=(prescol &1)?65535:0;
-      tmpcol.green=(prescol &2)?65535:0;
-      tmpcol.blue=(prescol &2)?65535:0;
-      tmpcol.pixel=prescol;
+      tmpcol.flags = DoRed | DoGreen | DoBlue;
+      tmpcol.red   = (prescol & 1) ? 65535 : 0;
+      tmpcol.green = (prescol & 2) ? 65535 : 0;
+      tmpcol.blue  = (prescol & 2) ? 65535 : 0;
+      tmpcol.pixel = prescol;
       /*XQueryColor(HD.disp,HD.ArcsColormap,&tmpcol);*/
       HD.pixelMap[prescol]=0;
     };
@@ -1683,13 +1648,13 @@ static void MainPane_Event(ARMul_State *state,XEvent *e) {
   switch (e->type) {
     case EnterNotify:
       /*fprintf(stderr,"MainPane: Enter notify!\n"); */
-        hostdisplay_change_focus(&HD, TRUE);
+        hostdisplay_change_focus(TRUE);
       DC.PollCount=0;
       break;
 
     case LeaveNotify:
       /*fprintf(stderr,"MainPane: Leave notify!\n"); */
-        hostdisplay_change_focus(&HD, FALSE);
+        hostdisplay_change_focus(FALSE);
       DC.PollCount=0;
       break;
 
@@ -1733,12 +1698,12 @@ static void CursorPane_Event(ARMul_State *state,XEvent *e) {
   switch (e->type) {
     case EnterNotify:
       fprintf(stderr,"CursorPane: Enter notify!\n");
-        hostdisplay_change_focus(&HD, TRUE);
+        hostdisplay_change_focus(TRUE);
       break;
 
     case LeaveNotify:
       fprintf(stderr,"CursorPane: Leave notify!\n");
-        hostdisplay_change_focus(&HD, FALSE);
+        hostdisplay_change_focus(FALSE);
       DC.PollCount=0;
       break;
 
@@ -1778,7 +1743,8 @@ unsigned int DisplayKbd_XPoll(void *data) {
   static int discconttog=0;
 
   /* Our POLLGAP runs at 125 cycles, HDC (and fdc) want callback at 250 */
-  if (discconttog) HDC_Regular(state);
+  if (discconttog)
+    HDC_Regular(state);
   discconttog^=1;
 
   if ((KbdPollInt++)>100) {
@@ -1789,7 +1755,9 @@ unsigned int DisplayKbd_XPoll(void *data) {
     } else {
       if (KBD.TimerIntHasHappened>2) {
         KBD.TimerIntHasHappened=0;
-        if (KBD.KbdState==KbdState_Idle) Kbd_StartToHost(state);
+        if (KBD.KbdState==KbdState_Idle) {
+          Kbd_StartToHost(state);
+        }
       };
     };
   };
@@ -1798,35 +1766,36 @@ unsigned int DisplayKbd_XPoll(void *data) {
   if (XCheckMaskEvent(HD.disp, ULONG_MAX, &e)) {
 #ifdef DEBUG_X_PROTOCOL
     if (e.xany.window == HD.BackingWindow) {
-        printf("backingwindow ");
+      printf("backingwindow ");
     } else if (e.xany.window == HD.MainPane) {
-        printf("mainpane ");
+      printf("mainpane ");
     } else if (e.xany.window == HD.ControlPane) {
-        printf("controlpane ");
+      printf("controlpane ");
     } else if (e.xany.window == HD.CursorPane) {
-        printf("cursorpane ");
+      printf("cursorpane ");
     } else {
-        printf("unknown window ");
+      printf("unknown window ");
     }
     printf("= %d\n", e.type);
 #endif
 
     if (e.xany.window == HD.BackingWindow) {
-        BackingWindow_Event(state, &e);
+      BackingWindow_Event(state, &e);
     } else if (e.xany.window == HD.MainPane) {
-        MainPane_Event(state, &e);
+      MainPane_Event(state, &e);
     } else if (e.xany.window == HD.ControlPane) {
-        ControlPane_Event(state, &e);
+      ControlPane_Event(state, &e);
     } else if (e.xany.window == HD.CursorPane) {
-        CursorPane_Event(state, &e);
+      CursorPane_Event(state, &e);
     } else {
-        fprintf(stderr, "event on unknown window: %#lx %d\n",
-            e.xany.window, e.type);
-        exit(1);
+      fprintf(stderr, "event on unknown window: %#lx %d\n",
+              e.xany.window, e.type);
+      exit(1);
     }
   }
 
-  if (--(DC.AutoRefresh)<0) RefreshDisplay(state);
+  if (--(DC.AutoRefresh)<0) 
+    RefreshDisplay(state);
 
   ARMul_ScheduleEvent(&(enodes[xpollenode]),POLLGAP,DisplayKbd_XPoll);
   xpollenode^=1;
@@ -1859,7 +1828,7 @@ void VIDC_PutVal(ARMul_State *state,ARMword address, ARMword data,int bNw) {
                       Log,Sup,Red,Green,Blue);
     }
 #endif
-        IF_DIFF_THEN_ASSIGN_AND_SET_FLAG(VIDC.Palette[Log],
+    IF_DIFF_THEN_ASSIGN_AND_SET_FLAG(VIDC.Palette[Log],
             val & 0x1fff, DC.video_palette_dirty);
     return;
   };
@@ -2060,10 +2029,10 @@ void VIDC_PutVal(ARMul_State *state,ARMword address, ARMword data,int bNw) {
 /* ------------------------------------------------------------------ */
 
 
-void hostdisplay_change_focus(struct host_display *hd, int focus)
+void hostdisplay_change_focus(int focus)
 {
-  if (hd->visInfo.class == PseudoColor) {
-    (*(focus ? XInstallColormap : XUninstallColormap))(hd->disp, hd->ArcsColormap);
+  if (HD.visInfo.class == PseudoColor) {
+    (*(focus ? XInstallColormap : XUninstallColormap))(HD.disp, HD.ArcsColormap);
   }
-  (*(focus ? XAutoRepeatOff : XAutoRepeatOn))(hd->disp);
+  (*(focus ? XAutoRepeatOff : XAutoRepeatOn))(HD.disp);
 }

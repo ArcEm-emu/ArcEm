@@ -7,11 +7,6 @@
 #include "../armdefs.h"
 #include "../armopts.h"
 
-#ifdef SYSTEM_X
-#include "X11/Xlib.h"
-#include "X11/Xutil.h"
-#endif
-
 #define KBDBUFFLEN 128
 
 typedef struct {
@@ -100,57 +95,24 @@ typedef struct {
     int green_shift,green_prec;
     int blue_shift,blue_prec;
   } HostDisplay;
-
-#else
-
-#ifdef SYSTEM_X
-  struct host_display {
-    Window RootWindow,BackingWindow,MainPane,ControlPane,CursorPane;
-    Display *disp;
-    Screen *xScreen;
-    int ScreenNum;
-    XVisualInfo visInfo;
-    XImage *DisplayImage,*CursorImage;
-    char *ImageData,*CursorImageData;
-    Colormap DefaultColormap;
-    Colormap ArcsColormap;
-    GC MainPaneGC;
-    GC ControlPaneGC;
-    XColor White,Black,Red,Green,GreyDark,GreyLight,OffWhite;
-    XFontStruct *ButtonFont;
-
-    /* Stuff for shape masking of the pointer based on XEyes */
-    Pixmap shape_mask; /* window shape */
-    int ShapeEnabled;      /* Yep - we are using shapes */
-    char *ShapePixmapData; /* This is what we use to create the pixmap */
-    unsigned long pixelMap[256]; /* Map from host memory contents to 'pixel' value for putpixel */
-        unsigned long border_map;
-    unsigned long cursorPixelMap[4]; /* Map from host memory contents to 'pixel' value for putpixel in cursor*/
-    int red_shift,red_prec;
-    int green_shift,green_prec;
-    int blue_shift,blue_prec;
-  } HostDisplay;
-
-#endif
-
 #endif
 
   struct arch_keyboard {
     KbdStates KbdState;
-        /* A signed, 7-bit value stored in an unsigned char as it gets
-         * passed to keyboard transmission functions expecting an
-         * unsigned char. */
-        unsigned char MouseXCount;
-        unsigned char MouseYCount;
+    /* A signed, 7-bit value stored in an unsigned char as it gets
+     * passed to keyboard transmission functions expecting an
+     * unsigned char. */
+    unsigned char MouseXCount;
+    unsigned char MouseYCount;
     int KeyColToSend,KeyRowToSend,KeyUpNDown;
     int Leds;
-        /* The bottom three bits of leds holds their current state.  If
-         * the bit is set the LED should be emitting. */
-        void (*leds_changed)(unsigned int leds);
+    /* The bottom three bits of leds holds their current state.  If
+     * the bit is set the LED should be emitting. */
+    void (*leds_changed)(unsigned int leds);
 
     /* Double buffering - update the others while sending this */
-        unsigned char MouseXToSend;
-        unsigned char MouseYToSend; 
+    unsigned char MouseXToSend;
+    unsigned char MouseYToSend; 
     int MouseTransEnable,KeyScanEnable; /* When 1 allowed to transmit */
     int HostCommand;            /* Normally 0 else the command code */
     KbdEntry Buffer[KBDBUFFLEN];
@@ -185,7 +147,7 @@ void VIDC_PutVal(ARMul_State *state,ARMword address, ARMword data,int bNw);
 #ifdef SYSTEM_X
 
 /* Adjust to gaining or losing the keyboard and pointer focus. */
-void hostdisplay_change_focus(struct host_display *hd, int focus);
+void hostdisplay_change_focus(int focus);
 
 #endif
 

@@ -12,6 +12,7 @@
 #include "armarc.h"
 #include "DispKbd.h"
 #include "ControlPane.h"
+#include "platform.h"
 
 #include <string.h>
 
@@ -22,8 +23,6 @@
 #define LEDWIDTH 15
 #define LEDTOPS 90
 
-/* HOSTDISPLAY is too verbose here - but HD could be hard disc somewhere else! */
-#define HD HOSTDISPLAY
 #define DC DISPLAYCONTROL
 
 
@@ -171,7 +170,7 @@ void ControlPane_Event(ARMul_State *state, XEvent *event) {
 
       } else if (sym == XK_q) {
         fputs("arcem: user requested exit\n", stderr);
-        hostdisplay_change_focus(&HD, FALSE);
+        hostdisplay_change_focus(FALSE);
         exit(0);
       }
       break;
