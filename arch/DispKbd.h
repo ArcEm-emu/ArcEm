@@ -126,7 +126,11 @@ typedef struct {
 
   struct arch_keyboard {
     KbdStates KbdState;
-    int MouseXCount,MouseYCount;
+        /* A signed, 7-bit value stored in an unsigned char as it gets
+         * passed to keyboard transmission functions expecting an
+         * unsigned char. */
+        unsigned char MouseXCount;
+        unsigned char MouseYCount;
     int KeyColToSend,KeyRowToSend,KeyUpNDown;
     int Leds;
         /* The bottom three bits of leds holds their current state.  If
@@ -134,7 +138,8 @@ typedef struct {
         void (*leds_changed)(int leds);
 
     /* Double buffering - update the others while sending this */
-    int MouseXToSend,MouseYToSend; 
+        unsigned char MouseXToSend;
+        unsigned char MouseYToSend; 
     int MouseTransEnable,KeyScanEnable; /* When 1 allowed to transmit */
     int HostCommand;            /* Normally 0 else the command code */
     KbdEntry Buffer[KBDBUFFLEN];
