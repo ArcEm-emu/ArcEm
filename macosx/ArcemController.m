@@ -41,6 +41,7 @@
     if (self = [super init])
     {
         NSMutableDictionary *defaultValues;
+        NSString *path = [NSString stringWithFormat: @"%s/arcem", getenv("HOME")];
         
         // Create the screen bitmap and image
         screenBmp = [[NSMutableData alloc] initWithLength: 800 * 600 * 3];
@@ -89,7 +90,7 @@
                           forKey: AEMenuModifierKey];
         [defaultValues setObject: [NSNumber numberWithInt: VK_COMMAND]
                           forKey: AEAdjustModifierKey];
-        [defaultValues setObject: [NSString stringWithCString: "/Users/michael/arcem"]
+        [defaultValues setObject: path
                           forKey: AEDirectoryKey];
 
         [[NSUserDefaults standardUserDefaults] registerDefaults: defaultValues];
@@ -110,7 +111,7 @@
     emuThread = [[ArcemEmulator alloc] init];
 
     // List the parameters for the thread - the bitmaps, and the view to send the redraw to
-    params = [NSArray arrayWithObjects: arcemView, screenBmp, cursorBmp, nil];
+    params = [NSArray arrayWithObjects: arcemView, screenBmp, cursorBmp, self, nil];
 
     // Run the processing thread
     [NSThread detachNewThreadSelector: @selector(threadStart:)
@@ -129,7 +130,12 @@
  */
 - (void)destroyEmulatorThread
 {
-    [emuThread threadKill];
+    if (emuThread != nil)
+    {
+        ArcemEmulator* temp = emuThread;
+        emuThread = nil;
+        [temp threadKill];
+    }
 }
 
 /*------------------------------------------------------------------------------
@@ -160,11 +166,20 @@
     menuItemsEject[2] = menuItemEject2;
     menuItemsEject[3] = menuItemEject3;
 
+    menuItemsHDMount[0] = menuItemHDMount0;
+    menuItemsHDMount[1] = menuItemHDMount1;
+    menuItemsHDEject[0] = menuItemHDEject0;
+    menuItemsHDEject[1] = menuItemHDEject1;
+    
     // We'll manage the menu items from now on thank you very much
     [[menuItemMount0 menu] setAutoenablesItems: NO];
     [[menuItemEject0 menu] setAutoenablesItems: NO];
+    [[menuItemHDMount0 menu] setAutoenablesItems: NO];
+    [[menuItemHDEject0 menu] setAutoenablesItems: NO];
     
     for (i = 0; i < 4; i++)
+        [menuItemsEject[i] setEnabled: NO];
+    for (i = 0; i < 2; i++)
         [menuItemsEject[i] setEnabled: NO];
     
     // Now set up to receive notification of when we lose control (either we're hidden
@@ -329,7 +344,6 @@
 }
 
 
-
 /*------------------------------------------------------------------------------
  *
  */
@@ -345,6 +359,35 @@
 
         // One assumes it we managed to select a file then it exists...
         
+        // Note the name of the disk image
+        FDC.driveFiles[mountDrive] = (char*)malloc([path length] + 1);
+        [path getCString: FDC.driveFiles[mountDrive]];
+
+        // Force the FDC to reload that drive
+        FDC_ReOpen((struct ARMul_State*)NULL, mountDrive);
+
+        // Now disable the insert menu option and enable the eject menu option
+        [menuItemsMount[mountDrive] setEnabled: NO];
+        [menuItemsEject[mountDrive] setEnabled: YES];
+    }
+}
+
+
+/*------------------------------------------------------------------------------
+ *
+ */
+- (void)openPanelHardDiscDidEnd: (NSOpenPanel *)openPanel
+                     returnCode: (int)returnCode
+                    contextInfo: (void *)x
+{
+    if (returnCode == NSOKButton)
+    {
+        NSString *path = [openPanel filename];
+
+        //NSLog(@"Open file %s for drive %d\n", [path cString], mountDrive);
+
+        // One assumes it we managed to select a file then it exists...
+
         // Note the name of the disk image
         FDC.driveFiles[mountDrive] = (char*)malloc([path length] + 1);
         [path getCString: FDC.driveFiles[mountDrive]];
@@ -475,7 +518,6 @@
 - (IBAction)menuReset:(id)sender
 {
     [self destroyEmulatorThread];
-
     [self createEmulatorThread];
 }
 

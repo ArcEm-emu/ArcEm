@@ -32,12 +32,16 @@
 #import "ArcemEmulator.h"
 #import "dagstandalone.h"
 #import "ArcemView.h"
+#import "ArcemController.h"
+#import "PreferenceController.h"
 
 #import <pthread.h>
 
 extern unsigned char *screenbmp;
 extern unsigned char *cursorbmp;
 ArcemView* disp;
+ArcemController* controller;
+char arcemDir[256];
 
 // This is where the imperative world meets the OO world. These functions could
 // be in DispKey.c, but that would need more headers.
@@ -72,8 +76,23 @@ void updateDisplay(int x, int y, int width, int height, int yield)
     
     [disp setNeedsScaledDisplayInRect: rect];
     
-    if (yield)
-        sched_yield();
+    //if (yield)
+      //  sched_yield();
+}
+
+
+/*------------------------------------------------------------------------------
+ *
+ */
+void arcem_exit(char* msg)
+{
+    [disp emulatorError: msg];
+    
+    //[pool release];
+    //[NSThread exit];
+    [controller destroyEmulatorThread];
+
+    return;
 }
 
 
@@ -87,15 +106,21 @@ void updateDisplay(int x, int y, int width, int height, int yield)
 {
     NSArray *params = anObject;
     NSMutableData *screen, *cursor;
+    NSString *dir;
     
     pool = [[NSAutoreleasePool alloc] init];
 
     disp = [params objectAtIndex: 0];
     screen = [params objectAtIndex: 1];
     cursor = [params objectAtIndex: 2];
+    controller = [params objectAtIndex: 3];
 
     screenbmp = [screen mutableBytes];
     cursorbmp = [cursor mutableBytes];
+
+    dir = [[NSUserDefaults standardUserDefaults] stringForKey:AEDirectoryKey];
+    [dir getCString: arcemDir
+          maxLength: 256];
     
     // Start ArcEm
     dagstandalone();

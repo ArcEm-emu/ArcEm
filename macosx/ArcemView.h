@@ -49,6 +49,8 @@
     float fXScale, fYScale;
     int nXScale, nYScale;
 
+    const char *strErrorMsg;
+    
     BOOL mouseEmulation;
     int adjustModifier, menuModifier;
 }
@@ -62,5 +64,6 @@
 - (void)toggleYScale;
 - (void)prefsUpdated;
 - (void)setNeedsScaledDisplayInRect: (NSRect)rect;
+- (void)emulatorError: (const char*)message;
 
 @end

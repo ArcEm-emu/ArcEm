@@ -26,6 +26,8 @@
 
 #ifdef MACOSX
 #include <unistd.h>
+extern char arcemDir[256];
+void arcem_exit(char* msg);
 #endif
 
 #ifdef __riscos__
@@ -421,16 +423,17 @@ unsigned ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
 #else
 #ifdef MACOSX
  {
-     char* homedir = getenv("HOME");
-     chdir(homedir);
+     chdir(arcemDir);
  }
- if (ROMFile = fopen("arcem/ROM", "rb"), ROMFile == NULL) {
+ if (ROMFile = fopen("ROM", "rb"), ROMFile == NULL) {
+     arcem_exit("Couldn't open ROM file");
+ }
 #else
  if (ROMFile = fopen("ROM", "rb"), ROMFile == NULL) {
-#endif
    fprintf(stderr, "Couldn't open ROM file\n");
    exit(1);
  };
+#endif
 #endif
 
  /* Find the rom file size */

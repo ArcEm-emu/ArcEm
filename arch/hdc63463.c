@@ -1617,11 +1617,15 @@ void HDC_Init(ARMul_State *state) {
 
   for (currentdrive = 0; currentdrive < 4; currentdrive++) {
     HDC.Track[currentdrive] = 0;
-
+      
+#ifndef MACOSX
 #ifdef __riscos__
     sprintf(FileName, "<ArcEm$Dir>.HardImage%d", currentdrive);
 #else
     sprintf(FileName, "HardImage%d", currentdrive);
+#endif
+#else
+    sprintf(FileName, "%s/arcem/HardImage%d", getenv("HOME"), currentdrive);
 #endif
 
     {
@@ -1635,11 +1639,11 @@ void HDC_Init(ARMul_State *state) {
       }
     }
 
-#ifdef DEBUG
+//#ifdef DEBUG
     if (!HDC.HardFile[currentdrive]) {
       fprintf(stderr,"HDC: Couldn't open image for drive %d\n", currentdrive);
     }
-#endif
+//#endif
   }; /* Image opening */
 
   HDC.DREQ=0;

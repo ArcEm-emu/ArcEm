@@ -7,6 +7,7 @@
 
 #ifdef MACOSX
 #include <unistd.h>
+extern char arcemDir[256];
 #endif
 
 #include "armarc.h"
@@ -65,9 +66,8 @@ static void SaveCMOS(ARMul_State *state) {
 #else
 #ifdef MACOSX
   {
-      char* homedir = getenv("HOME");
-      chdir(homedir);
-      OutFile = fopen("arcem/hexcmos","w");
+      chdir(arcemDir);
+      OutFile = fopen("hexcmos","w");
   }
 #else
   OutFile = fopen("hexcmos","w");
@@ -336,9 +336,8 @@ static void SetUpCMOS(ARMul_State *state) {
 #else
 #ifdef MACOSX
   {
-      char* homedir = getenv("HOME");
-      chdir(homedir);
-      InFile = fopen("arcem/hexcmos", "r");
+      chdir(arcemDir);
+      InFile = fopen("hexcmos", "r");
   }
 #else
   InFile = fopen("hexcmos", "r");

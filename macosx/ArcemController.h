@@ -40,10 +40,16 @@
     IBOutlet id menuItemMount1;
     IBOutlet id menuItemMount2;
     IBOutlet id menuItemMount3;
+    IBOutlet id menuItemHDEject0;
+    IBOutlet id menuItemHDEject1;
+    IBOutlet id menuItemHDMount0;
+    IBOutlet id menuItemHDMount1;
     IBOutlet id menuItemDoubleX;
     IBOutlet id menuItemDoubleY;
     IBOutlet id menuItemsEject[4];
     IBOutlet id menuItemsMount[4];
+    IBOutlet id menuItemsHDEject[2];
+    IBOutlet id menuItemsHDMount[2];
     
     NSMutableData *screenBmp;		// Raw screen bitmap
     NSBitmapImageRep *screenImg;	// Image for drawing screen
@@ -75,15 +81,25 @@
 - (IBAction)menuEject2:(id)sender;
 - (IBAction)menuEject3:(id)sender;
 
+- (IBAction)menuHDMount0:(id)sender;
+- (IBAction)menuHDMount1:(id)sender;
+
+- (IBAction)menuHDEject0:(id)sender;
+- (IBAction)menuHDEject1:(id)sender;
+
 - (IBAction)menuDoubleX:(id)sender;
 - (IBAction)menuDoubleY:(id)sender;
 
 - (IBAction)menuReset:(id)sender;
 
 - (void)applicationHide:(NSNotification*)aNotification;
+- (void)destroyEmulatorThread;
 
 - (void)openPanelDidEnd: (NSOpenPanel *)openPanel
              returnCode: (int)returnCode
             contextInfo: (void *)x;
+- (void)openPanelHardDiscDidEnd: (NSOpenPanel *)openPanel
+                     returnCode: (int)returnCode
+                    contextInfo: (void *)x;
 
 @end

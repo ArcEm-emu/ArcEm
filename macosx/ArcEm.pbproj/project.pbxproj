@@ -134,6 +134,7 @@
 				4A9504CCFFE6A4B311CA0CBA,
 				4A9504CDFFE6A4B311CA0CBA,
 			);
+			hasScannedForEncodings = 1;
 			isa = PBXProject;
 			mainGroup = 29B97314FDCFA39411CA2CEA;
 			projectDirPath = "";
@@ -188,6 +189,7 @@
 			refType = 4;
 		};
 		29B97316FDCFA39411CA2CEA = {
+			fileEncoding = 30;
 			isa = PBXFileReference;
 			path = main.m;
 			refType = 4;
@@ -250,14 +252,11 @@
 				29B9732DFDCFA39411CA2CEA,
 			);
 			buildSettings = {
-				DEBUGGING_SYMBOLS = NO;
 				FRAMEWORK_SEARCH_PATHS = "";
 				HEADER_SEARCH_PATHS = "";
 				INSTALL_PATH = "$(HOME)/Applications";
 				LIBRARY_SEARCH_PATHS = "";
-				OPTIMIZATION_CFLAGS = "-O3";
-				OTHER_CFLAGS = "-DBIGEND -DNOOS -DNOFPE -DMACOSX -I..";
-				OTHER_LDFLAGS = "";
+				OTHER_CFLAGS = "-DBIGEND -DNOOS -DNOFPE -DMACOSX -I.. ";
 				PRODUCT_NAME = ArcEm;
 				SECTORDER_FLAGS = "";
 				WARNING_CFLAGS = "-Wmost -Wno-four-char-constants -Wno-unknown-pragmas";
@@ -271,8 +270,8 @@
 			productName = ArcEm;
 			productReference = 17587328FF379C6511CA2CBB;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
-<!DOCTYPE plist SYSTEM \"file://localhost/System/Library/DTDs/PropertyList.dtd\">
-<plist version=\"0.9\">
+<!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
+<plist version=\"1.0\">
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
@@ -295,7 +294,6 @@
 </dict>
 </plist>
 ";
-			shouldUseHeadermap = 1;
 		};
 		29B97327FDCFA39411CA2CEA = {
 			buildActionMask = 2147483647;
@@ -330,6 +328,7 @@
 				D1E0FA2002B41B0301D1F43F,
 			);
 			isa = PBXHeadersBuildPhase;
+			runOnlyForDeploymentPostprocessing = 0;
 		};
 		29B97328FDCFA39411CA2CEA = {
 			buildActionMask = 2147483647;
@@ -338,10 +337,10 @@
 				089C165EFE840E0CC02AAC07,
 				D1CA0AB0029C4D9401D1F43F,
 				D1E92BE002A5470B01D1F43F,
-				D1E0FA0902B41B0301D1F43F,
 				D19819E402CA867701D1F43F,
 			);
 			isa = PBXResourcesBuildPhase;
+			runOnlyForDeploymentPostprocessing = 0;
 		};
 		29B9732BFDCFA39411CA2CEA = {
 			buildActionMask = 2147483647;
@@ -369,6 +368,7 @@
 				D1E0FA1B02B41B0301D1F43F,
 			);
 			isa = PBXSourcesBuildPhase;
+			runOnlyForDeploymentPostprocessing = 0;
 		};
 		29B9732CFDCFA39411CA2CEA = {
 			fileRef = 29B97316FDCFA39411CA2CEA;
@@ -384,6 +384,7 @@
 				1058C7A3FEA54F0111CA2CBB,
 			);
 			isa = PBXFrameworksBuildPhase;
+			runOnlyForDeploymentPostprocessing = 0;
 		};
 //290
 //291
@@ -425,11 +426,13 @@
 //D13
 //D14
 		D157A5F10291D6F801123251 = {
+			fileEncoding = 30;
 			isa = PBXFileReference;
 			path = ArcemView.h;
 			refType = 4;
 		};
 		D157A5F20291D6F801123251 = {
+			fileEncoding = 30;
 			isa = PBXFileReference;
 			path = ArcemView.m;
 			refType = 4;
@@ -447,11 +450,13 @@
 			};
 		};
 		D157A5F50291D94401123251 = {
+			fileEncoding = 30;
 			isa = PBXFileReference;
 			path = ArcemController.m;
 			refType = 4;
 		};
 		D157A5F60291D94401123251 = {
+			fileEncoding = 30;
 			isa = PBXFileReference;
 			path = ArcemController.h;
 			refType = 4;
@@ -469,11 +474,13 @@
 			};
 		};
 		D157A5F90291DA6C01123251 = {
+			fileEncoding = 30;
 			isa = PBXFileReference;
 			path = ArcemEmulator.m;
 			refType = 4;
 		};
 		D157A5FA0291DA6C01123251 = {
+			fileEncoding = 30;
 			isa = PBXFileReference;
 			path = ArcemEmulator.h;
 			refType = 4;
@@ -491,11 +498,13 @@
 			};
 		};
 		D167869C029D98DC01D1F43F = {
+			fileEncoding = 30;
 			isa = PBXFileReference;
 			path = PreferenceController.m;
 			refType = 4;
 		};
 		D167869D029D98DC01D1F43F = {
+			fileEncoding = 30;
 			isa = PBXFileReference;
 			path = PreferenceController.h;
 			refType = 4;
@@ -568,195 +577,238 @@
 			refType = 0;
 		};
 		D1E0F9D002B41B0301D1F43F = {
+			fileEncoding = 30;
 			isa = PBXFileReference;
 			path = archio.c;
 			refType = 4;
 		};
 		D1E0F9D102B41B0301D1F43F = {
+			fileEncoding = 30;
 			isa = PBXFileReference;
 			path = archio.h;
 			refType = 4;
 		};
 		D1E0F9D202B41B0301D1F43F = {
+			fileEncoding = 30;
 			isa = PBXFileReference;
 			path = armarc.c;
 			refType = 4;
 		};
 		D1E0F9D302B41B0301D1F43F = {
+			fileEncoding = 30;
 			isa = PBXFileReference;
 			path = armarc.h;
 			refType = 4;
 		};
 		D1E0F9D402B41B0301D1F43F = {
+			fileEncoding = 30;
 			isa = PBXFileReference;
 			path = ControlPane.h;
 			refType = 4;
 		};
 		D1E0F9D502B41B0301D1F43F = {
+			fileEncoding = 30;
 			isa = PBXFileReference;
 			path = DispKbd.h;
 			refType = 4;
 		};
 		D1E0F9D602B41B0301D1F43F = {
+			fileEncoding = 30;
 			isa = PBXFileReference;
 			path = fdc1772.c;
 			refType = 4;
 		};
 		D1E0F9D702B41B0301D1F43F = {
+			fileEncoding = 30;
 			isa = PBXFileReference;
 			path = fdc1772.h;
 			refType = 4;
 		};
 		D1E0F9D802B41B0301D1F43F = {
+			fileEncoding = 30;
 			isa = PBXFileReference;
 			path = hdc63463.c;
 			refType = 4;
 		};
 		D1E0F9D902B41B0301D1F43F = {
+			fileEncoding = 30;
 			isa = PBXFileReference;
 			path = hdc63463.h;
 			refType = 4;
 		};
 		D1E0F9DA02B41B0301D1F43F = {
+			fileEncoding = 30;
 			isa = PBXFileReference;
 			path = i2c.c;
 			refType = 4;
 		};
 		D1E0F9DB02B41B0301D1F43F = {
+			fileEncoding = 30;
 			isa = PBXFileReference;
 			path = i2c.h;
 			refType = 4;
 		};
 		D1E0F9DC02B41B0301D1F43F = {
+			fileEncoding = 30;
 			isa = PBXFileReference;
 			path = ReadConfig.c;
 			refType = 4;
 		};
 		D1E0F9DD02B41B0301D1F43F = {
+			fileEncoding = 30;
 			isa = PBXFileReference;
 			path = ReadConfig.h;
 			refType = 4;
 		};
 		D1E0F9DE02B41B0301D1F43F = {
+			fileEncoding = 30;
 			isa = PBXFileReference;
 			path = Version.h;
 			refType = 4;
 		};
+		D1E0F9DF02B41B0301D1F43F = {
+			children = (
+			);
+			isa = PBXGroup;
+			name = arm_code;
+			path = /Users/michael/Dev/arcem/clean/arcem/arm_code;
+			refType = 0;
+		};
 		D1E0F9E202B41B0301D1F43F = {
+			fileEncoding = 30;
 			isa = PBXFileReference;
 			name = armcopro.c;
 			path = /Users/michael/Dev/arcem/clean/arcem/armcopro.c;
 			refType = 0;
 		};
 		D1E0F9E302B41B0301D1F43F = {
+			fileEncoding = 30;
 			isa = PBXFileReference;
 			name = armdefs.h;
 			path = /Users/michael/Dev/arcem/clean/arcem/armdefs.h;
 			refType = 0;
 		};
 		D1E0F9E802B41B0301D1F43F = {
+			fileEncoding = 30;
 			isa = PBXFileReference;
 			name = armemu.c;
 			path = /Users/michael/Dev/arcem/clean/arcem/armemu.c;
 			refType = 0;
 		};
 		D1E0F9E902B41B0301D1F43F = {
+			fileEncoding = 30;
 			isa = PBXFileReference;
 			name = armemu.h;
 			path = /Users/michael/Dev/arcem/clean/arcem/armemu.h;
 			refType = 0;
 		};
 		D1E0F9EA02B41B0301D1F43F = {
+			fileEncoding = 30;
 			isa = PBXFileReference;
 			name = armfpe.h;
 			path = /Users/michael/Dev/arcem/clean/arcem/armfpe.h;
 			refType = 0;
 		};
 		D1E0F9EB02B41B0301D1F43F = {
+			fileEncoding = 30;
 			isa = PBXFileReference;
 			name = arminit.c;
 			path = /Users/michael/Dev/arcem/clean/arcem/arminit.c;
 			refType = 0;
 		};
 		D1E0F9EC02B41B0301D1F43F = {
+			fileEncoding = 30;
 			isa = PBXFileReference;
 			name = armopts.h;
 			path = /Users/michael/Dev/arcem/clean/arcem/armopts.h;
 			refType = 0;
 		};
 		D1E0F9ED02B41B0301D1F43F = {
+			fileEncoding = 30;
 			isa = PBXFileReference;
 			name = armos.c;
 			path = /Users/michael/Dev/arcem/clean/arcem/armos.c;
 			refType = 0;
 		};
 		D1E0F9EE02B41B0301D1F43F = {
+			fileEncoding = 30;
 			isa = PBXFileReference;
 			name = armos.h;
 			path = /Users/michael/Dev/arcem/clean/arcem/armos.h;
 			refType = 0;
 		};
 		D1E0F9EF02B41B0301D1F43F = {
+			fileEncoding = 30;
 			isa = PBXFileReference;
 			name = armrdi.c;
 			path = /Users/michael/Dev/arcem/clean/arcem/armrdi.c;
 			refType = 0;
 		};
 		D1E0F9F002B41B0301D1F43F = {
+			fileEncoding = 30;
 			isa = PBXFileReference;
 			name = armrdi.h;
 			path = /Users/michael/Dev/arcem/clean/arcem/armrdi.h;
 			refType = 0;
 		};
 		D1E0F9F102B41B0301D1F43F = {
+			fileEncoding = 30;
 			isa = PBXFileReference;
 			name = armsupp.c;
 			path = /Users/michael/Dev/arcem/clean/arcem/armsupp.c;
 			refType = 0;
 		};
 		D1E0F9F202B41B0301D1F43F = {
+			fileEncoding = 30;
 			isa = PBXFileReference;
 			name = bag.c;
 			path = /Users/michael/Dev/arcem/clean/arcem/bag.c;
 			refType = 0;
 		};
 		D1E0F9F302B41B0301D1F43F = {
+			fileEncoding = 30;
 			isa = PBXFileReference;
 			name = bag.h;
 			path = /Users/michael/Dev/arcem/clean/arcem/bag.h;
 			refType = 0;
 		};
 		D1E0F9F402B41B0301D1F43F = {
+			fileEncoding = 30;
 			isa = PBXFileReference;
 			name = dagstandalone.c;
 			path = /Users/michael/Dev/arcem/clean/arcem/dagstandalone.c;
 			refType = 0;
 		};
 		D1E0F9F502B41B0301D1F43F = {
+			fileEncoding = 30;
 			isa = PBXFileReference;
 			name = dagstandalone.h;
 			path = /Users/michael/Dev/arcem/clean/arcem/dagstandalone.h;
 			refType = 0;
 		};
 		D1E0F9F602B41B0301D1F43F = {
+			fileEncoding = 30;
 			isa = PBXFileReference;
 			name = dbg_conf.h;
 			path = /Users/michael/Dev/arcem/clean/arcem/dbg_conf.h;
 			refType = 0;
 		};
 		D1E0F9F702B41B0301D1F43F = {
+			fileEncoding = 30;
 			isa = PBXFileReference;
 			name = dbg_cp.h;
 			path = /Users/michael/Dev/arcem/clean/arcem/dbg_cp.h;
 			refType = 0;
 		};
 		D1E0F9F802B41B0301D1F43F = {
+			fileEncoding = 30;
 			isa = PBXFileReference;
 			name = dbg_hif.h;
 			path = /Users/michael/Dev/arcem/clean/arcem/dbg_hif.h;
 			refType = 0;
 		};
 		D1E0F9F902B41B0301D1F43F = {
+			fileEncoding = 30;
 			isa = PBXFileReference;
 			name = dbg_rdi.h;
 			path = /Users/michael/Dev/arcem/clean/arcem/dbg_rdi.h;
@@ -848,12 +900,6 @@
 		};
 		D1E0FA0802B41B0301D1F43F = {
 			fileRef = D1E0F9DE02B41B0301D1F43F;
-			isa = PBXBuildFile;
-			settings = {
-			};
-		};
-		D1E0FA0902B41B0301D1F43F = {
-			fileRef = D1E0F9E002B41B0301D1F43F;
 			isa = PBXBuildFile;
 			settings = {
 			};
@@ -990,6 +1036,7 @@
 			};
 		};
 		D1F01D8302931F6101CDBB35 = {
+			fileEncoding = 30;
 			isa = PBXFileReference;
 			path = macarcem.h;
 			refType = 4;
@@ -1012,6 +1059,7 @@
 			refType = 4;
 		};
 		D1F01DD60293339001CDBB35 = {
+			fileEncoding = 30;
 			isa = PBXFileReference;
 			path = DispKbd.c;
 			refType = 4;
@@ -1023,6 +1071,7 @@
 			};
 		};
 		D1F01DD8029333DB01CDBB35 = {
+			fileEncoding = 30;
 			isa = PBXFileReference;
 			path = win.h;
 			refType = 4;
@@ -1034,6 +1083,7 @@
 			};
 		};
 		D1F01DDA0293D79C01CDBB35 = {
+			fileEncoding = 30;
 			isa = PBXFileReference;
 			path = KeyTable.h;
 			refType = 4;
@@ -1045,6 +1095,7 @@
 			};
 		};
 		D1F01DDC0293E0E601CDBB35 = {
+			fileEncoding = 30;
 			isa = PBXFileReference;
 			path = ControlPane.c;
 			refType = 4;

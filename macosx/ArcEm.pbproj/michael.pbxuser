@@ -13,306 +13,14 @@
 			D157A5EE0291D66801123251,
 		);
 		perUserDictionary = {
-			PBXPerProjectTemplateStateSaveDate = 50001729;
-			"PBXTemplateGeometry-F5314676015831810DCA290F" = {
-				ContentSize = "{685, 434}";
-				LeftSlideOut = {
-					Collapsed = NO;
-					Frame = "{{0, 23}, {685, 411}}";
-					Split0 = {
-						ActiveTab = 2;
-						Collapsed = NO;
-						Frame = "{{0, 0}, {685, 411}}";
-						Split0 = {
-							Frame = "{{0, 221}, {685, 190}}";
-						};
-						SplitCount = 1;
-						Tab0 = {
-							Debugger = {
-								Collapsed = NO;
-								Frame = "{{0, 0}, {952, 321}}";
-								Split0 = {
-									Frame = "{{0, 24}, {952, 297}}";
-									Split0 = {
-										Frame = "{{0, 0}, {468, 297}}";
-									};
-									Split1 = {
-										DebugVariablesTableConfiguration = (
-											Name,
-											126.803,
-											Value,
-											150.074,
-											Summary,
-											172.123,
-										);
-										Frame = "{{477, 0}, {475, 297}}";
-									};
-									SplitCount = 2;
-								};
-								SplitCount = 1;
-								Tab0 = {
-									Frame = "{{0, 0}, {100, 50}}";
-								};
-								Tab1 = {
-									Frame = "{{0, 0}, {100, 50}}";
-								};
-								TabCount = 2;
-								TabsVisible = YES;
-							};
-							Frame = "{{0, 0}, {952, 321}}";
-							LauncherConfigVersion = 7;
-						};
-						Tab1 = {
-							Frame = "{{0, 0}, {781, 452}}";
-							LauncherConfigVersion = 3;
-							Runner = {
-								Frame = "{{0, 0}, {781, 452}}";
-							};
-						};
-						Tab2 = {
-							BuildMessageFrame = "{{0, 0}, {687, 149}}";
-							BuildTranscriptFrame = "{{0, 158}, {687, 59}}";
-							Frame = "{{0, 0}, {685, 215}}";
-						};
-						Tab3 = {
-							Frame = "{{0, 0}, {612, 295}}";
-						};
-						TabCount = 4;
-						TabsVisible = NO;
-					};
-					SplitCount = 1;
-					Tab0 = {
-						Frame = "{{0, 0}, {300, 533}}";
-						GroupTreeTableConfiguration = (
-							SCMStatusColumn,
-							22,
-							TargetStatusColumn,
-							18,
-							MainColumn,
-							245,
-						);
-					};
-					Tab1 = {
-						ClassesFrame = "{{0, 0}, {280, 398}}";
-						ClassesTreeTableConfiguration = (
-							PBXBookColumnIdentifier,
-							20,
-							PBXClassColumnIdentifier,
-							237,
-						);
-						Frame = "{{0, 0}, {278, 659}}";
-						MembersFrame = "{{0, 407}, {280, 252}}";
-						MembersTreeTableConfiguration = (
-							PBXBookColumnIdentifier,
-							20,
-							PBXMethodColumnIdentifier,
-							236,
-						);
-					};
-					Tab2 = {
-						Frame = "{{0, 0}, {200, 100}}";
-					};
-					Tab3 = {
-						Frame = "{{0, 0}, {200, 100}}";
-						Split0 = {
-							Frame = "{{0, 0}, {200, 45}}";
-							TargetTreeTableConfiguration = (
-								ActiveTarget,
-								16,
-								TargetName,
-								168,
-							);
-						};
-						Split1 = {
-							BuildStyleTreeTableConfiguration = (
-								IsActive,
-								16,
-								Name,
-								169,
-							);
-							Frame = "{{0, 54}, {200, 46}}";
-						};
-						SplitCount = 2;
-					};
-					Tab4 = {
-						ExecutableTreeTableConfiguration = (
-							ActiveExecutable,
-							16,
-							ExecutableName,
-							217,
-						);
-						Frame = "{{0, 0}, {250, 100}}";
-					};
-					Tab5 = {
-						BreakpointsTreeTableConfiguration = (
-							breakpointColumn,
-							197,
-							enabledColumn,
-							31,
-						);
-						Frame = "{{0, 0}, {250, 100}}";
-					};
-					TabCount = 6;
-					TabsVisible = NO;
-				};
-				StatusViewVisible = YES;
-				Template = F5314676015831810DCA290F;
-				ToolbarVisible = YES;
-				WindowLocation = "{110, 250}";
-			};
-			"PBXTemplateGeometry-F5534CB2020F3F8A0DCA290F" = {
-				ContentSize = "{594, 303}";
-				LeftSlideOut = {
-					Collapsed = NO;
-					Frame = "{{0, 23}, {594, 280}}";
-					Split0 = {
-						ActiveTab = 1;
-						Collapsed = YES;
-						Frame = "{{0, 0}, {594, 280}}";
-						Split0 = {
-							Frame = "{{1e+06, 1e+06}, {594, 0}}";
-						};
-						SplitCount = 1;
-						Tab0 = {
-							Debugger = {
-								Collapsed = NO;
-								Frame = "{{0, 0}, {804, 321}}";
-								Split0 = {
-									Frame = "{{0, 24}, {804, 297}}";
-									Split0 = {
-										Frame = "{{0, 0}, {394, 297}}";
-									};
-									Split1 = {
-										DebugVariablesTableConfiguration = (
-											Name,
-											102.803,
-											Value,
-											125.074,
-											Summary,
-											147.123,
-										);
-										Frame = "{{403, 0}, {401, 297}}";
-									};
-									SplitCount = 2;
-								};
-								SplitCount = 1;
-								Tab0 = {
-									Frame = "{{0, 0}, {100, 50}}";
-								};
-								Tab1 = {
-									Frame = "{{0, 0}, {100, 50}}";
-								};
-								TabCount = 2;
-								TabsVisible = YES;
-							};
-							Frame = "{{0, 0}, {804, 321}}";
-							LauncherConfigVersion = 7;
-						};
-						Tab1 = {
-							Frame = "{{0, 0}, {594, 274}}";
-							LauncherConfigVersion = 3;
-							Runner = {
-								Frame = "{{0, 0}, {594, 274}}";
-							};
-						};
-						Tab2 = {
-							BuildMessageFrame = "{{0, 0}, {806, 237}}";
-							BuildTranscriptFrame = "{{0, 246}, {806, 3}}";
-							Frame = "{{0, 0}, {804, 247}}";
-						};
-						Tab3 = {
-							Frame = "{{0, 0}, {612, 295}}";
-						};
-						TabCount = 4;
-						TabsVisible = NO;
-					};
-					SplitCount = 1;
-					Tab0 = {
-						Frame = "{{0, 0}, {300, 533}}";
-						GroupTreeTableConfiguration = (
-							SCMStatusColumn,
-							22,
-							TargetStatusColumn,
-							18,
-							MainColumn,
-							245,
-						);
-					};
-					Tab1 = {
-						ClassesFrame = "{{0, 0}, {280, 398}}";
-						ClassesTreeTableConfiguration = (
-							PBXBookColumnIdentifier,
-							20,
-							PBXClassColumnIdentifier,
-							237,
-						);
-						Frame = "{{0, 0}, {278, 659}}";
-						MembersFrame = "{{0, 407}, {280, 252}}";
-						MembersTreeTableConfiguration = (
-							PBXBookColumnIdentifier,
-							20,
-							PBXMethodColumnIdentifier,
-							236,
-						);
-					};
-					Tab2 = {
-						Frame = "{{0, 0}, {200, 100}}";
-					};
-					Tab3 = {
-						Frame = "{{0, 0}, {200, 386}}";
-						Split0 = {
-							Frame = "{{0, 0}, {200, 186}}";
-							TargetTreeTableConfiguration = (
-								ActiveTarget,
-								16,
-								TargetName,
-								168,
-							);
-						};
-						Split1 = {
-							BuildStyleTreeTableConfiguration = (
-								IsActive,
-								16,
-								Name,
-								169,
-							);
-							Frame = "{{0, 195}, {200, 191}}";
-						};
-						SplitCount = 2;
-					};
-					Tab4 = {
-						ExecutableTreeTableConfiguration = (
-							ActiveExecutable,
-							16,
-							ExecutableName,
-							217,
-						);
-						Frame = "{{0, 0}, {250, 386}}";
-					};
-					Tab5 = {
-						BreakpointsTreeTableConfiguration = (
-							breakpointColumn,
-							197,
-							enabledColumn,
-							31,
-						);
-						Frame = "{{0, 0}, {250, 100}}";
-					};
-					TabCount = 6;
-					TabsVisible = NO;
-				};
-				StatusViewVisible = YES;
-				Template = F5534CB2020F3F8A0DCA290F;
-				ToolbarVisible = YES;
-				WindowLocation = "{4, 381}";
-			};
+			PBXPerProjectTemplateStateSaveDate = 73671354;
 			PBXWorkspaceContents = (
 				{
 					LeftSlideOut = {
 						Split0 = {
 							Split0 = {
 								NavContent0 = {
-									bookmark = D14857FF02FAF7BB01878BC2;
+									bookmark = 4CEA711C046422FC00D1F43F;
 									history = (
 										D1F01DE1029400E201CDBB35,
 										D1F01DE6029400E201CDBB35,
@@ -324,14 +32,11 @@
 										D12F7473029AF59A01D1F43F,
 										D12F7474029AF59A01D1F43F,
 										D192FDE7029B061601D1F43F,
-										D1CC1308029D96AE01D1F43F,
 										D1CC130A029D96AE01D1F43F,
 										D1CC130B029D96AE01D1F43F,
 										D1CC130C029D96AE01D1F43F,
-										D1BB0389029E9A9F01D1F43F,
 										D1C7089702A002F701D1F43F,
 										D19369BB02A1991301D1F43F,
-										D1AC74C002A5925101D1F43F,
 										D1A7EEEE02AA58BF01CDDA66,
 										D1A7EEF002AA58BF01CDDA66,
 										D1A7EEF202AA58BF01CDDA66,
@@ -350,8 +55,6 @@
 										D1E0FA2402B4286F01D1F43F,
 										D1A4FF4102B6C9F701D1F43F,
 										D1A4FF4202B6C9F701D1F43F,
-										D1A41D8402B8D4C401D1F43F,
-										D1364EE802B8D65801D1F43F,
 										D1E4D3E502BAAB9801D1F43F,
 										D1E4D3E602BAAB9801D1F43F,
 										D18A5FC802BF714B01AB77B2,
@@ -365,32 +68,53 @@
 										D1B7C7FD02D8B1AA014B75DC,
 										D1B7C7FF02D8B1AA014B75DC,
 										D1B7C80102D8B1AA014B75DC,
-										D1B7C80402D8B1AA014B75DC,
 										D1B7C80502D8B1AA014B75DC,
-										D1B7C80902D8B1AA014B75DC,
-										D1A725AC02E9A6E201D1F43F,
 										D1A725AD02E9A6E201D1F43F,
-										D1A725AE02E9A6E201D1F43F,
-										D1A725B102E9A6E201D1F43F,
 										D1A725B202E9A6E201D1F43F,
-										D1A725C302E9AB8901D1F43F,
-										D1A725C402E9AB8901D1F43F,
-										D1A725C502E9AB8901D1F43F,
-										D1534BCA02EEB41901D1F43F,
-										D1534BCB02EEB41901D1F43F,
-										D1534BCC02EEB41901D1F43F,
-										D1534BCF02EEB41901D1F43F,
 										D1534BD002EEB41901D1F43F,
 										D1534BD102EEB41901D1F43F,
 										D1534BD202EEB41901D1F43F,
 										D1534BD502EEB41901D1F43F,
 										D18B80B402F6F849017603C1,
 										D18B80B502F6F849017603C1,
-										D18B80B602F6F849017603C1,
 										D18B80B702F6F849017603C1,
 										D18B80B802F6F849017603C1,
-										D18B80B902F6F849017603C1,
-										D18B80CB02F6F849017603C1,
+										D184310702FC25F901D1F43F,
+										D184310A02FC25F901D1F43F,
+										D184310E02FC25F901D1F43F,
+										D184311002FC25F901D1F43F,
+										D184311102FC25F901D1F43F,
+										D184311202FC25F901D1F43F,
+										D1E2A0B703193B8C01D1F43F,
+										D1E2A0B803193B8C01D1F43F,
+										D1E2A0BA03193B8C01D1F43F,
+										D14DC968031A3FD201D1F43F,
+										D14DC969031A3FD201D1F43F,
+										D14971000324054C01D1F43F,
+										D1C62B9C0330DE8901D1F43F,
+										D108B29403881D6201D1F43F,
+										D108B29703881D6201D1F43F,
+										D108B29803881D6201D1F43F,
+										D18D346E038853AE01D1F43F,
+										D1DF3BA50388FE0A01D1F43F,
+										D1DF3BA60388FE0A01D1F43F,
+										D195918C0389153501D1F43F,
+										D195918D0389153501D1F43F,
+										D195918E0389153501D1F43F,
+										D195918F0389153501D1F43F,
+										D19591900389153501D1F43F,
+										D19591910389153501D1F43F,
+										D19591920389153501D1F43F,
+										D1365B19038C0EEA01D1F43F,
+										D1DFCF12039A95BD01D1F43F,
+										D1DFCF13039A95BD01D1F43F,
+										D1DFCF15039A95BD01D1F43F,
+										4CF608A703DB1EDB002DFC5F,
+										4CF608A803DB1EDB002DFC5F,
+										4CF608A903DB1EDB002DFC5F,
+										4CF608AA03DB1EDB002DFC5F,
+										4C803DA804640ED900D1F43F,
+										4C803DAB046411EE00D1F43F,
 									);
 									prevStack = (
 										D157A602029261DC01123251,
@@ -1304,16 +1028,132 @@
 										D18B80C802F6F849017603C1,
 										D18B80C902F6F849017603C1,
 										D18B80CA02F6F849017603C1,
+										D184311402FC25F901D1F43F,
+										D184311502FC25F901D1F43F,
+										D184311602FC25F901D1F43F,
+										D184311702FC25F901D1F43F,
+										D184311802FC25F901D1F43F,
+										D184311902FC25F901D1F43F,
+										D184311A02FC25F901D1F43F,
+										D184311B02FC25F901D1F43F,
+										D184311C02FC25F901D1F43F,
+										D184311D02FC25F901D1F43F,
+										D184311E02FC25F901D1F43F,
+										D184311F02FC25F901D1F43F,
+										D184312002FC25F901D1F43F,
+										D184312102FC25F901D1F43F,
+										D184312202FC25F901D1F43F,
+										D184312302FC25F901D1F43F,
+										D184312402FC25F901D1F43F,
+										D184312502FC25F901D1F43F,
+										D184312602FC25F901D1F43F,
+										D184312702FC25F901D1F43F,
+										D184312802FC25F901D1F43F,
+										D184312902FC25F901D1F43F,
+										D184312A02FC25F901D1F43F,
+										D184312B02FC25F901D1F43F,
+										D184312C02FC25F901D1F43F,
+										D184312D02FC25F901D1F43F,
+										D1E2A0C103193B8C01D1F43F,
+										D1E2A0C203193B8C01D1F43F,
+										D1E2A0C303193B8C01D1F43F,
+										D1E2A0C403193B8C01D1F43F,
+										D1E2A0C503193B8C01D1F43F,
+										D1E2A0C603193B8C01D1F43F,
+										D1E2A0C703193B8C01D1F43F,
+										D1E2A0C803193B8C01D1F43F,
+										D1E2A0C903193B8C01D1F43F,
+										D1E2A0CA03193B8C01D1F43F,
+										D1E2A0CB03193B8C01D1F43F,
+										D1E2A0CC03193B8C01D1F43F,
+										D1E2A0CD03193B8C01D1F43F,
+										D1E2A0CE03193B8C01D1F43F,
+										D1E2A0CF03193B8C01D1F43F,
+										D1E2A0D003193B8C01D1F43F,
+										D1E2A0D103193B8C01D1F43F,
+										D1E2A0D203193B8C01D1F43F,
+										D1E2A0D303193B8C01D1F43F,
+										D1E2A0D403193B8C01D1F43F,
+										D1E2A0D503193B8C01D1F43F,
+										D1E2A0D603193B8C01D1F43F,
+										D1E2A0D803193B8C01D1F43F,
+										D1E2A0D903193B8C01D1F43F,
+										D14DC96E031A3FD201D1F43F,
+										D14DC96F031A3FD201D1F43F,
+										D14DC970031A3FD201D1F43F,
+										D14DC971031A3FD201D1F43F,
+										D14DC972031A3FD201D1F43F,
+										D14DC973031A3FD201D1F43F,
+										D14DC974031A3FD201D1F43F,
+										D14DC975031A3FD201D1F43F,
+										D14DC976031A3FD201D1F43F,
+										D14DC977031A3FD201D1F43F,
+										D14DC978031A3FD201D1F43F,
+										D14DC979031A3FD201D1F43F,
+										D14DC97A031A3FD201D1F43F,
+										D14DC97B031A3FD201D1F43F,
+										D14DC97C031A3FD201D1F43F,
+										D14DC97D031A3FD201D1F43F,
+										D14DC97E031A3FD201D1F43F,
+										D14DC97F031A3FD201D1F43F,
+										D14DC980031A3FD201D1F43F,
+										D14DC981031A3FD201D1F43F,
+										D14971010324054C01D1F43F,
+										D14971020324054C01D1F43F,
+										D130B99E0328C07901D1F43F,
+										D1C62B9E0330DE8901D1F43F,
+										D1C62B9F0330DE8901D1F43F,
+										D1C62BA00330DE8901D1F43F,
+										D1C62BA10330DE8901D1F43F,
+										D1C62BA20330DE8901D1F43F,
+										D1C62BA30330DE8901D1F43F,
+										D11AF5340332407D01D1F43F,
+										D108B29A03881D6201D1F43F,
+										D108B29B03881D6201D1F43F,
+										D108B29C03881D6201D1F43F,
+										D108B29D03881D6201D1F43F,
+										D108B29E03881D6201D1F43F,
+										D108B29F03881D6201D1F43F,
+										D108B2A003881D6201D1F43F,
+										D108B2A103881D6201D1F43F,
+										D108B2A203881D6201D1F43F,
+										D108B2A303881D6201D1F43F,
+										D108B2A403881D6201D1F43F,
+										D18D3470038853AE01D1F43F,
+										D1DF3BA70388FE0A01D1F43F,
+										D1DF3BA80388FE0A01D1F43F,
+										D1DF3BA90388FE0A01D1F43F,
+										D19591940389153501D1F43F,
+										D19591950389153501D1F43F,
+										D19591960389153501D1F43F,
+										D19591970389153501D1F43F,
+										D19591980389153501D1F43F,
+										D19591990389153501D1F43F,
+										D195919A0389153501D1F43F,
+										D195919B0389153501D1F43F,
+										D195919C0389153501D1F43F,
+										D1365B1A038C0EEA01D1F43F,
+										D1DFCF16039A95BE01D1F43F,
+										D1DFCF17039A95BE01D1F43F,
+										D1DFCF18039A95BE01D1F43F,
+										D1DFCF19039A95BE01D1F43F,
+										4C57070C03B6A73C00A6E961,
+										4CF608AB03DB1EDB002DFC5F,
+										4CF608AC03DB1EDB002DFC5F,
+										4CF608AD03DB1EDB002DFC5F,
+										4CF608AE03DB1EDB002DFC5F,
+										4C803DA904640ED900D1F43F,
 									);
 								};
 								NavCount = 1;
 								NavGeometry0 = {
-									Frame = "{{0, 0}, {702, 651}}";
+									Frame = "{{0, 0}, {707, 661}}";
 									NavBarVisible = YES;
 								};
+								NavSplitVertical = NO;
 							};
 							SplitCount = 1;
-							Tab0 = {
+							Tab1 = {
 								Debugger = {
 									Split0 = {
 										SplitCount = 2;
@@ -1323,59 +1163,18 @@
 								};
 								LauncherConfigVersion = 7;
 							};
-							Tab1 = {
+							Tab2 = {
 								LauncherConfigVersion = 3;
 								Runner = {
 								};
 							};
-							TabCount = 4;
+							TabCount = 5;
 						};
 						SplitCount = 1;
 						Tab1 = {
 							OptionsSetName = "Hierarchy, all classes";
 						};
-						Tab3 = {
-							SplitCount = 2;
-						};
-						TabCount = 6;
-					};
-				},
-				{
-					LeftSlideOut = {
-						Split0 = {
-							Split0 = {
-								NavCount = 1;
-								NavGeometry0 = {
-									Frame = "{{0, 0}, {685, 190}}";
-									NavBarVisible = YES;
-								};
-							};
-							SplitCount = 1;
-							Tab0 = {
-								Debugger = {
-									Split0 = {
-										SplitCount = 2;
-									};
-									SplitCount = 1;
-									TabCount = 2;
-								};
-								LauncherConfigVersion = 7;
-							};
-							Tab1 = {
-								LauncherConfigVersion = 3;
-								Runner = {
-								};
-							};
-							TabCount = 4;
-						};
-						SplitCount = 1;
-						Tab1 = {
-							OptionsSetName = "Hierarchy, all classes";
-						};
-						Tab3 = {
-							SplitCount = 2;
-						};
-						TabCount = 6;
+						TabCount = 5;
 					};
 				},
 				{
@@ -1387,9 +1186,10 @@
 									Frame = "{{0, 0}, {594, 150}}";
 									NavBarVisible = YES;
 								};
+								NavSplitVertical = NO;
 							};
 							SplitCount = 1;
-							Tab0 = {
+							Tab1 = {
 								Debugger = {
 									Split0 = {
 										SplitCount = 2;
@@ -1399,57 +1199,130 @@
 								};
 								LauncherConfigVersion = 7;
 							};
-							Tab1 = {
+							Tab2 = {
 								LauncherConfigVersion = 3;
 								Runner = {
 								};
 							};
-							TabCount = 4;
+							TabCount = 5;
 						};
 						SplitCount = 1;
 						Tab1 = {
 							OptionsSetName = "Hierarchy, all classes";
 						};
-						Tab3 = {
-							SplitCount = 2;
+						TabCount = 5;
+					};
+				},
+				{
+					LeftSlideOut = {
+						Split0 = {
+							Split0 = {
+								NavCount = 1;
+								NavGeometry0 = {
+									Frame = "{{0, 0}, {685, 150}}";
+									NavBarVisible = YES;
+								};
+								NavSplitVertical = NO;
+							};
+							SplitCount = 1;
+							Tab1 = {
+								Debugger = {
+									Split0 = {
+										SplitCount = 2;
+									};
+									SplitCount = 1;
+									TabCount = 2;
+								};
+								LauncherConfigVersion = 7;
+							};
+							Tab2 = {
+								LauncherConfigVersion = 3;
+								Runner = {
+								};
+							};
+							TabCount = 5;
 						};
-						TabCount = 6;
+						SplitCount = 1;
+						Tab1 = {
+							OptionsSetName = "Hierarchy, all classes";
+						};
+						TabCount = 5;
+					};
+				},
+				{
+					LeftSlideOut = {
+						Split0 = {
+							Split0 = {
+								NavCount = 1;
+								NavGeometry0 = {
+									Frame = "{{0, 0}, {749, 321}}";
+									NavBarVisible = YES;
+								};
+								NavSplitVertical = NO;
+							};
+							SplitCount = 1;
+							Tab1 = {
+								Debugger = {
+									Split0 = {
+										SplitCount = 2;
+									};
+									SplitCount = 1;
+									TabCount = 2;
+								};
+								LauncherConfigVersion = 7;
+							};
+							Tab2 = {
+								LauncherConfigVersion = 3;
+								Runner = {
+								};
+							};
+							TabCount = 5;
+						};
+						SplitCount = 1;
+						Tab1 = {
+							OptionsSetName = "Hierarchy, all classes";
+						};
+						TabCount = 5;
 					};
 				},
 			);
 			PBXWorkspaceGeometries = (
 				{
-					ContentSize = "{951, 674}";
+					ContentSize = "{950, 684}";
 					LeftSlideOut = {
 						ActiveTab = 0;
+						ActiveTabName = PBXGroupTreeModule;
 						Collapsed = NO;
-						Frame = "{{0, 23}, {951, 651}}";
+						Frame = "{{0, 23}, {950, 661}}";
 						Split0 = {
 							Collapsed = NO;
-							Frame = "{{249, 0}, {702, 651}}";
+							Frame = "{{243, 0}, {707, 661}}";
 							Split0 = {
-								Frame = "{{0, 0}, {702, 651}}";
+								Frame = "{{0, 0}, {707, 661}}";
 							};
 							SplitCount = 1;
 							Tab0 = {
+								Frame = "{{0, 0}, {681, 289}}";
+							};
+							Tab1 = {
 								Debugger = {
 									Collapsed = NO;
-									Frame = "{{0, 0}, {681, 289}}";
+									Frame = "{{0, 0}, {681, 150}}";
 									Split0 = {
-										Frame = "{{0, 24}, {681, 265}}";
+										Frame = "{{0, 24}, {681, 126}}";
 										Split0 = {
-											Frame = "{{0, 0}, {333, 265}}";
+											Frame = "{{0, 0}, {333, 126}}";
 										};
 										Split1 = {
 											DebugVariablesTableConfiguration = (
 												Name,
-												82.80298,
+												123,
 												Value,
-												104.074,
+												85,
 												Summary,
-												126.123,
+												105.123,
 											);
-											Frame = "{{342, 0}, {339, 265}}";
+											Frame = "{{342, 0}, {339, 126}}";
 										};
 										SplitCount = 2;
 									};
@@ -1463,37 +1336,38 @@
 									TabCount = 2;
 									TabsVisible = YES;
 								};
-								Frame = "{{0, 0}, {681, 289}}";
+								Frame = "{{0, 0}, {681, 120}}";
 								LauncherConfigVersion = 7;
 							};
-							Tab1 = {
-								Frame = "{{0, 0}, {681, 120}}";
+							Tab2 = {
+								Frame = "{{0, 0}, {681, 234}}";
 								LauncherConfigVersion = 3;
 								Runner = {
-									Frame = "{{0, 0}, {681, 120}}";
+									Frame = "{{0, 0}, {681, 234}}";
 								};
 							};
-							Tab2 = {
-								BuildMessageFrame = "{{0, 0}, {683, 127}}";
-								BuildTranscriptFrame = "{{0, 136}, {683, 100}}";
-								Frame = "{{0, 0}, {681, 234}}";
-							};
 							Tab3 = {
+								BuildMessageFrame = "{{0, 0}, {683, 205}}";
+								BuildTranscriptFrame = "{{0, 214}, {683, 2}}";
+								BuildTranscriptFrameExpanded = YES;
 								Frame = "{{0, 0}, {681, 238}}";
 							};
-							TabCount = 4;
+							Tab4 = {
+								Frame = "{{0, 0}, {612, 295}}";
+							};
+							TabCount = 5;
 							TabsVisible = NO;
 						};
 						SplitCount = 1;
 						Tab0 = {
-							Frame = "{{0, 0}, {225, 651}}";
+							Frame = "{{0, 0}, {219, 661}}";
 							GroupTreeTableConfiguration = (
 								SCMStatusColumn,
 								22,
 								TargetStatusColumn,
 								18,
 								MainColumn,
-								170,
+								164,
 							);
 						};
 						Tab1 = {
@@ -1517,37 +1391,15 @@
 							Frame = "{{0, 0}, {217, 651}}";
 						};
 						Tab3 = {
-							Frame = "{{0, 0}, {239, 651}}";
-							Split0 = {
-								Frame = "{{0, 0}, {239, 315}}";
-								TargetTreeTableConfiguration = (
-									ActiveTarget,
-									16,
-									TargetName,
-									207,
-								);
-							};
-							Split1 = {
-								BuildStyleTreeTableConfiguration = (
-									IsActive,
-									16,
-									Name,
-									208,
-								);
-								Frame = "{{0, 324}, {239, 327}}";
-							};
-							SplitCount = 2;
+							Frame = "{{0, 0}, {239, 661}}";
+							TargetTableConfiguration = (
+								ActiveObject,
+								16,
+								ObjectNames,
+								206.296,
+							);
 						};
 						Tab4 = {
-							ExecutableTreeTableConfiguration = (
-								ActiveExecutable,
-								16,
-								ExecutableName,
-								217,
-							);
-							Frame = "{{0, 0}, {250, 651}}";
-						};
-						Tab5 = {
 							BreakpointsTreeTableConfiguration = (
 								breakpointColumn,
 								197,
@@ -1556,157 +1408,14 @@
 							);
 							Frame = "{{0, 0}, {250, 651}}";
 						};
-						TabCount = 6;
+						TabCount = 5;
 						TabsVisible = YES;
 					};
+					NavBarShownByDefault = YES;
 					StatusViewVisible = YES;
 					Template = 64ABBB4501FA494900185B06;
 					ToolbarVisible = YES;
-					WindowLocation = "{73, 10}";
-				},
-				{
-					ContentSize = "{685, 434}";
-					LeftSlideOut = {
-						Collapsed = NO;
-						Frame = "{{0, 23}, {685, 411}}";
-						Split0 = {
-							ActiveTab = 2;
-							Collapsed = NO;
-							Frame = "{{0, 0}, {685, 411}}";
-							Split0 = {
-								Frame = "{{0, 221}, {685, 190}}";
-							};
-							SplitCount = 1;
-							Tab0 = {
-								Debugger = {
-									Collapsed = NO;
-									Frame = "{{0, 0}, {952, 321}}";
-									Split0 = {
-										Frame = "{{0, 24}, {952, 297}}";
-										Split0 = {
-											Frame = "{{0, 0}, {468, 297}}";
-										};
-										Split1 = {
-											DebugVariablesTableConfiguration = (
-												Name,
-												126.803,
-												Value,
-												150.074,
-												Summary,
-												172.123,
-											);
-											Frame = "{{477, 0}, {475, 297}}";
-										};
-										SplitCount = 2;
-									};
-									SplitCount = 1;
-									Tab0 = {
-										Frame = "{{0, 0}, {100, 50}}";
-									};
-									Tab1 = {
-										Frame = "{{0, 0}, {100, 50}}";
-									};
-									TabCount = 2;
-									TabsVisible = YES;
-								};
-								Frame = "{{0, 0}, {952, 321}}";
-								LauncherConfigVersion = 7;
-							};
-							Tab1 = {
-								Frame = "{{0, 0}, {781, 452}}";
-								LauncherConfigVersion = 3;
-								Runner = {
-									Frame = "{{0, 0}, {781, 452}}";
-								};
-							};
-							Tab2 = {
-								BuildMessageFrame = "{{0, 0}, {687, 149}}";
-								BuildTranscriptFrame = "{{0, 158}, {687, 59}}";
-								Frame = "{{0, 0}, {685, 215}}";
-							};
-							Tab3 = {
-								Frame = "{{0, 0}, {612, 295}}";
-							};
-							TabCount = 4;
-							TabsVisible = NO;
-						};
-						SplitCount = 1;
-						Tab0 = {
-							Frame = "{{0, 0}, {300, 533}}";
-							GroupTreeTableConfiguration = (
-								TargetStatusColumn,
-								18,
-								MainColumn,
-								267,
-							);
-						};
-						Tab1 = {
-							ClassesFrame = "{{0, 0}, {280, 398}}";
-							ClassesTreeTableConfiguration = (
-								PBXBookColumnIdentifier,
-								20,
-								PBXClassColumnIdentifier,
-								237,
-							);
-							Frame = "{{0, 0}, {278, 659}}";
-							MembersFrame = "{{0, 407}, {280, 252}}";
-							MembersTreeTableConfiguration = (
-								PBXBookColumnIdentifier,
-								20,
-								PBXMethodColumnIdentifier,
-								236,
-							);
-						};
-						Tab2 = {
-							Frame = "{{0, 0}, {200, 100}}";
-						};
-						Tab3 = {
-							Frame = "{{0, 0}, {200, 100}}";
-							Split0 = {
-								Frame = "{{0, 0}, {200, 45}}";
-								TargetTreeTableConfiguration = (
-									ActiveTarget,
-									16,
-									TargetName,
-									168,
-								);
-							};
-							Split1 = {
-								BuildStyleTreeTableConfiguration = (
-									IsActive,
-									16,
-									Name,
-									169,
-								);
-								Frame = "{{0, 54}, {200, 46}}";
-							};
-							SplitCount = 2;
-						};
-						Tab4 = {
-							ExecutableTreeTableConfiguration = (
-								ActiveExecutable,
-								16,
-								ExecutableName,
-								217,
-							);
-							Frame = "{{0, 0}, {250, 100}}";
-						};
-						Tab5 = {
-							BreakpointsTreeTableConfiguration = (
-								breakpointColumn,
-								197,
-								enabledColumn,
-								31,
-							);
-							Frame = "{{0, 0}, {250, 100}}";
-						};
-						TabCount = 6;
-						TabsVisible = NO;
-					};
-					StatusViewVisible = YES;
-					Template = F5314676015831810DCA290F;
-					ToolbarVisible = YES;
-					WindowLocation = "{110, 250}";
+					WindowLocation = "{69, 0}";
 				},
 				{
 					ContentSize = "{594, 303}";
@@ -1715,6 +1424,7 @@
 						Frame = "{{0, 23}, {594, 280}}";
 						Split0 = {
 							ActiveTab = 1;
+							ActiveTabName = PBXRunSessionModule;
 							Collapsed = YES;
 							Frame = "{{0, 0}, {594, 280}}";
 							Split0 = {
@@ -1722,24 +1432,27 @@
 							};
 							SplitCount = 1;
 							Tab0 = {
+								Frame = "{{0, 0}, {804, 321}}";
+							};
+							Tab1 = {
 								Debugger = {
 									Collapsed = NO;
-									Frame = "{{0, 0}, {804, 321}}";
+									Frame = "{{0, 0}, {594, 274}}";
 									Split0 = {
-										Frame = "{{0, 24}, {804, 297}}";
+										Frame = "{{0, 24}, {594, 250}}";
 										Split0 = {
-											Frame = "{{0, 0}, {394, 297}}";
+											Frame = "{{0, 0}, {290, 250}}";
 										};
 										Split1 = {
 											DebugVariablesTableConfiguration = (
 												Name,
-												102.803,
+												123,
 												Value,
-												125.074,
+												85,
 												Summary,
-												147.123,
+												62.123,
 											);
-											Frame = "{{403, 0}, {401, 297}}";
+											Frame = "{{299, 0}, {295, 250}}";
 										};
 										SplitCount = 2;
 									};
@@ -1753,25 +1466,26 @@
 									TabCount = 2;
 									TabsVisible = YES;
 								};
-								Frame = "{{0, 0}, {804, 321}}";
+								Frame = "{{0, 0}, {594, 274}}";
 								LauncherConfigVersion = 7;
 							};
-							Tab1 = {
+							Tab2 = {
 								Frame = "{{0, 0}, {594, 274}}";
 								LauncherConfigVersion = 3;
 								Runner = {
 									Frame = "{{0, 0}, {594, 274}}";
 								};
 							};
-							Tab2 = {
-								BuildMessageFrame = "{{0, 0}, {806, 237}}";
-								BuildTranscriptFrame = "{{0, 246}, {806, 3}}";
-								Frame = "{{0, 0}, {804, 247}}";
-							};
 							Tab3 = {
+								BuildMessageFrame = "{{0, 0}, {614, 262}}";
+								BuildTranscriptFrame = "{{0, 271}, {614, 2}}";
+								BuildTranscriptFrameExpanded = YES;
 								Frame = "{{0, 0}, {612, 295}}";
 							};
-							TabCount = 4;
+							Tab4 = {
+								Frame = "{{0, 0}, {612, 295}}";
+							};
+							TabCount = 5;
 							TabsVisible = NO;
 						};
 						SplitCount = 1;
@@ -1806,36 +1520,142 @@
 						};
 						Tab3 = {
 							Frame = "{{0, 0}, {200, 386}}";
-							Split0 = {
-								Frame = "{{0, 0}, {200, 186}}";
-								TargetTreeTableConfiguration = (
-									ActiveTarget,
-									16,
-									TargetName,
-									168,
-								);
-							};
-							Split1 = {
-								BuildStyleTreeTableConfiguration = (
-									IsActive,
-									16,
-									Name,
-									169,
-								);
-								Frame = "{{0, 195}, {200, 191}}";
-							};
-							SplitCount = 2;
+							TargetTableConfiguration = (
+								ActiveObject,
+								16,
+								ObjectNames,
+								202.296,
+							);
 						};
 						Tab4 = {
-							ExecutableTreeTableConfiguration = (
-								ActiveExecutable,
-								16,
-								ExecutableName,
-								217,
+							BreakpointsTreeTableConfiguration = (
+								breakpointColumn,
+								197,
+								enabledColumn,
+								31,
 							);
 							Frame = "{{0, 0}, {250, 386}}";
 						};
-						Tab5 = {
+						TabCount = 5;
+						TabsVisible = NO;
+					};
+					NavBarShownByDefault = YES;
+					StatusViewVisible = YES;
+					Template = F5534CB2020F3F8A0DCA290F;
+					ToolbarVisible = YES;
+					WindowLocation = "{220, 322}";
+				},
+				{
+					ContentSize = "{685, 434}";
+					LeftSlideOut = {
+						Collapsed = NO;
+						Frame = "{{0, 23}, {685, 411}}";
+						Split0 = {
+							ActiveTab = 2;
+							ActiveTabName = PBXBuildResultsModule;
+							Collapsed = NO;
+							Frame = "{{0, 0}, {685, 411}}";
+							Split0 = {
+								Frame = "{{0, 301}, {685, 110}}";
+							};
+							SplitCount = 1;
+							Tab0 = {
+								Frame = "{{0, 0}, {952, 321}}";
+							};
+							Tab1 = {
+								Debugger = {
+									Collapsed = NO;
+									Frame = "{{0, 0}, {781, 452}}";
+									Split0 = {
+										Frame = "{{0, 24}, {781, 428}}";
+										Split0 = {
+											Frame = "{{0, 0}, {383, 428}}";
+										};
+										Split1 = {
+											DebugVariablesTableConfiguration = (
+												Name,
+												123,
+												Value,
+												85,
+												Summary,
+												155.123,
+											);
+											Frame = "{{392, 0}, {389, 428}}";
+										};
+										SplitCount = 2;
+									};
+									SplitCount = 1;
+									Tab0 = {
+										Frame = "{{0, 0}, {100, 50}}";
+									};
+									Tab1 = {
+										Frame = "{{0, 0}, {100, 50}}";
+									};
+									TabCount = 2;
+									TabsVisible = YES;
+								};
+								Frame = "{{0, 0}, {781, 452}}";
+								LauncherConfigVersion = 7;
+							};
+							Tab2 = {
+								Frame = "{{0, 0}, {685, 215}}";
+								LauncherConfigVersion = 3;
+								Runner = {
+									Frame = "{{0, 0}, {685, 215}}";
+								};
+							};
+							Tab3 = {
+								BuildMessageFrame = "{{0, 0}, {687, 262}}";
+								BuildTranscriptFrame = "{{0, 271}, {687, 2}}";
+								BuildTranscriptFrameExpanded = YES;
+								Frame = "{{0, 0}, {685, 295}}";
+							};
+							Tab4 = {
+								Frame = "{{0, 0}, {612, 295}}";
+							};
+							TabCount = 5;
+							TabsVisible = NO;
+						};
+						SplitCount = 1;
+						Tab0 = {
+							Frame = "{{0, 0}, {300, 533}}";
+							GroupTreeTableConfiguration = (
+								TargetStatusColumn,
+								18,
+								MainColumn,
+								267,
+							);
+						};
+						Tab1 = {
+							ClassesFrame = "{{0, 0}, {280, 398}}";
+							ClassesTreeTableConfiguration = (
+								PBXBookColumnIdentifier,
+								20,
+								PBXClassColumnIdentifier,
+								237,
+							);
+							Frame = "{{0, 0}, {278, 659}}";
+							MembersFrame = "{{0, 407}, {280, 252}}";
+							MembersTreeTableConfiguration = (
+								PBXBookColumnIdentifier,
+								20,
+								PBXMethodColumnIdentifier,
+								236,
+							);
+						};
+						Tab2 = {
+							Frame = "{{0, 0}, {200, 100}}";
+						};
+						Tab3 = {
+							Frame = "{{0, 0}, {200, 100}}";
+							TargetTableConfiguration = (
+								ActiveObject,
+								16,
+								ObjectNames,
+								202.296,
+							);
+						};
+						Tab4 = {
 							BreakpointsTreeTableConfiguration = (
 								breakpointColumn,
 								197,
@@ -1844,18 +1664,160 @@
 							);
 							Frame = "{{0, 0}, {250, 100}}";
 						};
-						TabCount = 6;
+						TabCount = 5;
 						TabsVisible = NO;
 					};
+					NavBarShownByDefault = YES;
 					StatusViewVisible = YES;
-					Template = F5534CB2020F3F8A0DCA290F;
+					Template = F5314676015831810DCA290F;
 					ToolbarVisible = YES;
-					WindowLocation = "{4, 381}";
+					WindowLocation = "{263, 166}";
+				},
+				{
+					ContentSize = "{773, 558}";
+					LeftSlideOut = {
+						Collapsed = NO;
+						Frame = "{{0, 23}, {773, 535}}";
+						Split0 = {
+							ActiveTab = 0;
+							ActiveTabName = PBXDebugSessionModule;
+							Collapsed = NO;
+							Frame = "{{24, 0}, {749, 535}}";
+							Split0 = {
+								Frame = "{{0, 214}, {749, 321}}";
+							};
+							SplitCount = 1;
+							Tab0 = {
+								Frame = "{{0, 0}, {749, 267}}";
+							};
+							Tab1 = {
+								Debugger = {
+									Collapsed = NO;
+									Frame = "{{0, 0}, {749, 208}}";
+									Split0 = {
+										Frame = "{{0, 24}, {749, 184}}";
+										Split0 = {
+											Frame = "{{0, 0}, {367, 184}}";
+										};
+										Split1 = {
+											DebugVariablesTableConfiguration = (
+												Name,
+												123,
+												Value,
+												85,
+												Summary,
+												139.123,
+											);
+											Frame = "{{376, 0}, {373, 184}}";
+										};
+										SplitCount = 2;
+									};
+									SplitCount = 1;
+									Tab0 = {
+										Frame = "{{0, 0}, {100, 50}}";
+									};
+									Tab1 = {
+										Frame = "{{0, 0}, {100, 50}}";
+									};
+									TabCount = 2;
+									TabsVisible = YES;
+								};
+								Frame = "{{0, 0}, {749, 208}}";
+								LauncherConfigVersion = 7;
+							};
+							Tab2 = {
+								Frame = "{{0, 0}, {664, 50}}";
+								LauncherConfigVersion = 3;
+								Runner = {
+									Frame = "{{0, 0}, {664, 50}}";
+								};
+							};
+							Tab3 = {
+								BuildMessageFrame = "{{0, 0}, {614, 262}}";
+								BuildTranscriptFrame = "{{0, 271}, {614, 2}}";
+								BuildTranscriptFrameExpanded = YES;
+								Frame = "{{0, 0}, {612, 295}}";
+							};
+							Tab4 = {
+								Frame = "{{0, 0}, {612, 295}}";
+							};
+							TabCount = 5;
+							TabsVisible = NO;
+						};
+						SplitCount = 1;
+						Tab0 = {
+							Frame = "{{0, 0}, {313, 531}}";
+							GroupTreeTableConfiguration = (
+								TargetStatusColumn,
+								18,
+								MainColumn,
+								280,
+							);
+						};
+						Tab1 = {
+							ClassesFrame = "{{0, 0}, {280, 398}}";
+							ClassesTreeTableConfiguration = (
+								PBXBookColumnIdentifier,
+								20,
+								PBXClassColumnIdentifier,
+								237,
+							);
+							Frame = "{{0, 0}, {278, 659}}";
+							MembersFrame = "{{0, 407}, {280, 252}}";
+							MembersTreeTableConfiguration = (
+								PBXBookColumnIdentifier,
+								20,
+								PBXMethodColumnIdentifier,
+								236,
+							);
+						};
+						Tab2 = {
+							Frame = "{{0, 0}, {200, 100}}";
+						};
+						Tab3 = {
+							Frame = "{{0, 0}, {200, 557}}";
+							TargetTableConfiguration = (
+								ActiveObject,
+								16,
+								ObjectNames,
+								202.296,
+							);
+						};
+						Tab4 = {
+							BreakpointsTreeTableConfiguration = (
+								breakpointColumn,
+								197,
+								enabledColumn,
+								31,
+							);
+							Frame = "{{0, 0}, {250, 100}}";
+						};
+						TabCount = 5;
+						TabsVisible = YES;
+					};
+					NavBarShownByDefault = YES;
+					StatusViewVisible = YES;
+					Template = F5CA7ECC015C09990DCA290F;
+					ToolbarVisible = YES;
+					WindowLocation = "{87, 126}";
 				},
 			);
-			PBXWorkspaceStateSaveDate = 50001729;
+			PBXWorkspaceStateSaveDate = 73671354;
 		};
 		perUserProjectItems = {
+			4C57070C03B6A73C00A6E961 = 4C57070C03B6A73C00A6E961;
+			4C803DA804640ED900D1F43F = 4C803DA804640ED900D1F43F;
+			4C803DA904640ED900D1F43F = 4C803DA904640ED900D1F43F;
+			4C803DAB046411EE00D1F43F = 4C803DAB046411EE00D1F43F;
+			4CEA711C046422FC00D1F43F = 4CEA711C046422FC00D1F43F;
+			4CF608A703DB1EDB002DFC5F = 4CF608A703DB1EDB002DFC5F;
+			4CF608A803DB1EDB002DFC5F = 4CF608A803DB1EDB002DFC5F;
+			4CF608A903DB1EDB002DFC5F = 4CF608A903DB1EDB002DFC5F;
+			4CF608AA03DB1EDB002DFC5F = 4CF608AA03DB1EDB002DFC5F;
+			4CF608AB03DB1EDB002DFC5F = 4CF608AB03DB1EDB002DFC5F;
+			4CF608AC03DB1EDB002DFC5F = 4CF608AC03DB1EDB002DFC5F;
+			4CF608AD03DB1EDB002DFC5F = 4CF608AD03DB1EDB002DFC5F;
+			4CF608AE03DB1EDB002DFC5F = 4CF608AE03DB1EDB002DFC5F;
 			D100843402AA36F30153FD9A = D100843402AA36F30153FD9A;
 			D100843502AA36F30153FD9A = D100843502AA36F30153FD9A;
 			D100843602AA36F30153FD9A = D100843602AA36F30153FD9A;
@@ -1913,6 +1875,20 @@
 			D1068849029561E60146E0DD = D1068849029561E60146E0DD;
 			D106884A029561E60146E0DD = D106884A029561E60146E0DD;
 			D106884B029561E60146E0DD = D106884B029561E60146E0DD;
+			D108B29403881D6201D1F43F = D108B29403881D6201D1F43F;
+			D108B29703881D6201D1F43F = D108B29703881D6201D1F43F;
+			D108B29803881D6201D1F43F = D108B29803881D6201D1F43F;
+			D108B29A03881D6201D1F43F = D108B29A03881D6201D1F43F;
+			D108B29B03881D6201D1F43F = D108B29B03881D6201D1F43F;
+			D108B29C03881D6201D1F43F = D108B29C03881D6201D1F43F;
+			D108B29D03881D6201D1F43F = D108B29D03881D6201D1F43F;
+			D108B29E03881D6201D1F43F = D108B29E03881D6201D1F43F;
+			D108B29F03881D6201D1F43F = D108B29F03881D6201D1F43F;
+			D108B2A003881D6201D1F43F = D108B2A003881D6201D1F43F;
+			D108B2A103881D6201D1F43F = D108B2A103881D6201D1F43F;
+			D108B2A203881D6201D1F43F = D108B2A203881D6201D1F43F;
+			D108B2A303881D6201D1F43F = D108B2A303881D6201D1F43F;
+			D108B2A403881D6201D1F43F = D108B2A403881D6201D1F43F;
 			D109AE180296AC1801CE75F1 = D109AE180296AC1801CE75F1;
 			D109AE190296AC1801CE75F1 = D109AE190296AC1801CE75F1;
 			D1167ED30294913C01F461EF = D1167ED30294913C01F461EF;
@@ -1922,6 +1898,7 @@
 			D1167ED70294913C01F461EF = D1167ED70294913C01F461EF;
 			D1167ED80294913C01F461EF = D1167ED80294913C01F461EF;
 			D1167ED90294913C01F461EF = D1167ED90294913C01F461EF;
+			D11AF5340332407D01D1F43F = D11AF5340332407D01D1F43F;
 			D11C39B302BFA7AD010FE583 = D11C39B302BFA7AD010FE583;
 			D11C39B402BFA7AD010FE583 = D11C39B402BFA7AD010FE583;
 			D123FC4402B4149701D1F43F = D123FC4402B4149701D1F43F;
@@ -1938,6 +1915,7 @@
 			D12F7478029AF59A01D1F43F = D12F7478029AF59A01D1F43F;
 			D12F7479029AF59A01D1F43F = D12F7479029AF59A01D1F43F;
 			D12F747A029AF59A01D1F43F = D12F747A029AF59A01D1F43F;
+			D130B99E0328C07901D1F43F = D130B99E0328C07901D1F43F;
 			D131DE7F02A18C8001D1F43F = D131DE7F02A18C8001D1F43F;
 			D131DE8002A18C8001D1F43F = D131DE8002A18C8001D1F43F;
 			D131DE8102A18C8001D1F43F = D131DE8102A18C8001D1F43F;
@@ -1959,8 +1937,9 @@
 			D131DE9102A18C8001D1F43F = D131DE9102A18C8001D1F43F;
 			D131DE9202A18C8001D1F43F = D131DE9202A18C8001D1F43F;
 			D1332F1A0294271B017CB92E = D1332F1A0294271B017CB92E;
-			D1364EE802B8D65801D1F43F = D1364EE802B8D65801D1F43F;
 			D1364EEA02B8D65801D1F43F = D1364EEA02B8D65801D1F43F;
+			D1365B19038C0EEA01D1F43F = D1365B19038C0EEA01D1F43F;
+			D1365B1A038C0EEA01D1F43F = D1365B1A038C0EEA01D1F43F;
 			D139497E02D50F9D01E0C863 = D139497E02D50F9D01E0C863;
 			D139497F02D50F9D01E0C863 = D139497F02D50F9D01E0C863;
 			D139498002D50F9D01E0C863 = D139498002D50F9D01E0C863;
@@ -2004,9 +1983,33 @@
 			D146E11902A101B701D1F43F = D146E11902A101B701D1F43F;
 			D146E11A02A101B701D1F43F = D146E11A02A101B701D1F43F;
 			D146E11B02A101B701D1F43F = D146E11B02A101B701D1F43F;
-			D14857FF02FAF7BB01878BC2 = D14857FF02FAF7BB01878BC2;
+			D14971000324054C01D1F43F = D14971000324054C01D1F43F;
+			D14971010324054C01D1F43F = D14971010324054C01D1F43F;
+			D14971020324054C01D1F43F = D14971020324054C01D1F43F;
 			D14C95CB02B8DFAA01D1F43F = D14C95CB02B8DFAA01D1F43F;
 			D14C95CC02B8DFAA01D1F43F = D14C95CC02B8DFAA01D1F43F;
+			D14DC968031A3FD201D1F43F = D14DC968031A3FD201D1F43F;
+			D14DC969031A3FD201D1F43F = D14DC969031A3FD201D1F43F;
+			D14DC96E031A3FD201D1F43F = D14DC96E031A3FD201D1F43F;
+			D14DC96F031A3FD201D1F43F = D14DC96F031A3FD201D1F43F;
+			D14DC970031A3FD201D1F43F = D14DC970031A3FD201D1F43F;
+			D14DC971031A3FD201D1F43F = D14DC971031A3FD201D1F43F;
+			D14DC972031A3FD201D1F43F = D14DC972031A3FD201D1F43F;
+			D14DC973031A3FD201D1F43F = D14DC973031A3FD201D1F43F;
+			D14DC974031A3FD201D1F43F = D14DC974031A3FD201D1F43F;
+			D14DC975031A3FD201D1F43F = D14DC975031A3FD201D1F43F;
+			D14DC976031A3FD201D1F43F = D14DC976031A3FD201D1F43F;
+			D14DC977031A3FD201D1F43F = D14DC977031A3FD201D1F43F;
+			D14DC978031A3FD201D1F43F = D14DC978031A3FD201D1F43F;
+			D14DC979031A3FD201D1F43F = D14DC979031A3FD201D1F43F;
+			D14DC97A031A3FD201D1F43F = D14DC97A031A3FD201D1F43F;
+			D14DC97B031A3FD201D1F43F = D14DC97B031A3FD201D1F43F;
+			D14DC97C031A3FD201D1F43F = D14DC97C031A3FD201D1F43F;
+			D14DC97D031A3FD201D1F43F = D14DC97D031A3FD201D1F43F;
+			D14DC97E031A3FD201D1F43F = D14DC97E031A3FD201D1F43F;
+			D14DC97F031A3FD201D1F43F = D14DC97F031A3FD201D1F43F;
+			D14DC980031A3FD201D1F43F = D14DC980031A3FD201D1F43F;
+			D14DC981031A3FD201D1F43F = D14DC981031A3FD201D1F43F;
 			D14EDA9402AD352401ABF9F8 = D14EDA9402AD352401ABF9F8;
 			D14EDA9502AD352401ABF9F8 = D14EDA9502AD352401ABF9F8;
 			D14EDA9602AD352401ABF9F8 = D14EDA9602AD352401ABF9F8;
@@ -2017,10 +2020,6 @@
 			D14EDA9B02AD352401ABF9F8 = D14EDA9B02AD352401ABF9F8;
 			D14EDA9C02AD352401ABF9F8 = D14EDA9C02AD352401ABF9F8;
 			D14EDA9D02AD352401ABF9F8 = D14EDA9D02AD352401ABF9F8;
-			D1534BCA02EEB41901D1F43F = D1534BCA02EEB41901D1F43F;
-			D1534BCB02EEB41901D1F43F = D1534BCB02EEB41901D1F43F;
-			D1534BCC02EEB41901D1F43F = D1534BCC02EEB41901D1F43F;
-			D1534BCF02EEB41901D1F43F = D1534BCF02EEB41901D1F43F;
 			D1534BD002EEB41901D1F43F = D1534BD002EEB41901D1F43F;
 			D1534BD102EEB41901D1F43F = D1534BD102EEB41901D1F43F;
 			D1534BD202EEB41901D1F43F = D1534BD202EEB41901D1F43F;
@@ -2120,6 +2119,38 @@
 			D180320D029542A9018E6C24 = D180320D029542A9018E6C24;
 			D180320E029542A9018E6C24 = D180320E029542A9018E6C24;
 			D180320F029542A9018E6C24 = D180320F029542A9018E6C24;
+			D184310702FC25F901D1F43F = D184310702FC25F901D1F43F;
+			D184310A02FC25F901D1F43F = D184310A02FC25F901D1F43F;
+			D184310E02FC25F901D1F43F = D184310E02FC25F901D1F43F;
+			D184311002FC25F901D1F43F = D184311002FC25F901D1F43F;
+			D184311102FC25F901D1F43F = D184311102FC25F901D1F43F;
+			D184311202FC25F901D1F43F = D184311202FC25F901D1F43F;
+			D184311402FC25F901D1F43F = D184311402FC25F901D1F43F;
+			D184311502FC25F901D1F43F = D184311502FC25F901D1F43F;
+			D184311602FC25F901D1F43F = D184311602FC25F901D1F43F;
+			D184311702FC25F901D1F43F = D184311702FC25F901D1F43F;
+			D184311802FC25F901D1F43F = D184311802FC25F901D1F43F;
+			D184311902FC25F901D1F43F = D184311902FC25F901D1F43F;
+			D184311A02FC25F901D1F43F = D184311A02FC25F901D1F43F;
+			D184311B02FC25F901D1F43F = D184311B02FC25F901D1F43F;
+			D184311C02FC25F901D1F43F = D184311C02FC25F901D1F43F;
+			D184311D02FC25F901D1F43F = D184311D02FC25F901D1F43F;
+			D184311E02FC25F901D1F43F = D184311E02FC25F901D1F43F;
+			D184311F02FC25F901D1F43F = D184311F02FC25F901D1F43F;
+			D184312002FC25F901D1F43F = D184312002FC25F901D1F43F;
+			D184312102FC25F901D1F43F = D184312102FC25F901D1F43F;
+			D184312202FC25F901D1F43F = D184312202FC25F901D1F43F;
+			D184312302FC25F901D1F43F = D184312302FC25F901D1F43F;
+			D184312402FC25F901D1F43F = D184312402FC25F901D1F43F;
+			D184312502FC25F901D1F43F = D184312502FC25F901D1F43F;
+			D184312602FC25F901D1F43F = D184312602FC25F901D1F43F;
+			D184312702FC25F901D1F43F = D184312702FC25F901D1F43F;
+			D184312802FC25F901D1F43F = D184312802FC25F901D1F43F;
+			D184312902FC25F901D1F43F = D184312902FC25F901D1F43F;
+			D184312A02FC25F901D1F43F = D184312A02FC25F901D1F43F;
+			D184312B02FC25F901D1F43F = D184312B02FC25F901D1F43F;
+			D184312C02FC25F901D1F43F = D184312C02FC25F901D1F43F;
+			D184312D02FC25F901D1F43F = D184312D02FC25F901D1F43F;
 			D188DD8A02B57BD801D1F43F = D188DD8A02B57BD801D1F43F;
 			D188DD8B02B57BD801D1F43F = D188DD8B02B57BD801D1F43F;
 			D188DD8C02B57BD801D1F43F = D188DD8C02B57BD801D1F43F;
@@ -2131,10 +2162,8 @@
 			D18A5FCC02BF714B01AB77B2 = D18A5FCC02BF714B01AB77B2;
 			D18B80B402F6F849017603C1 = D18B80B402F6F849017603C1;
 			D18B80B502F6F849017603C1 = D18B80B502F6F849017603C1;
-			D18B80B602F6F849017603C1 = D18B80B602F6F849017603C1;
 			D18B80B702F6F849017603C1 = D18B80B702F6F849017603C1;
 			D18B80B802F6F849017603C1 = D18B80B802F6F849017603C1;
-			D18B80B902F6F849017603C1 = D18B80B902F6F849017603C1;
 			D18B80BB02F6F849017603C1 = D18B80BB02F6F849017603C1;
 			D18B80BC02F6F849017603C1 = D18B80BC02F6F849017603C1;
 			D18B80BD02F6F849017603C1 = D18B80BD02F6F849017603C1;
@@ -2151,7 +2180,8 @@
 			D18B80C802F6F849017603C1 = D18B80C802F6F849017603C1;
 			D18B80C902F6F849017603C1 = D18B80C902F6F849017603C1;
 			D18B80CA02F6F849017603C1 = D18B80CA02F6F849017603C1;
-			D18B80CB02F6F849017603C1 = D18B80CB02F6F849017603C1;
+			D18D346E038853AE01D1F43F = D18D346E038853AE01D1F43F;
+			D18D3470038853AE01D1F43F = D18D3470038853AE01D1F43F;
 			D190398C0297F91F016237FD = D190398C0297F91F016237FD;
 			D190398D0297F91F016237FD = D190398D0297F91F016237FD;
 			D190398E0297F91F016237FD = D190398E0297F91F016237FD;
@@ -2180,6 +2210,22 @@
 			D19369BB02A1991301D1F43F = D19369BB02A1991301D1F43F;
 			D19369BC02A1991301D1F43F = D19369BC02A1991301D1F43F;
 			D19369BD02A1991301D1F43F = D19369BD02A1991301D1F43F;
+			D195918C0389153501D1F43F = D195918C0389153501D1F43F;
+			D195918D0389153501D1F43F = D195918D0389153501D1F43F;
+			D195918E0389153501D1F43F = D195918E0389153501D1F43F;
+			D195918F0389153501D1F43F = D195918F0389153501D1F43F;
+			D19591900389153501D1F43F = D19591900389153501D1F43F;
+			D19591910389153501D1F43F = D19591910389153501D1F43F;
+			D19591920389153501D1F43F = D19591920389153501D1F43F;
+			D19591940389153501D1F43F = D19591940389153501D1F43F;
+			D19591950389153501D1F43F = D19591950389153501D1F43F;
+			D19591960389153501D1F43F = D19591960389153501D1F43F;
+			D19591970389153501D1F43F = D19591970389153501D1F43F;
+			D19591980389153501D1F43F = D19591980389153501D1F43F;
+			D19591990389153501D1F43F = D19591990389153501D1F43F;
+			D195919A0389153501D1F43F = D195919A0389153501D1F43F;
+			D195919B0389153501D1F43F = D195919B0389153501D1F43F;
+			D195919C0389153501D1F43F = D195919C0389153501D1F43F;
 			D1980FA602B7E90A01D1F43F = D1980FA602B7E90A01D1F43F;
 			D1980FA702B7E90A01D1F43F = D1980FA702B7E90A01D1F43F;
 			D1980FA802B7E90A01D1F43F = D1980FA802B7E90A01D1F43F;
@@ -2256,7 +2302,6 @@
 			D19FBBDD0294558D01ED938D = D19FBBDD0294558D01ED938D;
 			D1A22230029C586A01D1F43F = D1A22230029C586A01D1F43F;
 			D1A22231029C586A01D1F43F = D1A22231029C586A01D1F43F;
-			D1A41D8402B8D4C401D1F43F = D1A41D8402B8D4C401D1F43F;
 			D1A41D8602B8D4C401D1F43F = D1A41D8602B8D4C401D1F43F;
 			D1A41D8702B8D4C401D1F43F = D1A41D8702B8D4C401D1F43F;
 			D1A41D8802B8D4C401D1F43F = D1A41D8802B8D4C401D1F43F;
@@ -2278,10 +2323,7 @@
 			D1A4FF4C02B6C9F701D1F43F = D1A4FF4C02B6C9F701D1F43F;
 			D1A4FF4D02B6C9F701D1F43F = D1A4FF4D02B6C9F701D1F43F;
 			D1A4FF4E02B6C9F701D1F43F = D1A4FF4E02B6C9F701D1F43F;
-			D1A725AC02E9A6E201D1F43F = D1A725AC02E9A6E201D1F43F;
 			D1A725AD02E9A6E201D1F43F = D1A725AD02E9A6E201D1F43F;
-			D1A725AE02E9A6E201D1F43F = D1A725AE02E9A6E201D1F43F;
-			D1A725B102E9A6E201D1F43F = D1A725B102E9A6E201D1F43F;
 			D1A725B202E9A6E201D1F43F = D1A725B202E9A6E201D1F43F;
 			D1A725B402E9A6E201D1F43F = D1A725B402E9A6E201D1F43F;
 			D1A725B502E9A6E201D1F43F = D1A725B502E9A6E201D1F43F;
@@ -2293,9 +2335,6 @@
 			D1A725BB02E9A6E201D1F43F = D1A725BB02E9A6E201D1F43F;
 			D1A725BC02E9A6E201D1F43F = D1A725BC02E9A6E201D1F43F;
 			D1A725BD02E9A6E201D1F43F = D1A725BD02E9A6E201D1F43F;
-			D1A725C302E9AB8901D1F43F = D1A725C302E9AB8901D1F43F;
-			D1A725C402E9AB8901D1F43F = D1A725C402E9AB8901D1F43F;
-			D1A725C502E9AB8901D1F43F = D1A725C502E9AB8901D1F43F;
 			D1A725C702E9AB8A01D1F43F = D1A725C702E9AB8A01D1F43F;
 			D1A725C802E9AB8A01D1F43F = D1A725C802E9AB8A01D1F43F;
 			D1A725C902E9AB8A01D1F43F = D1A725C902E9AB8A01D1F43F;
@@ -2402,7 +2441,6 @@
 			D1ABD20902AF61D101D1F43F = D1ABD20902AF61D101D1F43F;
 			D1ABD20A02AF61D101D1F43F = D1ABD20A02AF61D101D1F43F;
 			D1ABD20B02AF61D101D1F43F = D1ABD20B02AF61D101D1F43F;
-			D1AC74C002A5925101D1F43F = D1AC74C002A5925101D1F43F;
 			D1AC74C602A5925101D1F43F = D1AC74C602A5925101D1F43F;
 			D1AC74C702A5925101D1F43F = D1AC74C702A5925101D1F43F;
 			D1AC74C802A5925101D1F43F = D1AC74C802A5925101D1F43F;
@@ -2427,9 +2465,7 @@
 			D1B7C7FD02D8B1AA014B75DC = D1B7C7FD02D8B1AA014B75DC;
 			D1B7C7FF02D8B1AA014B75DC = D1B7C7FF02D8B1AA014B75DC;
 			D1B7C80102D8B1AA014B75DC = D1B7C80102D8B1AA014B75DC;
-			D1B7C80402D8B1AA014B75DC = D1B7C80402D8B1AA014B75DC;
 			D1B7C80502D8B1AA014B75DC = D1B7C80502D8B1AA014B75DC;
-			D1B7C80902D8B1AA014B75DC = D1B7C80902D8B1AA014B75DC;
 			D1B7C80B02D8B1AA014B75DC = D1B7C80B02D8B1AA014B75DC;
 			D1B7C80C02D8B1AA014B75DC = D1B7C80C02D8B1AA014B75DC;
 			D1B7C80D02D8B1AA014B75DC = D1B7C80D02D8B1AA014B75DC;
@@ -2492,7 +2528,6 @@
 			D1B7C84602D8B1AA014B75DC = D1B7C84602D8B1AA014B75DC;
 			D1B7C84702D8B1AA014B75DC = D1B7C84702D8B1AA014B75DC;
 			D1B9254502DC5183018F6949 = D1B9254502DC5183018F6949;
-			D1BB0389029E9A9F01D1F43F = D1BB0389029E9A9F01D1F43F;
 			D1BB038D029E9A9F01D1F43F = D1BB038D029E9A9F01D1F43F;
 			D1BB038E029E9A9F01D1F43F = D1BB038E029E9A9F01D1F43F;
 			D1BB038F029E9A9F01D1F43F = D1BB038F029E9A9F01D1F43F;
@@ -2545,6 +2580,13 @@
 			D1BF668302A4411401D1F43F = D1BF668302A4411401D1F43F;
 			D1BF668402A4411401D1F43F = D1BF668402A4411401D1F43F;
 			D1BF668502A4411401D1F43F = D1BF668502A4411401D1F43F;
+			D1C62B9C0330DE8901D1F43F = D1C62B9C0330DE8901D1F43F;
+			D1C62B9E0330DE8901D1F43F = D1C62B9E0330DE8901D1F43F;
+			D1C62B9F0330DE8901D1F43F = D1C62B9F0330DE8901D1F43F;
+			D1C62BA00330DE8901D1F43F = D1C62BA00330DE8901D1F43F;
+			D1C62BA10330DE8901D1F43F = D1C62BA10330DE8901D1F43F;
+			D1C62BA20330DE8901D1F43F = D1C62BA20330DE8901D1F43F;
+			D1C62BA30330DE8901D1F43F = D1C62BA30330DE8901D1F43F;
 			D1C7088F029FE72201D1F43F = D1C7088F029FE72201D1F43F;
 			D1C7089702A002F701D1F43F = D1C7089702A002F701D1F43F;
 			D1C7089C02A002F701D1F43F = D1C7089C02A002F701D1F43F;
@@ -2568,7 +2610,6 @@
 			D1C708AE02A002F701D1F43F = D1C708AE02A002F701D1F43F;
 			D1C7CCC002DECFC10198B58E = D1C7CCC002DECFC10198B58E;
 			D1C7CCC102DECFC10198B58E = D1C7CCC102DECFC10198B58E;
-			D1CC1308029D96AE01D1F43F = D1CC1308029D96AE01D1F43F;
 			D1CC130A029D96AE01D1F43F = D1CC130A029D96AE01D1F43F;
 			D1CC130B029D96AE01D1F43F = D1CC130B029D96AE01D1F43F;
 			D1CC130C029D96AE01D1F43F = D1CC130C029D96AE01D1F43F;
@@ -2640,6 +2681,18 @@
 			D1D98CD602DBA033018DE1C6 = D1D98CD602DBA033018DE1C6;
 			D1D98CD702DBA033018DE1C6 = D1D98CD702DBA033018DE1C6;
 			D1D98CD802DBA033018DE1C6 = D1D98CD802DBA033018DE1C6;
+			D1DF3BA50388FE0A01D1F43F = D1DF3BA50388FE0A01D1F43F;
+			D1DF3BA60388FE0A01D1F43F = D1DF3BA60388FE0A01D1F43F;
+			D1DF3BA70388FE0A01D1F43F = D1DF3BA70388FE0A01D1F43F;
+			D1DF3BA80388FE0A01D1F43F = D1DF3BA80388FE0A01D1F43F;
+			D1DF3BA90388FE0A01D1F43F = D1DF3BA90388FE0A01D1F43F;
+			D1DFCF12039A95BD01D1F43F = D1DFCF12039A95BD01D1F43F;
+			D1DFCF13039A95BD01D1F43F = D1DFCF13039A95BD01D1F43F;
+			D1DFCF15039A95BD01D1F43F = D1DFCF15039A95BD01D1F43F;
+			D1DFCF16039A95BE01D1F43F = D1DFCF16039A95BE01D1F43F;
+			D1DFCF17039A95BE01D1F43F = D1DFCF17039A95BE01D1F43F;
+			D1DFCF18039A95BE01D1F43F = D1DFCF18039A95BE01D1F43F;
+			D1DFCF19039A95BE01D1F43F = D1DFCF19039A95BE01D1F43F;
 			D1E0FA2202B4286F01D1F43F = D1E0FA2202B4286F01D1F43F;
 			D1E0FA2402B4286F01D1F43F = D1E0FA2402B4286F01D1F43F;
 			D1E0FA2702B4286F01D1F43F = D1E0FA2702B4286F01D1F43F;
@@ -2650,6 +2703,33 @@
 			D1E200D402BF53E3012AF7FF = D1E200D402BF53E3012AF7FF;
 			D1E200D502BF53E3012AF7FF = D1E200D502BF53E3012AF7FF;
 			D1E200D602BF53E3012AF7FF = D1E200D602BF53E3012AF7FF;
+			D1E2A0B703193B8C01D1F43F = D1E2A0B703193B8C01D1F43F;
+			D1E2A0B803193B8C01D1F43F = D1E2A0B803193B8C01D1F43F;
+			D1E2A0BA03193B8C01D1F43F = D1E2A0BA03193B8C01D1F43F;
+			D1E2A0C103193B8C01D1F43F = D1E2A0C103193B8C01D1F43F;
+			D1E2A0C203193B8C01D1F43F = D1E2A0C203193B8C01D1F43F;
+			D1E2A0C303193B8C01D1F43F = D1E2A0C303193B8C01D1F43F;
+			D1E2A0C403193B8C01D1F43F = D1E2A0C403193B8C01D1F43F;
+			D1E2A0C503193B8C01D1F43F = D1E2A0C503193B8C01D1F43F;
+			D1E2A0C603193B8C01D1F43F = D1E2A0C603193B8C01D1F43F;
+			D1E2A0C703193B8C01D1F43F = D1E2A0C703193B8C01D1F43F;
+			D1E2A0C803193B8C01D1F43F = D1E2A0C803193B8C01D1F43F;
+			D1E2A0C903193B8C01D1F43F = D1E2A0C903193B8C01D1F43F;
+			D1E2A0CA03193B8C01D1F43F = D1E2A0CA03193B8C01D1F43F;
+			D1E2A0CB03193B8C01D1F43F = D1E2A0CB03193B8C01D1F43F;
+			D1E2A0CC03193B8C01D1F43F = D1E2A0CC03193B8C01D1F43F;
+			D1E2A0CD03193B8C01D1F43F = D1E2A0CD03193B8C01D1F43F;
+			D1E2A0CE03193B8C01D1F43F = D1E2A0CE03193B8C01D1F43F;
+			D1E2A0CF03193B8C01D1F43F = D1E2A0CF03193B8C01D1F43F;
+			D1E2A0D003193B8C01D1F43F = D1E2A0D003193B8C01D1F43F;
+			D1E2A0D103193B8C01D1F43F = D1E2A0D103193B8C01D1F43F;
+			D1E2A0D203193B8C01D1F43F = D1E2A0D203193B8C01D1F43F;
+			D1E2A0D303193B8C01D1F43F = D1E2A0D303193B8C01D1F43F;
+			D1E2A0D403193B8C01D1F43F = D1E2A0D403193B8C01D1F43F;
+			D1E2A0D503193B8C01D1F43F = D1E2A0D503193B8C01D1F43F;
+			D1E2A0D603193B8C01D1F43F = D1E2A0D603193B8C01D1F43F;
+			D1E2A0D803193B8C01D1F43F = D1E2A0D803193B8C01D1F43F;
+			D1E2A0D903193B8C01D1F43F = D1E2A0D903193B8C01D1F43F;
 			D1E4D3E502BAAB9801D1F43F = D1E4D3E502BAAB9801D1F43F;
 			D1E4D3E602BAAB9801D1F43F = D1E4D3E602BAAB9801D1F43F;
 			D1E4D3ED02BAAB9801D1F43F = D1E4D3ED02BAAB9801D1F43F;
@@ -2858,12 +2938,130 @@
 			D157A5EE0291D66801123251,
 		);
 	};
+	4C57070C03B6A73C00A6E961 = {
+		fRef = D157A5F90291DA6C01123251;
+		isa = PBXTextBookmark;
+		name = "ArcemEmulator.m: dir";
+		rLen = 0;
+		rLoc = 3142;
+		rType = 0;
+		vrLen = 1002;
+		vrLoc = 2668;
+	};
+	4C803DA804640ED900D1F43F = {
+		fRef = D157A5F90291DA6C01123251;
+		isa = PBXTextBookmark;
+		name = "ArcemEmulator.m: updateDisplay";
+		rLen = 0;
+		rLoc = 2567;
+		rType = 0;
+		vrLen = 1123;
+		vrLoc = 1894;
+	};
+	4C803DA904640ED900D1F43F = {
+		fRef = D157A5F90291DA6C01123251;
+		isa = PBXTextBookmark;
+		name = "ArcemEmulator.m: updateDisplay";
+		rLen = 0;
+		rLoc = 2567;
+		rType = 0;
+		vrLen = 1123;
+		vrLoc = 1894;
+	};
+	4C803DAB046411EE00D1F43F = {
+		fRef = D1E0F9DC02B41B0301D1F43F;
+		isa = PBXTextBookmark;
+		name = "ReadConfig.c: 97";
+		rLen = 0;
+		rLoc = 2322;
+		rType = 0;
+		vrLen = 891;
+		vrLoc = 0;
+	};
+	4CEA711C046422FC00D1F43F = {
+		fRef = D1E0F9DC02B41B0301D1F43F;
+		isa = PBXTextBookmark;
+		name = "ReadConfig.c: 97";
+		rLen = 0;
+		rLoc = 2322;
+		rType = 0;
+		vrLen = 891;
+		vrLoc = 0;
+	};
+	4CF608A703DB1EDB002DFC5F = {
+		bstl = 4A9504CDFFE6A4B311CA0CBA;
+		isa = PBXBuildStyleBookmark;
+	};
+	4CF608A803DB1EDB002DFC5F = {
+		fRef = D157A5F50291D94401123251;
+		isa = PBXTextBookmark;
+		name = "ArcemController.m: __VERSION__";
+		rLen = 0;
+		rLoc = 0;
+		rType = 0;
+		vrLen = 1581;
+		vrLoc = 0;
+	};
+	4CF608A903DB1EDB002DFC5F = {
+		fRef = D157A5F20291D6F801123251;
+		isa = PBXTextBookmark;
+		name = "ArcemView.m: mouseMoved:";
+		rLen = 5;
+		rLoc = 13333;
+		rType = 0;
+		vrLen = 1086;
+		vrLoc = 12861;
+	};
+	4CF608AA03DB1EDB002DFC5F = {
+		fRef = D1F01DD60293339001CDBB35;
+		isa = PBXTextBookmark;
+		name = "DispKbd.c: 30";
+		rLen = 0;
+		rLoc = 1100;
+		rType = 0;
+		vrLen = 1358;
+		vrLoc = 0;
+	};
+	4CF608AB03DB1EDB002DFC5F = {
+		bstl = 4A9504CDFFE6A4B311CA0CBA;
+		isa = PBXBuildStyleBookmark;
+	};
+	4CF608AC03DB1EDB002DFC5F = {
+		fRef = D157A5F50291D94401123251;
+		isa = PBXTextBookmark;
+		name = "ArcemController.m: __VERSION__";
+		rLen = 0;
+		rLoc = 0;
+		rType = 0;
+		vrLen = 1581;
+		vrLoc = 0;
+	};
+	4CF608AD03DB1EDB002DFC5F = {
+		fRef = D157A5F20291D6F801123251;
+		isa = PBXTextBookmark;
+		name = "ArcemView.m: mouseMoved:";
+		rLen = 5;
+		rLoc = 13333;
+		rType = 0;
+		vrLen = 1086;
+		vrLoc = 12861;
+	};
+	4CF608AE03DB1EDB002DFC5F = {
+		fRef = D1F01DD60293339001CDBB35;
+		isa = PBXTextBookmark;
+		name = "DispKbd.c: 30";
+		rLen = 0;
+		rLoc = 1100;
+		rType = 0;
+		vrLen = 1358;
+		vrLoc = 0;
+	};
 	D100843402AA36F30153FD9A = {
 		fRef = D157A5F50291D94401123251;
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: fullScreen:";
 		rLen = 0;
-		rLoc = 3635;
+		rLoc = 3718;
 		rType = 0;
 		vrLen = 1172;
 		vrLoc = 2538;
@@ -2873,7 +3071,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: 213";
 		rLen = 0;
-		rLoc = 9560;
+		rLoc = 10004;
 		rType = 0;
 		vrLen = 960;
 		vrLoc = 0;
@@ -2893,7 +3091,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: 213";
 		rLen = 0;
-		rLoc = 9560;
+		rLoc = 10004;
 		rType = 0;
 		vrLen = 960;
 		vrLoc = 0;
@@ -2903,7 +3101,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: awakeFromNib";
 		rLen = 0;
-		rLoc = 2942;
+		rLoc = 3025;
 		rType = 0;
 		vrLen = 1172;
 		vrLoc = 2538;
@@ -2933,7 +3131,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: awakeFromNib";
 		rLen = 0;
-		rLoc = 3517;
+		rLoc = 3600;
 		rType = 0;
 		vrLen = 1155;
 		vrLoc = 2555;
@@ -2943,7 +3141,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: awakeFromNib";
 		rLen = 0;
-		rLoc = 3517;
+		rLoc = 3600;
 		rType = 0;
 		vrLen = 1155;
 		vrLoc = 2555;
@@ -2973,7 +3171,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: mouseMoved:";
 		rLen = 0;
-		rLoc = 11941;
+		rLoc = 12385;
 		rType = 0;
 		vrLen = 591;
 		vrLoc = 2268;
@@ -2983,7 +3181,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: init";
 		rLen = 0;
-		rLoc = 1893;
+		rLoc = 1976;
 		rType = 0;
 		vrLen = 2426;
 		vrLoc = 0;
@@ -3005,7 +3203,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: init";
 		rLen = 0;
-		rLoc = 2681;
+		rLoc = 2764;
 		rType = 0;
 		vrLen = 2427;
 		vrLoc = 0;
@@ -3029,7 +3227,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: drawRect:";
 		rLen = 0;
-		rLoc = 5444;
+		rLoc = 5472;
 		rType = 0;
 		vrLen = 985;
 		vrLoc = 989;
@@ -3043,7 +3241,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: drawRect:";
 		rLen = 0;
-		rLoc = 4483;
+		rLoc = 4511;
 		rType = 0;
 		vrLen = 985;
 		vrLoc = 989;
@@ -3053,7 +3251,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: init";
 		rLen = 0;
-		rLoc = 2026;
+		rLoc = 2109;
 		rType = 0;
 		vrLen = 2427;
 		vrLoc = 0;
@@ -3067,7 +3265,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: acceptsFirstResponder";
 		rLen = 0;
-		rLoc = 5497;
+		rLoc = 5525;
 		rType = 0;
 		vrLen = 924;
 		vrLoc = 989;
@@ -3081,7 +3279,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: 92";
 		rLen = 0;
-		rLoc = 9560;
+		rLoc = 10004;
 		rType = 0;
 		vrLen = 984;
 		vrLoc = 989;
@@ -3099,7 +3297,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: drawRect:";
 		rLen = 0;
-		rLoc = 4810;
+		rLoc = 4838;
 		rType = 0;
 		vrLen = 990;
 		vrLoc = 989;
@@ -3113,7 +3311,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: drawRect:";
 		rLen = 0;
-		rLoc = 5473;
+		rLoc = 5501;
 		rType = 0;
 		vrLen = 1000;
 		vrLoc = 989;
@@ -3193,7 +3391,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: drawRect:";
 		rLen = 0;
-		rLoc = 4547;
+		rLoc = 4575;
 		rType = 0;
 		vrLen = 1173;
 		vrLoc = 4225;
@@ -3241,7 +3439,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: acceptsFirstResponder";
 		rLen = 0;
-		rLoc = 9614;
+		rLoc = 10058;
 		rType = 0;
 		vrLen = 875;
 		vrLoc = 1258;
@@ -3261,7 +3459,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: awakeFromNib";
 		rLen = 0;
-		rLoc = 3517;
+		rLoc = 3600;
 		rType = 0;
 		vrLen = 976;
 		vrLoc = 2348;
@@ -3279,7 +3477,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: acceptsFirstResponder";
 		rLen = 0;
-		rLoc = 9614;
+		rLoc = 10058;
 		rType = 0;
 		vrLen = 875;
 		vrLoc = 1258;
@@ -3299,7 +3497,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: awakeFromNib";
 		rLen = 0;
-		rLoc = 3517;
+		rLoc = 3600;
 		rType = 0;
 		vrLen = 976;
 		vrLoc = 2348;
@@ -3353,7 +3551,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: mouseMoved:";
 		rLen = 0;
-		rLoc = 11941;
+		rLoc = 12385;
 		rType = 0;
 		vrLen = 590;
 		vrLoc = 2269;
@@ -3363,7 +3561,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: awakeFromNib";
 		rLen = 0;
-		rLoc = 3517;
+		rLoc = 3600;
 		rType = 0;
 		vrLen = 976;
 		vrLoc = 2348;
@@ -3428,6 +3626,146 @@
 		path = /Developer/Documentation/Cocoa/TasksAndConcepts/ProgrammingTopics/BasicEventHandling/Tasks/HandlingMouseEvents.html;
 		refType = 0;
 	};
+	D108B29403881D6201D1F43F = {
+		fRef = 089C165DFE840E0CC02AAC07;
+		isa = PBXTextBookmark;
+		name = "English: 5";
+		rLen = 0;
+		rLoc = 159;
+		rType = 0;
+		vrLen = 298;
+		vrLoc = 0;
+	};
+	D108B29703881D6201D1F43F = {
+		fRef = D1E0F9D702B41B0301D1F43F;
+		isa = PBXTextBookmark;
+		name = "fdc1772.h: 21";
+		rLen = 90;
+		rLoc = 558;
+		rType = 0;
+		vrLen = 1038;
+		vrLoc = 0;
+	};
+	D108B29803881D6201D1F43F = {
+		fRef = D1E0F9D902B41B0301D1F43F;
+		isa = PBXTextBookmark;
+		name = "hdc63463.h: 1";
+		rLen = 0;
+		rLoc = 0;
+		rType = 0;
+		vrLen = 1207;
+		vrLoc = 847;
+	};
+	D108B29A03881D6201D1F43F = {
+		fRef = 089C165DFE840E0CC02AAC07;
+		isa = PBXTextBookmark;
+		name = "English: 8";
+		rLen = 0;
+		rLoc = 298;
+		rType = 0;
+		vrLen = 298;
+		vrLoc = 0;
+	};
+	D108B29B03881D6201D1F43F = {
+		fRef = D157A5F50291D94401123251;
+		isa = PBXTextBookmark;
+		name = "ArcemController.m: path";
+		rLen = 0;
+		rLoc = 1525;
+		rType = 0;
+		vrLen = 1581;
+		vrLoc = 0;
+	};
+	D108B29C03881D6201D1F43F = {
+		fRef = D157A5F60291D94401123251;
+		isa = PBXTextBookmark;
+		name = "ArcemController.h: 67";
+		rLen = 0;
+		rLoc = 2328;
+		rType = 0;
+		vrLen = 1416;
+		vrLoc = 990;
+	};
+	D108B29D03881D6201D1F43F = {
+		fRef = D157A5F50291D94401123251;
+		isa = PBXTextBookmark;
+		name = "ArcemController.m: awakeFromNib";
+		rLen = 0;
+		rLoc = 6615;
+		rType = 0;
+		vrLen = 1624;
+		vrLoc = 5848;
+	};
+	D108B29E03881D6201D1F43F = {
+		fRef = 089C165DFE840E0CC02AAC07;
+		isa = PBXTextBookmark;
+		name = "English: 5";
+		rLen = 0;
+		rLoc = 159;
+		rType = 0;
+		vrLen = 298;
+		vrLoc = 0;
+	};
+	D108B29F03881D6201D1F43F = {
+		fRef = D157A5F50291D94401123251;
+		isa = PBXTextBookmark;
+		name = "ArcemController.m: 387";
+		rLen = 0;
+		rLoc = 13594;
+		rType = 0;
+		vrLen = 1588;
+		vrLoc = 12766;
+	};
+	D108B2A003881D6201D1F43F = {
+		fRef = D157A5F60291D94401123251;
+		isa = PBXTextBookmark;
+		name = "ArcemController.h: 96";
+		rLen = 0;
+		rLoc = 3096;
+		rType = 0;
+		vrLen = 1353;
+		vrLoc = 1751;
+	};
+	D108B2A103881D6201D1F43F = {
+		fRef = D157A5F50291D94401123251;
+		isa = PBXTextBookmark;
+		name = "ArcemController.m: 387";
+		rLen = 0;
+		rLoc = 13594;
+		rType = 0;
+		vrLen = 1554;
+		vrLoc = 12766;
+	};
+	D108B2A203881D6201D1F43F = {
+		fRef = D1E0F9D802B41B0301D1F43F;
+		isa = PBXTextBookmark;
+		name = "hdc63463.c: __VERSION__";
+		rLen = 0;
+		rLoc = 0;
+		rType = 0;
+		vrLen = 909;
+		vrLoc = 0;
+	};
+	D108B2A303881D6201D1F43F = {
+		fRef = D1E0F9D702B41B0301D1F43F;
+		isa = PBXTextBookmark;
+		name = "fdc1772.h: 21";
+		rLen = 90;
+		rLoc = 558;
+		rType = 0;
+		vrLen = 1038;
+		vrLoc = 0;
+	};
+	D108B2A403881D6201D1F43F = {
+		fRef = D1E0F9D902B41B0301D1F43F;
+		isa = PBXTextBookmark;
+		name = "hdc63463.h: 1";
+		rLen = 0;
+		rLoc = 0;
+		rType = 0;
+		vrLen = 1207;
+		vrLoc = 847;
+	};
 	D109AE180296AC1801CE75F1 = {
 		fRef = D157A5F20291D6F801123251;
 		isa = PBXTextBookmark;
@@ -3453,7 +3791,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: dealloc";
 		rLen = 0;
-		rLoc = 11941;
+		rLoc = 12385;
 		rType = 0;
 		vrLen = 911;
 		vrLoc = 1193;
@@ -3491,7 +3829,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: mouseMoved:";
 		rLen = 0;
-		rLoc = 11941;
+		rLoc = 12385;
 		rType = 0;
 		vrLen = 806;
 		vrLoc = 1436;
@@ -3518,12 +3856,22 @@
 		path = /System/Library/Frameworks/AppKit.framework/Versions/C/Resources/English.lproj/Documentation/Reference/ObjC_classic/Classes/NSEvent.html;
 		refType = 0;
 	};
+	D11AF5340332407D01D1F43F = {
+		fRef = D157A5F50291D94401123251;
+		isa = PBXTextBookmark;
+		name = "ArcemController.m: path";
+		rLen = 0;
+		rLoc = 1525;
+		rType = 0;
+		vrLen = 1535;
+		vrLoc = 0;
+	};
 	D11C39B302BFA7AD010FE583 = {
 		fRef = D157A5F20291D6F801123251;
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: drawRect:";
 		rLen = 0;
-		rLoc = 6047;
+		rLoc = 6079;
 		rType = 0;
 		vrLen = 1429;
 		vrLoc = 4577;
@@ -3543,7 +3891,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: 498";
 		rLen = 0;
-		rLoc = 15832;
+		rLoc = 16278;
 		rType = 0;
 		vrLen = 849;
 		vrLoc = 12918;
@@ -3557,7 +3905,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: drawRect:";
 		rLen = 0;
-		rLoc = 5803;
+		rLoc = 5835;
 		rType = 0;
 		vrLen = 1415;
 		vrLoc = 4577;
@@ -3597,7 +3945,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: 154";
 		rLen = 0;
-		rLoc = 8056;
+		rLoc = 8563;
 		rType = 0;
 		vrLen = 1044;
 		vrLoc = 5209;
@@ -3621,7 +3969,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: keyDown:";
 		rLen = 0;
-		rLoc = 10589;
+		rLoc = 11033;
 		rType = 0;
 		vrLen = 1081;
 		vrLoc = 3321;
@@ -3649,7 +3997,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: keyDown:";
 		rLen = 0;
-		rLoc = 11941;
+		rLoc = 12385;
 		rType = 0;
 		vrLen = 1046;
 		vrLoc = 3101;
@@ -3684,6 +4032,16 @@
 		path = /System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/CoreGraphics.framework/Versions/A/Headers/CGRemoteOperation.h;
 		refType = 0;
 	};
+	D130B99E0328C07901D1F43F = {
+		fRef = 089C165DFE840E0CC02AAC07;
+		isa = PBXTextBookmark;
+		name = "English: 5";
+		rLen = 0;
+		rLoc = 159;
+		rType = 0;
+		vrLen = 298;
+		vrLoc = 0;
+	};
 	D131DE7F02A18C8001D1F43F = {
 		fRef = D131DE9A02A18C8001D1F43F;
 		isa = PBXBookmark;
@@ -3713,7 +4071,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: flagsChanged:";
 		rLen = 0;
-		rLoc = 10182;
+		rLoc = 10626;
 		rType = 0;
 		vrLen = 838;
 		vrLoc = 4907;
@@ -3751,7 +4109,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: flagsChanged:";
 		rLen = 0;
-		rLoc = 10003;
+		rLoc = 10447;
 		rType = 0;
 		vrLen = 1334;
 		vrLoc = 1839;
@@ -3761,7 +4119,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: showPreferencePanel:";
 		rLen = 0;
-		rLoc = 5714;
+		rLoc = 5858;
 		rType = 0;
 		vrLen = 1119;
 		vrLoc = 2545;
@@ -3781,7 +4139,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: showPreferencePanel:";
 		rLen = 0;
-		rLoc = 3651;
+		rLoc = 3734;
 		rType = 0;
 		vrLen = 1108;
 		vrLoc = 2303;
@@ -3801,7 +4159,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: dealloc";
 		rLen = 0;
-		rLoc = 5714;
+		rLoc = 5858;
 		rType = 0;
 		vrLen = 1034;
 		vrLoc = 2799;
@@ -3825,7 +4183,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: fullScreen:";
 		rLen = 0;
-		rLoc = 5714;
+		rLoc = 5858;
 		rType = 0;
 		vrLen = 1050;
 		vrLoc = 2799;
@@ -3845,7 +4203,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: newSim:";
 		rLen = 0;
-		rLoc = 5714;
+		rLoc = 5858;
 		rType = 0;
 		vrLen = 1064;
 		vrLoc = 2799;
@@ -3855,7 +4213,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: dealloc";
 		rLen = 0;
-		rLoc = 13689;
+		rLoc = 14135;
 		rType = 0;
 		vrLen = 653;
 		vrLoc = 7549;
@@ -3894,25 +4252,35 @@
 		vrLen = 1514;
 		vrLoc = 20094;
 	};
-	D1364EE802B8D65801D1F43F = {
-		fRef = D1E0F9D202B41B0301D1F43F;
-		isa = PBXTextBookmark;
-		name = "armarc.c: 29";
-		rLen = 0;
-		rLoc = 538;
-		rType = 0;
-		vrLen = 728;
-		vrLoc = 0;
-	};
 	D1364EEA02B8D65801D1F43F = {
 		fRef = D1E0F9D202B41B0301D1F43F;
 		isa = PBXTextBookmark;
 		name = "armarc.c: 29";
 		rLen = 0;
-		rLoc = 538;
+		rLoc = 593;
 		rType = 0;
 		vrLen = 728;
 		vrLoc = 0;
+	};
+	D1365B19038C0EEA01D1F43F = {
+		fRef = D1E0F9F102B41B0301D1F43F;
+		isa = PBXTextBookmark;
+		name = "armsupp.c: 26";
+		rLen = 0;
+		rLoc = 1037;
+		rType = 0;
+		vrLen = 1703;
+		vrLoc = 17276;
+	};
+	D1365B1A038C0EEA01D1F43F = {
+		fRef = D1E0F9F102B41B0301D1F43F;
+		isa = PBXTextBookmark;
+		name = "armsupp.c: 26";
+		rLen = 0;
+		rLoc = 1037;
+		rType = 0;
+		vrLen = 1703;
+		vrLoc = 17276;
 	};
 	D139497E02D50F9D01E0C863 = {
 		fRef = D1CA0AAF029C4D9401D1F43F;
@@ -3929,7 +4297,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: drawRect:";
 		rLen = 0;
-		rLoc = 5803;
+		rLoc = 5835;
 		rType = 0;
 		vrLen = 1415;
 		vrLoc = 4577;
@@ -3939,7 +4307,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: init";
 		rLen = 0;
-		rLoc = 4340;
+		rLoc = 4375;
 		rType = 0;
 		vrLen = 1870;
 		vrLoc = 2591;
@@ -3949,7 +4317,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: drawRect:";
 		rLen = 0;
-		rLoc = 5803;
+		rLoc = 5835;
 		rType = 0;
 		vrLen = 1415;
 		vrLoc = 4577;
@@ -3969,7 +4337,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.h: 44";
 		rLen = 12;
-		rLoc = 1479;
+		rLoc = 1615;
 		rType = 0;
 		vrLen = 1427;
 		vrLoc = 1378;
@@ -3979,7 +4347,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemEmulator.m: 58";
 		rLen = 85;
-		rLoc = 1873;
+		rLoc = 1983;
 		rType = 0;
 		vrLen = 1259;
 		vrLoc = 1454;
@@ -4039,7 +4407,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: init";
 		rLen = 0;
-		rLoc = 4340;
+		rLoc = 4375;
 		rType = 0;
 		vrLen = 2587;
 		vrLoc = 1431;
@@ -4059,7 +4427,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: init";
 		rLen = 0;
-		rLoc = 3932;
+		rLoc = 4015;
 		rType = 0;
 		vrLen = 2584;
 		vrLoc = 1431;
@@ -4089,7 +4457,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.h: 67";
 		rLen = 35;
-		rLoc = 2265;
+		rLoc = 2475;
 		rType = 0;
 		vrLen = 1427;
 		vrLoc = 1378;
@@ -4199,7 +4567,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: drawRect:";
 		rLen = 0;
-		rLoc = 6392;
+		rLoc = 6424;
 		rType = 0;
 		vrLen = 1456;
 		vrLoc = 4680;
@@ -4209,7 +4577,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: init";
 		rLen = 0;
-		rLoc = 4433;
+		rLoc = 4468;
 		rType = 0;
 		vrLen = 2562;
 		vrLoc = 1429;
@@ -4239,7 +4607,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.h: 52";
 		rLen = 0;
-		rLoc = 1845;
+		rLoc = 1879;
 		rType = 0;
 		vrLen = 1288;
 		vrLoc = 268;
@@ -4249,7 +4617,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: resizeToWidth:toHeight:";
 		rLen = 0;
-		rLoc = 10221;
+		rLoc = 10665;
 		rType = 0;
 		vrLen = 1135;
 		vrLoc = 8780;
@@ -4269,7 +4637,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: keyUp:";
 		rLen = 0;
-		rLoc = 11941;
+		rLoc = 12385;
 		rType = 0;
 		vrLen = 981;
 		vrLoc = 5654;
@@ -4289,7 +4657,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: flagsChanged:";
 		rLen = 0;
-		rLoc = 9876;
+		rLoc = 10320;
 		rType = 0;
 		vrLen = 868;
 		vrLoc = 4456;
@@ -4309,7 +4677,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: flagsChanged:";
 		rLen = 0;
-		rLoc = 10418;
+		rLoc = 10862;
 		rType = 0;
 		vrLen = 838;
 		vrLoc = 4907;
@@ -4344,15 +4712,23 @@
 		vrLen = 1051;
 		vrLoc = 0;
 	};
-	D14857FF02FAF7BB01878BC2 = {
-		fRef = D167869C029D98DC01D1F43F;
+	D14971000324054C01D1F43F = {
+		fRef = D1E92BDF02A5470B01D1F43F;
+		isa = PBXBookmark;
+	};
+	D14971010324054C01D1F43F = {
+		fRef = D157A5F50291D94401123251;
 		isa = PBXTextBookmark;
-		name = "PreferenceController.m: changeDirText:";
+		name = "ArcemController.m: awakeFromNib";
 		rLen = 0;
-		rLoc = 3681;
+		rLoc = 5859;
 		rType = 0;
-		vrLen = 1233;
-		vrLoc = 3639;
+		vrLen = 1322;
+		vrLoc = 4616;
+	};
+	D14971020324054C01D1F43F = {
+		fRef = D1E92BDF02A5470B01D1F43F;
+		isa = PBXBookmark;
 	};
 	D14C95CB02B8DFAA01D1F43F = {
 		fRef = 089C165DFE840E0CC02AAC07;
@@ -4374,12 +4750,232 @@
 		vrLen = 409;
 		vrLoc = 0;
 	};
+	D14DC968031A3FD201D1F43F = {
+		fRef = D157A5F10291D6F801123251;
+		isa = PBXTextBookmark;
+		name = "ArcemView.h: 54";
+		rLen = 0;
+		rLoc = 1568;
+		rType = 0;
+		vrLen = 1019;
+		vrLoc = 985;
+	};
+	D14DC969031A3FD201D1F43F = {
+		fRef = D157A5FA0291DA6C01123251;
+		isa = PBXTextBookmark;
+		name = "ArcemEmulator.h: 37";
+		rLen = 0;
+		rLoc = 1243;
+		rType = 0;
+		vrLen = 1340;
+		vrLoc = 0;
+	};
+	D14DC96E031A3FD201D1F43F = {
+		fRef = D157A5F20291D6F801123251;
+		isa = PBXTextBookmark;
+		name = "ArcemView.m: drawRect:";
+		rLen = 0;
+		rLoc = 6677;
+		rType = 0;
+		vrLen = 1562;
+		vrLoc = 6224;
+	};
+	D14DC96F031A3FD201D1F43F = {
+		fRef = D157A5F50291D94401123251;
+		isa = PBXTextBookmark;
+		name = "ArcemController.m: destroyEmulatorThread";
+		rLen = 0;
+		rLoc = 5499;
+		rType = 0;
+		vrLen = 1434;
+		vrLoc = 3955;
+	};
+	D14DC970031A3FD201D1F43F = {
+		fRef = D157A5F60291D94401123251;
+		isa = PBXTextBookmark;
+		name = "ArcemController.h: 81";
+		rLen = 0;
+		rLoc = 3014;
+		rType = 0;
+		vrLen = 1398;
+		vrLoc = 1442;
+	};
+	D14DC971031A3FD201D1F43F = {
+		fRef = D157A5F50291D94401123251;
+		isa = PBXTextBookmark;
+		name = "ArcemController.m: 136";
+		rLen = 0;
+		rLoc = 5532;
+		rType = 0;
+		vrLen = 847;
+		vrLoc = 15369;
+	};
+	D14DC972031A3FD201D1F43F = {
+		fRef = D157A5F10291D6F801123251;
+		isa = PBXTextBookmark;
+		name = "ArcemView.h: 54";
+		rLen = 0;
+		rLoc = 1568;
+		rType = 0;
+		vrLen = 1019;
+		vrLoc = 985;
+	};
+	D14DC973031A3FD201D1F43F = {
+		fRef = D157A5F20291D6F801123251;
+		isa = PBXTextBookmark;
+		name = "ArcemView.m: drawRect:";
+		rLen = 0;
+		rLoc = 6677;
+		rType = 0;
+		vrLen = 1562;
+		vrLoc = 6224;
+	};
+	D14DC974031A3FD201D1F43F = {
+		fRef = D157A5F10291D6F801123251;
+		isa = PBXTextBookmark;
+		name = "ArcemView.h: 54";
+		rLen = 0;
+		rLoc = 1568;
+		rType = 0;
+		vrLen = 1019;
+		vrLoc = 985;
+	};
+	D14DC975031A3FD201D1F43F = {
+		fRef = D157A5F50291D94401123251;
+		isa = PBXTextBookmark;
+		name = "ArcemController.m: 136";
+		rLen = 0;
+		rLoc = 5532;
+		rType = 0;
+		vrLen = 850;
+		vrLoc = 15366;
+	};
+	D14DC976031A3FD201D1F43F = {
+		fRef = D157A5F90291DA6C01123251;
+		isa = PBXTextBookmark;
+		name = "ArcemEmulator.m: 36";
+		rLen = 0;
+		rLoc = 1269;
+		rType = 0;
+		vrLen = 1308;
+		vrLoc = 1400;
+	};
+	D14DC977031A3FD201D1F43F = {
+		fRef = D157A5FA0291DA6C01123251;
+		isa = PBXTextBookmark;
+		name = "ArcemEmulator.h: 37";
+		rLen = 0;
+		rLoc = 1243;
+		rType = 0;
+		vrLen = 1340;
+		vrLoc = 0;
+	};
+	D14DC978031A3FD201D1F43F = {
+		fRef = D157A5F90291DA6C01123251;
+		isa = PBXTextBookmark;
+		name = "ArcemEmulator.m: threadStart:";
+		rLen = 0;
+		rLoc = 3355;
+		rType = 0;
+		vrLen = 1001;
+		vrLoc = 2797;
+	};
+	D14DC979031A3FD201D1F43F = {
+		fRef = D157A5F50291D94401123251;
+		isa = PBXTextBookmark;
+		name = "ArcemController.m: init";
+		rLen = 0;
+		rLoc = 4487;
+		rType = 0;
+		vrLen = 1438;
+		vrLoc = 3955;
+	};
+	D14DC97A031A3FD201D1F43F = {
+		fRef = D157A5F90291DA6C01123251;
+		isa = PBXTextBookmark;
+		name = "ArcemEmulator.m: threadStart:";
+		rLen = 0;
+		rLoc = 3355;
+		rType = 0;
+		vrLen = 1001;
+		vrLoc = 2797;
+	};
+	D14DC97B031A3FD201D1F43F = {
+		fRef = D157A5F60291D94401123251;
+		isa = PBXTextBookmark;
+		name = "ArcemController.h: 81";
+		rLen = 0;
+		rLoc = 3014;
+		rType = 0;
+		vrLen = 1398;
+		vrLoc = 1442;
+	};
+	D14DC97C031A3FD201D1F43F = {
+		fRef = D157A5F50291D94401123251;
+		isa = PBXTextBookmark;
+		name = "ArcemController.m: 129";
+		rLen = 30;
+		rLoc = 5369;
+		rType = 0;
+		vrLen = 1438;
+		vrLoc = 3955;
+	};
+	D14DC97D031A3FD201D1F43F = {
+		fRef = D157A5F60291D94401123251;
+		isa = PBXTextBookmark;
+		name = "ArcemController.h: 84";
+		rLen = 0;
+		rLoc = 3102;
+		rType = 0;
+		vrLen = 1334;
+		vrLoc = 1543;
+	};
+	D14DC97E031A3FD201D1F43F = {
+		fRef = D157A5F90291DA6C01123251;
+		isa = PBXTextBookmark;
+		name = "ArcemEmulator.m: arcem_exit";
+		rLen = 0;
+		rLoc = 2825;
+		rType = 0;
+		vrLen = 971;
+		vrLoc = 2869;
+	};
+	D14DC97F031A3FD201D1F43F = {
+		fRef = D157A5F20291D6F801123251;
+		isa = PBXTextBookmark;
+		name = "ArcemView.m: emulatorError:";
+		rLen = 0;
+		rLoc = 17850;
+		rType = 0;
+		vrLen = 1146;
+		vrLoc = 17023;
+	};
+	D14DC980031A3FD201D1F43F = {
+		fRef = D157A5F50291D94401123251;
+		isa = PBXTextBookmark;
+		name = "ArcemController.m: destroyEmulatorThread";
+		rLen = 0;
+		rLoc = 5526;
+		rType = 0;
+		vrLen = 1354;
+		vrLoc = 4717;
+	};
+	D14DC981031A3FD201D1F43F = {
+		fRef = D157A5F60291D94401123251;
+		isa = PBXTextBookmark;
+		name = "ArcemController.h: destroyEmulatorThread";
+		rLen = 0;
+		rLoc = 3102;
+		rType = 0;
+		vrLen = 1334;
+		vrLoc = 1543;
+	};
 	D14EDA9402AD352401ABF9F8 = {
 		fRef = D157A5F60291D94401123251;
 		isa = PBXTextBookmark;
 		name = "ArcemController.h: 52";
 		rLen = 0;
-		rLoc = 2711;
+		rLoc = 3102;
 		rType = 0;
 		vrLen = 1477;
 		vrLoc = 376;
@@ -4389,7 +4985,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: 130";
 		rLen = 0;
-		rLoc = 7942;
+		rLoc = 8449;
 		rType = 0;
 		vrLen = 814;
 		vrLoc = 4420;
@@ -4399,7 +4995,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.h: 51";
 		rLen = 0;
-		rLoc = 1845;
+		rLoc = 1879;
 		rType = 0;
 		vrLen = 1200;
 		vrLoc = 337;
@@ -4409,7 +5005,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: keyDown:";
 		rLen = 0;
-		rLoc = 11941;
+		rLoc = 12385;
 		rType = 0;
 		vrLen = 843;
 		vrLoc = 8790;
@@ -4419,7 +5015,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: awakeFromNib";
 		rLen = 0;
-		rLoc = 5880;
+		rLoc = 6024;
 		rType = 0;
 		vrLen = 1516;
 		vrLoc = 2971;
@@ -4437,7 +5033,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: awakeFromNib";
 		rLen = 0;
-		rLoc = 5880;
+		rLoc = 6024;
 		rType = 0;
 		vrLen = 1454;
 		vrLoc = 2971;
@@ -4451,7 +5047,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: awakeFromNib";
 		rLen = 0;
-		rLoc = 5875;
+		rLoc = 6019;
 		rType = 0;
 		vrLen = 1215;
 		vrLoc = 3546;
@@ -4474,40 +5070,6 @@
 		path = /System/Library/Frameworks/AppKit.framework/Versions/C/Resources/English.lproj/Documentation/Reference/ObjC_classic/Classes/NSMenuItem.html;
 		refType = 0;
 	};
-	D1534BCA02EEB41901D1F43F = {
-		fRef = D157A5F20291D6F801123251;
-		isa = PBXTextBookmark;
-		name = "ArcemView.m: drawRect:";
-		rLen = 0;
-		rLoc = 6218;
-		rType = 0;
-		vrLen = 1029;
-		vrLoc = 11719;
-	};
-	D1534BCB02EEB41901D1F43F = {
-		fRef = D157A5F10291D6F801123251;
-		isa = PBXTextBookmark;
-		name = "ArcemView.h: setNeedsScaledDisplayInRect:";
-		rLen = 28;
-		rLoc = 1890;
-		rType = 0;
-		vrLen = 1024;
-		vrLoc = 901;
-	};
-	D1534BCC02EEB41901D1F43F = {
-		fRef = D1CA0AAF029C4D9401D1F43F;
-		isa = PBXTextBookmark;
-		name = "Credits.rtf: 20";
-		rLen = 0;
-		rLoc = 339;
-		rType = 0;
-		vrLen = 442;
-		vrLoc = 0;
-	};
-	D1534BCF02EEB41901D1F43F = {
-		fRef = D1534BF602EEB41901D1F43F;
-		isa = PBXBookmark;
-	};
 	D1534BD002EEB41901D1F43F = {
 		fRef = D1534BF902EEB41A01D1F43F;
 		isa = PBXBookmark;
@@ -4529,7 +5091,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: createEmulatorThread";
 		rLen = 0;
-		rLoc = 4745;
+		rLoc = 4780;
 		rType = 0;
 		vrLen = 1357;
 		vrLoc = 3896;
@@ -4539,7 +5101,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: drawRect:";
 		rLen = 0;
-		rLoc = 6218;
+		rLoc = 6250;
 		rType = 0;
 		vrLen = 1029;
 		vrLoc = 11719;
@@ -4549,7 +5111,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.h: setNeedsScaledDisplayInRect:";
 		rLen = 28;
-		rLoc = 1890;
+		rLoc = 1924;
 		rType = 0;
 		vrLen = 1024;
 		vrLoc = 901;
@@ -4559,7 +5121,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: 98";
 		rLen = 0;
-		rLoc = 4453;
+		rLoc = 4488;
 		rType = 0;
 		vrLen = 1631;
 		vrLoc = 10018;
@@ -4623,7 +5185,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: init";
 		rLen = 0;
-		rLoc = 4340;
+		rLoc = 4375;
 		rType = 0;
 		vrLen = 1826;
 		vrLoc = 2970;
@@ -4637,7 +5199,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: init";
 		rLen = 0;
-		rLoc = 4340;
+		rLoc = 4375;
 		rType = 0;
 		vrLen = 2003;
 		vrLoc = 2885;
@@ -4659,7 +5221,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: init";
 		rLen = 0;
-		rLoc = 4340;
+		rLoc = 4375;
 		rType = 0;
 		vrLen = 1924;
 		vrLoc = 2885;
@@ -4679,7 +5241,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: menuMount2:";
 		rLen = 414;
-		rLoc = 10556;
+		rLoc = 11063;
 		rType = 0;
 		vrLen = 1631;
 		vrLoc = 10156;
@@ -4736,12 +5298,6 @@
 		isa = PBXFileReference;
 		name = NSControl.html;
 		path = /System/Library/Frameworks/AppKit.framework/Versions/C/Resources/English.lproj/Documentation/Reference/ObjC_classic/Classes/NSControl.html;
-		refType = 0;
-	};
-	D1534BF602EEB41901D1F43F = {
-		isa = PBXFileReference;
-		name = NSString.html;
-		path = /System/Library/Frameworks/Foundation.framework/Versions/C/Resources/English.lproj/Documentation/Reference/ObjC_classic/Classes/NSString.html;
 		refType = 0;
 	};
 	D1534BF702EEB41901D1F43F = {
@@ -4809,7 +5365,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: openPanelDidEnd:returnCode:contextInfo:";
 		rLen = 0;
-		rLoc = 12721;
+		rLoc = 13227;
 		rType = 0;
 		vrLen = 1523;
 		vrLoc = 10247;
@@ -4823,7 +5379,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: openPanelDidEnd:returnCode:contextInfo:";
 		rLen = 0;
-		rLoc = 12721;
+		rLoc = 13227;
 		rType = 0;
 		vrLen = 1225;
 		vrLoc = 10601;
@@ -4833,7 +5389,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.h: 52";
 		rLen = 0;
-		rLoc = 1845;
+		rLoc = 1879;
 		rType = 0;
 		vrLen = 1288;
 		vrLoc = 268;
@@ -4843,7 +5399,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: openPanelDidEnd:returnCode:contextInfo:";
 		rLen = 0;
-		rLoc = 12721;
+		rLoc = 13227;
 		rType = 0;
 		vrLen = 1228;
 		vrLoc = 10598;
@@ -4853,7 +5409,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.h: 74";
 		rLen = 0;
-		rLoc = 2654;
+		rLoc = 3014;
 		rType = 0;
 		vrLen = 1456;
 		vrLoc = 1133;
@@ -4863,7 +5419,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemEmulator.m: disp";
 		rLen = 0;
-		rLoc = 1318;
+		rLoc = 1428;
 		rType = 0;
 		vrLen = 1640;
 		vrLoc = 0;
@@ -4873,7 +5429,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: dealloc";
 		rLen = 0;
-		rLoc = 13101;
+		rLoc = 14558;
 		rType = 0;
 		vrLen = 1409;
 		vrLoc = 10598;
@@ -4883,7 +5439,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: openPanelDidEnd:returnCode:contextInfo:";
 		rLen = 0;
-		rLoc = 12111;
+		rLoc = 12617;
 		rType = 0;
 		vrLen = 1394;
 		vrLoc = 10573;
@@ -4966,8 +5522,12 @@
 	};
 	D157A5EE0291D66801123251 = {
 		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
 		argumentStrings = (
 		);
+		configStateDict = {
+		};
 		debuggerPlugin = GDBDebugging;
 		dylibVariantSuffix = "";
 		enableDebugStr = 1;
@@ -5045,7 +5605,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemEmulator.m: 24";
 		rLen = 0;
-		rLoc = 1282;
+		rLoc = 1343;
 		rType = 0;
 		vrLen = 428;
 		vrLoc = 0;
@@ -5075,7 +5635,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: 11";
 		rLen = 0;
-		rLoc = 2746;
+		rLoc = 2829;
 		rType = 0;
 		vrLen = 259;
 		vrLoc = 0;
@@ -5095,7 +5655,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: 11";
 		rLen = 0;
-		rLoc = 2746;
+		rLoc = 2829;
 		rType = 0;
 		vrLen = 325;
 		vrLoc = 0;
@@ -5115,7 +5675,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: drawRect:";
 		rLen = 0;
-		rLoc = 6186;
+		rLoc = 6218;
 		rType = 0;
 		vrLen = 1505;
 		vrLoc = 5724;
@@ -5133,7 +5693,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: 194";
 		rLen = 0;
-		rLoc = 6396;
+		rLoc = 6840;
 		rType = 0;
 		vrLen = 1385;
 		vrLoc = 4999;
@@ -5153,7 +5713,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.h: 60";
 		rLen = 0;
-		rLoc = 2393;
+		rLoc = 2603;
 		rType = 0;
 		vrLen = 1254;
 		vrLoc = 823;
@@ -5163,7 +5723,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: dealloc";
 		rLen = 0;
-		rLoc = 12259;
+		rLoc = 12765;
 		rType = 0;
 		vrLen = 1297;
 		vrLoc = 9098;
@@ -5181,7 +5741,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: 294";
 		rLen = 0;
-		rLoc = 12721;
+		rLoc = 13227;
 		rType = 0;
 		vrLen = 1601;
 		vrLoc = 0;
@@ -5191,7 +5751,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.h: 44";
 		rLen = 0;
-		rLoc = 1573;
+		rLoc = 1709;
 		rType = 0;
 		vrLen = 1403;
 		vrLoc = 762;
@@ -5201,7 +5761,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: openPanelDidEnd:returnCode:contextInfo:";
 		rLen = 0;
-		rLoc = 12638;
+		rLoc = 13144;
 		rType = 0;
 		vrLen = 1228;
 		vrLoc = 9976;
@@ -5215,7 +5775,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: awakeFromNib";
 		rLen = 0;
-		rLoc = 6277;
+		rLoc = 6421;
 		rType = 0;
 		vrLen = 1404;
 		vrLoc = 3965;
@@ -5255,7 +5815,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: openPanelDidEnd:returnCode:contextInfo:";
 		rLen = 0;
-		rLoc = 12719;
+		rLoc = 13225;
 		rType = 0;
 		vrLen = 1229;
 		vrLoc = 9943;
@@ -5277,7 +5837,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: 125";
 		rLen = 0;
-		rLoc = 6998;
+		rLoc = 7505;
 		rType = 0;
 		vrLen = 1209;
 		vrLoc = 4562;
@@ -5365,7 +5925,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: awakeFromNib";
 		rLen = 0;
-		rLoc = 6998;
+		rLoc = 7505;
 		rType = 0;
 		vrLen = 1227;
 		vrLoc = 4562;
@@ -5415,7 +5975,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: becomeFirstResponder";
 		rLen = 0;
-		rLoc = 9781;
+		rLoc = 10225;
 		rType = 0;
 		vrLen = 1014;
 		vrLoc = 1422;
@@ -5435,7 +5995,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: keyDown:";
 		rLen = 0;
-		rLoc = 10523;
+		rLoc = 10967;
 		rType = 0;
 		vrLen = 816;
 		vrLoc = 2370;
@@ -5445,7 +6005,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: resignsFirstResponder";
 		rLen = 0;
-		rLoc = 9680;
+		rLoc = 10124;
 		rType = 0;
 		vrLen = 859;
 		vrLoc = 4887;
@@ -5455,7 +6015,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: drawRect:";
 		rLen = 0;
-		rLoc = 4081;
+		rLoc = 4109;
 		rType = 0;
 		vrLen = 1318;
 		vrLoc = 1309;
@@ -5473,7 +6033,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: keyDown:";
 		rLen = 0;
-		rLoc = 10523;
+		rLoc = 10967;
 		rType = 0;
 		vrLen = 1004;
 		vrLoc = 4221;
@@ -5495,7 +6055,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: drawRect:";
 		rLen = 0;
-		rLoc = 4114;
+		rLoc = 4142;
 		rType = 0;
 		vrLen = 948;
 		vrLoc = 864;
@@ -5509,7 +6069,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: drawRect:";
 		rLen = 0;
-		rLoc = 4114;
+		rLoc = 4142;
 		rType = 0;
 		vrLen = 981;
 		vrLoc = 831;
@@ -5520,12 +6080,332 @@
 		path = /System/Library/Frameworks/AppKit.framework/Versions/C/Resources/English.lproj/Documentation/Reference/ObjC_classic/Classes/NSImage.html;
 		refType = 0;
 	};
+	D184310702FC25F901D1F43F = {
+		fRef = D167869C029D98DC01D1F43F;
+		isa = PBXTextBookmark;
+		name = "PreferenceController.m: windowDidLoad";
+		rLen = 28;
+		rLoc = 1996;
+		rType = 0;
+		vrLen = 1070;
+		vrLoc = 1577;
+	};
+	D184310A02FC25F901D1F43F = {
+		fRef = D1E0F9DA02B41B0301D1F43F;
+		isa = PBXTextBookmark;
+		name = "i2c.c: SetUpCMOS";
+		rLen = 0;
+		rLoc = 12270;
+		rType = 0;
+		vrLen = 1038;
+		vrLoc = 11583;
+	};
+	D184310E02FC25F901D1F43F = {
+		fRef = D184313502FC25FA01D1F43F;
+		isa = PBXBookmark;
+	};
+	D184311002FC25F901D1F43F = {
+		fRef = D184313B02FC25FA01D1F43F;
+		isa = PBXBookmark;
+	};
+	D184311102FC25F901D1F43F = {
+		fRef = D184313C02FC25FA01D1F43F;
+		isa = PBXBookmark;
+	};
+	D184311202FC25F901D1F43F = {
+		fRef = D184313D02FC25FA01D1F43F;
+		isa = PBXBookmark;
+	};
+	D184311402FC25F901D1F43F = {
+		fRef = D167869C029D98DC01D1F43F;
+		isa = PBXTextBookmark;
+		name = "PreferenceController.m: changeDirText:";
+		rLen = 0;
+		rLoc = 3681;
+		rType = 0;
+		vrLen = 1233;
+		vrLoc = 3639;
+	};
+	D184311502FC25F901D1F43F = {
+		fRef = D157A5F90291DA6C01123251;
+		isa = PBXTextBookmark;
+		name = "ArcemEmulator.m: threadStart:";
+		rLen = 0;
+		rLoc = 3152;
+		rType = 0;
+		vrLen = 848;
+		vrLoc = 2427;
+	};
+	D184311602FC25F901D1F43F = {
+		fRef = D157A5F50291D94401123251;
+		isa = PBXTextBookmark;
+		name = "ArcemController.m: awakeFromNib";
+		rLen = 0;
+		rLoc = 6021;
+		rType = 0;
+		vrLen = 847;
+		vrLoc = 15302;
+	};
+	D184311702FC25F901D1F43F = {
+		fRef = D167869C029D98DC01D1F43F;
+		isa = PBXTextBookmark;
+		name = "PreferenceController.m: windowDidLoad";
+		rLen = 37;
+		rLoc = 1831;
+		rType = 0;
+		vrLen = 1072;
+		vrLoc = 1577;
+	};
+	D184311802FC25F901D1F43F = {
+		fRef = D157A5F90291DA6C01123251;
+		isa = PBXTextBookmark;
+		name = "ArcemEmulator.m: threadStart:";
+		rLen = 0;
+		rLoc = 3514;
+		rType = 0;
+		vrLen = 883;
+		vrLoc = 2432;
+	};
+	D184311902FC25F901D1F43F = {
+		fRef = D167869C029D98DC01D1F43F;
+		isa = PBXTextBookmark;
+		name = "PreferenceController.m: windowDidLoad";
+		rLen = 28;
+		rLoc = 1996;
+		rType = 0;
+		vrLen = 1070;
+		vrLoc = 1577;
+	};
+	D184311A02FC25F901D1F43F = {
+		fRef = D157A5F90291DA6C01123251;
+		isa = PBXTextBookmark;
+		name = "ArcemEmulator.m: 31";
+		rLen = 0;
+		rLoc = 1139;
+		rType = 0;
+		vrLen = 1308;
+		vrLoc = 1139;
+	};
+	D184311B02FC25F901D1F43F = {
+		fRef = D184314102FC25FA01D1F43F;
+		isa = PBXBookmark;
+	};
+	D184311C02FC25F901D1F43F = {
+		fRef = D157A5F90291DA6C01123251;
+		isa = PBXTextBookmark;
+		name = "ArcemEmulator.m: 41";
+		rLen = 8;
+		rLoc = 1414;
+		rType = 0;
+		vrLen = 1313;
+		vrLoc = 1139;
+	};
+	D184311D02FC25F901D1F43F = {
+		fRef = D1E0F9D602B41B0301D1F43F;
+		isa = PBXTextBookmark;
+		name = "fdc1772.c: FDC_ReOpen";
+		rLen = 3;
+		rLoc = 22575;
+		rType = 0;
+		vrLen = 1285;
+		vrLoc = 21727;
+	};
+	D184311E02FC25F901D1F43F = {
+		fRef = D1E0F9D202B41B0301D1F43F;
+		isa = PBXTextBookmark;
+		name = "armarc.c: 28";
+		rLen = 0;
+		rLoc = 531;
+		rType = 0;
+		vrLen = 726;
+		vrLoc = 102;
+	};
+	D184311F02FC25F901D1F43F = {
+		fRef = D1E0F9DA02B41B0301D1F43F;
+		isa = PBXTextBookmark;
+		name = "i2c.c: SetUpCMOS";
+		rLen = 0;
+		rLoc = 12270;
+		rType = 0;
+		vrLen = 1038;
+		vrLoc = 11583;
+	};
+	D184312002FC25F901D1F43F = {
+		fRef = D157A5F90291DA6C01123251;
+		isa = PBXTextBookmark;
+		name = "ArcemEmulator.m: 35";
+		rLen = 0;
+		rLoc = 1274;
+		rType = 0;
+		vrLen = 1507;
+		vrLoc = 0;
+	};
+	D184312102FC25F901D1F43F = {
+		fRef = D1E0F9D202B41B0301D1F43F;
+		isa = PBXTextBookmark;
+		name = "armarc.c: 30";
+		rLen = 0;
+		rLoc = 584;
+		rType = 0;
+		vrLen = 775;
+		vrLoc = 0;
+	};
+	D184312202FC25F901D1F43F = {
+		fRef = D157A5F90291DA6C01123251;
+		isa = PBXTextBookmark;
+		name = "ArcemEmulator.m: 86";
+		rLen = 0;
+		rLoc = 2838;
+		rType = 0;
+		vrLen = 1171;
+		vrLoc = 1507;
+	};
+	D184312302FC25F901D1F43F = {
+		fRef = D157A5F20291D6F801123251;
+		isa = PBXTextBookmark;
+		name = "ArcemView.m: dealloc";
+		rLen = 0;
+		rLoc = 17977;
+		rType = 0;
+		vrLen = 1123;
+		vrLoc = 16390;
+	};
+	D184312402FC25F901D1F43F = {
+		fRef = D184313002FC25FA01D1F43F;
+		isa = PBXBookmark;
+	};
+	D184312502FC25F901D1F43F = {
+		fRef = D184313102FC25FA01D1F43F;
+		isa = PBXBookmark;
+	};
+	D184312602FC25F901D1F43F = {
+		fRef = D184313202FC25FA01D1F43F;
+		isa = PBXBookmark;
+	};
+	D184312702FC25F901D1F43F = {
+		fRef = D184313302FC25FA01D1F43F;
+		isa = PBXBookmark;
+	};
+	D184312802FC25F901D1F43F = {
+		fRef = D184312F02FC25F901D1F43F;
+		isa = PBXBookmark;
+	};
+	D184312902FC25F901D1F43F = {
+		fRef = D184313F02FC25FA01D1F43F;
+		isa = PBXBookmark;
+	};
+	D184312A02FC25F901D1F43F = {
+		fRef = D184313702FC25FA01D1F43F;
+		isa = PBXBookmark;
+	};
+	D184312B02FC25F901D1F43F = {
+		fRef = D184313802FC25FA01D1F43F;
+		isa = PBXBookmark;
+	};
+	D184312C02FC25F901D1F43F = {
+		fRef = D184314002FC25FA01D1F43F;
+		isa = PBXBookmark;
+	};
+	D184312D02FC25F901D1F43F = {
+		fRef = D184313902FC25FA01D1F43F;
+		isa = PBXBookmark;
+	};
+	D184312F02FC25F901D1F43F = {
+		isa = PBXFileReference;
+		name = AppKitTOC.html;
+		path = /System/Library/Frameworks/AppKit.framework/Versions/C/Resources/English.lproj/Documentation/Reference/ObjC_classic/AppKitTOC.html;
+		refType = 0;
+	};
+	D184313002FC25FA01D1F43F = {
+		isa = PBXFileReference;
+		name = AppKitTOC.html;
+		path = /System/Library/Frameworks/AppKit.framework/Versions/C/Resources/English.lproj/Documentation/Reference/ObjC_classic/AppKitTOC.html;
+		refType = 0;
+	};
+	D184313102FC25FA01D1F43F = {
+		isa = PBXFileReference;
+		name = NSPanel.html;
+		path = /System/Library/Frameworks/AppKit.framework/Versions/C/Resources/English.lproj/Documentation/Reference/ObjC_classic/Classes/NSPanel.html;
+		refType = 0;
+	};
+	D184313202FC25FA01D1F43F = {
+		isa = PBXFileReference;
+		name = index.html;
+		path = /Developer/Documentation/Cocoa/TasksAndConcepts/ProgrammingTopics/WinPanel/index.html;
+		refType = 0;
+	};
+	D184313302FC25FA01D1F43F = {
+		isa = PBXFileReference;
+		name = index.html;
+		path = /Developer/Documentation/Cocoa/TasksAndConcepts/ProgrammingTopics/Dialog/index.html;
+		refType = 0;
+	};
+	D184313502FC25FA01D1F43F = {
+		isa = PBXFileReference;
+		name = FoundationTOC.html;
+		path = /System/Library/Frameworks/Foundation.framework/Versions/C/Resources/English.lproj/Documentation/Reference/ObjC_classic/FoundationTOC.html;
+		refType = 0;
+	};
+	D184313702FC25FA01D1F43F = {
+		isa = PBXFileReference;
+		name = CocoaTopics.html;
+		path = /Developer/Documentation/Cocoa/CocoaTopics.html;
+		refType = 0;
+	};
+	D184313802FC25FA01D1F43F = {
+		isa = PBXFileReference;
+		name = index.html;
+		path = /Developer/Documentation/Cocoa/TasksAndConcepts/ProgrammingTopics/WinPanel/index.html;
+		refType = 0;
+	};
+	D184313902FC25FA01D1F43F = {
+		isa = PBXFileReference;
+		name = AppKitTOC.html;
+		path = /System/Library/Frameworks/AppKit.framework/Versions/C/Resources/English.lproj/Documentation/Reference/ObjC_classic/AppKitTOC.html;
+		refType = 0;
+	};
+	D184313B02FC25FA01D1F43F = {
+		isa = PBXFileReference;
+		name = index.html;
+		path = /Developer/Documentation/Cocoa/TasksAndConcepts/ProgrammingTopics/WinPanel/index.html;
+		refType = 0;
+	};
+	D184313C02FC25FA01D1F43F = {
+		isa = PBXFileReference;
+		name = index.html;
+		path = /Developer/Documentation/Cocoa/TasksAndConcepts/ProgrammingTopics/Dialog/index.html;
+		refType = 0;
+	};
+	D184313D02FC25FA01D1F43F = {
+		isa = PBXFileReference;
+		name = AppKitTOC.html;
+		path = /System/Library/Frameworks/AppKit.framework/Versions/C/Resources/English.lproj/Documentation/Reference/ObjC_classic/AppKitTOC.html;
+		refType = 0;
+	};
+	D184313F02FC25FA01D1F43F = {
+		isa = PBXFileReference;
+		name = FoundationTOC.html;
+		path = /System/Library/Frameworks/Foundation.framework/Versions/C/Resources/English.lproj/Documentation/Reference/ObjC_classic/FoundationTOC.html;
+		refType = 0;
+	};
+	D184314002FC25FA01D1F43F = {
+		isa = PBXFileReference;
+		name = index.html;
+		path = /Developer/Documentation/Cocoa/TasksAndConcepts/ProgrammingTopics/Dialog/index.html;
+		refType = 0;
+	};
+	D184314102FC25FA01D1F43F = {
+		isa = PBXFileReference;
+		name = NSString.html;
+		path = /System/Library/Frameworks/Foundation.framework/Versions/C/Resources/English.lproj/Documentation/Reference/ObjC_classic/Classes/NSString.html;
+		refType = 0;
+	};
 	D188DD8A02B57BD801D1F43F = {
 		fRef = D1E0F9DA02B41B0301D1F43F;
 		isa = PBXTextBookmark;
 		name = "i2c.c: SetUpCMOS";
 		rLen = 0;
-		rLoc = 12395;
+		rLoc = 12336;
 		rType = 0;
 		vrLen = 1161;
 		vrLoc = 1753;
@@ -5545,7 +6425,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.h: 79";
 		rLen = 0;
-		rLoc = 2654;
+		rLoc = 3014;
 		rType = 0;
 		vrLen = 1396;
 		vrLoc = 1410;
@@ -5555,7 +6435,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: dealloc";
 		rLen = 0;
-		rLoc = 15496;
+		rLoc = 16953;
 		rType = 0;
 		vrLen = 978;
 		vrLoc = 13115;
@@ -5565,7 +6445,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.h: 62";
 		rLen = 0;
-		rLoc = 2118;
+		rLoc = 2328;
 		rType = 0;
 		vrLen = 1433;
 		vrLoc = 1378;
@@ -5585,7 +6465,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemEmulator.m: updateDisplay";
 		rLen = 0;
-		rLoc = 2385;
+		rLoc = 2495;
 		rType = 0;
 		vrLen = 1295;
 		vrLoc = 1454;
@@ -5624,10 +6504,6 @@
 		vrLen = 1565;
 		vrLoc = 83;
 	};
-	D18B80B602F6F849017603C1 = {
-		fRef = D18B80CF02F6F84A017603C1;
-		isa = PBXBookmark;
-	};
 	D18B80B702F6F849017603C1 = {
 		fRef = D18B80D002F6F84A017603C1;
 		isa = PBXBookmark;
@@ -5635,16 +6511,6 @@
 	D18B80B802F6F849017603C1 = {
 		fRef = D18B80D102F6F84A017603C1;
 		isa = PBXBookmark;
-	};
-	D18B80B902F6F849017603C1 = {
-		fRef = D157A5F50291D94401123251;
-		isa = PBXTextBookmark;
-		name = "ArcemController.m: openPanelDidEnd:returnCode:contextInfo:";
-		rLen = 0;
-		rLoc = 12178;
-		rType = 0;
-		vrLen = 1434;
-		vrLoc = 3955;
 	};
 	D18B80BB02F6F849017603C1 = {
 		fRef = D18B80D602F6F84B017603C1;
@@ -5675,7 +6541,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: 332";
 		rLen = 214;
-		rLoc = 11788;
+		rLoc = 12294;
 		rType = 0;
 		vrLen = 1263;
 		vrLoc = 11784;
@@ -5727,7 +6593,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: openPanelDidEnd:returnCode:contextInfo:";
 		rLen = 47;
-		rLoc = 12044;
+		rLoc = 12550;
 		rType = 0;
 		vrLen = 1263;
 		vrLoc = 11784;
@@ -5747,7 +6613,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: openPanelDidEnd:returnCode:contextInfo:";
 		rLen = 96;
-		rLoc = 12004;
+		rLoc = 12510;
 		rType = 0;
 		vrLen = 1263;
 		vrLoc = 11784;
@@ -5771,31 +6637,15 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: openPanelDidEnd:returnCode:contextInfo:";
 		rLen = 0;
-		rLoc = 12178;
+		rLoc = 12684;
 		rType = 0;
 		vrLen = 1434;
 		vrLoc = 3955;
-	};
-	D18B80CB02F6F849017603C1 = {
-		fRef = D167869C029D98DC01D1F43F;
-		isa = PBXTextBookmark;
-		name = "PreferenceController.m: changeDirText:";
-		rLen = 0;
-		rLoc = 3681;
-		rType = 0;
-		vrLen = 1229;
-		vrLoc = 3643;
 	};
 	D18B80CE02F6F84A017603C1 = {
 		isa = PBXFileReference;
 		name = NSWindow.html;
 		path = /System/Library/Frameworks/AppKit.framework/Versions/C/Resources/English.lproj/Documentation/Reference/ObjC_classic/Classes/NSWindow.html;
-		refType = 0;
-	};
-	D18B80CF02F6F84A017603C1 = {
-		isa = PBXFileReference;
-		name = AppKitTOC.html;
-		path = /System/Library/Frameworks/AppKit.framework/Versions/C/Resources/English.lproj/Documentation/Reference/ObjC_classic/AppKitTOC.html;
 		refType = 0;
 	};
 	D18B80D002F6F84A017603C1 = {
@@ -5840,6 +6690,26 @@
 		path = /System/Library/Frameworks/AppKit.framework/Versions/C/Resources/English.lproj/Documentation/Reference/ObjC_classic/Classes/NSWindow.html;
 		refType = 0;
 	};
+	D18D346E038853AE01D1F43F = {
+		fRef = D1E0F9D802B41B0301D1F43F;
+		isa = PBXTextBookmark;
+		name = "hdc63463.c: HDC_Init";
+		rLen = 0;
+		rLoc = 51663;
+		rType = 0;
+		vrLen = 1145;
+		vrLoc = 51331;
+	};
+	D18D3470038853AE01D1F43F = {
+		fRef = D1E0F9D802B41B0301D1F43F;
+		isa = PBXTextBookmark;
+		name = "hdc63463.c: HDC_Init";
+		rLen = 0;
+		rLoc = 51663;
+		rType = 0;
+		vrLen = 1145;
+		vrLoc = 51331;
+	};
 	D190398C0297F91F016237FD = {
 		fRef = D19039A50297F91F016237FD;
 		isa = PBXBookmark;
@@ -5849,7 +6719,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: mouseMoved:";
 		rLen = 0;
-		rLoc = 11941;
+		rLoc = 12385;
 		rType = 0;
 		vrLen = 671;
 		vrLoc = 3754;
@@ -5869,7 +6739,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: mouseDown:";
 		rLen = 0;
-		rLoc = 12534;
+		rLoc = 12978;
 		rType = 0;
 		vrLen = 741;
 		vrLoc = 3676;
@@ -5889,7 +6759,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: mouseMoved:";
 		rLen = 0;
-		rLoc = 11941;
+		rLoc = 12385;
 		rType = 0;
 		vrLen = 741;
 		vrLoc = 3676;
@@ -5903,7 +6773,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: mouseMoved:";
 		rLen = 0;
-		rLoc = 11941;
+		rLoc = 12385;
 		rType = 0;
 		vrLen = 783;
 		vrLoc = 3676;
@@ -5917,7 +6787,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: mouseMoved:";
 		rLen = 0;
-		rLoc = 11941;
+		rLoc = 12385;
 		rType = 0;
 		vrLen = 783;
 		vrLoc = 3676;
@@ -5931,7 +6801,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: mouseMoved:";
 		rLen = 0;
-		rLoc = 11941;
+		rLoc = 12385;
 		rType = 0;
 		vrLen = 859;
 		vrLoc = 3676;
@@ -5951,7 +6821,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: mouseMoved:";
 		rLen = 0;
-		rLoc = 11941;
+		rLoc = 12385;
 		rType = 0;
 		vrLen = 878;
 		vrLoc = 3676;
@@ -5971,7 +6841,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: mouseMoved:";
 		rLen = 0;
-		rLoc = 11941;
+		rLoc = 12385;
 		rType = 0;
 		vrLen = 1212;
 		vrLoc = 3350;
@@ -6025,7 +6895,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: mouseDown:";
 		rLen = 0;
-		rLoc = 12487;
+		rLoc = 12931;
 		rType = 0;
 		vrLen = 118;
 		vrLoc = 5094;
@@ -6049,7 +6919,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: mouseDown:";
 		rLen = 0;
-		rLoc = 12405;
+		rLoc = 12849;
 		rType = 0;
 		vrLen = 162;
 		vrLoc = 5050;
@@ -6069,7 +6939,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: mouseUp:";
 		rLen = 0;
-		rLoc = 13051;
+		rLoc = 13497;
 		rType = 0;
 		vrLen = 162;
 		vrLoc = 5050;
@@ -6117,7 +6987,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: fullScreen:";
 		rLen = 0;
-		rLoc = 4449;
+		rLoc = 4484;
 		rType = 0;
 		vrLen = 816;
 		vrLoc = 3317;
@@ -6138,12 +7008,160 @@
 		path = /System/Library/Frameworks/AppKit.framework/Versions/C/Resources/English.lproj/Documentation/Reference/ObjC_classic/Classes/NSCursor.html;
 		refType = 0;
 	};
+	D195918C0389153501D1F43F = {
+		isa = PBXTargetBookmark;
+		trg = 29B97326FDCFA39411CA2CEA;
+	};
+	D195918D0389153501D1F43F = {
+		fRef = D1E0F9EB02B41B0301D1F43F;
+		isa = PBXTextBookmark;
+		name = "arminit.c: __VERSION__";
+		rLen = 0;
+		rLoc = 0;
+		rType = 0;
+		vrLen = 2000;
+		vrLoc = 0;
+	};
+	D195918E0389153501D1F43F = {
+		fRef = D1E0F9E902B41B0301D1F43F;
+		isa = PBXTextBookmark;
+		name = "armemu.h: 191";
+		rLen = 4;
+		rLoc = 7026;
+		rType = 0;
+		vrLen = 2104;
+		vrLoc = 5741;
+	};
+	D195918F0389153501D1F43F = {
+		fRef = D1E0F9ED02B41B0301D1F43F;
+		isa = PBXTextBookmark;
+		name = "armos.c: 26";
+		rLen = 0;
+		rLoc = 1246;
+		rType = 0;
+		vrLen = 1523;
+		vrLoc = 2782;
+	};
+	D19591900389153501D1F43F = {
+		fRef = D1E0F9F402B41B0301D1F43F;
+		isa = PBXTextBookmark;
+		name = "dagstandalone.c: 31";
+		rLen = 0;
+		rLoc = 1268;
+		rType = 0;
+		vrLen = 1167;
+		vrLoc = 987;
+	};
+	D19591910389153501D1F43F = {
+		fRef = D1E0F9E802B41B0301D1F43F;
+		isa = PBXTextBookmark;
+		name = "armemu.c: 43";
+		rLen = 0;
+		rLoc = 2057;
+		rType = 0;
+		vrLen = 1785;
+		vrLoc = 852;
+	};
+	D19591920389153501D1F43F = {
+		fRef = D1E0F9EF02B41B0301D1F43F;
+		isa = PBXTextBookmark;
+		name = "armrdi.c: 426";
+		rLen = 0;
+		rLoc = 12091;
+		rType = 0;
+		vrLen = 727;
+		vrLoc = 11621;
+	};
+	D19591940389153501D1F43F = {
+		fRef = D1E0F9E802B41B0301D1F43F;
+		isa = PBXTextBookmark;
+		name = "armemu.c: 23";
+		rLen = 0;
+		rLoc = 1141;
+		rType = 0;
+		vrLen = 1502;
+		vrLoc = 33435;
+	};
+	D19591950389153501D1F43F = {
+		isa = PBXTargetBookmark;
+		trg = 29B97326FDCFA39411CA2CEA;
+	};
+	D19591960389153501D1F43F = {
+		fRef = D1E0F9E802B41B0301D1F43F;
+		isa = PBXTextBookmark;
+		name = "armemu.c: StoreSMult";
+		rLen = 0;
+		rLoc = 34383;
+		rType = 0;
+		vrLen = 1556;
+		vrLoc = 33305;
+	};
+	D19591970389153501D1F43F = {
+		fRef = D1E0F9EB02B41B0301D1F43F;
+		isa = PBXTextBookmark;
+		name = "arminit.c: __VERSION__";
+		rLen = 0;
+		rLoc = 0;
+		rType = 0;
+		vrLen = 2000;
+		vrLoc = 0;
+	};
+	D19591980389153501D1F43F = {
+		fRef = D1E0F9E902B41B0301D1F43F;
+		isa = PBXTextBookmark;
+		name = "armemu.h: 191";
+		rLen = 4;
+		rLoc = 7026;
+		rType = 0;
+		vrLen = 2104;
+		vrLoc = 5741;
+	};
+	D19591990389153501D1F43F = {
+		fRef = D1E0F9ED02B41B0301D1F43F;
+		isa = PBXTextBookmark;
+		name = "armos.c: 26";
+		rLen = 0;
+		rLoc = 1246;
+		rType = 0;
+		vrLen = 1523;
+		vrLoc = 2782;
+	};
+	D195919A0389153501D1F43F = {
+		fRef = D1E0F9F402B41B0301D1F43F;
+		isa = PBXTextBookmark;
+		name = "dagstandalone.c: 31";
+		rLen = 0;
+		rLoc = 1268;
+		rType = 0;
+		vrLen = 1167;
+		vrLoc = 987;
+	};
+	D195919B0389153501D1F43F = {
+		fRef = D1E0F9E802B41B0301D1F43F;
+		isa = PBXTextBookmark;
+		name = "armemu.c: 43";
+		rLen = 0;
+		rLoc = 2057;
+		rType = 0;
+		vrLen = 1785;
+		vrLoc = 852;
+	};
+	D195919C0389153501D1F43F = {
+		fRef = D1E0F9EF02B41B0301D1F43F;
+		isa = PBXTextBookmark;
+		name = "armrdi.c: 426";
+		rLen = 0;
+		rLoc = 12091;
+		rType = 0;
+		vrLen = 727;
+		vrLoc = 11621;
+	};
 	D1980FA602B7E90A01D1F43F = {
 		fRef = D157A5F10291D6F801123251;
 		isa = PBXTextBookmark;
 		name = "ArcemView.h: 47";
 		rLen = 0;
-		rLoc = 1572;
+		rLoc = 1606;
 		rType = 0;
 		vrLen = 1178;
 		vrLoc = 447;
@@ -6153,7 +7171,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: 535";
 		rLen = 0;
-		rLoc = 16364;
+		rLoc = 16810;
 		rType = 0;
 		vrLen = 1101;
 		vrLoc = 1735;
@@ -6163,7 +7181,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.h: 51";
 		rLen = 0;
-		rLoc = 1572;
+		rLoc = 1606;
 		rType = 0;
 		vrLen = 1166;
 		vrLoc = 447;
@@ -6193,7 +7211,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: r";
 		rLen = 0;
-		rLoc = 5563;
+		rLoc = 5591;
 		rType = 0;
 		vrLen = 1190;
 		vrLoc = 4531;
@@ -6213,7 +7231,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: drawRect:";
 		rLen = 0;
-		rLoc = 6169;
+		rLoc = 6201;
 		rType = 0;
 		vrLen = 1284;
 		vrLoc = 3289;
@@ -6261,7 +7279,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemEmulator.m: updateDisplay";
 		rLen = 0;
-		rLoc = 2385;
+		rLoc = 2495;
 		rType = 0;
 		vrLen = 1259;
 		vrLoc = 1454;
@@ -6271,7 +7289,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: showPreferencePanel:";
 		rLen = 0;
-		rLoc = 8520;
+		rLoc = 9027;
 		rType = 0;
 		vrLen = 1542;
 		vrLoc = 7010;
@@ -6331,7 +7349,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: 129";
 		rLen = 0;
-		rLoc = 6998;
+		rLoc = 7505;
 		rType = 0;
 		vrLen = 1314;
 		vrLoc = 4562;
@@ -6345,7 +7363,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: 131";
 		rLen = 0;
-		rLoc = 6998;
+		rLoc = 7505;
 		rType = 0;
 		vrLen = 1494;
 		vrLoc = 4562;
@@ -6359,7 +7377,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: 132";
 		rLen = 0;
-		rLoc = 6998;
+		rLoc = 7505;
 		rType = 0;
 		vrLen = 1590;
 		vrLoc = 4562;
@@ -6369,7 +7387,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.h: applicationHide:";
 		rLen = 0;
-		rLoc = 2710;
+		rLoc = 3070;
 		rType = 0;
 		vrLen = 1396;
 		vrLoc = 1135;
@@ -6379,7 +7397,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: awakeFromNib";
 		rLen = 0;
-		rLoc = 6900;
+		rLoc = 7407;
 		rType = 0;
 		vrLen = 1705;
 		vrLoc = 4206;
@@ -6399,7 +7417,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.h: 52";
 		rLen = 0;
-		rLoc = 1845;
+		rLoc = 1879;
 		rType = 0;
 		vrLen = 1289;
 		vrLoc = 268;
@@ -6409,7 +7427,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: drawRect:";
 		rLen = 0;
-		rLoc = 6392;
+		rLoc = 6424;
 		rType = 0;
 		vrLen = 1460;
 		vrLoc = 4680;
@@ -6493,7 +7511,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: drawRect:";
 		rLen = 0;
-		rLoc = 5488;
+		rLoc = 5516;
 		rType = 0;
 		vrLen = 750;
 		vrLoc = 0;
@@ -6553,7 +7571,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: drawRect:";
 		rLen = 0;
-		rLoc = 5431;
+		rLoc = 5459;
 		rType = 0;
 		vrLen = 923;
 		vrLoc = 400;
@@ -6583,7 +7601,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: init";
 		rLen = 0;
-		rLoc = 2279;
+		rLoc = 2362;
 		rType = 0;
 		vrLen = 2460;
 		vrLoc = 0;
@@ -6623,7 +7641,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: init";
 		rLen = 0;
-		rLoc = 2279;
+		rLoc = 2362;
 		rType = 0;
 		vrLen = 2460;
 		vrLoc = 0;
@@ -6673,7 +7691,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: awakeFromNib";
 		rLen = 0;
-		rLoc = 3073;
+		rLoc = 3156;
 		rType = 0;
 		vrLen = 2112;
 		vrLoc = 976;
@@ -6733,7 +7751,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: init";
 		rLen = 0;
-		rLoc = 2055;
+		rLoc = 2138;
 		rType = 0;
 		vrLen = 2443;
 		vrLoc = 0;
@@ -6743,7 +7761,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: drawRect:";
 		rLen = 0;
-		rLoc = 5384;
+		rLoc = 5412;
 		rType = 0;
 		vrLen = 846;
 		vrLoc = 557;
@@ -6765,7 +7783,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: drawRect:";
 		rLen = 0;
-		rLoc = 4733;
+		rLoc = 4761;
 		rType = 0;
 		vrLen = 892;
 		vrLoc = 533;
@@ -6783,7 +7801,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: drawRect:";
 		rLen = 0;
-		rLoc = 4425;
+		rLoc = 4453;
 		rType = 0;
 		vrLen = 892;
 		vrLoc = 533;
@@ -6803,7 +7821,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: init";
 		rLen = 0;
-		rLoc = 1879;
+		rLoc = 1962;
 		rType = 0;
 		vrLen = 2426;
 		vrLoc = 0;
@@ -6823,7 +7841,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: drawRect:";
 		rLen = 0;
-		rLoc = 4333;
+		rLoc = 4361;
 		rType = 0;
 		vrLen = 897;
 		vrLoc = 532;
@@ -6843,7 +7861,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: drawRect:";
 		rLen = 0;
-		rLoc = 4339;
+		rLoc = 4367;
 		rType = 0;
 		vrLen = 892;
 		vrLoc = 532;
@@ -6883,7 +7901,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: 197";
 		rLen = 0;
-		rLoc = 11941;
+		rLoc = 12385;
 		rType = 0;
 		vrLen = 1058;
 		vrLoc = 3596;
@@ -6898,22 +7916,12 @@
 		vrLen = 255;
 		vrLoc = 0;
 	};
-	D1A41D8402B8D4C401D1F43F = {
-		fRef = D1E0F9DA02B41B0301D1F43F;
-		isa = PBXTextBookmark;
-		name = "i2c.c: 7";
-		rLen = 41;
-		rLoc = 199;
-		rType = 0;
-		vrLen = 1675;
-		vrLoc = 0;
-	};
 	D1A41D8602B8D4C401D1F43F = {
 		fRef = D157A5F50291D94401123251;
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: init";
 		rLen = 0;
-		rLoc = 4422;
+		rLoc = 4457;
 		rType = 0;
 		vrLen = 2441;
 		vrLoc = 1548;
@@ -6933,7 +7941,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: flagsChanged:";
 		rLen = 0;
-		rLoc = 11489;
+		rLoc = 11933;
 		rType = 0;
 		vrLen = 1093;
 		vrLoc = 10161;
@@ -6953,7 +7961,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: becomeFirstResponder";
 		rLen = 0;
-		rLoc = 11052;
+		rLoc = 11496;
 		rType = 0;
 		vrLen = 1014;
 		vrLoc = 9955;
@@ -6963,7 +7971,7 @@
 		isa = PBXTextBookmark;
 		name = "i2c.c: SaveCMOS";
 		rLen = 0;
-		rLoc = 2366;
+		rLoc = 2350;
 		rType = 0;
 		vrLen = 1169;
 		vrLoc = 1753;
@@ -6973,7 +7981,7 @@
 		isa = PBXTextBookmark;
 		name = "armarc.c: ARMul_MemoryInit";
 		rLen = 0;
-		rLoc = 10624;
+		rLoc = 10637;
 		rType = 0;
 		vrLen = 1114;
 		vrLoc = 10120;
@@ -6982,8 +7990,8 @@
 		fRef = D1E0F9DA02B41B0301D1F43F;
 		isa = PBXTextBookmark;
 		name = "i2c.c: SaveCMOS";
-		rLen = 60;
-		rLoc = 2232;
+		rLen = 23;
+		rLoc = 2259;
 		rType = 0;
 		vrLen = 1136;
 		vrLoc = 1753;
@@ -6993,7 +8001,7 @@
 		isa = PBXTextBookmark;
 		name = "armarc.c: ARMul_MemoryInit";
 		rLen = 0;
-		rLoc = 10618;
+		rLoc = 10637;
 		rType = 0;
 		vrLen = 1091;
 		vrLoc = 10120;
@@ -7002,7 +8010,7 @@
 		fRef = D1E0F9DA02B41B0301D1F43F;
 		isa = PBXTextBookmark;
 		name = "i2c.c: 7";
-		rLen = 41;
+		rLen = 68;
 		rLoc = 199;
 		rType = 0;
 		vrLen = 1675;
@@ -7021,7 +8029,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: toggleXScale";
 		rLen = 0;
-		rLoc = 16336;
+		rLoc = 16782;
 		rType = 0;
 		vrLen = 501;
 		vrLoc = 14297;
@@ -7031,7 +8039,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: menuDoubleX:";
 		rLen = 0;
-		rLoc = 15213;
+		rLoc = 16670;
 		rType = 0;
 		vrLen = 977;
 		vrLoc = 13485;
@@ -7041,7 +8049,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.h: 62";
 		rLen = 0;
-		rLoc = 2118;
+		rLoc = 2328;
 		rType = 0;
 		vrLen = 1416;
 		vrLoc = 1378;
@@ -7051,7 +8059,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: init";
 		rLen = 0;
-		rLoc = 4422;
+		rLoc = 4457;
 		rType = 0;
 		vrLen = 920;
 		vrLoc = 13515;
@@ -7069,7 +8077,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: init";
 		rLen = 0;
-		rLoc = 4422;
+		rLoc = 4457;
 		rType = 0;
 		vrLen = 2443;
 		vrLoc = 1548;
@@ -7079,7 +8087,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.h: 61";
 		rLen = 0;
-		rLoc = 2118;
+		rLoc = 2328;
 		rType = 0;
 		vrLen = 1427;
 		vrLoc = 1378;
@@ -7089,7 +8097,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: 535";
 		rLen = 0;
-		rLoc = 16364;
+		rLoc = 16810;
 		rType = 0;
 		vrLen = 1132;
 		vrLoc = 1735;
@@ -7118,39 +8126,9 @@
 		path = /System/Library/Frameworks/AppKit.framework/Versions/C/Resources/English.lproj/Documentation/Reference/ObjC_classic/Protocols/NSMenuItem.html;
 		refType = 0;
 	};
-	D1A725AC02E9A6E201D1F43F = {
-		fRef = D1F01DD60293339001CDBB35;
-		isa = PBXTextBookmark;
-		name = "DispKbd.c: DisplayKbd_Init";
-		rLen = 0;
-		rLoc = 39431;
-		rType = 0;
-		vrLen = 1179;
-		vrLoc = 38445;
-	};
 	D1A725AD02E9A6E201D1F43F = {
 		fRef = D1A725C002E9A6E301D1F43F;
 		isa = PBXBookmark;
-	};
-	D1A725AE02E9A6E201D1F43F = {
-		fRef = D157A5F60291D94401123251;
-		isa = PBXTextBookmark;
-		name = "ArcemController.h: applicationHide:";
-		rLen = 0;
-		rLoc = 2654;
-		rType = 0;
-		vrLen = 1398;
-		vrLoc = 1442;
-	};
-	D1A725B102E9A6E201D1F43F = {
-		fRef = D1E0F9E202B41B0301D1F43F;
-		isa = PBXTextBookmark;
-		name = "armcopro.c: 1";
-		rLen = 0;
-		rLoc = 0;
-		rType = 0;
-		vrLen = 1983;
-		vrLoc = 0;
 	};
 	D1A725B202E9A6E201D1F43F = {
 		fRef = D1E0F9E302B41B0301D1F43F;
@@ -7167,7 +8145,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: 101";
 		rLen = 0;
-		rLoc = 4559;
+		rLoc = 4594;
 		rType = 0;
 		vrLen = 1449;
 		vrLoc = 3955;
@@ -7187,7 +8165,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.h: applicationHide:";
 		rLen = 0;
-		rLoc = 2654;
+		rLoc = 3014;
 		rType = 0;
 		vrLen = 1398;
 		vrLoc = 1442;
@@ -7197,7 +8175,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: 130";
 		rLen = 0;
-		rLoc = 5390;
+		rLoc = 5534;
 		rType = 0;
 		vrLen = 1352;
 		vrLoc = 3955;
@@ -7211,7 +8189,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.h: applicationHide:";
 		rLen = 0;
-		rLoc = 2654;
+		rLoc = 3014;
 		rType = 0;
 		vrLen = 1398;
 		vrLoc = 1442;
@@ -7221,7 +8199,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: 129";
 		rLen = 0;
-		rLoc = 5388;
+		rLoc = 5532;
 		rType = 0;
 		vrLen = 1352;
 		vrLoc = 3955;
@@ -7231,7 +8209,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemEmulator.m: 79";
 		rLen = 0;
-		rLoc = 2473;
+		rLoc = 2842;
 		rType = 0;
 		vrLen = 880;
 		vrLoc = 2252;
@@ -7268,36 +8246,6 @@
 		path = /System/Library/Frameworks/Foundation.framework/Versions/C/Resources/English.lproj/Documentation/Reference/ObjC_classic/Classes/NSThread.html;
 		refType = 0;
 	};
-	D1A725C302E9AB8901D1F43F = {
-		fRef = D1E0F9E802B41B0301D1F43F;
-		isa = PBXTextBookmark;
-		name = "armemu.c: 1";
-		rLen = 0;
-		rLoc = 0;
-		rType = 0;
-		vrLen = 2101;
-		vrLoc = 0;
-	};
-	D1A725C402E9AB8901D1F43F = {
-		fRef = D157A5FA0291DA6C01123251;
-		isa = PBXTextBookmark;
-		name = "ArcemEmulator.h: 37";
-		rLen = 0;
-		rLoc = 1243;
-		rType = 0;
-		vrLen = 1340;
-		vrLoc = 0;
-	};
-	D1A725C502E9AB8901D1F43F = {
-		fRef = D157A5F90291DA6C01123251;
-		isa = PBXTextBookmark;
-		name = "ArcemEmulator.m: threadStart:";
-		rLen = 0;
-		rLoc = 2764;
-		rType = 0;
-		vrLen = 848;
-		vrLoc = 2427;
-	};
 	D1A725C702E9AB8A01D1F43F = {
 		fRef = D1E0F9E802B41B0301D1F43F;
 		isa = PBXTextBookmark;
@@ -7313,7 +8261,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemEmulator.m: 84";
 		rLen = 0;
-		rLoc = 2647;
+		rLoc = 3016;
 		rType = 0;
 		vrLen = 1301;
 		vrLoc = 1454;
@@ -7333,7 +8281,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemEmulator.m: 115";
 		rLen = 0;
-		rLoc = 3266;
+		rLoc = 3835;
 		rType = 0;
 		vrLen = 843;
 		vrLoc = 2432;
@@ -7343,7 +8291,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: destroyEmulatorThread";
 		rLen = 0;
-		rLoc = 5370;
+		rLoc = 5509;
 		rType = 0;
 		vrLen = 1299;
 		vrLoc = 3955;
@@ -7353,7 +8301,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemEmulator.m: pool";
 		rLen = 4;
-		rLoc = 2764;
+		rLoc = 3152;
 		rType = 0;
 		vrLen = 848;
 		vrLoc = 2427;
@@ -7373,7 +8321,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemEmulator.m: threadStart:";
 		rLen = 0;
-		rLoc = 2764;
+		rLoc = 3152;
 		rType = 0;
 		vrLen = 848;
 		vrLoc = 2427;
@@ -7419,7 +8367,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: keyDown:";
 		rLen = 0;
-		rLoc = 11941;
+		rLoc = 12385;
 		rType = 0;
 		vrLen = 1089;
 		vrLoc = 5976;
@@ -7433,7 +8381,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: keyDown:";
 		rLen = 0;
-		rLoc = 11941;
+		rLoc = 12385;
 		rType = 0;
 		vrLen = 1103;
 		vrLoc = 5976;
@@ -7463,7 +8411,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: keyDown:";
 		rLen = 0;
-		rLoc = 11941;
+		rLoc = 12385;
 		rType = 0;
 		vrLen = 1103;
 		vrLoc = 5976;
@@ -7483,7 +8431,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: keyDown:";
 		rLen = 0;
-		rLoc = 11941;
+		rLoc = 12385;
 		rType = 0;
 		vrLen = 1142;
 		vrLoc = 6365;
@@ -7501,7 +8449,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: keyDown:";
 		rLen = 0;
-		rLoc = 11483;
+		rLoc = 11927;
 		rType = 0;
 		vrLen = 1186;
 		vrLoc = 5942;
@@ -7521,7 +8469,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: keyDown:";
 		rLen = 0;
-		rLoc = 11941;
+		rLoc = 12385;
 		rType = 0;
 		vrLen = 1236;
 		vrLoc = 6352;
@@ -7541,7 +8489,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: keyDown:";
 		rLen = 0;
-		rLoc = 11941;
+		rLoc = 12385;
 		rType = 0;
 		vrLen = 1493;
 		vrLoc = 6328;
@@ -7555,7 +8503,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: keyDown:";
 		rLen = 0;
-		rLoc = 11941;
+		rLoc = 12385;
 		rType = 0;
 		vrLen = 1537;
 		vrLoc = 6328;
@@ -7569,7 +8517,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: keyDown:";
 		rLen = 0;
-		rLoc = 11941;
+		rLoc = 12385;
 		rType = 0;
 		vrLen = 1560;
 		vrLoc = 6318;
@@ -7587,7 +8535,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: keyDown:";
 		rLen = 0;
-		rLoc = 11941;
+		rLoc = 12385;
 		rType = 0;
 		vrLen = 1653;
 		vrLoc = 6318;
@@ -7601,7 +8549,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: keyDown:";
 		rLen = 0;
-		rLoc = 11941;
+		rLoc = 12385;
 		rType = 0;
 		vrLen = 1661;
 		vrLoc = 6318;
@@ -7615,7 +8563,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: cp";
 		rLen = 0;
-		rLoc = 11941;
+		rLoc = 12385;
 		rType = 0;
 		vrLen = 1673;
 		vrLoc = 6318;
@@ -7633,7 +8581,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: val";
 		rLen = 0;
-		rLoc = 11941;
+		rLoc = 12385;
 		rType = 0;
 		vrLen = 1185;
 		vrLoc = 7510;
@@ -7651,7 +8599,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: keyDown:";
 		rLen = 0;
-		rLoc = 11941;
+		rLoc = 12385;
 		rType = 0;
 		vrLen = 1585;
 		vrLoc = 6047;
@@ -7669,7 +8617,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: keyDown:";
 		rLen = 0;
-		rLoc = 11483;
+		rLoc = 11927;
 		rType = 0;
 		vrLen = 1570;
 		vrLoc = 6086;
@@ -7891,7 +8839,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: 177";
 		rLen = 0;
-		rLoc = 11941;
+		rLoc = 12385;
 		rType = 0;
 		vrLen = 1097;
 		vrLoc = 3005;
@@ -8049,7 +8997,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: mouseMoved:";
 		rLen = 0;
-		rLoc = 11941;
+		rLoc = 12385;
 		rType = 0;
 		vrLen = 657;
 		vrLoc = 4272;
@@ -8069,7 +9017,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: init";
 		rLen = 0;
-		rLoc = 2107;
+		rLoc = 2190;
 		rType = 0;
 		vrLen = 2427;
 		vrLoc = 0;
@@ -8079,7 +9027,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: pos";
 		rLen = 0;
-		rLoc = 11941;
+		rLoc = 12385;
 		rType = 0;
 		vrLen = 1240;
 		vrLoc = 3152;
@@ -8099,7 +9047,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: mouseExited:";
 		rLen = 0;
-		rLoc = 11941;
+		rLoc = 12385;
 		rType = 0;
 		vrLen = 1180;
 		vrLoc = 2570;
@@ -8129,7 +9077,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: mouseMoved:";
 		rLen = 0;
-		rLoc = 11941;
+		rLoc = 12385;
 		rType = 0;
 		vrLen = 1219;
 		vrLoc = 2833;
@@ -8149,7 +9097,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: keyUp:";
 		rLen = 0;
-		rLoc = 11941;
+		rLoc = 12385;
 		rType = 0;
 		vrLen = 901;
 		vrLoc = 2287;
@@ -8169,7 +9117,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: keyUp:";
 		rLen = 0;
-		rLoc = 11941;
+		rLoc = 12385;
 		rType = 0;
 		vrLen = 993;
 		vrLoc = 2286;
@@ -8225,7 +9173,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: size2";
 		rLen = 85;
-		rLoc = 3884;
+		rLoc = 3912;
 		rType = 0;
 		vrLen = 1129;
 		vrLoc = 2755;
@@ -8245,7 +9193,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemEmulator.m: 102";
 		rLen = 0;
-		rLoc = 3269;
+		rLoc = 3838;
 		rType = 0;
 		vrLen = 924;
 		vrLoc = 2006;
@@ -8267,7 +9215,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: mouseDragged:";
 		rLen = 0;
-		rLoc = 15503;
+		rLoc = 15949;
 		rType = 0;
 		vrLen = 856;
 		vrLoc = 12549;
@@ -8309,7 +9257,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.h: 53";
 		rLen = 0;
-		rLoc = 2711;
+		rLoc = 3102;
 		rType = 0;
 		vrLen = 1505;
 		vrLoc = 376;
@@ -8319,7 +9267,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: showPreferencePanel:";
 		rLen = 0;
-		rLoc = 8139;
+		rLoc = 8646;
 		rType = 0;
 		vrLen = 1038;
 		vrLoc = 5209;
@@ -8329,7 +9277,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.h: 52";
 		rLen = 0;
-		rLoc = 1845;
+		rLoc = 1879;
 		rType = 0;
 		vrLen = 1220;
 		vrLoc = 337;
@@ -8339,7 +9287,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: 275";
 		rLen = 0;
-		rLoc = 9150;
+		rLoc = 9594;
 		rType = 0;
 		vrLen = 1396;
 		vrLoc = 7769;
@@ -8349,7 +9297,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: 154";
 		rLen = 0;
-		rLoc = 8056;
+		rLoc = 8563;
 		rType = 0;
 		vrLen = 1044;
 		vrLoc = 5209;
@@ -8430,10 +9378,6 @@
 		path = /System/Library/Frameworks/Foundation.framework/Versions/C/Resources/English.lproj/Documentation/Reference/ObjC_classic/Classes/NSNotificationCenter.html;
 		refType = 0;
 	};
-	D1AC74C002A5925101D1F43F = {
-		fRef = D1E92BDF02A5470B01D1F43F;
-		isa = PBXBookmark;
-	};
 	D1AC74C602A5925101D1F43F = {
 		fRef = D1E92BDF02A5470B01D1F43F;
 		isa = PBXBookmark;
@@ -8443,7 +9387,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: drawRect:";
 		rLen = 0;
-		rLoc = 4284;
+		rLoc = 4312;
 		rType = 0;
 		vrLen = 1277;
 		vrLoc = 2186;
@@ -8563,7 +9507,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: drawRect:";
 		rLen = 0;
-		rLoc = 5797;
+		rLoc = 5829;
 		rType = 0;
 		vrLen = 1415;
 		vrLoc = 4556;
@@ -8593,7 +9537,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: drawRect:";
 		rLen = 0;
-		rLoc = 5851;
+		rLoc = 5883;
 		rType = 0;
 		vrLen = 1109;
 		vrLoc = 12000;
@@ -8613,7 +9557,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: drawRect:";
 		rLen = 0;
-		rLoc = 6392;
+		rLoc = 6424;
 		rType = 0;
 		vrLen = 1419;
 		vrLoc = 5035;
@@ -8650,23 +9594,9 @@
 		vrLen = 973;
 		vrLoc = 3066;
 	};
-	D1B7C80402D8B1AA014B75DC = {
-		fRef = D1B7C84C02D8B1AA014B75DC;
-		isa = PBXBookmark;
-	};
 	D1B7C80502D8B1AA014B75DC = {
 		fRef = D1B7C84D02D8B1AA014B75DC;
 		isa = PBXBookmark;
-	};
-	D1B7C80902D8B1AA014B75DC = {
-		fRef = 089C165DFE840E0CC02AAC07;
-		isa = PBXTextBookmark;
-		name = "English: 5";
-		rLen = 0;
-		rLoc = 159;
-		rType = 0;
-		vrLen = 298;
-		vrLoc = 0;
 	};
 	D1B7C80B02D8B1AA014B75DC = {
 		fRef = D157A5F20291D6F801123251;
@@ -8693,7 +9623,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.h: 47";
 		rLen = 0;
-		rLoc = 1578;
+		rLoc = 1788;
 		rType = 0;
 		vrLen = 1336;
 		vrLoc = 1475;
@@ -8703,7 +9633,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: showPreferencePanel:";
 		rLen = 0;
-		rLoc = 8476;
+		rLoc = 8983;
 		rType = 0;
 		vrLen = 1640;
 		vrLoc = 7358;
@@ -8763,7 +9693,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.h: 62";
 		rLen = 0;
-		rLoc = 1867;
+		rLoc = 1901;
 		rType = 0;
 		vrLen = 1009;
 		vrLoc = 827;
@@ -8773,7 +9703,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: 617";
 		rLen = 0;
-		rLoc = 16937;
+		rLoc = 17383;
 		rType = 0;
 		vrLen = 1759;
 		vrLoc = 0;
@@ -8849,7 +9779,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.h: prefsUpdated";
 		rLen = 0;
-		rLoc = 1867;
+		rLoc = 1901;
 		rType = 0;
 		vrLen = 1009;
 		vrLoc = 827;
@@ -8859,7 +9789,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: dealloc";
 		rLen = 0;
-		rLoc = 17396;
+		rLoc = 18108;
 		rType = 0;
 		vrLen = 962;
 		vrLoc = 15674;
@@ -8975,7 +9905,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: 612";
 		rLen = 0;
-		rLoc = 16677;
+		rLoc = 17123;
 		rType = 0;
 		vrLen = 985;
 		vrLoc = 12040;
@@ -8995,7 +9925,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: flagsChanged:";
 		rLen = 0;
-		rLoc = 11489;
+		rLoc = 11933;
 		rType = 0;
 		vrLen = 1759;
 		vrLoc = 0;
@@ -9085,7 +10015,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: flagsChanged:";
 		rLen = 0;
-		rLoc = 11489;
+		rLoc = 11933;
 		rType = 0;
 		vrLen = 1759;
 		vrLoc = 0;
@@ -9095,7 +10025,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: init";
 		rLen = 0;
-		rLoc = 4340;
+		rLoc = 4375;
 		rType = 0;
 		vrLen = 2565;
 		vrLoc = 1443;
@@ -9113,7 +10043,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: init";
 		rLen = 0;
-		rLoc = 4340;
+		rLoc = 4375;
 		rType = 0;
 		vrLen = 1909;
 		vrLoc = 2804;
@@ -9133,7 +10063,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.h: 53";
 		rLen = 0;
-		rLoc = 1572;
+		rLoc = 1606;
 		rType = 0;
 		vrLen = 1041;
 		vrLoc = 827;
@@ -9143,7 +10073,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: prefsUpdated";
 		rLen = 0;
-		rLoc = 17150;
+		rLoc = 17596;
 		rType = 0;
 		vrLen = 1069;
 		vrLoc = 15719;
@@ -9153,7 +10083,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.h: 53";
 		rLen = 0;
-		rLoc = 1555;
+		rLoc = 1589;
 		rType = 0;
 		vrLen = 1046;
 		vrLoc = 823;
@@ -9163,7 +10093,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: prefsUpdated";
 		rLen = 0;
-		rLoc = 17266;
+		rLoc = 17712;
 		rType = 0;
 		vrLen = 1142;
 		vrLoc = 15719;
@@ -9173,7 +10103,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: init";
 		rLen = 0;
-		rLoc = 4422;
+		rLoc = 4457;
 		rType = 0;
 		vrLen = 1892;
 		vrLoc = 2804;
@@ -9183,7 +10113,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: setBitmapsWithScreen:withCursor:";
 		rLen = 0;
-		rLoc = 4848;
+		rLoc = 4876;
 		rType = 0;
 		vrLen = 1202;
 		vrLoc = 3857;
@@ -9193,7 +10123,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: init";
 		rLen = 0;
-		rLoc = 4422;
+		rLoc = 4457;
 		rType = 0;
 		vrLen = 1911;
 		vrLoc = 2804;
@@ -9203,7 +10133,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: flagsChanged:";
 		rLen = 0;
-		rLoc = 11489;
+		rLoc = 11933;
 		rType = 0;
 		vrLen = 1037;
 		vrLoc = 10082;
@@ -9231,12 +10161,6 @@
 		refType = 0;
 	};
 	D1B7C84B02D8B1AA014B75DC = {
-		isa = PBXFileReference;
-		name = FoundationTOC.html;
-		path = /System/Library/Frameworks/Foundation.framework/Versions/C/Resources/English.lproj/Documentation/Reference/ObjC_classic/FoundationTOC.html;
-		refType = 0;
-	};
-	D1B7C84C02D8B1AA014B75DC = {
 		isa = PBXFileReference;
 		name = FoundationTOC.html;
 		path = /System/Library/Frameworks/Foundation.framework/Versions/C/Resources/English.lproj/Documentation/Reference/ObjC_classic/FoundationTOC.html;
@@ -9318,16 +10242,12 @@
 		vrLen = 1020;
 		vrLoc = 5709;
 	};
-	D1BB0389029E9A9F01D1F43F = {
-		fRef = D1BB039E029E9A9F01D1F43F;
-		isa = PBXBookmark;
-	};
 	D1BB038D029E9A9F01D1F43F = {
 		fRef = D157A5F20291D6F801123251;
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: 110";
 		rLen = 0;
-		rLoc = 9467;
+		rLoc = 9911;
 		rType = 0;
 		vrLen = 1149;
 		vrLoc = 1398;
@@ -9347,7 +10267,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: 110";
 		rLen = 0;
-		rLoc = 9467;
+		rLoc = 9911;
 		rType = 0;
 		vrLen = 1125;
 		vrLoc = 1398;
@@ -9361,7 +10281,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: becomeFirstResponder";
 		rLen = 0;
-		rLoc = 9467;
+		rLoc = 9911;
 		rType = 0;
 		vrLen = 880;
 		vrLoc = 2010;
@@ -9391,7 +10311,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: drawRect:";
 		rLen = 0;
-		rLoc = 4081;
+		rLoc = 4109;
 		rType = 0;
 		vrLen = 1122;
 		vrLoc = 1256;
@@ -9409,7 +10329,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: drawRect:";
 		rLen = 0;
-		rLoc = 5494;
+		rLoc = 5522;
 		rType = 0;
 		vrLen = 1050;
 		vrLoc = 1825;
@@ -9429,7 +10349,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: drawRect:";
 		rLen = 0;
-		rLoc = 4081;
+		rLoc = 4109;
 		rType = 0;
 		vrLen = 1212;
 		vrLoc = 1309;
@@ -9442,12 +10362,6 @@
 		isa = PBXFileReference;
 		name = NSWindow.html;
 		path = /System/Library/Frameworks/AppKit.framework/Versions/C/Resources/English.lproj/Documentation/Reference/ObjC_classic/Classes/NSWindow.html;
-		refType = 0;
-	};
-	D1BB039E029E9A9F01D1F43F = {
-		isa = PBXFileReference;
-		name = index.html;
-		path = /Developer/Documentation/Cocoa/TasksAndConcepts/ProgrammingTopics/WinPanel/index.html;
 		refType = 0;
 	};
 	D1BB03A0029E9A9F01D1F43F = {
@@ -9483,7 +10397,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: drawRect:";
 		rLen = 0;
-		rLoc = 4733;
+		rLoc = 4761;
 		rType = 0;
 		vrLen = 930;
 		vrLoc = 532;
@@ -9523,7 +10437,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: drawRect:";
 		rLen = 0;
-		rLoc = 4733;
+		rLoc = 4761;
 		rType = 0;
 		vrLen = 930;
 		vrLoc = 532;
@@ -9537,7 +10451,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: drawRect:";
 		rLen = 0;
-		rLoc = 4425;
+		rLoc = 4453;
 		rType = 0;
 		vrLen = 947;
 		vrLoc = 532;
@@ -9583,7 +10497,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: becomeFirstResponder";
 		rLen = 0;
-		rLoc = 9781;
+		rLoc = 10225;
 		rType = 0;
 		vrLen = 1042;
 		vrLoc = 1403;
@@ -9623,7 +10537,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: 233";
 		rLen = 0;
-		rLoc = 10434;
+		rLoc = 10878;
 		rType = 0;
 		vrLen = 1003;
 		vrLoc = 5283;
@@ -9643,7 +10557,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: fullScreen:";
 		rLen = 0;
-		rLoc = 4449;
+		rLoc = 4484;
 		rType = 0;
 		vrLen = 816;
 		vrLoc = 3317;
@@ -9693,7 +10607,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: 150";
 		rLen = 0;
-		rLoc = 5494;
+		rLoc = 5522;
 		rType = 0;
 		vrLen = 1279;
 		vrLoc = 2480;
@@ -9733,7 +10647,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: drawRect:";
 		rLen = 0;
-		rLoc = 5494;
+		rLoc = 5522;
 		rType = 0;
 		vrLen = 1443;
 		vrLoc = 2976;
@@ -9753,7 +10667,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: drawRect:";
 		rLen = 0;
-		rLoc = 4081;
+		rLoc = 4109;
 		rType = 0;
 		vrLen = 1289;
 		vrLoc = 2379;
@@ -9763,7 +10677,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: fullScreen:";
 		rLen = 0;
-		rLoc = 5714;
+		rLoc = 5858;
 		rType = 0;
 		vrLen = 2459;
 		vrLoc = 0;
@@ -9783,7 +10697,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: drawRect:";
 		rLen = 0;
-		rLoc = 4081;
+		rLoc = 4109;
 		rType = 0;
 		vrLen = 1205;
 		vrLoc = 1702;
@@ -9803,7 +10717,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: drawRect:";
 		rLen = 0;
-		rLoc = 4081;
+		rLoc = 4109;
 		rType = 0;
 		vrLen = 1273;
 		vrLoc = 2187;
@@ -9837,7 +10751,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: drawRect:";
 		rLen = 0;
-		rLoc = 4113;
+		rLoc = 4141;
 		rType = 0;
 		vrLen = 1326;
 		vrLoc = 2186;
@@ -9846,6 +10760,72 @@
 		isa = PBXFileReference;
 		name = NSView.html;
 		path = /System/Library/Frameworks/AppKit.framework/Versions/C/Resources/English.lproj/Documentation/Reference/ObjC_classic/Classes/NSView.html;
+		refType = 0;
+	};
+	D1C62B9C0330DE8901D1F43F = {
+		fRef = D1C62BA50330DE8A01D1F43F;
+		isa = PBXBookmark;
+		name = "NSString.html: stringWithFo...";
+	};
+	D1C62B9E0330DE8901D1F43F = {
+		bstl = 4A9504CDFFE6A4B311CA0CBA;
+		isa = PBXBuildStyleBookmark;
+	};
+	D1C62B9F0330DE8901D1F43F = {
+		fRef = D1E0F9D202B41B0301D1F43F;
+		isa = PBXTextBookmark;
+		name = "armarc.c: arcemDir";
+		rLen = 27;
+		rLoc = 532;
+		rType = 0;
+		vrLen = 775;
+		vrLoc = 0;
+	};
+	D1C62BA00330DE8901D1F43F = {
+		fRef = D157A5F50291D94401123251;
+		isa = PBXTextBookmark;
+		name = "ArcemController.m: awakeFromNib";
+		rLen = 0;
+		rLoc = 5859;
+		rType = 0;
+		vrLen = 1322;
+		vrLoc = 4616;
+	};
+	D1C62BA10330DE8901D1F43F = {
+		fRef = D157A5F90291DA6C01123251;
+		isa = PBXTextBookmark;
+		name = "ArcemEmulator.m: threadStart:";
+		rLen = 0;
+		rLoc = 3571;
+		rType = 0;
+		vrLen = 971;
+		vrLoc = 2869;
+	};
+	D1C62BA20330DE8901D1F43F = {
+		fRef = D157A5F50291D94401123251;
+		isa = PBXTextBookmark;
+		name = "ArcemController.m: init";
+		rLen = 0;
+		rLoc = 1525;
+		rType = 0;
+		vrLen = 2536;
+		vrLoc = 1286;
+	};
+	D1C62BA30330DE8901D1F43F = {
+		fRef = D1C62BA60330DE8A01D1F43F;
+		isa = PBXBookmark;
+		name = "NSString.html: stringWithFo...";
+	};
+	D1C62BA50330DE8A01D1F43F = {
+		isa = PBXFileReference;
+		name = NSString.html;
+		path = /System/Library/Frameworks/Foundation.framework/Versions/C/Resources/English.lproj/Documentation/Reference/ObjC_classic/Classes/NSString.html;
+		refType = 0;
+	};
+	D1C62BA60330DE8A01D1F43F = {
+		isa = PBXFileReference;
+		name = NSString.html;
+		path = /System/Library/Frameworks/Foundation.framework/Versions/C/Resources/English.lproj/Documentation/Reference/ObjC_classic/Classes/NSString.html;
 		refType = 0;
 	};
 	D1C7088F029FE72201D1F43F = {
@@ -9873,7 +10853,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: keyDown:";
 		rLen = 0;
-		rLoc = 10580;
+		rLoc = 11024;
 		rType = 0;
 		vrLen = 821;
 		vrLoc = 3920;
@@ -9913,7 +10893,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: flagsChanged:";
 		rLen = 0;
-		rLoc = 10003;
+		rLoc = 10447;
 		rType = 0;
 		vrLen = 821;
 		vrLoc = 3920;
@@ -9933,7 +10913,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: mouseDown:";
 		rLen = 0;
-		rLoc = 11941;
+		rLoc = 12385;
 		rType = 0;
 		vrLen = 958;
 		vrLoc = 5847;
@@ -10013,7 +10993,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: keyUp:";
 		rLen = 0;
-		rLoc = 11941;
+		rLoc = 12385;
 		rType = 0;
 		vrLen = 928;
 		vrLoc = 5852;
@@ -10063,7 +11043,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: drawRect:";
 		rLen = 0;
-		rLoc = 6016;
+		rLoc = 6048;
 		rType = 0;
 		vrLen = 1478;
 		vrLoc = 5724;
@@ -10077,10 +11057,6 @@
 		rType = 0;
 		vrLen = 1547;
 		vrLoc = 24418;
-	};
-	D1CC1308029D96AE01D1F43F = {
-		fRef = D1CC1327029D96AE01D1F43F;
-		isa = PBXBookmark;
 	};
 	D1CC130A029D96AE01D1F43F = {
 		fRef = D1CC1329029D96AE01D1F43F;
@@ -10099,7 +11075,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: flagsChanged:";
 		rLen = 0;
-		rLoc = 10003;
+		rLoc = 10447;
 		rType = 0;
 		vrLen = 938;
 		vrLoc = 2761;
@@ -10195,7 +11171,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: init";
 		rLen = 0;
-		rLoc = 2107;
+		rLoc = 2190;
 		rType = 0;
 		vrLen = 2427;
 		vrLoc = 0;
@@ -10215,16 +11191,10 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: 70";
 		rLen = 0;
-		rLoc = 5714;
+		rLoc = 5858;
 		rType = 0;
 		vrLen = 1303;
 		vrLoc = 2021;
-	};
-	D1CC1327029D96AE01D1F43F = {
-		isa = PBXFileReference;
-		name = CocoaTopics.html;
-		path = /Developer/Documentation/Cocoa/CocoaTopics.html;
-		refType = 0;
 	};
 	D1CC1329029D96AE01D1F43F = {
 		isa = PBXFileReference;
@@ -10307,7 +11277,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: keyDown:";
 		rLen = 0;
-		rLoc = 10579;
+		rLoc = 11023;
 		rType = 0;
 		vrLen = 774;
 		vrLoc = 2370;
@@ -10325,7 +11295,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: keyDown:";
 		rLen = 0;
-		rLoc = 10579;
+		rLoc = 11023;
 		rType = 0;
 		vrLen = 774;
 		vrLoc = 2370;
@@ -10339,7 +11309,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: flagsChanged:";
 		rLen = 0;
-		rLoc = 9888;
+		rLoc = 10332;
 		rType = 0;
 		vrLen = 756;
 		vrLoc = 2370;
@@ -10405,7 +11375,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: dealloc";
 		rLen = 0;
-		rLoc = 15877;
+		rLoc = 17333;
 		rType = 0;
 		vrLen = 1258;
 		vrLoc = 6733;
@@ -10425,7 +11395,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: init";
 		rLen = 0;
-		rLoc = 4422;
+		rLoc = 4457;
 		rType = 0;
 		vrLen = 1880;
 		vrLoc = 2783;
@@ -10487,7 +11457,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: init";
 		rLen = 0;
-		rLoc = 4422;
+		rLoc = 4457;
 		rType = 0;
 		vrLen = 1880;
 		vrLoc = 2783;
@@ -10557,7 +11527,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: systemDefined:";
 		rLen = 0;
-		rLoc = 14163;
+		rLoc = 14609;
 		rType = 0;
 		vrLen = 943;
 		vrLoc = 13033;
@@ -10571,7 +11541,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: mouseDown:";
 		rLen = 0;
-		rLoc = 13319;
+		rLoc = 13765;
 		rType = 0;
 		vrLen = 1055;
 		vrLoc = 11978;
@@ -10581,7 +11551,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.h: 52";
 		rLen = 0;
-		rLoc = 1572;
+		rLoc = 1606;
 		rType = 0;
 		vrLen = 1231;
 		vrLoc = 447;
@@ -10591,7 +11561,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: initWithFrame:";
 		rLen = 0;
-		rLoc = 3856;
+		rLoc = 3884;
 		rType = 0;
 		vrLen = 1083;
 		vrLoc = 2778;
@@ -10653,7 +11623,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: keyDown:";
 		rLen = 0;
-		rLoc = 11896;
+		rLoc = 12340;
 		rType = 0;
 		vrLen = 1042;
 		vrLoc = 10957;
@@ -10673,7 +11643,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: bounds";
 		rLen = 0;
-		rLoc = 5526;
+		rLoc = 5554;
 		rType = 0;
 		vrLen = 1380;
 		vrLoc = 4502;
@@ -10683,7 +11653,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemEmulator.m: updateDisplay";
 		rLen = 0;
-		rLoc = 2269;
+		rLoc = 2379;
 		rType = 0;
 		vrLen = 1259;
 		vrLoc = 1454;
@@ -10693,7 +11663,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.h: 64";
 		rLen = 0;
-		rLoc = 1918;
+		rLoc = 1997;
 		rType = 0;
 		vrLen = 985;
 		vrLoc = 901;
@@ -10713,7 +11683,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemEmulator.m: updateDisplay";
 		rLen = 32;
-		rLoc = 2394;
+		rLoc = 2504;
 		rType = 0;
 		vrLen = 1259;
 		vrLoc = 1454;
@@ -10723,7 +11693,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.h: 64";
 		rLen = 0;
-		rLoc = 1913;
+		rLoc = 1947;
 		rType = 0;
 		vrLen = 1024;
 		vrLoc = 901;
@@ -10733,7 +11703,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemEmulator.m: updateDisplay";
 		rLen = 0;
-		rLoc = 2405;
+		rLoc = 2515;
 		rType = 0;
 		vrLen = 1265;
 		vrLoc = 1454;
@@ -10743,7 +11713,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.h: 64";
 		rLen = 0;
-		rLoc = 1913;
+		rLoc = 1947;
 		rType = 0;
 		vrLen = 1024;
 		vrLoc = 901;
@@ -10753,7 +11723,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: 172";
 		rLen = 0;
-		rLoc = 5356;
+		rLoc = 5384;
 		rType = 0;
 		vrLen = 1292;
 		vrLoc = 4502;
@@ -10763,7 +11733,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.h: 64";
 		rLen = 28;
-		rLoc = 1890;
+		rLoc = 1924;
 		rType = 0;
 		vrLen = 1024;
 		vrLoc = 901;
@@ -10773,7 +11743,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: 172";
 		rLen = 0;
-		rLoc = 5132;
+		rLoc = 5160;
 		rType = 0;
 		vrLen = 1267;
 		vrLoc = 4502;
@@ -10783,7 +11753,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.h: menuEject1:";
 		rLen = 0;
-		rLoc = 2476;
+		rLoc = 2686;
 		rType = 0;
 		vrLen = 1369;
 		vrLoc = 1442;
@@ -10793,10 +11763,130 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: drawRect:";
 		rLen = 0;
-		rLoc = 5856;
+		rLoc = 5888;
 		rType = 0;
 		vrLen = 1506;
 		vrLoc = 5724;
+	};
+	D1DF3BA50388FE0A01D1F43F = {
+		fRef = D1E0F9E202B41B0301D1F43F;
+		isa = PBXTextBookmark;
+		name = "armcopro.c: __VERSION__";
+		rLen = 0;
+		rLoc = 0;
+		rType = 0;
+		vrLen = 2001;
+		vrLoc = 0;
+	};
+	D1DF3BA60388FE0A01D1F43F = {
+		fRef = D1E0F9D202B41B0301D1F43F;
+		isa = PBXTextBookmark;
+		name = "armarc.c: 18";
+		rLen = 0;
+		rLoc = 355;
+		rType = 0;
+		vrLen = 836;
+		vrLoc = 25237;
+	};
+	D1DF3BA70388FE0A01D1F43F = {
+		fRef = D1E0F9DC02B41B0301D1F43F;
+		isa = PBXTextBookmark;
+		name = "ReadConfig.c: ReadConfigFile";
+		rLen = 0;
+		rLoc = 839;
+		rType = 0;
+		vrLen = 1099;
+		vrLoc = 306;
+	};
+	D1DF3BA80388FE0A01D1F43F = {
+		fRef = D1E0F9E202B41B0301D1F43F;
+		isa = PBXTextBookmark;
+		name = "armcopro.c: __VERSION__";
+		rLen = 0;
+		rLoc = 0;
+		rType = 0;
+		vrLen = 2001;
+		vrLoc = 0;
+	};
+	D1DF3BA90388FE0A01D1F43F = {
+		fRef = D1E0F9D202B41B0301D1F43F;
+		isa = PBXTextBookmark;
+		name = "armarc.c: 18";
+		rLen = 0;
+		rLoc = 355;
+		rType = 0;
+		vrLen = 836;
+		vrLoc = 25237;
+	};
+	D1DFCF12039A95BD01D1F43F = {
+		fRef = D1E0F9D602B41B0301D1F43F;
+		isa = PBXTextBookmark;
+		name = "fdc1772.c: TYPE2_BIT_MOTORON";
+		rLen = 0;
+		rLoc = 688;
+		rType = 0;
+		vrLen = 1284;
+		vrLoc = 429;
+	};
+	D1DFCF13039A95BD01D1F43F = {
+		fRef = D157A5F60291D94401123251;
+		isa = PBXTextBookmark;
+		name = "ArcemController.h: destroyEmulatorThread";
+		rLen = 0;
+		rLoc = 3096;
+		rType = 0;
+		vrLen = 1421;
+		vrLoc = 1961;
+	};
+	D1DFCF15039A95BD01D1F43F = {
+		fRef = D1CA0AAF029C4D9401D1F43F;
+		isa = PBXTextBookmark;
+		name = "Credits.rtf: 6";
+		rLen = 0;
+		rLoc = 88;
+		rType = 0;
+		vrLen = 442;
+		vrLoc = 0;
+	};
+	D1DFCF16039A95BE01D1F43F = {
+		fRef = D1E0F9D602B41B0301D1F43F;
+		isa = PBXTextBookmark;
+		name = "fdc1772.c: TYPE2_BIT_MOTORON";
+		rLen = 0;
+		rLoc = 688;
+		rType = 0;
+		vrLen = 1284;
+		vrLoc = 429;
+	};
+	D1DFCF17039A95BE01D1F43F = {
+		fRef = D157A5F60291D94401123251;
+		isa = PBXTextBookmark;
+		name = "ArcemController.h: destroyEmulatorThread";
+		rLen = 0;
+		rLoc = 3096;
+		rType = 0;
+		vrLen = 1421;
+		vrLoc = 1961;
+	};
+	D1DFCF18039A95BE01D1F43F = {
+		fRef = D157A5F50291D94401123251;
+		isa = PBXTextBookmark;
+		name = "ArcemController.m: 375";
+		rLen = 0;
+		rLoc = 13237;
+		rType = 0;
+		vrLen = 1452;
+		vrLoc = 13237;
+	};
+	D1DFCF19039A95BE01D1F43F = {
+		fRef = D1CA0AAF029C4D9401D1F43F;
+		isa = PBXTextBookmark;
+		name = "Credits.rtf: 6";
+		rLen = 0;
+		rLoc = 88;
+		rType = 0;
+		vrLen = 442;
+		vrLoc = 0;
 	};
 	D1E0FA2202B4286F01D1F43F = {
 		fRef = 29B97316FDCFA39411CA2CEA;
@@ -10853,7 +11943,7 @@
 		isa = PBXTextBookmark;
 		name = "armarc.c: ARMul_MemoryInit";
 		rLen = 0;
-		rLoc = 10656;
+		rLoc = 10715;
 		rType = 0;
 		vrLen = 1111;
 		vrLoc = 10121;
@@ -10863,7 +11953,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: mouseMoved:";
 		rLen = 0;
-		rLoc = 12805;
+		rLoc = 13249;
 		rType = 0;
 		vrLen = 1127;
 		vrLoc = 11345;
@@ -10873,7 +11963,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemEmulator.m: updateDisplay";
 		rLen = 0;
-		rLoc = 2469;
+		rLoc = 2583;
 		rType = 0;
 		vrLen = 1087;
 		vrLoc = 1934;
@@ -10898,6 +11988,294 @@
 		vrLen = 1266;
 		vrLoc = 447;
 	};
+	D1E2A0B703193B8C01D1F43F = {
+		fRef = D1E2A0E103193B8D01D1F43F;
+		isa = PBXBookmark;
+	};
+	D1E2A0B803193B8C01D1F43F = {
+		fRef = D1E2A0E203193B8D01D1F43F;
+		isa = PBXBookmark;
+	};
+	D1E2A0BA03193B8C01D1F43F = {
+		fRef = D1E2A0E303193B8D01D1F43F;
+		isa = PBXTextBookmark;
+		name = "NSPanel.h: 18";
+		rLen = 136;
+		rLoc = 635;
+		rType = 0;
+		vrLen = 2117;
+		vrLoc = 0;
+	};
+	D1E2A0C103193B8C01D1F43F = {
+		fRef = D1E2A0DE03193B8D01D1F43F;
+		isa = PBXBookmark;
+	};
+	D1E2A0C203193B8C01D1F43F = {
+		fRef = D1E2A0DF03193B8D01D1F43F;
+		isa = PBXBookmark;
+	};
+	D1E2A0C303193B8C01D1F43F = {
+		fRef = D1E2A0E003193B8D01D1F43F;
+		isa = PBXTextBookmark;
+		name = "NSPanel.h: 1";
+		rLen = 0;
+		rLoc = 0;
+		rType = 0;
+		vrLen = 2117;
+		vrLoc = 0;
+	};
+	D1E2A0C403193B8C01D1F43F = {
+		fRef = D157A5F50291D94401123251;
+		isa = PBXTextBookmark;
+		name = "ArcemController.m: awakeFromNib";
+		rLen = 0;
+		rLoc = 6021;
+		rType = 0;
+		vrLen = 850;
+		vrLoc = 15299;
+	};
+	D1E2A0C503193B8C01D1F43F = {
+		fRef = D157A5F90291DA6C01123251;
+		isa = PBXTextBookmark;
+		name = "ArcemEmulator.m: 87";
+		rLen = 0;
+		rLoc = 2838;
+		rType = 0;
+		vrLen = 1148;
+		vrLoc = 1507;
+	};
+	D1E2A0C603193B8C01D1F43F = {
+		fRef = D1E2A0DD03193B8C01D1F43F;
+		isa = PBXTextBookmark;
+		name = "NSPanel.h: 18";
+		rLen = 136;
+		rLoc = 635;
+		rType = 0;
+		vrLen = 2117;
+		vrLoc = 0;
+	};
+	D1E2A0C703193B8C01D1F43F = {
+		fRef = D157A5F90291DA6C01123251;
+		isa = PBXTextBookmark;
+		name = "ArcemEmulator.m: arcem_exit";
+		rLen = 0;
+		rLoc = 2704;
+		rType = 0;
+		vrLen = 1309;
+		vrLoc = 1453;
+	};
+	D1E2A0C803193B8C01D1F43F = {
+		fRef = D1E0F9D202B41B0301D1F43F;
+		isa = PBXTextBookmark;
+		name = "armarc.c: ARMul_MemoryInit";
+		rLen = 10;
+		rLoc = 10674;
+		rType = 0;
+		vrLen = 1040;
+		vrLoc = 10217;
+	};
+	D1E2A0C903193B8C01D1F43F = {
+		fRef = D157A5F90291DA6C01123251;
+		isa = PBXTextBookmark;
+		name = "ArcemEmulator.m: arcem_exit";
+		rLen = 0;
+		rLoc = 2838;
+		rType = 0;
+		vrLen = 1188;
+		vrLoc = 1589;
+	};
+	D1E2A0CA03193B8C01D1F43F = {
+		fRef = D1E0F9D202B41B0301D1F43F;
+		isa = PBXTextBookmark;
+		name = "armarc.c: ARMul_MemoryInit";
+		rLen = 10;
+		rLoc = 10674;
+		rType = 0;
+		vrLen = 1040;
+		vrLoc = 10217;
+	};
+	D1E2A0CB03193B8C01D1F43F = {
+		fRef = D157A5F90291DA6C01123251;
+		isa = PBXTextBookmark;
+		name = "ArcemEmulator.m: 94";
+		rLen = 0;
+		rLoc = 2841;
+		rType = 0;
+		vrLen = 1052;
+		vrLoc = 2084;
+	};
+	D1E2A0CC03193B8C01D1F43F = {
+		fRef = D157A5F20291D6F801123251;
+		isa = PBXTextBookmark;
+		name = "ArcemView.m: emulatorError:";
+		rLen = 0;
+		rLoc = 17977;
+		rType = 0;
+		vrLen = 1123;
+		vrLoc = 16390;
+	};
+	D1E2A0CD03193B8C01D1F43F = {
+		fRef = D157A5F90291DA6C01123251;
+		isa = PBXTextBookmark;
+		name = "ArcemEmulator.m: arcem_exit";
+		rLen = 0;
+		rLoc = 2735;
+		rType = 0;
+		vrLen = 961;
+		vrLoc = 2084;
+	};
+	D1E2A0CE03193B8C01D1F43F = {
+		fRef = D157A5F20291D6F801123251;
+		isa = PBXTextBookmark;
+		name = "ArcemView.m: emulatorError:";
+		rLen = 0;
+		rLoc = 17977;
+		rType = 0;
+		vrLen = 1203;
+		vrLoc = 16390;
+	};
+	D1E2A0CF03193B8C01D1F43F = {
+		fRef = D157A5F90291DA6C01123251;
+		isa = PBXTextBookmark;
+		name = "ArcemEmulator.m: arcem_exit";
+		rLen = 0;
+		rLoc = 2762;
+		rType = 0;
+		vrLen = 927;
+		vrLoc = 2322;
+	};
+	D1E2A0D003193B8C01D1F43F = {
+		fRef = D157A5F20291D6F801123251;
+		isa = PBXTextBookmark;
+		name = "ArcemView.m: toggleYScale";
+		rLen = 0;
+		rLoc = 17001;
+		rType = 0;
+		vrLen = 1759;
+		vrLoc = 0;
+	};
+	D1E2A0D103193B8C01D1F43F = {
+		fRef = D157A5F10291D6F801123251;
+		isa = PBXTextBookmark;
+		name = "ArcemView.h: 52";
+		rLen = 11;
+		rLoc = 1526;
+		rType = 0;
+		vrLen = 1050;
+		vrLoc = 901;
+	};
+	D1E2A0D203193B8C01D1F43F = {
+		fRef = D157A5F20291D6F801123251;
+		isa = PBXTextBookmark;
+		name = "ArcemView.m: 669";
+		rLen = 0;
+		rLoc = 17971;
+		rType = 0;
+		vrLen = 1179;
+		vrLoc = 16726;
+	};
+	D1E2A0D303193B8C01D1F43F = {
+		fRef = D1E2A0DB03193B8C01D1F43F;
+		isa = PBXBookmark;
+	};
+	D1E2A0D403193B8C01D1F43F = {
+		fRef = D157A5F20291D6F801123251;
+		isa = PBXTextBookmark;
+		name = "ArcemView.m: 663";
+		rLen = 45;
+		rLoc = 17803;
+		rType = 0;
+		vrLen = 1207;
+		vrLoc = 16726;
+	};
+	D1E2A0D503193B8C01D1F43F = {
+		fRef = D157A5F10291D6F801123251;
+		isa = PBXTextBookmark;
+		name = "ArcemView.h: emulatorError:";
+		rLen = 0;
+		rLoc = 1989;
+		rType = 0;
+		vrLen = 995;
+		vrLoc = 1001;
+	};
+	D1E2A0D603193B8C01D1F43F = {
+		fRef = D157A5F20291D6F801123251;
+		isa = PBXTextBookmark;
+		name = "ArcemView.m: initWithFrame:";
+		rLen = 0;
+		rLoc = 3799;
+		rType = 0;
+		vrLen = 1116;
+		vrLoc = 16894;
+	};
+	D1E2A0D803193B8C01D1F43F = {
+		fRef = D157A5F20291D6F801123251;
+		isa = PBXTextBookmark;
+		name = "ArcemView.m: 664";
+		rLen = 0;
+		rLoc = 17834;
+		rType = 0;
+		vrLen = 1145;
+		vrLoc = 16800;
+	};
+	D1E2A0D903193B8C01D1F43F = {
+		fRef = D157A5F10291D6F801123251;
+		isa = PBXTextBookmark;
+		name = "ArcemView.h: setNeedsScaledDisplayInRect:";
+		rLen = 0;
+		rLoc = 1952;
+		rType = 0;
+		vrLen = 1019;
+		vrLoc = 985;
+	};
+	D1E2A0DB03193B8C01D1F43F = {
+		isa = PBXFileReference;
+		name = NSString.html;
+		path = /System/Library/Frameworks/Foundation.framework/Versions/C/Resources/English.lproj/Documentation/Reference/ObjC_classic/Classes/NSString.html;
+		refType = 0;
+	};
+	D1E2A0DD03193B8C01D1F43F = {
+		isa = PBXFileReference;
+		name = NSPanel.h;
+		path = /System/Library/Frameworks/AppKit.framework/Versions/C/Headers/NSPanel.h;
+		refType = 0;
+	};
+	D1E2A0DE03193B8D01D1F43F = {
+		isa = PBXFileReference;
+		name = NSPanel.html;
+		path = /System/Library/Frameworks/AppKit.framework/Versions/C/Resources/English.lproj/Documentation/Reference/ObjC_classic/Classes/NSPanel.html;
+		refType = 0;
+	};
+	D1E2A0DF03193B8D01D1F43F = {
+		isa = PBXFileReference;
+		name = CocoaTopics.html;
+		path = /Developer/Documentation/Cocoa/CocoaTopics.html;
+		refType = 0;
+	};
+	D1E2A0E003193B8D01D1F43F = {
+		isa = PBXFileReference;
+		name = NSPanel.h;
+		path = /System/Library/Frameworks/AppKit.framework/Versions/C/Headers/NSPanel.h;
+		refType = 0;
+	};
+	D1E2A0E103193B8D01D1F43F = {
+		isa = PBXFileReference;
+		name = NSPanel.html;
+		path = /System/Library/Frameworks/AppKit.framework/Versions/C/Resources/English.lproj/Documentation/Reference/ObjC_classic/Classes/NSPanel.html;
+		refType = 0;
+	};
+	D1E2A0E203193B8D01D1F43F = {
+		isa = PBXFileReference;
+		name = CocoaTopics.html;
+		path = /Developer/Documentation/Cocoa/CocoaTopics.html;
+		refType = 0;
+	};
+	D1E2A0E303193B8D01D1F43F = {
+		isa = PBXFileReference;
+		name = NSPanel.h;
+		path = /System/Library/Frameworks/AppKit.framework/Versions/C/Headers/NSPanel.h;
+		refType = 0;
+	};
 	D1E4D3E502BAAB9801D1F43F = {
 		fRef = D1E4D40B02BAAB9801D1F43F;
 		isa = PBXBookmark;
@@ -10911,7 +12289,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: keyDown:";
 		rLen = 0;
-		rLoc = 11896;
+		rLoc = 12340;
 		rType = 0;
 		vrLen = 1032;
 		vrLoc = 10933;
@@ -10955,7 +12333,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: flagsChanged:";
 		rLen = 0;
-		rLoc = 11489;
+		rLoc = 11933;
 		rType = 0;
 		vrLen = 1185;
 		vrLoc = 10298;
@@ -10965,7 +12343,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemEmulator.m: updateDisplay";
 		rLen = 0;
-		rLoc = 2426;
+		rLoc = 2536;
 		rType = 0;
 		vrLen = 1006;
 		vrLoc = 2002;
@@ -10975,7 +12353,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: mouseMoved:";
 		rLen = 0;
-		rLoc = 12805;
+		rLoc = 13249;
 		rType = 0;
 		vrLen = 1115;
 		vrLoc = 11397;
@@ -10985,7 +12363,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemEmulator.m: 75";
 		rLen = 0;
-		rLoc = 2503;
+		rLoc = 2872;
 		rType = 0;
 		vrLen = 1001;
 		vrLoc = 2002;
@@ -10995,7 +12373,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: init";
 		rLen = 0;
-		rLoc = 3119;
+		rLoc = 3202;
 		rType = 0;
 		vrLen = 2592;
 		vrLoc = 1432;
@@ -11015,7 +12393,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: drawRect:";
 		rLen = 0;
-		rLoc = 6191;
+		rLoc = 6223;
 		rType = 0;
 		vrLen = 1472;
 		vrLoc = 4811;
@@ -11045,7 +12423,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: setBitmapsWithScreen:withCursor:";
 		rLen = 0;
-		rLoc = 4353;
+		rLoc = 4381;
 		rType = 0;
 		vrLen = 1357;
 		vrLoc = 3745;
@@ -11055,7 +12433,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: init";
 		rLen = 0;
-		rLoc = 3672;
+		rLoc = 3755;
 		rType = 0;
 		vrLen = 2592;
 		vrLoc = 1433;
@@ -11065,7 +12443,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: drawRect:";
 		rLen = 0;
-		rLoc = 6085;
+		rLoc = 6117;
 		rType = 0;
 		vrLen = 1356;
 		vrLoc = 3745;
@@ -11075,7 +12453,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: init";
 		rLen = 0;
-		rLoc = 3119;
+		rLoc = 3202;
 		rType = 0;
 		vrLen = 2592;
 		vrLoc = 1433;
@@ -11085,7 +12463,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: drawRect:";
 		rLen = 0;
-		rLoc = 6052;
+		rLoc = 6084;
 		rType = 0;
 		vrLen = 1357;
 		vrLoc = 3745;
@@ -11095,7 +12473,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: init";
 		rLen = 0;
-		rLoc = 2678;
+		rLoc = 2761;
 		rType = 0;
 		vrLen = 2555;
 		vrLoc = 1433;
@@ -11115,7 +12493,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: init";
 		rLen = 0;
-		rLoc = 2678;
+		rLoc = 2761;
 		rType = 0;
 		vrLen = 2555;
 		vrLoc = 1433;
@@ -11190,7 +12568,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: drawRect:";
 		rLen = 0;
-		rLoc = 4653;
+		rLoc = 4681;
 		rType = 0;
 		vrLen = 1023;
 		vrLoc = 989;
@@ -11204,7 +12582,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: drawRect:";
 		rLen = 0;
-		rLoc = 5437;
+		rLoc = 5465;
 		rType = 0;
 		vrLen = 1031;
 		vrLoc = 1102;
@@ -11218,7 +12596,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: drawRect:";
 		rLen = 0;
-		rLoc = 4734;
+		rLoc = 4762;
 		rType = 0;
 		vrLen = 1031;
 		vrLoc = 1102;
@@ -11232,7 +12610,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: drawRect:";
 		rLen = 0;
-		rLoc = 5445;
+		rLoc = 5473;
 		rType = 0;
 		vrLen = 1036;
 		vrLoc = 1102;
@@ -11242,7 +12620,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: init";
 		rLen = 0;
-		rLoc = 2355;
+		rLoc = 2438;
 		rType = 0;
 		vrLen = 2427;
 		vrLoc = 0;
@@ -11252,7 +12630,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: drawRect:";
 		rLen = 0;
-		rLoc = 5486;
+		rLoc = 5514;
 		rType = 0;
 		vrLen = 1036;
 		vrLoc = 1102;
@@ -11272,7 +12650,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: init";
 		rLen = 0;
-		rLoc = 2107;
+		rLoc = 2190;
 		rType = 0;
 		vrLen = 2427;
 		vrLoc = 0;
@@ -11292,7 +12670,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: 91";
 		rLen = 0;
-		rLoc = 5497;
+		rLoc = 5525;
 		rType = 0;
 		vrLen = 699;
 		vrLoc = 2086;
@@ -11322,7 +12700,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: 91";
 		rLen = 0;
-		rLoc = 5497;
+		rLoc = 5525;
 		rType = 0;
 		vrLen = 697;
 		vrLoc = 2086;
@@ -11366,7 +12744,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: mouseMoved:";
 		rLen = 0;
-		rLoc = 11941;
+		rLoc = 12385;
 		rType = 0;
 		vrLen = 644;
 		vrLoc = 2536;
@@ -11450,7 +12828,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: 204";
 		rLen = 0;
-		rLoc = 8530;
+		rLoc = 9037;
 		rType = 0;
 		vrLen = 1280;
 		vrLoc = 6609;
@@ -11480,7 +12858,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: 50";
 		rLen = 0;
-		rLoc = 3517;
+		rLoc = 3600;
 		rType = 0;
 		vrLen = 1728;
 		vrLoc = 955;
@@ -11500,7 +12878,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: 54";
 		rLen = 0;
-		rLoc = 3517;
+		rLoc = 3600;
 		rType = 0;
 		vrLen = 1900;
 		vrLoc = 880;
@@ -11520,7 +12898,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: 58";
 		rLen = 0;
-		rLoc = 3517;
+		rLoc = 3600;
 		rType = 0;
 		vrLen = 1954;
 		vrLoc = 880;
@@ -11530,7 +12908,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemEmulator.m: 24";
 		rLen = 0;
-		rLoc = 1282;
+		rLoc = 1343;
 		rType = 0;
 		vrLen = 428;
 		vrLoc = 0;
@@ -11550,7 +12928,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: 57";
 		rLen = 0;
-		rLoc = 3097;
+		rLoc = 3180;
 		rType = 0;
 		vrLen = 2003;
 		vrLoc = 880;
@@ -11572,7 +12950,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: 57";
 		rLen = 0;
-		rLoc = 3097;
+		rLoc = 3180;
 		rType = 0;
 		vrLen = 2046;
 		vrLoc = 880;
@@ -11592,7 +12970,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: 45";
 		rLen = 0;
-		rLoc = 2746;
+		rLoc = 2829;
 		rType = 0;
 		vrLen = 2106;
 		vrLoc = 880;
@@ -11612,7 +12990,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: 9";
 		rLen = 0;
-		rLoc = 13752;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 167;
 		vrLoc = 0;
@@ -11694,7 +13072,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: drawRect:";
 		rLen = 0;
-		rLoc = 4114;
+		rLoc = 4142;
 		rType = 0;
 		vrLen = 835;
 		vrLoc = 70;
@@ -11704,7 +13082,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: awakeFromNib";
 		rLen = 0;
-		rLoc = 3517;
+		rLoc = 3600;
 		rType = 0;
 		vrLen = 1472;
 		vrLoc = 1842;
@@ -11724,7 +13102,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: awakeFromNib";
 		rLen = 0;
-		rLoc = 3352;
+		rLoc = 3435;
 		rType = 0;
 		vrLen = 1471;
 		vrLoc = 1842;
@@ -11744,7 +13122,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: drawRect:";
 		rLen = 0;
-		rLoc = 4114;
+		rLoc = 4142;
 		rType = 0;
 		vrLen = 861;
 		vrLoc = 44;
@@ -11754,7 +13132,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: awakeFromNib";
 		rLen = 0;
-		rLoc = 3352;
+		rLoc = 3435;
 		rType = 0;
 		vrLen = 1482;
 		vrLoc = 1842;
@@ -11774,7 +13152,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: awakeFromNib";
 		rLen = 0;
-		rLoc = 3373;
+		rLoc = 3456;
 		rType = 0;
 		vrLen = 1482;
 		vrLoc = 1842;
@@ -11834,7 +13212,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: dealloc";
 		rLen = 0;
-		rLoc = 5714;
+		rLoc = 5858;
 		rType = 0;
 		vrLen = 1124;
 		vrLoc = 2162;
@@ -11854,7 +13232,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemEmulator.m: threadStart:";
 		rLen = 0;
-		rLoc = 1240;
+		rLoc = 1301;
 		rType = 0;
 		vrLen = 428;
 		vrLoc = 0;
@@ -11894,7 +13272,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemEmulator.m: threadStart:";
 		rLen = 0;
-		rLoc = 1256;
+		rLoc = 1317;
 		rType = 0;
 		vrLen = 423;
 		vrLoc = 0;
@@ -11938,7 +13316,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: mouseUp:";
 		rLen = 0;
-		rLoc = 5714;
+		rLoc = 5858;
 		rType = 0;
 		vrLen = 1124;
 		vrLoc = 2162;
@@ -11948,7 +13326,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemEmulator.m: threadStart:";
 		rLen = 0;
-		rLoc = 1313;
+		rLoc = 1374;
 		rType = 0;
 		vrLen = 753;
 		vrLoc = 0;
@@ -11998,7 +13376,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemEmulator.m: threadStart:";
 		rLen = 0;
-		rLoc = 1257;
+		rLoc = 1318;
 		rType = 0;
 		vrLen = 753;
 		vrLoc = 0;
@@ -12088,7 +13466,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: drawRect:";
 		rLen = 0;
-		rLoc = 5488;
+		rLoc = 5516;
 		rType = 0;
 		vrLen = 988;
 		vrLoc = 273;
@@ -12148,7 +13526,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: keyDown:";
 		rLen = 0;
-		rLoc = 10523;
+		rLoc = 10967;
 		rType = 0;
 		vrLen = 1004;
 		vrLoc = 5283;
@@ -12308,7 +13686,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: 194";
 		rLen = 0;
-		rLoc = 6396;
+		rLoc = 6840;
 		rType = 0;
 		vrLen = 1385;
 		vrLoc = 4999;
@@ -12318,7 +13696,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: 153";
 		rLen = 0;
-		rLoc = 8019;
+		rLoc = 8526;
 		rType = 0;
 		vrLen = 1044;
 		vrLoc = 5209;
@@ -12328,7 +13706,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemEmulator.m: disp";
 		rLen = 0;
-		rLoc = 1318;
+		rLoc = 1428;
 		rType = 0;
 		vrLen = 1640;
 		vrLoc = 0;
@@ -12356,7 +13734,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: 194";
 		rLen = 0;
-		rLoc = 6396;
+		rLoc = 6840;
 		rType = 0;
 		vrLen = 1385;
 		vrLoc = 4999;
@@ -12366,7 +13744,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: awakeFromNib";
 		rLen = 0;
-		rLoc = 6999;
+		rLoc = 7506;
 		rType = 0;
 		vrLen = 1327;
 		vrLoc = 3942;
@@ -12376,7 +13754,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: awakeFromNib";
 		rLen = 0;
-		rLoc = 6998;
+		rLoc = 7505;
 		rType = 0;
 		vrLen = 1327;
 		vrLoc = 3942;
@@ -12410,7 +13788,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: awakeFromNib";
 		rLen = 0;
-		rLoc = 6998;
+		rLoc = 7505;
 		rType = 0;
 		vrLen = 1348;
 		vrLoc = 3942;
@@ -12424,7 +13802,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: awakeFromNib";
 		rLen = 0;
-		rLoc = 6998;
+		rLoc = 7505;
 		rType = 0;
 		vrLen = 1357;
 		vrLoc = 3942;
@@ -12438,7 +13816,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: awakeFromNib";
 		rLen = 0;
-		rLoc = 6999;
+		rLoc = 7506;
 		rType = 0;
 		vrLen = 1386;
 		vrLoc = 3942;
@@ -12448,7 +13826,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.h: menuMount0:";
 		rLen = 0;
-		rLoc = 2654;
+		rLoc = 3014;
 		rType = 0;
 		vrLen = 1436;
 		vrLoc = 513;
@@ -12458,7 +13836,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: dealloc";
 		rLen = 126;
-		rLoc = 11877;
+		rLoc = 12383;
 		rType = 0;
 		vrLen = 1045;
 		vrLoc = 6243;
@@ -12468,7 +13846,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.h: openPanelDidEnd:returnCode:contextInfo:";
 		rLen = 0;
-		rLoc = 2839;
+		rLoc = 3381;
 		rType = 0;
 		vrLen = 1256;
 		vrLoc = 827;
@@ -12478,7 +13856,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: panel";
 		rLen = 0;
-		rLoc = 10605;
+		rLoc = 11112;
 		rType = 0;
 		vrLen = 1071;
 		vrLoc = 6243;
@@ -12488,7 +13866,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.h: applicationHide:";
 		rLen = 0;
-		rLoc = 2358;
+		rLoc = 2568;
 		rType = 0;
 		vrLen = 1325;
 		vrLoc = 823;
@@ -12498,7 +13876,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: 180";
 		rLen = 0;
-		rLoc = 10516;
+		rLoc = 11023;
 		rType = 0;
 		vrLen = 1071;
 		vrLoc = 6243;
@@ -12508,7 +13886,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.h: showPreferencePanel:";
 		rLen = 0;
-		rLoc = 2118;
+		rLoc = 2328;
 		rType = 0;
 		vrLen = 1269;
 		vrLoc = 823;
@@ -12518,7 +13896,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: dealloc";
 		rLen = 0;
-		rLoc = 12154;
+		rLoc = 12660;
 		rType = 0;
 		vrLen = 1186;
 		vrLoc = 8287;
@@ -12532,7 +13910,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: 194";
 		rLen = 0;
-		rLoc = 6396;
+		rLoc = 6840;
 		rType = 0;
 		vrLen = 1385;
 		vrLoc = 4999;
@@ -12562,7 +13940,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: openPanelDidEnd:returnCode:contextInfo:";
 		rLen = 0;
-		rLoc = 12721;
+		rLoc = 13227;
 		rType = 0;
 		vrLen = 1233;
 		vrLoc = 8444;
@@ -12572,7 +13950,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: 266";
 		rLen = 0;
-		rLoc = 12721;
+		rLoc = 13227;
 		rType = 0;
 		vrLen = 1259;
 		vrLoc = 8444;
@@ -12582,7 +13960,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: 266";
 		rLen = 0;
-		rLoc = 12721;
+		rLoc = 13227;
 		rType = 0;
 		vrLen = 1285;
 		vrLoc = 8444;
@@ -12688,7 +14066,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: mouseEntered:";
 		rLen = 0;
-		rLoc = 11941;
+		rLoc = 12385;
 		rType = 0;
 		vrLen = 827;
 		vrLoc = 2508;
@@ -12708,7 +14086,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: mouseEntered:";
 		rLen = 0;
-		rLoc = 11941;
+		rLoc = 12385;
 		rType = 0;
 		vrLen = 827;
 		vrLoc = 2508;
@@ -12768,7 +14146,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: 410";
 		rLen = 0;
-		rLoc = 15050;
+		rLoc = 16507;
 		rType = 0;
 		vrLen = 1632;
 		vrLoc = 0;
@@ -12778,7 +14156,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: 498";
 		rLen = 0;
-		rLoc = 15832;
+		rLoc = 16278;
 		rType = 0;
 		vrLen = 849;
 		vrLoc = 12918;
@@ -12788,7 +14166,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.h: 47";
 		rLen = 0;
-		rLoc = 1572;
+		rLoc = 1606;
 		rType = 0;
 		vrLen = 1263;
 		vrLoc = 268;
@@ -12798,7 +14176,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.h: 62";
 		rLen = 0;
-		rLoc = 2118;
+		rLoc = 2328;
 		rType = 0;
 		vrLen = 1416;
 		vrLoc = 1378;
@@ -12808,7 +14186,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.h: 56";
 		rLen = 0;
-		rLoc = 1845;
+		rLoc = 1879;
 		rType = 0;
 		vrLen = 1113;
 		vrLoc = 513;
@@ -12818,7 +14196,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: 520";
 		rLen = 0;
-		rLoc = 16366;
+		rLoc = 16812;
 		rType = 0;
 		vrLen = 699;
 		vrLoc = 13347;
@@ -12838,7 +14216,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemController.m: menuDoubleX:";
 		rLen = 0;
-		rLoc = 15213;
+		rLoc = 16670;
 		rType = 0;
 		vrLen = 938;
 		vrLoc = 13524;
@@ -12848,7 +14226,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: resizeToWidth:toHeight:";
 		rLen = 0;
-		rLoc = 10003;
+		rLoc = 10447;
 		rType = 0;
 		vrLen = 1212;
 		vrLoc = 7358;
@@ -12858,7 +14236,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.h: 56";
 		rLen = 0;
-		rLoc = 1845;
+		rLoc = 1879;
 		rType = 0;
 		vrLen = 1179;
 		vrLoc = 447;
@@ -12868,7 +14246,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.m: 517";
 		rLen = 0;
-		rLoc = 16366;
+		rLoc = 16812;
 		rType = 0;
 		vrLen = 664;
 		vrLoc = 13489;
@@ -12878,7 +14256,7 @@
 		isa = PBXTextBookmark;
 		name = "ArcemView.h: 56";
 		rLen = 0;
-		rLoc = 1845;
+		rLoc = 1879;
 		rType = 0;
 		vrLen = 1178;
 		vrLoc = 447;
