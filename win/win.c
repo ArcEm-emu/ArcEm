@@ -17,9 +17,14 @@ BITMAPINFO cbmi;
 
 static char	szWindowClass[32] = "GenericClass";
 
+
 static BOOL captureMouse = FALSE;
+
 static RECT rcClip;           // new area for ClipCursor
+
 static RECT rcOldClip;        // previous area for ClipCursor
+
+
 
 
 int xSize, ySize;
@@ -29,17 +34,16 @@ BOOL			InitInstance(HINSTANCE, int);
 LRESULT CALLBACK	WndProc(HWND, UINT, WPARAM, LPARAM);
 BOOL    CALLBACK AboutDlgProc (HWND, UINT, WPARAM, LPARAM);
 
-MSG msg;
-HANDLE hInst;
-HWND mainWin;
-DWORD tid;
+static MSG msg;
+static HANDLE hInst;
+static HWND mainWin;
+static DWORD tid;
+static int lKeyData;
 
-//char *dibbmp;
 WORD *dibbmp;
 WORD *curbmp;
 
 int nVirtKey;
-int lKeyData;
 int nKeyStat;
 int keyF = 0;
 
@@ -52,9 +56,6 @@ int buttF = 0;
 
 static DWORD WINAPI threadWindow(LPVOID param)
 {
-//	xSize = w;
-//	ySize = h;
-
 	hInst = GetModuleHandle(NULL);
 
 	MyRegisterClass((HINSTANCE)hInst);
@@ -80,17 +81,17 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 
 	wcex.cbSize = sizeof(WNDCLASSEX); 
 
-	wcex.style		= CS_HREDRAW | CS_VREDRAW;
-	wcex.lpfnWndProc	= (WNDPROC)WndProc;
-	wcex.cbClsExtra		= 0;
-	wcex.cbWndExtra		= 0;
-	wcex.hInstance		= hInstance;
-	wcex.hIcon		= LoadIcon(hInstance, "GuiIcon");
-	wcex.hCursor		= LoadCursor(NULL, IDC_ARROW);
-	wcex.hbrBackground	= (HBRUSH)(COLOR_WINDOW+1);
-	wcex.lpszMenuName	= "GuiMenu";
-	wcex.lpszClassName	= szWindowClass;
-	wcex.hIconSm		= NULL; //LoadIcon(wcex.hInstance, (LPCTSTR)IDI_SMALL);
+	wcex.style         = CS_HREDRAW | CS_VREDRAW;
+	wcex.lpfnWndProc   = (WNDPROC)WndProc;
+	wcex.cbClsExtra    = 0;
+	wcex.cbWndExtra    = 0;
+	wcex.hInstance     = hInstance;
+	wcex.hIcon         = LoadIcon(hInstance, "GuiIcon");
+	wcex.hCursor       = LoadCursor(NULL, IDC_ARROW);
+	wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW+1);
+	wcex.lpszMenuName  = "GuiMenu";
+	wcex.lpszClassName = szWindowClass;
+	wcex.hIconSm       = NULL; //LoadIcon(wcex.hInstance, (LPCTSTR)IDI_SMALL);
 
 	return RegisterClassEx(&wcex);
 }
@@ -148,6 +149,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	PAINTSTRUCT ps;
 	HDC hdc;
 
+
 	switch (message) 
 	{
 		case WM_COMMAND:
@@ -170,113 +172,132 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			}
 			break;
 
+
 		case WM_PAINT: {
 			HDC hsrc;
 			HDC hsrc1;
 
 			hdc = BeginPaint(hWnd, &ps);
 
-			hsrc=CreateCompatibleDC(hdc);
-			SelectObject(hsrc,hbmp);
-			BitBlt(hdc,0,0,xSize,ySize,hsrc,0,0,SRCCOPY);
+			hsrc = CreateCompatibleDC(hdc);
+			SelectObject(hsrc, hbmp);
+			BitBlt(hdc, 0, 0, xSize, ySize, hsrc, 0, 0, SRCCOPY);
 			DeleteDC(hsrc);
 
 			hsrc1=CreateCompatibleDC(hdc);
-			SelectObject(hsrc1,cbmp);
-			BitBlt(hdc,rMouseX,rMouseY,32,rMouseHeight,hsrc1,0,0,SRCCOPY);
+			SelectObject(hsrc1, cbmp);
+			BitBlt(hdc, rMouseX, rMouseY, 32, rMouseHeight, hsrc1, 0, 0, SRCCOPY);
 			DeleteDC(hsrc1);
 
 			EndPaint(hWnd, &ps);
-			};
+			}
 			break;
+
 
 		case WM_DESTROY:
 			PostQuitMessage(0);
 			exit(0);
 			break;
 
+
 		case WM_KEYDOWN:
 			nVirtKey = (TCHAR) wParam;    // character code 
 
-			if (nVirtKey == VK_ADD) {
-		      captureMouse = !captureMouse;
+      if (nVirtKey == VK_ADD) {
+        captureMouse = !captureMouse;
+        if (captureMouse) {
+          GetClipCursor(&rcOldClip); 
+          GetWindowRect(hWnd, &rcClip); 
+          ClipCursor(&rcClip);
+          SetCursor(NULL);
+        } else {
+          ClipCursor(&rcOldClip); 	
+        }
+        break;  
+      }
 
-			  if (captureMouse) {
-                GetClipCursor(&rcOldClip); 
-                GetWindowRect(hWnd, &rcClip); 
-                ClipCursor(&rcClip);
-				SetCursor(NULL);
-
-			  } else {
-                ClipCursor(&rcOldClip); 	
-
-			  }
-              break;  
-			}
-			
 			lKeyData = lParam;              // key data 
 			nKeyStat = 0;
 			keyF = 1;
 			break;
 
+
 		case WM_KEYUP:
 			nVirtKey = (TCHAR) wParam;    // character code 
-
 			lKeyData = lParam;              // key data 
 			nKeyStat = 1;
 			keyF = 1;
 			break;
 
+
 		case WM_MOUSEMOVE:						
+
 			if (mouseMF == 0) {
 			  nMouseX = LOWORD(lParam);  // horizontal position of cursor 
-			  if (captureMouse) nMouseX *= 2;
-			  nMouseY = HIWORD(lParam);  // vertical position of cursor 
-			  if (captureMouse) nMouseY *= 2;
+        if (captureMouse) {
+          nMouseX *= 2;
+        }
+
+        nMouseY = HIWORD(lParam);  // vertical position of cursor 
+        if (captureMouse) {
+          nMouseY *= 2;
+        }
 			}
+
 			if (captureMouse) {
 			  SetCursor(NULL);
 			}
 
 			mouseMF = 1;
+
 			break;
+
 
 		case WM_LBUTTONDOWN:
 			nButton = 0x00;
 			buttF = 1;
 			break;
 
+
 		case WM_MBUTTONDOWN:
 			nButton = 0x01;
 			buttF = 1;
 			break;
+
 
 		case WM_RBUTTONDOWN:
 			nButton = 0x02;
 			buttF = 1;
 			break;
 
+
 		case WM_LBUTTONUP:
 			nButton = 0x80;
 			buttF = 1;
 			break;
+
 
 		case WM_MBUTTONUP:
 			nButton = 0x81;
 			buttF = 1;
 			break;
 
+
 		case WM_RBUTTONUP:
 			nButton = 0x82;
 			buttF = 1;
 			break;
 
+
 		case WM_SETCURSOR:
-			if (captureMouse)
+
+      if (captureMouse) {
 			  SetCursor(NULL);
-			else
+      } else {
 			  SetCursor(LoadCursor(NULL, IDC_ARROW));
+      }
 			break;
+
 
 		default:
 			return DefWindowProc(hWnd, message, wParam, lParam);
@@ -284,6 +305,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
    return TRUE;
 }
 
+/**
+ * AboutDldProc
+ *
+ */
 BOOL CALLBACK AboutDlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (iMsg)
@@ -304,110 +329,103 @@ BOOL CALLBACK AboutDlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam)
 	return FALSE ;
 } 
 
+/**
+ * createWindow (IMPROVE rename, as it doesn't create a window)
+ *
+ * Called on program startup, create the bitmaps used to
+ * store the main display and cursor images.
+ *
+ * @param x Width of video mode
+ * @param y Height of video mode
+ * @returns ALWAYS 0 (IMPROVE)
+ */
 int createWindow(int x, int y)
 {
-
    xSize = x;
    ySize = y;
 
-//   memset(&fhdr, 0, sizeof(fhdr));
    memset(&pbmi, 0, sizeof(BITMAPINFOHEADER));
    memset(&cbmi, 0, sizeof(BITMAPINFOHEADER));
 
-//   fhdr.bfType = 'MB';
-//   fhdr.bfSize = sizeof(BITMAPINFOHEADER) + sizeof(BITMAPFILEHEADER)
-//		  + x * y * 2 + 0;
-//   fhdr.bfOffBits = sizeof(BITMAPINFOHEADER) + sizeof(BITMAPFILEHEADER)
-//		  + 0;
+   /* Setup display bitmap */
+   pbmi.bmiHeader.biSize          = sizeof(BITMAPINFOHEADER);
+   pbmi.bmiHeader.biWidth         = x;
+   pbmi.bmiHeader.biHeight        = y;
+   pbmi.bmiHeader.biCompression   = BI_RGB; //0;
+   pbmi.bmiHeader.biPlanes        = 1;
+   pbmi.bmiHeader.biSizeImage     = 0; //wic->getWidth()*wic->getHeight()*scale;
+   pbmi.bmiHeader.biBitCount      = 16; //24;
+   pbmi.bmiHeader.biXPelsPerMeter = 0;
+   pbmi.bmiHeader.biYPelsPerMeter = 0;
+   pbmi.bmiHeader.biClrUsed       = 0;
+   pbmi.bmiHeader.biClrImportant  = 0;
+   hbmp = CreateDIBSection(NULL, &pbmi, DIB_RGB_COLORS, (void **)&dibbmp, NULL, 0);
 
-   pbmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-   pbmi.bmiHeader.biWidth = x;
-   pbmi.bmiHeader.biHeight = y;
-   pbmi.bmiHeader.biCompression = BI_RGB; //0;
-   pbmi.bmiHeader.biPlanes = 1;
-   pbmi.bmiHeader.biSizeImage = 0; //wic->getWidth()*wic->getHeight()*scale;
-   pbmi.bmiHeader.biBitCount = 16; //24;
-   pbmi.bmiHeader.biXPelsPerMeter=0;
-   pbmi.bmiHeader.biYPelsPerMeter=0;
-   pbmi.bmiHeader.biClrUsed=0;
-   pbmi.bmiHeader.biClrImportant=0;
-   hbmp=CreateDIBSection(NULL,&pbmi,DIB_RGB_COLORS,(void **)&dibbmp,NULL,0);
+   /* Setup Cursor bitmap */
+   cbmi.bmiHeader.biSize          = sizeof(BITMAPINFOHEADER);
+   cbmi.bmiHeader.biWidth         = 32;
+   cbmi.bmiHeader.biHeight        = y;
+   cbmi.bmiHeader.biCompression   = BI_RGB; //0;
+   cbmi.bmiHeader.biPlanes        = 1;
+   cbmi.bmiHeader.biSizeImage     = 0; //wic->getWidth()*wic->getHeight()*scale;
+   cbmi.bmiHeader.biBitCount      = 16; //24;
+   cbmi.bmiHeader.biXPelsPerMeter = 0;
+   cbmi.bmiHeader.biYPelsPerMeter = 0;
+   cbmi.bmiHeader.biClrUsed       = 0;
+   cbmi.bmiHeader.biClrImportant  = 0;
+   cbmp = CreateDIBSection(NULL, &cbmi, DIB_RGB_COLORS, (void **)&curbmp, NULL, 0);
 
-   cbmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-   cbmi.bmiHeader.biWidth = 32;
-   cbmi.bmiHeader.biHeight = y;
-   cbmi.bmiHeader.biCompression = BI_RGB; //0;
-   cbmi.bmiHeader.biPlanes = 1;
-   cbmi.bmiHeader.biSizeImage = 0; //wic->getWidth()*wic->getHeight()*scale;
-   cbmi.bmiHeader.biBitCount = 16; //24;
-   cbmi.bmiHeader.biXPelsPerMeter=0;
-   cbmi.bmiHeader.biYPelsPerMeter=0;
-   cbmi.bmiHeader.biClrUsed=0;
-   cbmi.bmiHeader.biClrImportant=0;
-   cbmp=CreateDIBSection(NULL,&cbmi,DIB_RGB_COLORS,(void **)&curbmp,NULL,0);
-
-   CreateThread(NULL,
-	     16384,
-	     threadWindow,
-	     NULL,
-	     0,
-	     &tid);
+   CreateThread(NULL, 16384, threadWindow, NULL, 0, &tid);
 
    return 0;
 }
 
-int updateDisplay()
+/**
+ * updateDisplay
+ *
+ *
+ * @returns ALWAYS 0 (IMPROVE)
+ */
+int updateDisplay(void)
 {
-  /*if (captureMouse) {
-    RECT rect;
-    int width, height;
-
-	width  = rMouseX + GetSystemMetrics(SM_CXFIXEDFRAME);
-    height = rMouseY + GetSystemMetrics(SM_CYFIXEDFRAME)
-	 + GetSystemMetrics(SM_CYCAPTION)
-	 + GetSystemMetrics(SM_CYMENU);
-
-
-//	captureFB = TRUE;
-    GetWindowRect(mainWin, &rect);
-//    SetCursorPos(rect.left + width, rect.top + height);
-    SetCursorPos(rect.left + (rect.right - rect.left) /2, rect.top + height);
-  }*/
- 
   InvalidateRect(mainWin, NULL, 0);
   UpdateWindow(mainWin);
 
   return 0;
 }
 
+/**
+ * resizeWindow
+ *
+ * Called when vidc recieves new display start and end parameters
+ *
+ * @param hWidth  New width in pixels
+ * @param hHeight New width in pixels
+ * @returns ALWAYS 0 (IMPROVE)
+ */
 int resizeWindow(int hWidth, int hHeight)
 {
   RECT r;
 
   int w, h;
 
-  if (hWidth <= 0 || hWidth > xSize) return 0;
-  if (hHeight <= 0 || hHeight > ySize) return 0;
+  if (hWidth <= 0 || hWidth > xSize) {
+    return 0;
+  }
+  if (hHeight <= 0 || hHeight > ySize) {
+    return 0;
+  }
 
-  if (GetWindowRect(mainWin, &r) != TRUE) return 0;
+  if (GetWindowRect(mainWin, &r) != TRUE) {
+    return 0;
+  }
 
-  w = hWidth+GetSystemMetrics(SM_CXFIXEDFRAME)*2;
-  h = hHeight+GetSystemMetrics(SM_CYFIXEDFRAME)*2
-	+GetSystemMetrics(SM_CYCAPTION)
-	+GetSystemMetrics(SM_CYMENU);
+  w = hWidth  + GetSystemMetrics(SM_CXFIXEDFRAME) * 2;
+  h = hHeight + GetSystemMetrics(SM_CYFIXEDFRAME) * 2
+	    + GetSystemMetrics(SM_CYCAPTION)
+      + GetSystemMetrics(SM_CYMENU);
 
-  MoveWindow(
-	mainWin,
-	r.left,
-	r.top,
-	w,
-	h,
-	TRUE
-  );
-//  r.right = r.left+w;
-//  r.bottom = r.top+h;
-//  ClipCursor(&r);
-//  SetCursorPos(r.left+w/2, r.top+h/2);
+  MoveWindow(mainWin, r.left,	r.top, w, h, TRUE);
 
   return 0;
 }
