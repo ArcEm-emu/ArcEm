@@ -373,7 +373,7 @@ static void DoColourMap_Standard(ARMul_State *state) {
   };
 
   /* Now do the ones for the cursor */
-  for(c=0;c<2;c++) {
+  for(c=0;c<3;c++) {
     tmp.flags=DoRed|DoGreen|DoBlue;
     tmp.pixel=c+CURSORCOLBASE;
     tmp.red=(VIDC.CursorPalette[c] &15)<<12;
