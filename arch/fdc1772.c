@@ -881,9 +881,12 @@ char *fdc_eject_floppy(int drive)
 
     dr = FDC.drive + drive;
 
-    if (fclose(dr->fp)) {
-        fprintf(stderr, "error closing floppy drive %d: %s\n",
-            drive, strerror(errno));
+    if (dr->fp != NULL)
+    {
+        if (fclose(dr->fp)) {
+            fprintf(stderr, "error closing floppy drive %d: %s\n",
+                    drive, strerror(errno));
+        }
     }
 
     dr->fp = NULL;
