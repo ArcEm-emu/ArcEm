@@ -160,7 +160,6 @@
 				D1F01D8302931F6101CDBB35,
 				29B97316FDCFA39411CA2CEA,
 				D1E0F9CF02B41B0301D1F43F,
-				D1E0F9DF02B41B0301D1F43F,
 				D1E0F9E202B41B0301D1F43F,
 				D1E0F9E302B41B0301D1F43F,
 				D1E0F9E802B41B0301D1F43F,
@@ -323,6 +322,7 @@
 				D1E0FA1E02B41B0301D1F43F,
 				D1E0FA1F02B41B0301D1F43F,
 				D1E0FA2002B41B0301D1F43F,
+				4CA3F3F1046BE8B800E6600F,
 			);
 			isa = PBXHeadersBuildPhase;
 			runOnlyForDeploymentPostprocessing = 0;
@@ -362,6 +362,7 @@
 				D1E0FA1602B41B0301D1F43F,
 				D1E0FA1802B41B0301D1F43F,
 				D1E0FA1B02B41B0301D1F43F,
+				4CA3F3F0046BE8B800E6600F,
 			);
 			isa = PBXSourcesBuildPhase;
 			runOnlyForDeploymentPostprocessing = 0;
@@ -416,6 +417,42 @@
 //4A2
 //4A3
 //4A4
+//4C0
+//4C1
+//4C2
+//4C3
+//4C4
+		4CA3F3EE046BE8B800E6600F = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			name = keyboard.c;
+			path = /Users/michael/Dev/arcem/clean/arcem/arch/keyboard.c;
+			refType = 0;
+		};
+		4CA3F3EF046BE8B800E6600F = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			name = keyboard.h;
+			path = /Users/michael/Dev/arcem/clean/arcem/arch/keyboard.h;
+			refType = 0;
+		};
+		4CA3F3F0046BE8B800E6600F = {
+			fileRef = 4CA3F3EE046BE8B800E6600F;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		4CA3F3F1046BE8B800E6600F = {
+			fileRef = 4CA3F3EF046BE8B800E6600F;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+//4C0
+//4C1
+//4C2
+//4C3
+//4C4
 //D10
 //D11
 //D12
@@ -566,6 +603,8 @@
 				D1E0F9DC02B41B0301D1F43F,
 				D1E0F9DD02B41B0301D1F43F,
 				D1E0F9DE02B41B0301D1F43F,
+				4CA3F3EE046BE8B800E6600F,
+				4CA3F3EF046BE8B800E6600F,
 			);
 			isa = PBXGroup;
 			name = arch;
@@ -661,14 +700,6 @@
 			isa = PBXFileReference;
 			path = Version.h;
 			refType = 4;
-		};
-		D1E0F9DF02B41B0301D1F43F = {
-			children = (
-			);
-			isa = PBXGroup;
-			name = arm_code;
-			path = /Users/michael/Dev/arcem/clean/arcem/arm_code;
-			refType = 0;
 		};
 		D1E0F9E202B41B0301D1F43F = {
 			fileEncoding = 30;
