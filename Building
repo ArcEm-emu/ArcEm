@@ -25,6 +25,12 @@ RISC OS Single Tasking:
   This is the default build option.
   The program should build with GCC with 'make' distributed with it.
 
+  This version has two modes of operation.  The default is "Direct
+  Display", where writes are mapped directly to the screen and
+  the host machine matches the emulator's screen mode.  The alternative
+  is to cache writes as per the X version, and run in mode 31.  This
+  is controlled by the DIRECT_DISPLAY setting in the Makefile.
+
 
 RISC OS Desktop version:
 
