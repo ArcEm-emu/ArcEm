@@ -1647,9 +1647,7 @@ unsigned int DisplayKbd_XPoll(void *data) {
     };
   };
 
-
-  /* See if there is an event - if there is deal with it */
-  if (XCheckMaskEvent(HD.disp,ULONG_MAX,&e)) {
+    if (XCheckMaskEvent(HD.disp, ULONG_MAX, &e)) {
 #ifdef DEBUG_X_PROTOCOL
         if (e.xany.window == HD.BackingWindow) {
             printf("backingwindow ");
@@ -1665,13 +1663,20 @@ unsigned int DisplayKbd_XPoll(void *data) {
         printf("= %d\n", e.type);
 #endif
 
-    /* Handle event */
-    if (e.xany.window==HD.BackingWindow) BackingWindow_Event(state,&e);
-    if (e.xany.window==HD.MainPane) MainPane_Event(state,&e);
-    if (e.xany.window==HD.ControlPane) ControlPane_Event(state,&e);
-    if (e.xany.window==HD.CursorPane) CursorPane_Event(state,&e);
-
-  }; /* Pending event ? */
+        if (e.xany.window == HD.BackingWindow) {
+            BackingWindow_Event(state, &e);
+        } else if (e.xany.window == HD.MainPane) {
+            MainPane_Event(state, &e);
+        } else if (e.xany.window == HD.ControlPane) {
+            ControlPane_Event(state, &e);
+        } else if (e.xany.window == HD.CursorPane) {
+            CursorPane_Event(state, &e);
+        } else {
+            fprintf(stderr, "event on unknown window: %#lx %d\n",
+                e.xany.window, e.type);
+            exit(1);
+        }
+    }
 
   if (--(DC.AutoRefresh)<0) RefreshDisplay(state);
 
