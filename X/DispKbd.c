@@ -860,7 +860,7 @@ void DisplayKbd_Init(ARMul_State *state) {
 
   XSetErrorHandler(DisplayKbd_XError);
 
-  XSynchronize(HD.disp,1);
+  /* for debug -- XSynchronize(HD.disp, 1); */
 
   HD.xScreen=XDefaultScreenOfDisplay(HD.disp);
   HD.ScreenNum=XScreenNumberOfScreen(HD.xScreen);
