@@ -121,6 +121,8 @@
     X(button_1, 7, 0) \
     X(button_2, 7, 1) \
     X(button_3, 7, 2) \
+    X(button_4, 7, 3) \
+    X(button_5, 7, 4) \
 
 enum {
 #define X(key, row, col) ARCH_KEY_ ## key,
@@ -138,3 +140,4 @@ void keyboard_key_changed(struct arch_keyboard *kb, arch_key_id kid,
 
 void Kbd_StartToHost(ARMul_State *state);
 void Kbd_CodeFromHost(ARMul_State *state, unsigned char FromHost);
+

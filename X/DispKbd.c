@@ -1395,6 +1395,12 @@ static void ProcessButton(ARMul_State *state, XButtonEvent *button)
     case Button3:
       kid = ARCH_KEY_button_3;
       break;
+    case Button4:
+      kid = ARCH_KEY_button_4;
+      break;
+    case Button5:
+      kid = ARCH_KEY_button_5;
+      break;
     default:
       return;
   }
