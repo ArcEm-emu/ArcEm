@@ -3,6 +3,8 @@ Archimedes emulator by David Alan Gilbert
 
 Version 0.60
 
+Please refer to the file "Building" for building arcem.
+
 Archimedes hardware emulation code (c) David Alan Gilbert 1995-1999
 It uses the GPL release of the ARMulator V1.0 by ARM Ltd
 
