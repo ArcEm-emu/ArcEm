@@ -12,7 +12,7 @@
    "RISC OS Support for extension ROMs", a text file
 */
 
-#if defined(SYSTEM_X) || defined(MACOSX)  
+#if defined(SYSTEM_X) || defined(MACOSX)
 
 #include <assert.h>
 #include <errno.h>
@@ -25,6 +25,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#include "../armdefs.h"
 #include "extnrom.h"
 
 #define PRODUCT_TYPE_EXTENSION_ROM 0x0087 /* Allocated type for Extension Roms */
@@ -94,19 +95,36 @@ get_32bit_le(const void *address)
   return result;
 }
 
+/* TODO: Make this a no-op on a little-endian host */
+static void
+extnrom_endian_correct(ARMword *start_addr, unsigned size)
+{
+  unsigned size_in_words = ROUND_UP_TO_4(size) / 4;
+  unsigned word_num;
+  ARMword word;
+
+  assert(start_addr != NULL);
+  assert(size > 0);
+
+  for (word_num = 0; word_num < size_in_words; word_num++) {
+    word = get_32bit_le(start_addr + word_num); /* Read little-endian */
+    start_addr[word_num] = word;                /* Write host-endian */
+  }
+}
+
 static unsigned
-extnrom_calculate_checksum(const unsigned char *start_addr,
-                           unsigned size)
+extnrom_calculate_checksum(const ARMword *start_addr, unsigned size)
 {
   unsigned checksum = 0;
-  unsigned word;
+  unsigned size_in_words = ROUND_UP_TO_4(size) / 4;
+  unsigned word_num;
 
   assert(start_addr != NULL);
   assert(size > 0);
   assert((size & 0xffff) == 0); /* size is multiple of 64KB */
 
-  for (word = 0; word < (size - 12); word += 4) {
-    checksum += get_32bit_le(start_addr + word);
+  for (word_num = 0; word_num < (size_in_words - 3); word_num++) {
+    checksum += start_addr[word_num];
   }
 
   return checksum;
@@ -193,10 +211,11 @@ extnrom_calculate_size(unsigned *entry_count)
 void
 extnrom_load(unsigned size, unsigned entry_count, void *address)
 {
-  unsigned char *start_addr = address;
-  unsigned char *chunk, *modules;
+  ARMword *start_addr = address;
+  ARMword *chunk, *modules;
   DIR *d;
   struct dirent *entry;
+  unsigned size_in_words = size / 4;
 
   assert(((size != 0) && (entry_count != 0)) ||
          ((size == 0) && (entry_count == 0)));
@@ -210,20 +229,28 @@ extnrom_load(unsigned size, unsigned entry_count, void *address)
   assert(address != NULL);
 
   /* Fill in Expansion Card identity */
-  start_addr[0] = 0x00; /* Acorn conformant, extended Expansion Card identity
-                           present, no Interrupts */
-  start_addr[1] = 0x03; /* 8-bit wide, Interrupt Status Pointers prsent,
-                           Chunk Directory present */
-  start_addr[2] = 0x00; /* All values reserved - must be 0 */
-  store_16bit_le(start_addr + 3, PRODUCT_TYPE_EXTENSION_ROM);
-  store_16bit_le(start_addr + 5, MANUFACTURER_CODE);
-  start_addr[7] = COUNTRY_CODE;
+  {
+    unsigned simple_ecid = 0x00; /* Acorn conformant, extended Expansion Card
+                                    identity present, no Interrupts */
+    unsigned flags = 0x03; /* 8-bit wide, Interrupt Status Pointers present,
+                              Chunk Directory present */
+    unsigned reserved = 0x00; /* All values reserved - must be 0 */
+
+    start_addr[0] = simple_ecid |
+                    (flags << 8) |
+                    (reserved << 16) |
+                    ((PRODUCT_TYPE_EXTENSION_ROM & 0xff) << 24);
+    start_addr[1] = (PRODUCT_TYPE_EXTENSION_ROM >> 8) |
+                    (MANUFACTURER_CODE << 8) |
+                    (COUNTRY_CODE << 24);
+  }
 
   /* Interrupt Status Pointers */
   /* "Extension ROMs must provide Interrupt Status Pointers. However,
       extension ROMs generate neither FIQ nor IRQ: consequently their
       Interrupt Status Pointers always consist of eight zero bytes */
-  memset(start_addr + 8, 0, 8);
+  start_addr[2] = 0;
+  start_addr[3] = 0;
 
   /* Read list of files, create Chunk Directory and load them in */
   d = opendir(EXTNROM_DIRECTORY);
@@ -233,29 +260,28 @@ extnrom_load(unsigned size, unsigned entry_count, void *address)
     return;
   }
 
-  chunk = start_addr + 16; /* points to where the Chunk Directory will be made */
+  chunk = start_addr + 4; /* points to where the Chunk Directory will be made */
 
   /* Initialise pointer to where the actual module data will be loaded.
-     These reside after the Header (16),
-     Chunk Directory (8 per entry plus 8 for the descriptor entry)
-     and Chunk Directory Terminator (4) */
-  modules = chunk + (entry_count * 8) + 8 + 4;
+     These reside after the Header (16 bytes, 4 words),
+     Chunk Directory (8 bytes (2 words) per entry
+                      plus 8 bytes (2 words) for the descriptor entry)
+     and Chunk Directory Terminator (4 bytes, 1 word) */
+  modules = chunk + (entry_count * 2) + 2 + 1;
 
   /* The First Chunk: A simple description string */
-  {
-    unsigned offset = modules - start_addr;
+  chunk[0] = OS_ID_BYTE_DEVICE_DESCR |
+             ((strlen(DESCRIPTION_STRING) + 1) << 8);
+  chunk[1] = (modules - start_addr) * 4; /* offset in bytes */
 
-    chunk[0] = OS_ID_BYTE_DEVICE_DESCR;
-    store_24bit_le(chunk + 1, strlen(DESCRIPTION_STRING) + 1);
-    store_32bit_le(chunk + 4, offset);
+  strcpy((char *) modules, DESCRIPTION_STRING);
+  extnrom_endian_correct(modules, strlen(DESCRIPTION_STRING) + 1);
 
-    strcpy(modules, DESCRIPTION_STRING);
+  /* Move chunk and module pointers on */
+  chunk += 2;
+  modules += ROUND_UP_TO_4(strlen(DESCRIPTION_STRING) + 1) / 4;
 
-    /* Move chunk and module pointers on */
-    chunk += 8;
-    modules += ROUND_UP_TO_4(strlen(DESCRIPTION_STRING) + 1);
-  }
-
+  /* Process the modules */
   while ((entry = readdir(d)) != NULL) {
     char path[PATH_MAX];
     struct stat entry_info;
@@ -283,15 +309,18 @@ extnrom_load(unsigned size, unsigned entry_count, void *address)
     }
 
     /* Offset of where this module will be placed in the ROM */
-    offset = (modules - start_addr) + 4;
+    offset = ((modules - start_addr) * 4) + 4;
 
     /* Prepare Chunk Directory information for this entry */
-    chunk[0] = OS_ID_BYTE_RISCOS_MODULE;
-    store_24bit_le(chunk + 1, entry_info.st_size);
-    store_32bit_le(chunk + 4, offset);
+    chunk[0] = OS_ID_BYTE_RISCOS_MODULE |
+               (entry_info.st_size << 8);
+    chunk[1] = offset;
 
     /* Prepare undocumented size prefix - size includes the size data */
-    store_32bit_le(modules, entry_info.st_size + 4);
+    modules[0] = entry_info.st_size + 4;
+
+    /* Point to next word within module area - after the size */
+    modules++;
 
     /* Load module */
     f = fopen(path, "rb");
@@ -301,7 +330,7 @@ extnrom_load(unsigned size, unsigned entry_count, void *address)
       continue;
     }
 
-    if (fread(modules + 4, 1, entry_info.st_size, f) != entry_info.st_size) {
+    if (fread(modules, 1, entry_info.st_size, f) != entry_info.st_size) {
       fprintf(stderr, "Error while loading file \'%s\': %s\n",
               path, strerror(errno));
       fclose(f);
@@ -310,27 +339,35 @@ extnrom_load(unsigned size, unsigned entry_count, void *address)
 
     fclose(f);
 
+    /* Byte-swap module from little-endian to host processor */
+    extnrom_endian_correct(modules, entry_info.st_size);
+
     /* Move chunk and module pointers on */
-    chunk += 8;
-    modules += ROUND_UP_TO_4(4 + entry_info.st_size);
+    chunk += 2;
+    modules += ROUND_UP_TO_4(entry_info.st_size) / 4;
   }
 
   closedir(d);
 
   /* Fill in chunk directory terminator */
-  memset(chunk, 0, 4);
+  chunk[0] = 0;
 
   /* Fill in end header */
-  store_32bit_le(start_addr + size - 16, size);
+  start_addr[size_in_words - 4] = size;
 
   /* Calculate and fill in checksum */
-  {
-    unsigned checksum = extnrom_calculate_checksum(start_addr, size);
+  start_addr[size_in_words - 3] = extnrom_calculate_checksum(start_addr, size);
 
-    store_32bit_le(start_addr + size - 12, checksum);
-  }
+  /* Fill in Extension ROM id */
+  /* memcpy() used to ensure no zero-terminator */
+  memcpy(start_addr + size_in_words - 2, "ExtnROM0", 8);
+  extnrom_endian_correct(start_addr + size_in_words - 2, 8);
 
-  memcpy(start_addr + size - 8, "ExtnROM0", 8); /* memcpy used to ensure no zero-terminator */
+  /*{
+    FILE *f = fopen("extnrom_dump", "wb");
+    fwrite(start_addr, 1, size, f);
+    fclose(f);
+  }*/
 }
 
-#endif /* SYSTEM_X */
+#endif /* defined(SYSTEM_X) || defined(MACOSX) */
