@@ -36,7 +36,7 @@ WARN = -Wall -Wno-return-type -Wno-unknown-pragmas -Wshadow -Wundef \
 
 
 # add -DHOST_BIGENDIAN for big endian hosts, e.g. Sun, SGI, HP
-CFLAGS = -O3 -D$(ENDIAN) $(CFL) -DNOOS -DNOFPE $(WARN) -DSYSTEM_$(SYSTEM) \
+CFLAGS = -O3 -D$(ENDIAN) $(CFL) -DNOOS -DNOFPE $(WARN) \
  -I$(SYSTEM) -Iarch -funroll-loops -fexpensive-optimizations -ffast-math \
  -fomit-frame-pointer -frerun-cse-after-loop
 
@@ -70,23 +70,24 @@ INCS = armdefs.h armemu.h armfpe.h armopts.h bag.h armos.h \
 TARGET=arcem
 
 ifeq (${SYSTEM},riscos)
-CFLAGS += -Iriscos-single
+CFLAGS += -DSYSTEM_riscos -Iriscos-single 
 TARGET=!ArcEm/arcem
 endif
 
 ifeq (${SYSTEM},riscos-single)
 DIRECT_DISPLAY=yes
-CFLAGS += -Iriscos-single -mpoke-function-name
+CFLAGS += -DSYSTEM_riscos_single -Iriscos-single -mpoke-function-name
 OBJS += arm-support.o rhs.o
 TARGET=!ArcEm/arcem
 endif
 
 ifeq (${SYSTEM},X)
-CFLAGS += -I/usr/X11R6/include
-LIBS +=  -L/usr/X11R6/lib -lXext -lX11
+CFLAGS += -DSYSTEM_X -I/usr/X11R6/include
+LIBS += -L/usr/X11R6/lib -lXext -lX11
 endif
 
 ifeq (${SYSTEM},win)
+CFLAGS += -DSYSTEM_win
 OBJS += win/gui.o win/win.o
 LIBS += -luser32 -lgdi32
 endif

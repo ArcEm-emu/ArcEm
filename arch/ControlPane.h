@@ -8,7 +8,7 @@ void ControlPane_Init(ARMul_State *state);
 /*----------------------------------------------------------------------------*/
 void ControlPane_RedrawLeds(ARMul_State *state);
 
-#ifdef SYSTEM_X
+#ifdef SYSTEM_X 
 /*----------------------------------------------------------------------------*/
 void ControlPane_Event(ARMul_State *state,XEvent *e);
 #endif
