@@ -1,7 +1,9 @@
 Archimedes Emulator
 ===================
-Version 0.60
-This is the 2nd RISC OS Release
+Homepage: http://arcem.sf.net/
+
+Version 1.00
+This is the 3rd RISC OS Release
 
 Ported by Alex Macfarlane Smith and Peter Naulls
 Contact:  peter@chocky.org
@@ -16,7 +18,7 @@ However, you can boot RISC OS and ARM Linux on it.
 
 Installing:
 
-  You will require the !Unixhome application.  This is avilable from
+  You will require the !Unixhome application.  This is available from
   http://www.chocky.org/unix/programs/
   Put the file /arcemrc inside !UnixHome (double click on it)
   Put the !ArcEm application anywhere you like along with the 'ROM'
@@ -52,7 +54,6 @@ Known Problems:
   key combination to quit emulator).
 
 
-Source available upon request.
 Original source, documentation, etc, available from:
 
   ftp://ftp.arm.linux.org.uk/pub/linux/arcem/
