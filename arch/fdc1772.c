@@ -3,6 +3,8 @@
 
 /*#define DEBUG_FDC */
 
+#include <stdlib.h>
+
 #define __USE_FIXED_PROTOTYPES__
 #include <errno.h>
 #include <stdio.h>
@@ -32,21 +34,28 @@
 #define TYPE2_BIT_MOTORON (1<<2)
 #define TYPE2_BIT_MULTISECTOR (1<<4)
 
-/* COMMENT this out for E-format discs */
-//#define DOSDISC
+typedef struct {
+    char *name;
+    int bytes_per_sector;
+    int sector_size_code;
+    int sectors_per_track;
+    int sector_base;
+    int num_tracks;
+} floppy_format;
 
-#ifndef DOSDISC
-#define SECTORSIZE 1024
-#define SECTORSIZECODE 3
-#define SECTORSPERTRACK 5
-#define SECTOROFFSET 0
-#else
-#define SECTORSIZE 512
-#define SECTORSIZECODE 2
-#define SECTORSPERTRACK 9
-#define SECTOROFFSET 1
-#endif
-#define TRACKSONDISC 80
+static floppy_format avail_format[] = {
+    { "ADFS 800KB", 1024, 3, 5, 0, 80 },
+    { "DOS 720KB", 512, 2, 9, 1, 80 },
+};
+
+/* points to an element of avail_format. */
+static floppy_format *format;
+
+#define SECTORSIZE (format->bytes_per_sector)
+#define SECTORSIZECODE (format->sector_size_code)
+#define SECTORSPERTRACK (format->sectors_per_track)
+#define SECTOROFFSET (format->sector_base)
+#define TRACKSONDISC (format->num_tracks)
 
 static void FDC_DoWriteChar(ARMul_State *state);
 static void FDC_DoReadChar(ARMul_State *state);
@@ -821,7 +830,15 @@ void FDC_ReOpen(ARMul_State *state, int drive) {
 
 /*--------------------------------------------------------------------------*/
 void FDC_Init(ARMul_State *state) {
-int disc;
+    char *env;
+    int disc;
+
+    if ((env = getenv("ARCEMFLOPPYFORM")) == NULL) {
+        env = "0";
+    }
+    format = avail_format + atoi(env);
+    fprintf(stderr, "floppy format: %s\n", format->name);
+
   FDC.StatusReg=0;
   FDC.Track=0;
   FDC.Sector=SECTOROFFSET;
