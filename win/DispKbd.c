@@ -48,12 +48,6 @@ static void ProcessButton(ARMul_State *state);
 
 
 
-static unsigned long get_pixelval(unsigned int red, unsigned int green, unsigned int blue) {
-    return (((red >> (16 - HD.red_prec)) << HD.red_shift) +
-           ((green >> (16 - HD.green_prec)) << HD.green_shift) +
-           ((blue >> (16 - HD.blue_prec)) << HD.blue_shift));
-} /* get_pixval */
-
 
 
 
@@ -97,41 +91,48 @@ unsigned int DisplayKbd_XPoll(void *data)
 {
   ARMul_State *state = data;
   int KbdSerialVal;
-  static int KbdPollInt=0;
-  static int discconttog=0;
+  static int KbdPollInt  = 0;
+  static int discconttog = 0;
 
   /* Our POLLGAP runs at 125 cycles, HDC (and fdc) want callback at 250 */
 
-  if (discconttog)
+  if (discconttog) {
     HDC_Regular(state);
-  discconttog^=1;
+  }
+  discconttog ^= 1;
 
-  if ((KbdPollInt++)>100) {
-    KbdPollInt=0;
+  if ((KbdPollInt++) > 100) {
+    KbdPollInt = 0;
 
     /* Keyboard check */
-    if (KbdSerialVal=IOC_ReadKbdTx(state),KbdSerialVal!=-1) {
+    if (KbdSerialVal = IOC_ReadKbdTx(state), KbdSerialVal!=-1) {
       Kbd_CodeFromHost(state, (unsigned char)KbdSerialVal);
     } else {
-      if (KBD.TimerIntHasHappened>2) {
-        KBD.TimerIntHasHappened=0;
-        if (KBD.KbdState == KbdState_Idle)
+      if (KBD.TimerIntHasHappened > 2) {
+        KBD.TimerIntHasHappened = 0;
+        if (KBD.KbdState == KbdState_Idle) {
           Kbd_StartToHost(state);
+        }
       }
     }
   }
 
-  if (keyF)
+  if (keyF) {
     ProcessKey(state);
-  if (buttF)
+  }
+  if (buttF) {
     ProcessButton(state);
-  if (mouseMF)
+  }
+  if (mouseMF) {
     MouseMoved(state);
+  }
 
-  if (--(DC.AutoRefresh)<0) RefreshDisplay(state);
-  ARMul_ScheduleEvent(&(enodes[xpollenode]),POLLGAP,DisplayKbd_XPoll);
+  if (--(DC.AutoRefresh) < 0) {
+    RefreshDisplay(state);
+  }
+  ARMul_ScheduleEvent(&(enodes[xpollenode]), POLLGAP, DisplayKbd_XPoll);
 
-  xpollenode^=1;
+  xpollenode ^= 1;
 
   return 0;
 }
@@ -140,207 +141,100 @@ unsigned int DisplayKbd_XPoll(void *data)
 
 /*-----------------------------------------------------------------------------*/
 
-/* I'm not confident that this is completely correct - if it's wrong all hell
-   is bound to break loose! If it works however it should speed things up nicely!
-*/
-
-static void MarkAsUpdated(ARMul_State *state, int end)
-{
-  unsigned int Addr=MEMC.Vinit*16;
-  unsigned int Vend=MEMC.Vend*16;
-
-  /* Loop from Vinit until we have done the whole image */
-
-  for(;end>0;Addr+=UPDATEBLOCKSIZE,end-=UPDATEBLOCKSIZE) {
-    if (Addr>Vend) 
-      Addr=Addr-Vend+MEMC.Vstart*16;
-    DC.UpdateFlags[Addr/UPDATEBLOCKSIZE]=MEMC.UpdateFlags[Addr/UPDATEBLOCKSIZE];
-  };
-
-}; /* MarkAsUpdated */
 
 
 
-/*----------------------------------------------------------------------------*/
-/* Check to see if the area of memory has changed.                            */
-/* Returns true if there is any chance that the given area has changed        */
-static int QueryRamChange(ARMul_State *state, unsigned int offset, int len) {
-  unsigned int Vinit=MEMC.Vinit;
-  unsigned int Vstart=MEMC.Vstart;
-  unsigned int Vend=MEMC.Vend;
-  unsigned int startblock,endblock,currentblock;
 
-  /* Figure out if 'offset' starts between Vinit-Vend or Vstart-Vinit */
-
-  if (offset < (((Vend-Vinit)+1)*16)) {
-    /* Vinit-Vend */
-    /* Now check to see if the whole buffer is in that area */
-    if ((offset+len)>=(((Vend-Vinit)+1)*16)) {
-      /* Its split - so copy the bit upto Vend and then the rest */
-
-      /* Don't bother - this isn't going to happen much - lets say it changed */
-      return(1);
-    } else {
-      offset+=Vinit*16;
-    };
-  } else {
-    /* Vstart-Vinit */
-    /* its all in one place */
-    offset-=((Vend-Vinit)+1)*16; /* Thats the bit after Vinit */
-    offset+=Vstart*16; /* so the bit we copy is somewhere after Vstart */
-  };
-
-  /* So now we have an area running from 'offset' to 'offset+len' */
-  startblock=offset/UPDATEBLOCKSIZE;
-  endblock=(offset+len)/UPDATEBLOCKSIZE;
-
-  /* Now just loop through from startblock to endblock */
-  for(currentblock=startblock;currentblock<=endblock;currentblock++) {
-    if (MEMC.UpdateFlags[currentblock]!=DC.UpdateFlags[currentblock]) {
-      return(1);
-    }
-  }
-
-  /* We've checked them all and their are no changes */
-  return(0);
-}; /* QueryRamChange */
-
-/*-----------------------------------------------------------------------------*/
-/* Copy a lump of screen RAM into the buffer.  The section of screen ram is    */
-/* len bytes from the top left of the screen.  The routine takes into account
-   all scrolling etc.                                                          */
-/* This routine may be burdened with undoing endianness                        */
-static void CopyScreenRAM(ARMul_State *state, unsigned int offset, int len, char *Buffer) {
-  unsigned int Vinit=MEMC.Vinit;
-  unsigned int Vstart=MEMC.Vstart;
-  unsigned int Vend=MEMC.Vend;
-
-  /*fprintf(stderr,"CopyScreenRAM: offset=%d len=%d Vinit=0x%x VStart=0x%x Vend=0x%x\n",
-         offset,len,Vinit,Vstart,Vend); */
-
-  /* Figure out if 'offset' starts between Vinit-Vend or Vstart-Vinit */
-  if ((offset)<(((Vend-Vinit)+1)*16)) {
-    /* Vinit-Vend */
-    /* Now check to see if the whole buffer is in that area */
-    if ((offset+len)>=(((Vend-Vinit)+1)*16)) {
-      /* Its split - so copy the bit upto Vend and then the rest */
-      int tmplen;
-
-      offset+=Vinit*16;
-      tmplen=(Vend+1)*16-offset;
-      /*fprintf(stderr,"CopyScreenRAM: Split over Vend offset now=0x%x tmplen=%d\n",offset,tmplen); */
-      memcpy(Buffer,MEMC.PhysRam+(offset/sizeof(ARMword)),tmplen);
-      memcpy(Buffer+tmplen,MEMC.PhysRam+((Vstart*16)/sizeof(ARMword)),len-tmplen);
-    } else {
-      /* Its all their */
-      /*fprintf(stderr,"CopyScreenRAM: All in one piece between Vinit..Vend offset=0x%x\n",offset); */
-      offset+=Vinit*16;
-      memcpy(Buffer,MEMC.PhysRam+(offset/sizeof(ARMword)),len);
-    };
-  } else {
-    /* Vstart-Vinit */
-    /* its all in one place */
-    offset-=((Vend-Vinit)+1)*16; /* Thats the bit after Vinit */
-    offset+=Vstart*16; /* so the bit we copy is somewhere after Vstart */
-    /*fprintf(stderr,"CopyScreenRAM: All in one piece between Vstart..Vinit offset=0x%x\n",offset); */
-    memcpy(Buffer,MEMC.PhysRam+(offset/sizeof(ARMword)),len);
-  };
-
-#ifdef HOST_BIGENDIAN
-/* Hacking of the buffer now - OK - I know that I should do this neater */
-  for(offset=0;offset<len;offset+=4) {
-    unsigned char tmp;
-
-    tmp=Buffer[offset];
-    Buffer[offset]=Buffer[offset+3];
-    Buffer[offset+3]=tmp;
-    tmp=Buffer[offset+2];
-    Buffer[offset+2]=Buffer[offset+1];
-    Buffer[offset+1]=tmp;
-  };
-#endif
-}; /* CopyScreenRAM */
 
 /*-----------------------------------------------------------------------------*/
 /* Configure the TrueColor pixelmap for the standard 1,2,4 bpp modes           */
-static void DoPixelMap_Standard(ARMul_State *state) {
+static void DoPixelMap_Standard(ARMul_State *state)
+{
   char tmpstr[16];
   XColor tmp;
   int c;
 
-  if (!(DC.MustRedraw || DC.MustResetPalette)) return;
-
+  if (!(DC.MustRedraw || DC.MustResetPalette)) {
+    return;
+  }
 
   for(c=0;c<16;c++) {
-    tmp.red=(VIDC.Palette[c] & 15)<<12;
-    tmp.green=((VIDC.Palette[c]>>4) & 15)<<12;
-    tmp.blue=((VIDC.Palette[c]>>8) & 15)<<12;
-    sprintf(tmpstr,"#%4x%4x%4x",tmp.red,tmp.green,tmp.blue);
+    tmp.red   = (VIDC.Palette[c] & 15) << 12;
+    tmp.green = ((VIDC.Palette[c] >> 4) & 15) << 12;
+    tmp.blue  = ((VIDC.Palette[c] >> 8) & 15) << 12;
+    sprintf(tmpstr, "#%4x%4x%4x", tmp.red, tmp.green, tmp.blue);
 //    tmp.pixel=c;
 //printf("color %d = %s\n", c, tmpstr);
     /* I suppose I should do something with the supremacy bit....*/
-    HD.pixelMap[c]=get_pixelval(tmp.red,tmp.green,tmp.blue);
-  };
+    HD.pixelMap[c] = get_pixelval(tmp.red, tmp.green, tmp.blue);
+  }
 //getchar();
   /* Now do the ones for the cursor */
-  for(c=0;c<3;c++) {
-    tmp.red=(VIDC.CursorPalette[c] &15)<<12;
-    tmp.green=((VIDC.CursorPalette[c]>>4) &15)<<12;
-    tmp.blue=((VIDC.CursorPalette[c]>>8) &15)<<12;
+  for(c = 0; c < 3; c++) {
+    tmp.red   = (VIDC.CursorPalette[c] &15) << 12;
+    tmp.green = ((VIDC.CursorPalette[c] >> 4) & 15) << 12;
+    tmp.blue  = ((VIDC.CursorPalette[c] >> 8) & 15) << 12;
 
     /* Entry 0 is transparent */
-    HD.cursorPixelMap[c+1]=get_pixelval(tmp.red,tmp.green,tmp.blue);
-  };
+    HD.cursorPixelMap[c + 1] = get_pixelval(tmp.red,tmp.green,tmp.blue);
+  }
 
-  DC.MustResetPalette=0;
-}; /* DoPixelMap_Standard */
+  DC.MustResetPalette = 0;
+} /* DoPixelMap_Standard */
+
 /*-----------------------------------------------------------------------------*/
 /* Configure the true colour pixel map for the 8bpp modes                      */
-static void DoPixelMap_256(ARMul_State *state) {
+static void DoPixelMap_256(ARMul_State *state)
+{
   XColor tmp;
   int c;
 
-  if (!(DC.MustRedraw || DC.MustResetPalette)) return;
+  if (!(DC.MustRedraw || DC.MustResetPalette)) {
+    return;
+  }
 
-  for(c=0;c<256;c++) {
-    int palentry=c &15;
-    int L4=(c>>4) &1;
-    int L65=(c>>5) &3;
-    int L7=(c>>7) &1;
+  for(c=0; c<256; c++) {
+    int palentry = c & 15;
+    int L4  = (c >> 4) & 1;
+    int L65 = (c >> 5) & 3;
+    int L7  = (c >> 7) & 1;
 
-    tmp.red=((VIDC.Palette[palentry] & 7) | (L4<<3))<<12;
-    tmp.green=(((VIDC.Palette[palentry] >> 4) & 3) | (L65<<2))<<12;
-    tmp.blue=(((VIDC.Palette[palentry] >> 8) & 7) | (L7<<3))<<12;
+    tmp.red   = ((VIDC.Palette[palentry] & 7) | (L4 << 3)) << 12;
+    tmp.green = (((VIDC.Palette[palentry] >> 4) & 3) | (L65 << 2)) << 12;
+    tmp.blue  = (((VIDC.Palette[palentry] >> 8) & 7) | (L7 << 3)) << 12;
     /* I suppose I should do something with the supremacy bit....*/
-    HD.pixelMap[c]=get_pixelval(tmp.red,tmp.green,tmp.blue);
-  };
+    HD.pixelMap[c] = get_pixelval(tmp.red, tmp.green, tmp.blue);
+  }
 
   /* Now do the ones for the cursor */
-  for(c=0;c<3;c++) {
+  for(c=0; c<3; c++) {
 //    tmp.flags=DoRed|DoGreen|DoBlue;
 //    tmp.pixel=c+CURSORCOLBASE;
-    tmp.red=(VIDC.CursorPalette[c] &15)<<12;
-    tmp.green=((VIDC.CursorPalette[c]>>4) &15)<<12;
-    tmp.blue=((VIDC.CursorPalette[c]>>8) &15)<<12;
+    tmp.red   = (VIDC.CursorPalette[c] &15) << 12;
+    tmp.green = ((VIDC.CursorPalette[c] >> 4) &15) << 12;
+    tmp.blue  = ((VIDC.CursorPalette[c] >> 8) &15) << 12;
 
-    HD.cursorPixelMap[c+1]=get_pixelval(tmp.red,tmp.green,tmp.blue);
-  };
+    HD.cursorPixelMap[c + 1] = get_pixelval(tmp.red, tmp.green, tmp.blue);
+  }
 
-  DC.MustResetPalette=0;
-}; /* DoPixelMap_256 */
+  DC.MustResetPalette = 0;
+} /* DoPixelMap_256 */
 
 /*-----------------------------------------------------------------------------*/
-static void RefreshDisplay_TrueColor_1bpp(ARMul_State *state, int DisplayWidth, int DisplayHeight) {
+static void RefreshDisplay_TrueColor_1bpp(ARMul_State *state, int DisplayWidth, int DisplayHeight)
+{
   int x,y,memoffset;
   int VisibleDisplayWidth;
-  char Buffer[MonitorWidth/8];
-  char *ImgPtr=HD.ImageData;
+  char Buffer[MonitorWidth / 8];
+  char *ImgPtr = HD.ImageData;
 
   /* First configure the colourmap */
   DoPixelMap_Standard(state);
 
   /* Cope with screwy display widths/height */
-  if (DisplayHeight>MonitorHeight) DisplayHeight=MonitorHeight;
+  if (DisplayHeight>MonitorHeight) {
+    DisplayHeight=MonitorHeight;
+  }
   if (DisplayWidth>MonitorWidth) 
     VisibleDisplayWidth=MonitorWidth;
   else
@@ -625,24 +519,25 @@ static void ProcessKey(ARMul_State *state) {
 
 /*-----------------------------------------------------------------------------*/
 static void ProcessButton(ARMul_State *state) {
-  int UpNDown=nButton >> 7;
-  int ButtonNum= nButton & 3;
+  int UpNDown   = nButton >> 7;
+  int ButtonNum = nButton & 3;
 
   /* Hey if you've got a 4 or more buttoned mouse hard luck! */
-  if (ButtonNum<0) 
+  if (ButtonNum < 0)  {
     return;
+  }
 
-  if (KBD.BuffOcc>=KBDBUFFLEN) {
+  if (KBD.BuffOcc >= KBDBUFFLEN) {
 #ifdef DEBUG_KBD
-    fprintf(stderr,"KBD: Missed mouse event - buffer full\n");
+    fprintf(stderr, "KBD: Missed mouse event - buffer full\n");
 #endif
     return;
-  };
+  }
 
   /* Now add it to the buffer */
-  KBD.Buffer[KBD.BuffOcc].KeyColToSend=ButtonNum;
-  KBD.Buffer[KBD.BuffOcc].KeyRowToSend=7;
-  KBD.Buffer[KBD.BuffOcc].KeyUpNDown=UpNDown;
+  KBD.Buffer[KBD.BuffOcc].KeyColToSend = ButtonNum;
+  KBD.Buffer[KBD.BuffOcc].KeyRowToSend = 7;
+  KBD.Buffer[KBD.BuffOcc].KeyUpNDown   = UpNDown;
   KBD.BuffOcc++;
 #ifdef DEBUG_KBD
   fprintf(stderr,"ProcessButton: Got Col,Row=%d,%d UpNDown=%d BuffOcc=%d\n", 
@@ -652,7 +547,7 @@ static void ProcessButton(ARMul_State *state) {
           KBD.BuffOcc);
 #endif
   buttF = 0;
-}; /* ProcessButton */
+} /* ProcessButton */
 
 void DisplayKbd_Init(ARMul_State *state)
 {
@@ -661,35 +556,36 @@ void DisplayKbd_Init(ARMul_State *state)
   /* Setup display and cursor bitmaps */
   createWindow(MonitorWidth, MonitorHeight);
 
-  HD.red_prec = 5;
-  HD.green_prec = 5;
-  HD.blue_prec = 5;
-  HD.red_shift = 10;
+  HD.red_prec    = 5;
+  HD.green_prec  = 5;
+  HD.blue_prec   = 5;
+  HD.red_shift   = 10;
   HD.green_shift = 5;
-  HD.blue_shift = 0;
+  HD.blue_shift  = 0;
 
 
-  DC.PollCount=0;
-  KBD.KbdState=KbdState_JustStarted;
-  KBD.MouseTransEnable=0;
-  KBD.KeyScanEnable=0;
-  KBD.KeyColToSend=-1;
-  KBD.KeyRowToSend=-1;
-  KBD.MouseXCount=0;
-  KBD.MouseYCount=0;
-  KBD.KeyUpNDown=0; /* When 0 it means the key to be sent is a key down event, 1 is up */
-  KBD.HostCommand=0;
-  KBD.BuffOcc=0;
-  KBD.TimerIntHasHappened=0; /* if using AutoKey should be 2 Otherwise it never reinitialises the event routines */
-  KBD.Leds=0;
-  KBD.leds_changed = NULL;
+  DC.PollCount            = 0;
+  KBD.KbdState            = KbdState_JustStarted;
+  KBD.MouseTransEnable    = 0;
+  KBD.KeyScanEnable       = 0;
+  KBD.KeyColToSend        = -1;
+  KBD.KeyRowToSend        = -1;
+  KBD.MouseXCount         = 0;
+  KBD.MouseYCount         = 0;
+  KBD.KeyUpNDown          = 0; /* When 0 it means the key to be sent is a key down event, 1 is up */
+  KBD.HostCommand         = 0;
+  KBD.BuffOcc             = 0;
+  KBD.TimerIntHasHappened = 0; /* if using AutoKey should be 2 Otherwise it never reinitialises the event routines */
+  KBD.Leds                = 0;
+  KBD.leds_changed        = NULL;
 
-  DC.DoingMouseFollow=0;
+  DC.DoingMouseFollow = 0;
 
   /* Note the memory model sets its to 1 - note the ordering */
   /* i.e. it must be updated */
-  for(block=0;block<(512*1024)/UPDATEBLOCKSIZE;block++)
-    DC.UpdateFlags[block]=0;
+  for(block=0; block < (512 * 1024) / UPDATEBLOCKSIZE; block++) {
+    DC.UpdateFlags[block] = 0;
+  }
 
   ARMul_ScheduleEvent(&(enodes[xpollenode]),POLLGAP,DisplayKbd_XPoll);
   xpollenode^=1;
