@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <string.h>
 //#include <unistd.h>
+#include <math.h>
 
 #include "../armopts.h"
 #include "../armdefs.h"
@@ -28,6 +29,7 @@
 #include "ReadConfig.h"
 #include "Version.h"
 #include "extnrom.h"
+
 
 
 #ifdef MACOSX
@@ -71,6 +73,12 @@ int Vendold;
 
 struct MEMCStruct memc;
 
+#ifdef SOUND_SUPPORT
+static SoundData soundTable[256];
+static double channelAmount[8][2];
+static unsigned int numberOfChannels;
+#endif
+
 /*-----------------------------------------------------------------------------*/
 
 
@@ -79,6 +87,10 @@ struct MEMCStruct memc;
 #define OSMODE(state) ((MEMC.ControlReg >> 12) & 1)
 
 static ARMul_State *sigavailablestate=NULL;
+
+#ifdef SOUND_SUPPORT
+static void SoundInitTable(void);
+#endif
 
 /*------------------------------------------------------------------------------*/
 /* OK - this is getting treated as an odds/sods engine - just hook up anything
@@ -428,6 +440,11 @@ ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
   MEMC.ROMMapFlag    = 1; /* Map ROM to address 0 */
   MEMC.ControlReg    = 0; /* Defaults */
   MEMC.PageSizeFlags = MEMC_PAGESIZE_O_4K;
+  MEMC.NextSoundBufferValid = 0; /* Not set till Sstart and SendN have been written */
+
+#ifdef SOUND_SUPPORT
+  SoundInitTable();
+#endif
 
   /* Top bit set means it isn't valid */
   for (PresPage = 0; PresPage < 512; PresPage++)
@@ -949,20 +966,35 @@ PutVal(ARMul_State *state, ARMword address, ARMword data, int byteNotword,
         break;
 
       case 4: /* Sstart */
-        MEMC.Sstart = RegVal;
-        ioc.IRQStatus &= ~0x20; /* Take sound interrupt off */
+	RegVal *= 16;
+	MEMC.Sstart = RegVal;
+	/* The data sheet does not define what happens if you write start before end. */
+	MEMC.NextSoundBufferValid = 1;
+        ioc.IRQStatus &= ~0x200; /* Take sound interrupt off */
         IO_UpdateNirq();
         dbug_memc("Write to MEMC Sstart register\n");
         break;
 
       case 5: /* SendN */
+	RegVal *= 16;
         MEMC.SendN = RegVal;
-        dbug_memc("Write to MEMC Send register\n");
+        dbug_memc("Write to MEMC SendN register\n");
         break;
 
       case 6: /* Sptr */
+
         dbug_memc("Write to MEMC Sptr register\n");
-        MEMC.Sptr = RegVal; /* NO. Should just cause a sound buffer swap? */
+	/* Note this never actually sets Sptr directly, instead
+	 * it causes a first buffer to be swapped in. */
+	ARMword swap;
+	MEMC.Sptr = MEMC.Sstart;
+	swap = MEMC.SendC;
+	MEMC.SendC = MEMC.SendN;
+	MEMC.SendN = swap;
+	MEMC.SstartC = MEMC.Sptr;
+	MEMC.NextSoundBufferValid = 0;
+	ioc.IRQStatus |= 0x200; /* Take sound interrupt on */
+        IO_UpdateNirq();
         break;
 
       case 7: /* MEMC Control register */
@@ -1121,3 +1153,250 @@ PutVal(ARMul_State *state, ARMword address, ARMword data, int byteNotword,
 
   return;
 } /* PutVal */
+
+
+#ifdef SOUND_SUPPORT
+/**
+ * SoundDMAFetch
+ *
+ * Gets and converts one 16 byte block from the current buffer,
+ * then does updating like switching to the next buffer.
+ *
+ * Note that this does not fill the buffer if there is no new buffer,
+ * so you are expected to keep the contents yourself if you want it to wrap.
+ *
+ * The amount of buffer you must provide is 64 bytes
+ *
+ * @param buffer       Buffer to fill with sound data
+ * @param blocks       Number of 4 words blocks to fetch, that is blocks * 16 bytes
+ * @returns 0 if the fetch was done, 1 if sound dma is disabled and so no fetch was done.
+ */
+int
+SoundDMAFetch(SoundData *buffer)
+{
+  int i;
+
+  if ((MEMC.ControlReg & (1 << 11)) == 0) {
+    return 1;
+  }
+
+  for (i = 0; i < 16; i += numberOfChannels) {
+    int j;
+    double leftTotal = 0;
+    double rightTotal = 0;
+
+    for (j = 0; j < numberOfChannels; j++) {
+      unsigned char val = ((unsigned char *) (MEMC.PhysRam + (MEMC.Sptr / sizeof(ARMword))))[i + j];
+
+      leftTotal  += (signed short int) soundTable[val] * channelAmount[j][0];
+      rightTotal += (signed short int) soundTable[val] * channelAmount[j][1];
+    }
+
+    buffer[2 * i]       = (SoundData) leftTotal;
+    buffer[(2 * i) + 1] = (SoundData) rightTotal;
+  }
+
+  MEMC.Sptr += 16;
+
+  /* Reached end of buffer? */
+  if (MEMC.Sptr + 16 >= MEMC.SendC) {
+
+    /* Have the next buffer addresses been written? */
+    if (MEMC.NextSoundBufferValid == 1) {
+      /* Yes, so change to the next buffer */
+      ARMword swap;
+
+      MEMC.Sptr = MEMC.Sstart;
+      MEMC.SstartC = MEMC.Sstart;
+
+      swap = MEMC.SendC;
+      MEMC.SendC = MEMC.SendN;
+      MEMC.SendN = swap;
+
+      ioc.IRQStatus |= 0x200; /* Take sound interrupt on */
+      IO_UpdateNirq();
+
+      MEMC.NextSoundBufferValid = 0;
+      return 1;
+    } else {
+      /* Otherwise wrap to the beginning of the buffer */
+      MEMC.Sptr = MEMC.SstartC;
+    }
+  }
+
+  return 0;
+}
+
+static void
+SoundInitTable(void)
+{
+  unsigned i;
+
+  for (i = 0; i < 256; i++) {
+    /*
+     * (not VIDC1, whoops...)
+     * VIDC2:
+     * 0 Sign
+     * 4,3,2,1 Point on chord
+     * 7,6,5 Chord select
+     */
+
+    unsigned int chordSelect = (i & 0xE0) >> 5;
+    unsigned int pointSelect = (i & 0x1E) >> 1;
+    unsigned int sign = (i & 1);
+
+    unsigned int stepSize;
+
+    SoundData scale = (SoundData) 0xFFFF / (247 * 2);
+    SoundData chordBase;
+    SoundData sample;
+
+    switch (chordSelect) {
+      case 0: chordBase = 0;
+              stepSize = scale / 16;
+              break;
+      case 1: chordBase = scale;
+              stepSize = (2 * scale) / 16;
+              break;
+      case 2: chordBase = 3*scale;
+              stepSize = (4 * scale) / 16;
+              break;
+      case 3: chordBase = 7*scale;
+              stepSize = (8 * scale) / 16;
+              break;
+      case 4: chordBase = 15*scale;
+              stepSize = (16 * scale) / 16;
+              break;
+      case 5: chordBase = 31*scale;
+              stepSize = (32 * scale) / 16;
+              break;
+      case 6: chordBase = 63*scale;
+              stepSize = (64 * scale) / 16;
+              break;
+      case 7: chordBase = 127*scale;
+              stepSize = (120 * scale) / 16;
+              break;
+      /* End of chord 7 is 247 * scale. */
+
+      default: chordBase = 0;
+               stepSize = 0;
+               break;
+    }
+
+    sample = chordBase + stepSize * pointSelect;
+
+    if (sign == 1) { /* negative */
+      soundTable[i] = ~(sample - 1);
+    } else {
+      soundTable[i] = sample;
+    }
+    if (i == 128) {
+      soundTable[i] = 0xFFFF;
+    }
+  }
+}
+
+/**
+ * SoundUpdateStereoImage
+ *
+ * Called whenever VIDC stereo image registers are written so that the
+ * channelAmount array can be recalculated and the new number of channels can
+ * be figured out.
+ * Additionally, the sample rate is updated as the SFR has a different
+ * meaning depending on the number of channels in use.
+ */
+void
+SoundUpdateStereoImage(void)
+{
+  int i = 0;
+
+  /* Note that the order of this if block is important for it to
+     pick the right number of channels. */
+
+  /* 1 channel mode? */
+  if (VIDC.StereoImageReg[0] == VIDC.StereoImageReg[1] &&
+      VIDC.StereoImageReg[0] == VIDC.StereoImageReg[2] &&
+      VIDC.StereoImageReg[0] == VIDC.StereoImageReg[3] &&
+      VIDC.StereoImageReg[0] == VIDC.StereoImageReg[4] &&
+      VIDC.StereoImageReg[0] == VIDC.StereoImageReg[5] &&
+      VIDC.StereoImageReg[0] == VIDC.StereoImageReg[6] &&
+      VIDC.StereoImageReg[0] == VIDC.StereoImageReg[7])
+  {
+    numberOfChannels = 1;
+  }
+  /* 2 channel mode? */
+  else if (VIDC.StereoImageReg[0] == VIDC.StereoImageReg[2] &&
+           VIDC.StereoImageReg[0] == VIDC.StereoImageReg[4] &&
+           VIDC.StereoImageReg[0] == VIDC.StereoImageReg[6] &&
+           VIDC.StereoImageReg[1] == VIDC.StereoImageReg[3] &&
+           VIDC.StereoImageReg[1] == VIDC.StereoImageReg[5] &&
+           VIDC.StereoImageReg[1] == VIDC.StereoImageReg[7])
+  {
+    numberOfChannels = 2;
+  }
+  /* 4 channel mode? */
+  else if (VIDC.StereoImageReg[0] == VIDC.StereoImageReg[4] &&
+           VIDC.StereoImageReg[1] == VIDC.StereoImageReg[5] &&
+           VIDC.StereoImageReg[2] == VIDC.StereoImageReg[6] &&
+           VIDC.StereoImageReg[3] == VIDC.StereoImageReg[7])
+  {
+    numberOfChannels = 4;
+  }
+  /* Otherwise it is 8 channel mode. */
+  else {
+    numberOfChannels = 8;
+  }
+
+  for (i = 0; i < 8; i++) {
+    switch (VIDC.StereoImageReg[i]) {
+      /* Centre */
+      case 4: channelAmount[i][0] = 0.5;
+              channelAmount[i][1] = 0.5;
+              break;
+
+      /* Left 100% */
+      case 1: channelAmount[i][0] = 1.0;
+              channelAmount[i][1] = 0.0;
+              break;
+      /* Left 83% */
+      case 2: channelAmount[i][0] = 0.83;
+              channelAmount[i][1] = 0.17;
+              break;
+      /* Left 67% */
+      case 3: channelAmount[i][0] = 0.67;
+              channelAmount[i][1] = 0.33;
+              break;
+
+      /* Right 100% */
+      case 5: channelAmount[i][1] = 1.0;
+              channelAmount[i][0] = 0.0;
+              break;
+      /* Right 83% */
+      case 6: channelAmount[i][1] = 0.83;
+              channelAmount[i][0] = 0.17;
+              break;
+      /* Right 67% */
+      case 7: channelAmount[i][1] = 0.67;
+              channelAmount[i][0] = 0.33;
+              break;
+    }
+
+    /* We have to share each stereo side between the number of channels. */
+    channelAmount[i][0] /= numberOfChannels;
+    channelAmount[i][1] /= numberOfChannels;
+  }
+
+  SoundUpdateSampleRate();
+}
+
+void
+SoundUpdateSampleRate(void)
+{
+  /* SFR = (N - 2) where N is sample period in microseconds. */
+  if (numberOfChannels != 8) {
+    sound_setSampleRate(VIDC.SoundFreq + 2);
+  } else {
+    sound_setSampleRate((VIDC.SoundFreq + 2) * 8);
+  }
+}
+#endif

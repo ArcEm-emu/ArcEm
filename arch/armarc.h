@@ -8,6 +8,9 @@
 #include "archio.h"
 #include "fdc1772.h"
 #include "hdc63463.h"
+#ifdef SOUND_SUPPORT
+#include "sound.h"
+#endif
 
 /* Erm - this has to be 256....*/
 #define UPDATEBLOCKSIZE 256
@@ -41,7 +44,16 @@ struct MEMCStruct {
   int PageTable[512]; /* Good old fashioned MEMC1 page table */
   ARMword ControlReg;
   ARMword PageSizeFlags;
-  ARMword Vinit,Vstart,Vend,Cinit,Sstart,SendN,Sptr;
+  ARMword Vinit,Vstart,Vend,Cinit;
+
+  /* Sound buffer addresses */
+  ARMword Sstart; /* The start and end of the next buffer */
+  ARMword SendN;
+  ARMword Sptr; /* Current position in current buffer */
+  ARMword SendC; /* End of current buffer */
+  ARMword SstartC; /* The start of the current buffer */
+  int NextSoundBufferValid; /* This indicates whether the next buffer has been set yet */
+
   int ROMMapFlag; /* 0 means ROM is mapped as normal,1 means
                      processor hasn't done access to low memory, 2 means it
                      hasn't done an access to ROM space, so in 1 & 2 accesses
@@ -112,5 +124,12 @@ void EnableTrace(void);
 int FindPageTableEntry(unsigned address, ARMword *PageTabVal);
 
 ARMword GetPhysAddress(unsigned int address);
+
+#ifdef SOUND_SUPPORT
+int SoundDMAFetch(SoundData *buffer);
+void SoundUpdateStereoImage(void);
+void SoundUpdateSampleRate(void);
+#endif
+
 
 #endif

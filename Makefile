@@ -1,16 +1,16 @@
 #    Makefile for ARMulator:  ARM6 Instruction Emulator.
 #    Copyright (C) 1994 Advanced RISC Machines Ltd.
-# 
+#
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
 #    the Free Software Foundation; either version 2 of the License, or
 #    (at your option) any later version.
-# 
+#
 #    This program is distributed in the hope that it will be useful,
 #    but WITHOUT ANY WARRANTY; without even the implied warranty of
 #    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #    GNU General Public License for more details.
-# 
+#
 #    You should have received a copy of the GNU General Public License
 #    along with this program; if not, write to the Free Software
 #    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
@@ -22,6 +22,9 @@
 # Default endianness of the *emulated* processor (LITTLEEND or BIGEND)
 # Should stay as LITTLEEND in most cases
 ENDIAN=LITTLEEND
+
+# Sound support - currently experimental - to enable set to 'yes'
+SOUND_SUPPORT=no
 
 # Windowing System
 ifeq ($(SYSTEM),)
@@ -77,7 +80,7 @@ INCS = armdefs.h armemu.h armfpe.h armopts.h armos.h \
 TARGET=arcem
 
 ifeq (${SYSTEM},riscos)
-CFLAGS += -DSYSTEM_riscos -Iriscos-single 
+CFLAGS += -DSYSTEM_riscos -Iriscos-single
 TARGET=!ArcEm/arcem
 endif
 
@@ -101,9 +104,15 @@ LIBS += -luser32 -lgdi32 -mno-cygwin
 LIBS += -mwindows
 endif
 
-
 ifeq (${DIRECT_DISPLAY},yes)
 CFLAGS += -DDIRECT_DISPLAY
+endif
+
+ifeq (${SOUND_SUPPORT},yes)
+CFLAGS += -DSOUND_SUPPORT
+OBJS += $(SYSTEM)/sound.o
+LIBS += -lpthread
+INCS += arch/sound.h
 endif
 
 
@@ -121,7 +130,7 @@ install: all
 
 $(TARGET): $(OBJS) $(MODEL).o
 	$(CC) $(OBJS) $(LIBS) $(MODEL).o -o $@
- 
+
 
 clean:
 	rm -f *.o arch/*.o $(SYSTEM)/*.o arcem core *.bb *.bbg *.da
@@ -135,7 +144,7 @@ realclean: distclean
 depend:
 	makedepend $(SRCS)
 
-arcem.tar.gz: 
+arcem.tar.gz:
 	rm -rf arcem-$(VER)
 	mkdir arcem-$(VER)
 	cd arcem-$(VER) ; \
@@ -159,13 +168,13 @@ arch/armarc.o: armdefs.h arch/armarc.c arch/DispKbd.h arch/armarc.h \
 armos.o: armos.c armdefs.h armos.h armfpe.h
 	$(CC) $(CFLAGS) -c $*.c
 
-armcopro.o: armcopro.c armdefs.h 
+armcopro.o: armcopro.c armdefs.h
 	$(CC) $(CFLAGS) -c $*.c
 
 armemu.o: armemu.c armdefs.h armemu.h armemuinstr.c armemudec.c
 	$(CC) $(CFLAGS) -o armemu.o -c armemu.c
 
-arm-support.o: arm-support.s instructions 
+arm-support.o: arm-support.s instructions
 	$(CC) -x assembler-with-cpp arm-support.s -c -I@
 
 rhs.o: rhs.s

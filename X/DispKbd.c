@@ -36,8 +36,11 @@
 #include "archio.h"
 #include "hdc63463.h"
 #include "platform.h"
+#ifdef SOUND_SUPPORT
+#include "sound.h"
+#endif
 
-#include "ControlPane.h" 
+#include "ControlPane.h"
 
 /* A sensible set of defaults for the start window, the OS
    will call the VIDC and push this smaller or bigger later. */
@@ -173,7 +176,7 @@ static keysym_to_arch_key keysym_to_arch_key_map[] = {
     X(Left, left)
     X(Num_Lock, num_lock)
     /* For some screwy reason these seem to be missing in X11R5. */
-#ifdef XK_Page_Up  
+#ifdef XK_Page_Up
     X(Page_Up, page_up)
 #endif
 #ifdef XK_Page_Down
@@ -259,7 +262,7 @@ static int xpollenode = 2; /* Flips between 2 and 3 */
 
 static void
 gdk_visual_decompose_mask (unsigned long mask, int *shift, int *prec)
-{ 
+{
   *shift = 0;
   *prec = 0;
 
@@ -421,7 +424,7 @@ static void RefreshMouse(ARMul_State *state) {
   ImgPtr   = HD.CursorImageData;
   TransPtr = HD.ShapePixmapData;
   TransBit = 0;
-  
+
   for(y=0; y<height; y++,memptr+=8,offset+=8,TransPtr+=4) {
     if (offset < 512*1024) {
       ARMword tmp[2];
@@ -449,9 +452,9 @@ static void RefreshMouse(ARMul_State *state) {
   if (HD.ShapeEnabled) {
     int DisplayHeight =  VIDC.Vert_DisplayEnd  - VIDC.Vert_DisplayStart;
 
-    if(DisplayHeight > 0) 
+    if(DisplayHeight > 0)
     {
-      HD.shape_mask = XCreatePixmapFromBitmapData(HD.disp, HD.CursorPane, 
+      HD.shape_mask = XCreatePixmapFromBitmapData(HD.disp, HD.CursorPane,
                                                   HD.ShapePixmapData,
                                                   32, DisplayHeight, 0, 1, 1);
       /* Eek - a lot of this is copied from XEyes - unfortunatly the manual
@@ -559,7 +562,7 @@ static void RefreshDisplay_PseudoColor_4bpp(ARMul_State *state, int DisplayHeigh
 static void RefreshDisplay_PseudoColor_8bpp(ARMul_State *state, int DisplayHeight, int DisplayWidth) {
   int y,memoffset;
   char *ImgPtr=HD.ImageData;
- 
+
   if (DC.video_palette_dirty) {
     set_video_8bpp_colourmap();
   }
@@ -666,7 +669,7 @@ static void RefreshDisplay_TrueColor_4bpp(ARMul_State *state, int DisplayHeight,
 /*----------------------------------------------------------------------------*/
 static void RefreshDisplay_TrueColor_8bpp(ARMul_State *state, int DisplayHeight, int DisplayWidth) {
   int x,y,memoffset;
-  
+
   if (DC.video_palette_dirty) {
     set_video_8bpp_pixelmap();
   }
@@ -1079,7 +1082,7 @@ void DisplayKbd_Init(ARMul_State *state) {
     any other true colour probably? */
     /* NOTE: this is using short circuit eval to only evaluate upto the first match */
     if ((XMatchVisualInfo(HD.disp,HD.ScreenNum,24,TrueColor,&(HD.visInfo))) ||
-        (XMatchVisualInfo(HD.disp,HD.ScreenNum,32,TrueColor,&(HD.visInfo))) || 
+        (XMatchVisualInfo(HD.disp,HD.ScreenNum,32,TrueColor,&(HD.visInfo))) ||
         (XMatchVisualInfo(HD.disp,HD.ScreenNum,16,TrueColor,&(HD.visInfo))) ||
         (XMatchVisualInfo(HD.disp,HD.ScreenNum,15,TrueColor,&(HD.visInfo)))) {
       /* True colour - extract the shift and precision values */
@@ -1122,7 +1125,7 @@ void DisplayKbd_Init(ARMul_State *state) {
   }
 
   /* Create the main arcem pane, create it small, it will be
-     pushed bigger when the VIDC recieves instructions to change video 
+     pushed bigger when the VIDC recieves instructions to change video
      mode */
   HD.BackingWindow = XCreateWindow(HD.disp, HD.RootWindow, 500, 500,
         InitialVideoWidth + VIDC_BORDER * 2, InitialVideoHeight + VIDC_BORDER * 2,
@@ -1148,7 +1151,7 @@ void DisplayKbd_Init(ARMul_State *state) {
 
   HD.CursorPane = XCreateWindow(HD.disp,
                                 HD.MainPane,
-                                0, 0, 
+                                0, 0,
                                 32, InitialVideoHeight,
                                 0, /* Border width */
                                 CopyFromParent, /* depth */
@@ -1315,6 +1318,15 @@ void DisplayKbd_Init(ARMul_State *state) {
 
   ControlPane_Init(state);
 
+#ifdef SOUND_SUPPORT
+  /* Initialise the Sound output */
+  if (sound_init()) {
+    /* There was an error of some sort - it will already have been reported */
+    fprintf(stderr, "Could not initialise sound output - exiting\n");
+    exit(EXIT_FAILURE);
+  }
+#endif
+
   ARMul_ScheduleEvent(&enodes[xpollenode], POLLGAP, DisplayKbd_XPoll);
   xpollenode^=1;
 }; /* DisplayKbd_Init */
@@ -1356,7 +1368,7 @@ static void ProcessKey(ARMul_State *state, XKeyEvent *key)
         XDefineCursor(HD.disp, HD.MainPane,
                       XCreatePixmapCursor(HD.disp, bm_no, bm_no, &black, &black, 0, 0));
       }
-      else 
+      else
       {
         /* Restore the original cursor */
         XUndefineCursor(HD.disp, HD.MainPane);
@@ -1426,9 +1438,9 @@ static void UpdateCursorPos(ARMul_State *state) {
   VertPos = (int)VIDC.Vert_CursorStart;
   tmp = (signed int)VIDC.Vert_DisplayStart;
   VertPos -= tmp;
-  if (Height < 1) 
+  if (Height < 1)
     Height = 1;
-  
+
   if (VertPos < 0)
     VertPos = 0;
 
@@ -1447,7 +1459,7 @@ static void MouseMoved(ARMul_State *state,XMotionEvent *xmotion)
   int xdiff, ydiff;
   unsigned ScreenWidth  = (VIDC.Horiz_DisplayEnd - VIDC.Horiz_DisplayStart) * 2;
   unsigned ScreenHeight = VIDC.Vert_DisplayEnd - VIDC.Vert_DisplayStart;
-  
+
   /* Well the coordinates of the mouse cursor are now in xmotion->x and
      xmotion->y, I'm going to compare those against the cursor position
      and transmit the difference.  This can't possibly take care of the OS's
@@ -1462,9 +1474,9 @@ static void MouseMoved(ARMul_State *state,XMotionEvent *xmotion)
                None,                               /* src window for relative coords (NOT USED) */
                HD.MainPane,                        /* Destination window to move cursor in */
                0, 0,                               /* relative coords (NOT USED) */
-               9999, 9999,                         /* src width and height (NOT USED) */ 
+               9999, 9999,                         /* src width and height (NOT USED) */
                ScreenWidth / 2, ScreenHeight / 2); /* Coordinates in the destination window */
-               
+
 #ifdef DEBUG_MOUSEMOVEMENT
   fprintf(stderr,"MouseMoved: CursorStart=%d xmotion->x=%d\n",
           VIDC.Horiz_CursorStart,xmotion->x);
@@ -1482,7 +1494,7 @@ static void MouseMoved(ARMul_State *state,XMotionEvent *xmotion)
     }
   }
 
-  if (xdiff > 63) 
+  if (xdiff > 63)
     xdiff = 63;
   if (xdiff < -63)
     xdiff = -63;
@@ -1609,6 +1621,10 @@ unsigned int DisplayKbd_XPoll(void *data) {
   static int KbdPollInt=0;
   static int discconttog=0;
 
+#ifdef SOUND_SUPPORT
+  sound_poll();
+#endif
+
   /* Our POLLGAP runs at 125 cycles, HDC (and fdc) want callback at 250 */
   if (discconttog)
     HDC_Regular(state);
@@ -1661,7 +1677,7 @@ unsigned int DisplayKbd_XPoll(void *data) {
     }
   }
 
-  if (--(DC.AutoRefresh)<0) 
+  if (--(DC.AutoRefresh)<0)
     RefreshDisplay(state);
 
   ARMul_ScheduleEvent(&(enodes[xpollenode]),POLLGAP,DisplayKbd_XPoll);
@@ -1703,7 +1719,7 @@ void VIDC_PutVal(ARMul_State *state,ARMword address, ARMword data,int bNw) {
   addr&=~3;
   switch (addr) {
     case 0x40: /* Border col */
-#ifdef DEBUG_VIDCREGS  
+#ifdef DEBUG_VIDCREGS
       fprintf(stderr,"VIDC border colour write val=0x%x\n",val);
 #endif
         IF_DIFF_THEN_ASSIGN_AND_SET_FLAG(VIDC.BorderCol, val & 0x1fff,
@@ -1711,25 +1727,25 @@ void VIDC_PutVal(ARMul_State *state,ARMword address, ARMword data,int bNw) {
       break;
 
     case 0x44: /* Cursor palette log col 1 */
-#ifdef DEBUG_VIDCREGS  
+#ifdef DEBUG_VIDCREGS
       fprintf(stderr,"VIDC cursor log col 1 write val=0x%x\n",val);
-#endif   
+#endif
         IF_DIFF_THEN_ASSIGN_AND_SET_FLAG(VIDC.CursorPalette[0],
             val & 0x1fff, DC.cursor_palette_dirty);
       break;
 
     case 0x48: /* Cursor palette log col 2 */
-#ifdef DEBUG_VIDCREGS  
+#ifdef DEBUG_VIDCREGS
       fprintf(stderr,"VIDC cursor log col 2 write val=0x%x\n",val);
-#endif   
+#endif
         IF_DIFF_THEN_ASSIGN_AND_SET_FLAG(VIDC.CursorPalette[1],
             val & 0x1fff, DC.cursor_palette_dirty);
       break;
 
     case 0x4c: /* Cursor palette log col 3 */
-#ifdef DEBUG_VIDCREGS  
+#ifdef DEBUG_VIDCREGS
       fprintf(stderr,"VIDC cursor log col 3 write val=0x%x\n",val);
-#endif   
+#endif
         IF_DIFF_THEN_ASSIGN_AND_SET_FLAG(VIDC.CursorPalette[2],
             val & 0x1fff, DC.cursor_palette_dirty);
       break;
@@ -1742,141 +1758,147 @@ void VIDC_PutVal(ARMul_State *state,ARMword address, ARMword data,int bNw) {
     case 0x74: /* Stereo image reg 4 */
     case 0x78: /* Stereo image reg 5 */
     case 0x7c: /* Stereo image reg 6 */
-#ifdef DEBUG_VIDCREGS  
+#ifdef DEBUG_VIDCREGS
       fprintf(stderr,"VIDC stereo image reg write val=0x%x\n",val);
-#endif   
+#endif
       VIDC.StereoImageReg[(addr==0x60)?7:((addr-0x64)/4)]=val & 7;
+#ifdef SOUND_SUPPORT
+      SoundUpdateStereoImage();
+#endif
       break;
 
     case 0x80:
-#ifdef DEBUG_VIDCREGS   
+#ifdef DEBUG_VIDCREGS
       fprintf(stderr,"VIDC Horiz cycle register val=%d\n",val>>14);
-#endif   
+#endif
       VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Horiz_Cycle,(val>>14) & 0x3ff);
       break;
 
     case 0x84:
-#ifdef DEBUG_VIDCREGS   
+#ifdef DEBUG_VIDCREGS
       fprintf(stderr,"VIDC Horiz sync width register val=%d\n",val>>14);
-#endif   
+#endif
       VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Horiz_SyncWidth,(val>>14) & 0x3ff);
       break;
 
     case 0x88:
-#ifdef DEBUG_VIDCREGS   
+#ifdef DEBUG_VIDCREGS
       fprintf(stderr,"VIDC Horiz border start register val=%d\n",val>>14);
-#endif   
+#endif
       VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Horiz_BorderStart,(val>>14) & 0x3ff);
       break;
 
     case 0x8c:
-#ifdef DEBUG_VIDCREGS   
+#ifdef DEBUG_VIDCREGS
       fprintf(stderr,"VIDC Horiz display start register val=%d\n",val>>14);
-#endif   
+#endif
       VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Horiz_DisplayStart,((val>>14) & 0x3ff));
       Resize_Window();
       break;
 
     case 0x90:
-#ifdef DEBUG_VIDCREGS   
+#ifdef DEBUG_VIDCREGS
       fprintf(stderr,"VIDC Horiz display end register val=%d\n",val>>14);
-#endif   
+#endif
       VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Horiz_DisplayEnd,(val>>14) & 0x3ff);
-      Resize_Window();      
+      Resize_Window();
       break;
 
     case 0x94:
-#ifdef DEBUG_VIDCREGS   
+#ifdef DEBUG_VIDCREGS
       fprintf(stderr,"VIDC horizontal border end register val=%d\n",val>>14);
-#endif   
+#endif
       VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Horiz_BorderEnd,(val>>14) & 0x3ff);
       break;
 
     case 0x98:
-#ifdef DEBUG_VIDCREGS   
+#ifdef DEBUG_VIDCREGS
       fprintf(stderr,"VIDC horiz cursor start register val=%d\n",val>>13);
-#endif   
+#endif
       VIDC.Horiz_CursorStart=(val>>13) & 0x7ff;
       break;
 
     case 0x9c:
-#ifdef DEBUG_VIDCREGS   
+#ifdef DEBUG_VIDCREGS
       fprintf(stderr,"VIDC horiz interlace register val=%d\n",val>>14);
-#endif   
+#endif
       VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Horiz_Interlace,(val>>14) & 0x3ff);
       break;
 
     case 0xa0:
-#ifdef DEBUG_VIDCREGS   
+#ifdef DEBUG_VIDCREGS
       fprintf(stderr,"VIDC Vert cycle register val=%d\n",val>>14);
-#endif   
+#endif
       VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Vert_Cycle,(val>>14) & 0x3ff);
       break;
 
     case 0xa4:
-#ifdef DEBUG_VIDCREGS   
+#ifdef DEBUG_VIDCREGS
       fprintf(stderr,"VIDC Vert sync width register val=%d\n",val>>14);
-#endif   
+#endif
       VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Vert_SyncWidth,(val>>14) & 0x3ff);
       break;
 
     case 0xa8:
-#ifdef DEBUG_VIDCREGS   
+#ifdef DEBUG_VIDCREGS
       fprintf(stderr,"VIDC Vert border start register val=%d\n",val>>14);
-#endif   
+#endif
       VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Vert_BorderStart,(val>>14) & 0x3ff);
       break;
 
     case 0xac:
-#ifdef DEBUG_VIDCREGS   
+#ifdef DEBUG_VIDCREGS
       fprintf(stderr,"VIDC Vert disp start register val=%d\n",val>>14);
-#endif   
+#endif
       VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Vert_DisplayStart,((val>>14) & 0x3ff));
       Resize_Window();
       break;
 
     case 0xb0:
-#ifdef DEBUG_VIDCREGS   
+#ifdef DEBUG_VIDCREGS
       fprintf(stderr,"VIDC Vert disp end register val=%d\n",val>>14);
-#endif   
+#endif
       VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Vert_DisplayEnd,(val>>14) & 0x3ff);
       Resize_Window();
       break;
 
     case 0xb4:
-#ifdef DEBUG_VIDCREGS   
+#ifdef DEBUG_VIDCREGS
       fprintf(stderr,"VIDC Vert Border end register val=%d\n",val>>14);
-#endif   
+#endif
       VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Vert_BorderEnd,(val>>14) & 0x3ff);
       break;
 
     case 0xb8:
-#ifdef DEBUG_VIDCREGS   
+#ifdef DEBUG_VIDCREGS
       fprintf(stderr,"VIDC Vert cursor start register val=%d\n",val>>14);
-#endif   
+#endif
       VIDC.Vert_CursorStart=(val>>14) & 0x3ff;
       UpdateCursorPos(state);
       break;
 
     case 0xbc:
-#ifdef DEBUG_VIDCREGS   
+#ifdef DEBUG_VIDCREGS
       fprintf(stderr,"VIDC Vert cursor end register val=%d\n",val>>14);
-#endif   
+#endif
       VIDC.Vert_CursorEnd=(val>>14) & 0x3ff;
       UpdateCursorPos(state);
       break;
 
     case 0xc0:
-#ifdef DEBUG_VIDCREGS   
+#ifdef DEBUG_VIDCREGS
       fprintf(stderr,"VIDC Sound freq register val=%d\n",val);
-#endif   
+#endif
       VIDC.SoundFreq=val & 0xff;
+#ifdef SOUND_SUPPORT
+      SoundUpdateSampleRate();
+#endif
       break;
 
     case 0xe0:
-#ifdef DEBUG_VIDCREGS   
+#ifdef DEBUG_VIDCREGS
       fprintf(stderr,"VIDC Control register val=0x%x\n",val);
-#endif   
+#endif
       VideoRelUpdateAndForce(DC.MustRedraw,VIDC.ControlReg,val & 0xffff);
       break;
 
@@ -1916,20 +1938,20 @@ static void Resize_Window(void)
       fprintf(stderr, "Resize_Window: Request to display a mode larger than we can handle (%dx%d)\n", x, y);
       exit(EXIT_FAILURE);
     }
-      
+
     /* resize outer window including border */
     XResizeWindow(HD.disp, HD.BackingWindow,
                   x + (VIDC_BORDER * 2),
                   y + (VIDC_BORDER * 2) );
-                  
-    /* resize inner window excluding border */              
+
+    /* resize inner window excluding border */
     XResizeWindow(HD.disp, HD.MainPane, x, y);
-    
+
     /* clean up previous images used as display and cursor */
     XDestroyImage(HD.DisplayImage);
     XDestroyImage(HD.CursorImage);
     free(HD.ShapePixmapData);
-    
+
     /* realocate space for new screen image */
     HD.ImageData = malloc(4 * (x + 32) * y);
     if (HD.ImageData == NULL) {
@@ -1947,7 +1969,7 @@ static void Resize_Window(void)
       fprintf(stderr, "Resize_Window: Couldn't create image\n");
       exit(EXIT_FAILURE);
     }
-    
+
     /* realocate space for new cursor image */
     HD.CursorImageData = malloc(4 * 64 * y);
     if (HD.CursorImageData == NULL) {
@@ -1965,7 +1987,7 @@ static void Resize_Window(void)
       fprintf(stderr, "Resize_Window: Couldn't create cursor image\n");
       exit(EXIT_FAILURE);
     }
-    
+
     /* Calloc to clear it as well */
     HD.ShapePixmapData = calloc(32 * y, 1);
     if (HD.ShapePixmapData == NULL) {
