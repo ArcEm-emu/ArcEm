@@ -1,6 +1,14 @@
 /* Emulation of 1772 fdc */
 /* (c) David Alan Gilbert 1995-1999 - see Readme file for copying info */
 
+/* Some helpful Western Digital FDC 1772 documentation, from a gentle
+ * introduction to transcriptions of the data sheet.
+ * http://www.atarimagazines.com/startv1n2/ProbingTheFDC.html
+ * http://www.cloud9.co.uk/james/BBCMicro/Documentation/wd1770.html
+ * http://saint.atari.org/html/doc/wd1772.html
+ * http://saint.atari.org/html/doc/wd17722.html
+ */
+
 #define DEBUG_FDC1772 0
 #define DBG(a) if (DEBUG_FDC1772) fprintf a
 
