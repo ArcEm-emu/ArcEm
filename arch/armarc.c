@@ -339,7 +339,7 @@ unsigned ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
   int PresPage;
   unsigned int i;
 
-  PrivDPtr = malloc(sizeof(PrivateDataType));
+  PrivDPtr = calloc(sizeof(PrivateDataType), 1);
   if (PrivDPtr == NULL) {
     fprintf(stderr,"ARMul_MemoryInit: malloc of PrivateDataType failed\n");
     exit(3);
