@@ -36,9 +36,21 @@
 
 #include "ControlPane.h" 
 
+/* The dimensions of the area set aside for the video data. */
 #define MonitorWidth 800
 #define MonitorHeight 600
+
+/* The size of the border surrounding the video data. */
+#define VIDC_BORDER 10
+
 #define ControlHeight 30
+
+/* Three colourmap entries are nicked out of the 256 needed by the video
+ * data for the cursor's colours, and one more for the border.  This may
+ * muck up a nice image utilising all 256 colours but what else can one
+ * do apart from pick the closest matching colours from the video's
+ * palette. */
+#define BORDER_COLOURMAP_ENTRY 249
 #define CURSORCOLBASE 250
 
 /* HOSTDISPLAY is too verbose here - but HD could be hard disc somewhere else */
@@ -50,7 +62,20 @@
     x |= x << 4; \
     x |= x << 8
 
+#define IF_DIFF_THEN_ASSIGN_AND_SET_FLAG(a, b, f) \
+    if ((a) != (b)) { \
+        (a) = (b); \
+        (f) = TRUE; \
+    }
+
+static void set_video_4bpp_colourmap(void);
+static void set_video_8bpp_colourmap(void);
+static void set_border_colourmap(void);
 static void set_cursor_colourmap(void);
+
+static void set_video_4bpp_pixelmap(void);
+static void set_video_8bpp_pixelmap(void);
+static void set_border_pixelmap(void);
 static void set_cursor_pixelmap(void);
 
 static int (*prev_x_error_handler)(Display *, XErrorEvent *);
@@ -367,211 +392,6 @@ static void CopyScreenRAM(ARMul_State *state,int offset, int len, char *Buffer) 
 
 /* ------------------------------------------------------------------ */
 
-static void set_4bpp_colourmap(ARMul_State *state)
-{
-    int c;
-    unsigned int pal;
-    XColor col;
-
-    if (!DC.MustRedraw && !DC.MustResetPalette) {
-        return;
-    }
-
-    for (c = 0; c < 16; c++) {
-        pal = VIDC.Palette[c];
-
-        col.flags = DoRed | DoGreen | DoBlue;
-        col.pixel = c;
-        col.red = pal & 0xf;
-        col.green = pal >> 4 & 0xf;
-        col.blue = pal >> 8 & 0xf;
-        MULT_BY_0x1111(col.red);
-        MULT_BY_0x1111(col.green);
-        MULT_BY_0x1111(col.blue);
-
-        /* I suppose I should do something with the supremacy bit... */
-        XStoreColor(HD.disp, HD.ArcsColormap, &col);
-    }
-
-    set_cursor_colourmap();
-
-    DC.MustResetPalette = 0;
-
-    return;
-}
-
-/* ------------------------------------------------------------------ */
-
-static void set_8bpp_colourmap(ARMul_State *state)
-{
-    int c;
-    int l4;
-    int l65;
-    int l7;
-    unsigned int pal;
-    XColor col;
-
-    if (!DC.MustRedraw && !DC.MustResetPalette) {
-        return;
-    }
-
-    for (c = 0; c < 256; c++) {
-        l4 = c >> 1 & 8;
-        l65 = c >> 3 & 0xc;
-        l7 = c >> 4 & 8;
-
-        pal = VIDC.Palette[c & 0xf];
-        col.red = l4 | (pal & 7);
-        col.green = l65 | (pal >> 4 & 3);
-        col.blue = l7 | (pal >> 8 & 7);
-
-        MULT_BY_0x1111(col.red);
-        MULT_BY_0x1111(col.green);
-        MULT_BY_0x1111(col.blue);
-
-        /* I suppose I should do something with the supremacy bit... */
-        XStoreColor(HD.disp, HD.ArcsColormap, &col);
-    }
-
-    set_cursor_colourmap();
-
-    DC.MustResetPalette = 0;
-
-    return;
-}
-
-/* ------------------------------------------------------------------ */
-
-static void set_cursor_colourmap(void)
-{
-    int c;
-    unsigned int pal;
-    XColor col;
-
-    for (c = 0; c < 3; c++) {
-        pal = VIDC.CursorPalette[c];
-        col.flags = DoRed | DoGreen | DoBlue;
-        col.pixel = c + CURSORCOLBASE;
-        col.red = pal & 0xf;
-        col.green = pal >> 4 & 0xf;
-        col.blue = pal >> 8 & 0xf;
-        MULT_BY_0x1111(col.red);
-        MULT_BY_0x1111(col.green);
-        MULT_BY_0x1111(col.blue);
-
-        XStoreColor(HD.disp, HD.ArcsColormap, &col);
-    }
-
-    return;
-}
-
-/* ------------------------------------------------------------------ */
-
-static void set_4bpp_pixelmap(ARMul_State *state)
-{
-    int c;
-    unsigned int pal;
-    unsigned short r;
-    unsigned short g;
-    unsigned short b;
-
-    if (!DC.MustRedraw && !DC.MustResetPalette) {
-        return;
-    }
-
-    for (c = 0; c < 16; c++) {
-        pal = VIDC.Palette[c];
-
-        r = pal & 0xf;
-        g = pal >> 4 & 0xf;
-        b = pal >> 8 & 0xf;
-        MULT_BY_0x1111(r);
-        MULT_BY_0x1111(g);
-        MULT_BY_0x1111(b);
-
-        /* I suppose I should do something with the supremacy bit... */
-        HD.pixelMap[c] = get_pixelval(r, g, b);
-    }
-
-    set_cursor_pixelmap();
-
-    DC.MustResetPalette = 0;
-
-    return;
-}
-
-/* ------------------------------------------------------------------ */
-
-static void set_8bpp_pixelmap(ARMul_State *state)
-{
-    int c;
-    int l4;
-    int l65;
-    int l7;
-    unsigned int pal;
-    unsigned short r;
-    unsigned short g;
-    unsigned short b;
-
-    if (!DC.MustRedraw && !DC.MustResetPalette) {
-        return;
-    }
-
-    for (c = 0; c < 256; c++) {
-        l4 = c >> 1 & 8;
-        l65 = c >> 3 & 0xc;
-        l7 = c >> 4 & 8;
-
-        pal = VIDC.Palette[c & 0xf];
-        r = l4 | (pal & 7);
-        g = l65 | (pal >> 4 & 3);
-        b = l7 | (pal >> 8 & 7);
-
-        MULT_BY_0x1111(r);
-        MULT_BY_0x1111(g);
-        MULT_BY_0x1111(b);
-
-        /* I suppose I should do something with the supremacy bit... */
-        HD.pixelMap[c] = get_pixelval(r, g, b);
-    }
-
-    set_cursor_pixelmap();
-
-    DC.MustResetPalette = 0;
-
-    return;
-}
-
-/* ------------------------------------------------------------------ */
-
-static void set_cursor_pixelmap(void)
-{
-    int c;
-    unsigned int pal;
-    unsigned short r;
-    unsigned short g;
-    unsigned short b;
-
-    for (c = 0; c < 3; c++) {
-        pal = VIDC.CursorPalette[c];
-
-        r = pal & 0xf;
-        g = pal >> 4 & 0xf;
-        b = pal >> 8 & 0xf;
-
-        MULT_BY_0x1111(r);
-        MULT_BY_0x1111(g);
-        MULT_BY_0x1111(b);
-
-        /* Entry 0 is transparent. */
-        HD.cursorPixelMap[c + 1] = get_pixelval(r, g, b);
-    }
-
-    return;
-}
-
-/* ------------------------------------------------------------------ */
-
 /* Refresh the mouses image                                                   */
 static void RefreshMouse(ARMul_State *state) {
   int x,y,height,offset;
@@ -634,8 +454,15 @@ static void RefreshDisplay_PseudoColor_1bpp(ARMul_State *state) {
   char Buffer[MonitorWidth/8];
   char *ImgPtr=HD.ImageData;
 
-  /* First configure the colourmap */
-   set_4bpp_colourmap(state);
+    if (DC.video_palette_dirty) {
+        set_video_4bpp_colourmap();
+    }
+    if (DC.border_palette_dirty) {
+        set_border_colourmap();
+    }
+    if (DC.cursor_palette_dirty) {
+        set_cursor_colourmap();
+    }
 
   if (DisplayHeight<=0) {
     fprintf(stderr,"RefreshDisplay_PseudoColor_1bpp: 0 or -ve display height\n");
@@ -684,8 +511,15 @@ static void RefreshDisplay_PseudoColor_2bpp(ARMul_State *state) {
   char Buffer[MonitorWidth/4];
   char *ImgPtr=HD.ImageData;
 
-  /* First configure the colourmap */
-  set_4bpp_colourmap(state);
+    if (DC.video_palette_dirty) {
+        set_video_4bpp_colourmap();
+    }
+    if (DC.border_palette_dirty) {
+        set_border_colourmap();
+    }
+    if (DC.cursor_palette_dirty) {
+        set_cursor_colourmap();
+    }
 
   if (DisplayHeight<=0) {
     fprintf(stderr,"RefreshDisplay_PseudoColor_2bpp: 0 or -ve display height\n");
@@ -734,8 +568,15 @@ static void RefreshDisplay_PseudoColor_4bpp(ARMul_State *state) {
   char Buffer[MonitorWidth/2];
   char *ImgPtr=HD.ImageData;
 
-  /* First configure the colourmap */
-  set_4bpp_colourmap(state);
+    if (DC.video_palette_dirty) {
+        set_video_4bpp_colourmap();
+    }
+    if (DC.border_palette_dirty) {
+        set_border_colourmap();
+    }
+    if (DC.cursor_palette_dirty) {
+        set_cursor_colourmap();
+    }
 
   if (DisplayHeight<=0) {
     fprintf(stderr,"RefreshDisplay_PseudoColor_4bpp: 0 or -ve display height\n");
@@ -784,9 +625,16 @@ static void RefreshDisplay_PseudoColor_8bpp(ARMul_State *state) {
   int y,memoffset;
   int VisibleDisplayWidth;
   char *ImgPtr=HD.ImageData;
-  
-  /* First configure the colourmap */
-  set_8bpp_colourmap(state);
+ 
+    if (DC.video_palette_dirty) {
+        set_video_8bpp_colourmap();
+    }
+    if (DC.border_palette_dirty) {
+        set_border_colourmap();
+    }
+    if (DC.cursor_palette_dirty) {
+        set_cursor_colourmap();
+    }
 
   if (DisplayHeight<=0) {
     fprintf(stderr,"RefreshDisplay_PseudoColor_8bpp: 0 or -ve display height\n");
@@ -826,8 +674,15 @@ static void RefreshDisplay_TrueColor_1bpp(ARMul_State *state) {
   char Buffer[MonitorWidth/8];
   char *ImgPtr=HD.ImageData;
 
-  /* First configure the colourmap */
-  set_4bpp_pixelmap(state);
+    if (DC.video_palette_dirty) {
+        set_video_4bpp_pixelmap();
+    }
+    if (DC.border_palette_dirty) {
+        set_border_pixelmap();
+    }
+    if (DC.cursor_palette_dirty) {
+        set_cursor_pixelmap();
+    }
 
   if (DisplayHeight<=0) {
     fprintf(stderr,"RefreshDisplay_TrueColor_1bpp: 0 or -ve display height\n");
@@ -876,8 +731,15 @@ static void RefreshDisplay_TrueColor_2bpp(ARMul_State *state) {
   char Buffer[MonitorWidth/4];
   char *ImgPtr=HD.ImageData;
 
-  /* First configure the colourmap */
-  set_4bpp_pixelmap(state);
+    if (DC.video_palette_dirty) {
+        set_video_4bpp_pixelmap();
+    }
+    if (DC.border_palette_dirty) {
+        set_border_pixelmap();
+    }
+    if (DC.cursor_palette_dirty) {
+        set_cursor_pixelmap();
+    }
 
   if (DisplayHeight<=0) {
     fprintf(stderr,"RefreshDisplay_TrueColor_2bpp: 0 or -ve display height\n");
@@ -926,8 +788,15 @@ static void RefreshDisplay_TrueColor_4bpp(ARMul_State *state) {
   char Buffer[MonitorWidth/2];
   char *ImgPtr=HD.ImageData;
 
-  /* First configure the colourmap */
-  set_4bpp_pixelmap(state);
+    if (DC.video_palette_dirty) {
+        set_video_4bpp_pixelmap();
+    }
+    if (DC.border_palette_dirty) {
+        set_border_pixelmap();
+    }
+    if (DC.cursor_palette_dirty) {
+        set_cursor_pixelmap();
+    }
 
   if (DisplayHeight<=0) {
     fprintf(stderr,"RefreshDisplay_TrueColor_4bpp: 0 or -ve display height\n");
@@ -978,8 +847,15 @@ static void RefreshDisplay_TrueColor_8bpp(ARMul_State *state) {
   unsigned char Buffer[MonitorWidth];
   char *ImgPtr=HD.ImageData;
   
-  /* First configure the colourmap */
-  set_8bpp_pixelmap(state);
+    if (DC.video_palette_dirty) {
+        set_video_8bpp_pixelmap();
+    }
+    if (DC.border_palette_dirty) {
+        set_border_pixelmap();
+    }
+    if (DC.cursor_palette_dirty) {
+        set_cursor_pixelmap();
+    }
 
   if (DisplayHeight<=0) {
     fprintf(stderr,"RefreshDisplay_TrueColor_8bpp: 0 or -ve display height\n");
@@ -1074,6 +950,245 @@ static void RefreshDisplay(ARMul_State *state) {
               32,((VIDC.Vert_CursorEnd-VIDC.Vert_CursorStart)-1));
 }; /* RefreshDisplay */
 
+/* ------------------------------------------------------------------ */
+
+static void set_video_4bpp_colourmap(void)
+{
+    int c;
+    unsigned int pal;
+    XColor col;
+
+    for (c = 0; c < 16; c++) {
+        pal = VIDC.Palette[c];
+
+        col.flags = DoRed | DoGreen | DoBlue;
+        col.pixel = c;
+        col.red = pal & 0xf;
+        col.green = pal >> 4 & 0xf;
+        col.blue = pal >> 8 & 0xf;
+
+        MULT_BY_0x1111(col.red);
+        MULT_BY_0x1111(col.green);
+        MULT_BY_0x1111(col.blue);
+
+        XStoreColor(HD.disp, HD.ArcsColormap, &col);
+    }
+
+    DC.video_palette_dirty = FALSE;
+
+    return;
+}
+
+/* ------------------------------------------------------------------ */
+
+static void set_video_8bpp_colourmap(void)
+{
+    int c;
+    int l4;
+    int l65;
+    int l7;
+    unsigned int pal;
+    XColor col;
+
+    for (c = 0; c < 256; c++) {
+        l4 = c >> 1 & 8;
+        l65 = c >> 3 & 0xc;
+        l7 = c >> 4 & 8;
+
+        col.flags = DoRed | DoGreen | DoBlue;
+        col.pixel = c;
+        pal = VIDC.Palette[c & 0xf];
+        col.red = l4 | (pal & 7);
+        col.green = l65 | (pal >> 4 & 3);
+        col.blue = l7 | (pal >> 8 & 7);
+
+        MULT_BY_0x1111(col.red);
+        MULT_BY_0x1111(col.green);
+        MULT_BY_0x1111(col.blue);
+
+        XStoreColor(HD.disp, HD.ArcsColormap, &col);
+    }
+
+    DC.video_palette_dirty = FALSE;
+
+    return;
+}
+
+/* ------------------------------------------------------------------ */
+
+static void set_border_colourmap(void)
+{
+    unsigned int pal;
+    XColor col;
+
+    pal = VIDC.BorderCol;
+    col.flags = DoRed | DoGreen | DoBlue;
+    col.pixel = BORDER_COLOURMAP_ENTRY;
+    col.red = pal & 0xf;
+    col.green = pal >> 4 & 0xf;
+    col.blue = pal >> 8 & 0xf;
+
+    MULT_BY_0x1111(col.red);
+    MULT_BY_0x1111(col.green);
+    MULT_BY_0x1111(col.blue);
+
+    XStoreColor(HD.disp, HD.ArcsColormap, &col);
+
+    DC.border_palette_dirty = FALSE;
+
+    return;
+}
+
+/* ------------------------------------------------------------------ */
+
+static void set_cursor_colourmap(void)
+{
+    int c;
+    unsigned int pal;
+    XColor col;
+
+    for (c = 0; c < 3; c++) {
+        pal = VIDC.CursorPalette[c];
+        col.flags = DoRed | DoGreen | DoBlue;
+        col.pixel = c + CURSORCOLBASE;
+        col.red = pal & 0xf;
+        col.green = pal >> 4 & 0xf;
+        col.blue = pal >> 8 & 0xf;
+
+        MULT_BY_0x1111(col.red);
+        MULT_BY_0x1111(col.green);
+        MULT_BY_0x1111(col.blue);
+
+        XStoreColor(HD.disp, HD.ArcsColormap, &col);
+    }
+
+    DC.cursor_palette_dirty = FALSE;
+
+    return;
+}
+
+/* ------------------------------------------------------------------ */
+
+static void set_video_4bpp_pixelmap(void)
+{
+    int c;
+    unsigned int pal;
+    unsigned short r;
+    unsigned short g;
+    unsigned short b;
+
+    for (c = 0; c < 16; c++) {
+        pal = VIDC.Palette[c];
+
+        r = pal & 0xf;
+        g = pal >> 4 & 0xf;
+        b = pal >> 8 & 0xf;
+
+        MULT_BY_0x1111(r);
+        MULT_BY_0x1111(g);
+        MULT_BY_0x1111(b);
+
+        HD.pixelMap[c] = get_pixelval(r, g, b);
+    }
+
+    DC.video_palette_dirty = FALSE;
+
+    return;
+}
+
+/* ------------------------------------------------------------------ */
+
+static void set_video_8bpp_pixelmap(void)
+{
+    int c;
+    int l4;
+    int l65;
+    int l7;
+    unsigned int pal;
+    unsigned short r;
+    unsigned short g;
+    unsigned short b;
+
+    for (c = 0; c < 256; c++) {
+        l4 = c >> 1 & 8;
+        l65 = c >> 3 & 0xc;
+        l7 = c >> 4 & 8;
+
+        pal = VIDC.Palette[c & 0xf];
+        r = l4 | (pal & 7);
+        g = l65 | (pal >> 4 & 3);
+        b = l7 | (pal >> 8 & 7);
+
+        MULT_BY_0x1111(r);
+        MULT_BY_0x1111(g);
+        MULT_BY_0x1111(b);
+
+        HD.pixelMap[c] = get_pixelval(r, g, b);
+    }
+
+    DC.video_palette_dirty = FALSE;
+
+    return;
+}
+
+/* ------------------------------------------------------------------ */
+
+static void set_border_pixelmap(void)
+{
+    unsigned int pal;
+    unsigned short r;
+    unsigned short g;
+    unsigned short b;
+
+    pal = VIDC.BorderCol;
+
+    r = pal & 0xf;
+    g = pal >> 4 & 0xf;
+    b = pal >> 8 & 0xf;
+
+    MULT_BY_0x1111(r);
+    MULT_BY_0x1111(g);
+    MULT_BY_0x1111(b);
+
+    HD.border_map = get_pixelval(r, g, b);
+    XSetWindowBackground(HD.disp, HD.BackingWindow, HD.border_map);
+    XClearWindow(HD.disp, HD.BackingWindow);
+
+    DC.border_palette_dirty = FALSE;
+
+    return;
+}
+
+/* ------------------------------------------------------------------ */
+
+static void set_cursor_pixelmap(void)
+{
+    int c;
+    unsigned int pal;
+    unsigned short r;
+    unsigned short g;
+    unsigned short b;
+
+    for (c = 0; c < 3; c++) {
+        pal = VIDC.CursorPalette[c];
+
+        r = pal & 0xf;
+        g = pal >> 4 & 0xf;
+        b = pal >> 8 & 0xf;
+
+        MULT_BY_0x1111(r);
+        MULT_BY_0x1111(g);
+        MULT_BY_0x1111(b);
+
+        /* Entry 0 is transparent. */
+        HD.cursorPixelMap[c + 1] = get_pixelval(r, g, b);
+    }
+
+    DC.cursor_palette_dirty = FALSE;
+
+    return;
+}
+
 /*----------------------------------------------------------------------------*/
 
 static int DisplayKbd_XError(Display* disp, XErrorEvent *err)
@@ -1098,6 +1213,7 @@ void DisplayKbd_Init(ARMul_State *state) {
     char *s;
     KeySym ks;
     XSetWindowAttributes attr;
+    unsigned long attrmask;
   XColor tmpcol;
   int prescol;
   int mindex;
@@ -1176,10 +1292,17 @@ void DisplayKbd_Init(ARMul_State *state) {
 
     attr.border_pixel = 0;
     attr.colormap = HD.ArcsColormap;
+    attrmask = CWBorderPixel | CWColormap;
+
+    if (HD.visInfo.class == PseudoColor) {
+        attr.background_pixel = BORDER_COLOURMAP_ENTRY;
+        attrmask |= CWBackPixel;
+    }
 
     HD.BackingWindow = XCreateWindow(HD.disp, HD.RootWindow, 500, 500,
-        MonitorWidth, MonitorHeight, 0, HD.visInfo.depth, InputOutput,
-        HD.visInfo.visual, CWBorderPixel | CWColormap, &attr);
+        MonitorWidth + VIDC_BORDER * 2, MonitorHeight + VIDC_BORDER * 2,
+        0, HD.visInfo.depth, InputOutput, HD.visInfo.visual, attrmask,
+        &attr);
 
   tmpptr = strdup("Arc emulator - Main display");
   if (XStringListToTextProperty(&tmpptr,1,&name)==0) {
@@ -1189,16 +1312,9 @@ void DisplayKbd_Init(ARMul_State *state) {
   XSetWMName(HD.disp,HD.BackingWindow,&name);
   XFree(name.value);
 
-  HD.MainPane=XCreateWindow(HD.disp,
-                                     HD.BackingWindow,
-                                     0,0, /* Bottom left of backing window */
-                                     MonitorWidth,MonitorHeight,
-                                     0, /* Border width */
-                                     CopyFromParent, /* depth */
-                                     InputOutput, /* class */
-                                     CopyFromParent, /* visual */
-                                     0, /* valuemask */
-                                     NULL /* attribs */);
+    HD.MainPane = XCreateWindow(HD.disp, HD.BackingWindow, VIDC_BORDER,
+        VIDC_BORDER, MonitorWidth, MonitorHeight, 0, CopyFromParent,
+        InputOutput, CopyFromParent, 0, NULL);
 
   HD.CursorPane=XCreateWindow(HD.disp,
                               HD.MainPane,
@@ -1247,7 +1363,6 @@ void DisplayKbd_Init(ARMul_State *state) {
   };
 
 
-    XSelectInput(HD.disp, HD.BackingWindow, ExposureMask);
   XSelectInput(HD.disp,HD.MainPane,ExposureMask |
                                    PointerMotionMask |
                                    EnterWindowMask | LeaveWindowMask | /* For changing colour maps */
@@ -1677,19 +1792,23 @@ void VIDC_PutVal(ARMul_State *state,ARMword address, ARMword data,int bNw) {
   val=data & 0xffffff;
 
   if (!(addr & 0xc0)) {
-    int Log, Sup,Red,Green,Blue;
+        int Log;
 
     /* This lot presumes its not 8bpp mode! */
     Log=(addr>>2) & 15;
+#ifdef DEBUG_VIDCREGS
+    {
+        int Sup,Red,Green,Blue;
     Sup=(val >> 12) & 1;
     Blue=(val >> 8) & 15;
     Green=(val >> 4) & 15;
     Red=val & 15;
-#ifdef DEBUG_VIDCREGS
     fprintf(stderr,"VIDC Palette write: Logical=%d Physical=(%d,%d,%d,%d)\n",
       Log,Sup,Red,Green,Blue);
+    }
 #endif
-    VideoRelUpdateAndForce(DC.MustResetPalette,VIDC.Palette[Log],(val & 0x1fff));
+        IF_DIFF_THEN_ASSIGN_AND_SET_FLAG(VIDC.Palette[Log],
+            val & 0x1fff, DC.video_palette_dirty);
     return;
   };
 
@@ -1699,28 +1818,32 @@ void VIDC_PutVal(ARMul_State *state,ARMword address, ARMword data,int bNw) {
 #ifdef DEBUG_VIDCREGS  
       fprintf(stderr,"VIDC border colour write val=0x%x\n",val);
 #endif
-      VideoRelUpdateAndForce(DC.MustResetPalette,VIDC.BorderCol,(val & 0x1fff));
+        IF_DIFF_THEN_ASSIGN_AND_SET_FLAG(VIDC.BorderCol, val & 0x1fff,
+            DC.border_palette_dirty);
       break;
 
     case 0x44: /* Cursor palette log col 1 */
 #ifdef DEBUG_VIDCREGS  
       fprintf(stderr,"VIDC cursor log col 1 write val=0x%x\n",val);
 #endif   
-      VideoRelUpdateAndForce(DC.MustResetPalette,VIDC.CursorPalette[0],(val & 0x1fff));
+        IF_DIFF_THEN_ASSIGN_AND_SET_FLAG(VIDC.CursorPalette[0],
+            val & 0x1fff, DC.cursor_palette_dirty);
       break;
 
     case 0x48: /* Cursor palette log col 2 */
 #ifdef DEBUG_VIDCREGS  
       fprintf(stderr,"VIDC cursor log col 2 write val=0x%x\n",val);
 #endif   
-      VideoRelUpdateAndForce(DC.MustResetPalette,VIDC.CursorPalette[1],(val & 0x1fff));
+        IF_DIFF_THEN_ASSIGN_AND_SET_FLAG(VIDC.CursorPalette[1],
+            val & 0x1fff, DC.cursor_palette_dirty);
       break;
 
     case 0x4c: /* Cursor palette log col 3 */
 #ifdef DEBUG_VIDCREGS  
       fprintf(stderr,"VIDC cursor log col 3 write val=0x%x\n",val);
 #endif   
-      VideoRelUpdateAndForce(DC.MustResetPalette,VIDC.CursorPalette[2],(val & 0x1fff));
+        IF_DIFF_THEN_ASSIGN_AND_SET_FLAG(VIDC.CursorPalette[2],
+            val & 0x1fff, DC.cursor_palette_dirty);
       break;
 
     case 0x60: /* Stereo image reg 7 */

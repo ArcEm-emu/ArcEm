@@ -39,7 +39,16 @@ typedef enum {
 typedef struct {
   struct {
     int MustRedraw;       /* Set to 1 by emulator if something major changes */
-    int MustResetPalette; /* Set to 1 by emulator if palette is changed      */
+#if defined(SYSTEM_X)
+        /* These three flags indicate VIDC's palette registers have
+         * changed without the host's equivalent structure being updated
+         * to match. */
+        char video_palette_dirty;
+        char border_palette_dirty;
+        char cursor_palette_dirty;
+#else
+    int MustResetPalette; /* Set to 1 by emulator if something major changes */
+#endif
     int PollCount;
     int AutoRefresh;
 
@@ -54,7 +63,7 @@ typedef struct {
 
   struct {
     unsigned int Palette[16];
-    unsigned int BorderCol:14;
+    unsigned int BorderCol;
     unsigned int CursorPalette[3];
     unsigned int Horiz_Cycle;
     unsigned int Horiz_SyncWidth;
@@ -114,6 +123,7 @@ typedef struct {
     int ShapeEnabled;      /* Yep - we are using shapes */
     char *ShapePixmapData; /* This is what we use to create the pixmap */
     unsigned long pixelMap[256]; /* Map from host memory contents to 'pixel' value for putpixel */
+        unsigned long border_map;
     unsigned long cursorPixelMap[4]; /* Map from host memory contents to 'pixel' value for putpixel in cursor*/
     int red_shift,red_prec;
     int green_shift,green_prec;
