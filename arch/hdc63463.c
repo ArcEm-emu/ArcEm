@@ -1629,11 +1629,11 @@ void HDC_Init(ARMul_State *state) {
 #endif
 
     {
-      FILE *isThere = fopen(FileName, "r");
+      FILE *isThere = fopen(FileName, "rb");
 
       if (isThere) {
         fclose(isThere);
-        HDC.HardFile[currentdrive] = fopen(FileName,"r+");
+        HDC.HardFile[currentdrive] = fopen(FileName,"rb+");
       } else {
         HDC.HardFile[currentdrive] = NULL;
       }

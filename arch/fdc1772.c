@@ -810,11 +810,11 @@ void FDC_ReOpen(ARMul_State *state, int drive) {
 #endif
 
   {
-    FILE *isThere = fopen(tmp, "r");
+    FILE *isThere = fopen(tmp, "rb");
 
     if (isThere) {
       fclose(isThere);
-      FDC.FloppyFile[drive] = fopen(tmp,"r+");
+      FDC.FloppyFile[drive] = fopen(tmp,"rb+");
     } else {
       FDC.FloppyFile[drive] = NULL;
     }
@@ -822,7 +822,7 @@ void FDC_ReOpen(ARMul_State *state, int drive) {
 
   if (FDC.FloppyFile[drive]==NULL) {
     /* If it failed for r/w try read only */
-    FDC.FloppyFile[drive]=fopen(tmp,"r");
+    FDC.FloppyFile[drive]=fopen(tmp,"rb");
   };
 
 #ifdef DEBUG_FDC
@@ -859,23 +859,23 @@ void FDC_Init(ARMul_State *state) {
     sprintf(tmp, "<ArcEm$Dir>.^.FloppyImage%d", disc);
 
     {
-      FILE *isThere = fopen(tmp, "r");
+      FILE *isThere = fopen(tmp, "rb");
   
       if (isThere) {
         fclose(isThere);
-        FDC.FloppyFile[disc] = fopen(tmp,"r+");
+        FDC.FloppyFile[disc] = fopen(tmp,"rb+");
       } else {
         FDC.FloppyFile[disc] = NULL;
       }
     }
 #else
     sprintf(tmp,"FloppyImage%d",disc);
-    FDC.FloppyFile[disc] = fopen(tmp,"r+");
+    FDC.FloppyFile[disc] = fopen(tmp,"rb+");
 #endif
 
     if (FDC.FloppyFile[disc] == NULL) {
       /* If it failed for r/w try read only */
-      FDC.FloppyFile[disc] = fopen(tmp,"r");
+      FDC.FloppyFile[disc] = fopen(tmp,"rb");
     };
   };
 #else
