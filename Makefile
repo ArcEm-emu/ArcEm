@@ -50,7 +50,7 @@ INSTALL=cp
 
 # Everything else should be ok as it is.
 
-OBJS = armcopro.o armemu26.o arminit.o \
+OBJS = armcopro.o armemu.o arminit.o \
 	armsupp.o main.o dagstandalone.o armos.o \
 		bag.o armrdi.o $(SYSTEM)/DispKbd.o arch/i2c.o arch/archio.o \
     arch/fdc1772.o $(SYSTEM)/ControlPane.o arch/hdc63463.o arch/ReadConfig.o
@@ -155,8 +155,8 @@ armos.o: armos.c armdefs.h armos.h armfpe.h
 armcopro.o: armcopro.c armdefs.h 
 	$(CC) $(CFLAGS) -c $*.c
 
-armemu26.o: armemu.c armdefs.h armemu.h armemuinstr.c armemudec.c
-	$(CC) $(CFLAGS) -o armemu26.o -c armemu.c
+armemu.o: armemu.c armdefs.h armemu.h armemuinstr.c armemudec.c
+	$(CC) $(CFLAGS) -o armemu.o -c armemu.c
 
 arm-support.o: arm-support.s instructions 
 	$(CC) -x assembler-with-cpp arm-support.s -c -I@
