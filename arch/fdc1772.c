@@ -1,7 +1,8 @@
 /* Emulation of 1772 fdc */
 /* (c) David Alan Gilbert 1995-1999 - see Readme file for copying info */
 
-/*#define DEBUG_FDC */
+#define DEBUG_FDC1772 0
+#define DBG(a) if (DEBUG_FDC1772) fprintf a
 
 #include <stdlib.h>
 
@@ -62,14 +63,10 @@ static void FDC_DoReadAddressChar(ARMul_State *state);
 
 /*--------------------------------------------------------------------------*/
 static void GenInterrupt(ARMul_State *state, const char *reason) {
-#ifdef DEBUG_FDC 
-  fprintf(stderr,"FDC:GenInterrupt: %s\n",reason);
-#endif 
+  DBG((stderr,"FDC:GenInterrupt: %s\n",reason));
   ioc.FIRQStatus|=2; /* FH1 line on IOC */
-#ifdef DEBUG_FDC
-  fprintf(stderr,"FDC:GenInterrupt FIRQStatus=0x%x Mask=0x%x\n",
-    ioc.FIRQStatus,ioc.FIRQMask);
-#endif
+  DBG((stderr,"FDC:GenInterrupt FIRQStatus=0x%x Mask=0x%x\n",
+    ioc.FIRQStatus,ioc.FIRQMask));
   IO_UpdateNfiq();
 }; /* GenInterrupt */
 
@@ -149,18 +146,14 @@ static void ClearInterrupt(ARMul_State *state) {
 
 /*--------------------------------------------------------------------------*/
 static void GenDRQ(ARMul_State *state) {
-#ifdef DEBUG_FDC 
-  fprintf(stderr,"FDC_GenDRQ (data=0x%x)\n",FDC.Data);
-#endif 
+  DBG((stderr,"FDC_GenDRQ (data=0x%x)\n",FDC.Data));
   ioc.FIRQStatus|=1; /* FH0 line on IOC */
   IO_UpdateNfiq();
 }; /* GenDRQ */
 
 /*--------------------------------------------------------------------------*/
 static void ClearDRQ(ARMul_State *state) {
-#ifdef DEBUG_FDC 
-  fprintf(stderr,"FDC_ClearDRQ\n");
-#endif 
+  DBG((stderr,"FDC_ClearDRQ\n"));
   ioc.FIRQStatus&=~1; /* FH0 line on IOC */
   IO_UpdateNfiq();
   FDC.StatusReg&=~BIT_DRQ;
@@ -173,9 +166,7 @@ void FDC_LatchAChange(ARMul_State *state) {
   int val;
   int diffmask=ioc.LatchA ^ ioc.LatchAold;
 
-#ifdef DEBUG_FDC
-  fprintf(stderr,"LatchA: 0x%x\n",ioc.LatchA);
-#endif
+  DBG((stderr,"LatchA: 0x%x\n",ioc.LatchA));
 
   /* Start up test */
   if (ioc.LatchAold==-1) diffmask=0xff;
@@ -190,39 +181,29 @@ void FDC_LatchAChange(ARMul_State *state) {
         case 1:
         case 2:
         case 3:
-#ifdef DEBUG_FDC
-          fprintf(stderr,"Floppy drive select %d gone %s\n",bit,val?"High":"Low");
-#endif
+          DBG((stderr,"Floppy drive select %d gone %s\n",bit,val?"High":"Low"));
           if (!val)
             FDC.CurrentDisc=bit;
           break;
 
         case 4:
-#ifdef DEBUG_FDC
-          fprintf(stderr,"Floppy drive side select now %d\n",val?1:0);
-#endif
+          DBG((stderr,"Floppy drive side select now %d\n",val?1:0));
           break;
 
         case 5:
-#ifdef DEBUG_FDC
-          fprintf(stderr,"Floppy drive Motor now %s\n",val?"On":"Off");
-#endif          
+          DBG((stderr,"Floppy drive Motor now %s\n",val?"On":"Off"));
           break;
 
         case 6:
           now=ARMul_Time;
           diff=now-TimeWhenInUseChanged;
-#ifdef DEBUG_FDC
-          fprintf(stderr,"Floppy In use line now %d (was %s for %lu ticks)\n",
-                  val?1:0,val?"low":"high",diff);
-#endif
+          DBG((stderr,"Floppy In use line now %d (was %s for %lu ticks)\n",
+                  val?1:0,val?"low":"high",diff));
           TimeWhenInUseChanged=now;
           break;
 
         case 7:
-#ifdef DEBUG_FDC
-          fprintf(stderr,"Floppy eject/disc change reset now %d\n",val?1:0);
-#endif
+          DBG((stderr,"Floppy eject/disc change reset now %d\n",val?1:0));
           break;
       }; /* Bit changed switch */
     }; /* Difference if */
@@ -241,9 +222,7 @@ void FDC_LatchBChange(ARMul_State *state) {
   int val;
   int diffmask=ioc.LatchB ^ ioc.LatchBold;
 
-#ifdef DEBUG_FDC
-  fprintf(stderr,"LatchB: 0x%x\n",ioc.LatchB);
-#endif
+  DBG((stderr,"LatchB: 0x%x\n",ioc.LatchB));
   /* Start up test */
   if (ioc.LatchBold==-1) diffmask=0xff;
 
@@ -252,38 +231,36 @@ void FDC_LatchBChange(ARMul_State *state) {
       /* Bit changed! */
       val=ioc.LatchB & (1<<bit);
 
-#ifdef DEBUG_FDC
       switch (bit) {
         case 0:
         case 2:
-          fprintf(stderr,"Latch B bit %d now %d\n",bit,val?1:0);
+          DBG((stderr,"Latch B bit %d now %d\n",bit,val?1:0));
           break;
 
         case 1:
-          fprintf(stderr,"FDC format now %s Density\n",val?"Single":"Double");
+          DBG((stderr,"FDC format now %s Density\n",val?"Single":"Double"));
           break;
 
         case 3:
-          fprintf(stderr,"Floppy drive reset now %s\n",val?"High":"Low");
+          DBG((stderr,"Floppy drive reset now %s\n",val?"High":"Low"));
           break;
 
         case 4:
-          fprintf(stderr,"Printer strobe now %d\n",val?1:0);
+          DBG((stderr,"Printer strobe now %d\n",val?1:0));
           break;
 
         case 5:
-          fprintf(stderr,"Aux 1 now %d\n",val?1:0);
+          DBG((stderr,"Aux 1 now %d\n",val?1:0));
           break;
 
         case 6:
-          fprintf(stderr,"Aux 2 now %d\n",val?1:0);
+          DBG((stderr,"Aux 2 now %d\n",val?1:0));
           break;
 
         case 7:
-          fprintf(stderr,"HDC HS3 line now %d\n",val?1:0);
+          DBG((stderr,"HDC HS3 line now %d\n",val?1:0));
           break;
       }; /* Bit changed switch */
-#endif      
     }; /* Difference if */
   }; /* bit loop */
 }; /* FDC_LatchBChange */
@@ -322,24 +299,18 @@ ARMword FDC_Read(ARMul_State *state, ARMword offset) {
 
   switch (reg) {
     case 0: /* Status */
-#ifdef DEBUG_FDC
-      fprintf(stderr,"FDC_Read: Status reg=0x%x pc=%08x r[15]=%08x\n",FDC.StatusReg,state->pc,state->Reg[15]);
-#endif
+      DBG((stderr,"FDC_Read: Status reg=0x%x pc=%08x r[15]=%08x\n",FDC.StatusReg,state->pc,state->Reg[15]));
       ClearInterrupt(state);
       return(FDC.StatusReg);
       break;
 
     case 1: /* Track */
-#ifdef DEBUG_FDC
-      fprintf(stderr,"FDC_Read: Track reg\n");
-#endif
+      DBG((stderr,"FDC_Read: Track reg\n"));
       return(FDC.Track);
       break;
 
     case 2: /* Sector */
-#ifdef DEBUG_FDC
-      fprintf(stderr,"FDC_Read: Sector reg\n");
-#endif
+      DBG((stderr,"FDC_Read: Sector reg\n"));
       return(FDC.Sector);
       break;
 
@@ -359,9 +330,7 @@ static void FDC_DoDRQ(ARMul_State *state) {
   /* If they haven't read the previous data then flag a problem */
   if (FDC.StatusReg & BIT_DRQ) {
     FDC.StatusReg |=BIT_LOSTDATA;
-#ifdef DEBUG_FDC
-    fprintf(stderr,"FDC: LostData\n");
-#endif
+    DBG((stderr,"FDC: LostData\n"));
   };
 
   FDC.StatusReg|=BIT_DRQ;
@@ -385,9 +354,7 @@ static void FDC_NextSector(ARMul_State *state) {
 }; /* FDC_NextSector */
 /*--------------------------------------------------------------------------*/
 static void FDC_DoReadAddressChar(ARMul_State *state) {
-#ifdef DEBUG_FDC
-  fprintf(stderr,"FDC_DoReadAddressChar: BytesToGo=%x\n",FDC.BytesToGo);
-#endif
+  DBG((stderr,"FDC_DoReadAddressChar: BytesToGo=%x\n",FDC.BytesToGo));
 
   switch (FDC.BytesToGo) {
     case 6: /* Track addr */
@@ -422,13 +389,9 @@ static void FDC_DoReadAddressChar(ARMul_State *state) {
          reading all the data we should finish anyway */
       if (FDC.StatusReg & BIT_DRQ) {
         FDC.StatusReg |=BIT_LOSTDATA;
-#ifdef DEBUG_FDC
-        fprintf(stderr,"FDC: LostData (Read address end)\n");
-#endif
+        DBG((stderr,"FDC: LostData (Read address end)\n"));
       };
-#ifdef DEBUG_FDC
-      fprintf(stderr,"FDC: ReadAddressChar: Terminating command at end\n");
-#endif
+      DBG((stderr,"FDC: ReadAddressChar: Terminating command at end\n"));
       GenInterrupt(state,"Read end");
       FDC.LastCommand=0xd0; /* Force int with no interrupt */
       FDC.StatusReg&=~BIT_BUSY;
@@ -448,11 +411,9 @@ static void FDC_DoReadChar(ARMul_State *state) {
     data=42;
   } else {
     data=fgetc(FDC.FloppyFile[FDC.CurrentDisc]);
-#ifdef DEBUG_FDC
     if (data==EOF) {
-      fprintf(stderr,"FDC_DoReadChar: got EOF\n");
+      DBG((stderr,"FDC_DoReadChar: got EOF\n"));
     };
-#endif
   };
   FDC.Data=data;
   FDC_DoDRQ(state);
@@ -544,10 +505,8 @@ static void FDC_ReadCommand(ARMul_State *state) {
   FDC.StatusReg|=BIT_BUSY;
   FDC.StatusReg&=~(BIT_DRQ | BIT_LOSTDATA | (1<<5) | (1<<6) | BIT_RECNOTFOUND);
 
-#ifdef DEBUG_FDC
-  fprintf(stderr,"FDC_ReadCommand: Starting with Side=%d Track=%d Sector=%d (CurrentDisc=%d)\n",
-                 Side,FDC.Track,FDC.Sector,FDC.CurrentDisc);
-#endif
+  DBG((stderr,"FDC_ReadCommand: Starting with Side=%d Track=%d Sector=%d (CurrentDisc=%d)\n",
+                 Side,FDC.Track,FDC.Sector,FDC.CurrentDisc));
 
     offset = SECTOR_LOC_TO_BYTE_OFF(FDC.Track, Side, FDC.Sector);
 
@@ -602,10 +561,8 @@ static void FDC_WriteCommand(ARMul_State *state) {
   FDC.StatusReg|=BIT_BUSY;
   FDC.StatusReg&=~(BIT_DRQ | BIT_LOSTDATA | (1<<5) | (1<<6) | BIT_RECNOTFOUND);
 
-#ifdef DEBUG_FDC
-  fprintf(stderr,"FDC_WriteCommand: Starting with Side=%d Track=%d Sector=%d\n",
-                 Side,FDC.Track,FDC.Sector);
-#endif
+  DBG((stderr,"FDC_WriteCommand: Starting with Side=%d Track=%d Sector=%d\n",
+                 Side,FDC.Track,FDC.Sector));
 
     offset = SECTOR_LOC_TO_BYTE_OFF(FDC.Track, Side, FDC.Sector);
   fseek(FDC.FloppyFile[FDC.CurrentDisc],offset,SEEK_SET);
@@ -625,36 +582,28 @@ static void FDC_NewCommand(ARMul_State *state, ARMword data) {
   ClearInterrupt(state);
   switch (data & 0xf0) {
     case 0x00: /* Restore (Type I command) */
-#ifdef DEBUG_FDC
-      fprintf(stderr,"FDC_NewCommand: Restore data=0x%x pc=%08x r[15]=%08x\n",
-              data,state->pc,state->Reg[15]);
-#endif
+      DBG((stderr,"FDC_NewCommand: Restore data=0x%x pc=%08x r[15]=%08x\n",
+              data,state->pc,state->Reg[15]));
       FDC.LastCommand=data;
       FDC_RestoreCommand(state);
       break;
 
     case 0x10: /* Seek (Type I command) */
-#ifdef DEBUG_FDC
-      fprintf(stderr,"FDC_NewCommand: Seek data=0x%x\n",data);
-#endif
+      DBG((stderr,"FDC_NewCommand: Seek data=0x%x\n",data));
       FDC.LastCommand=data;
       FDC_SeekCommand(state);
       break;
 
     case 0x20: /* Step (Type I command) */
     case 0x30:
-#ifdef DEBUG_FDC
-      fprintf(stderr,"FDC_NewCommand: Step data=0x%x\n",data);
-#endif
+      DBG((stderr,"FDC_NewCommand: Step data=0x%x\n",data));
       FDC.LastCommand=data;
       FDC_StepDirCommand(state,FDC.Direction);
       break;
 
     case 0x40: /* Step In (Type I command) */
     case 0x50:
-#ifdef DEBUG_FDC
-    fprintf(stderr,"FDC_NewCommand: Step in data=0x%x\n",data);
-#endif
+    DBG((stderr,"FDC_NewCommand: Step in data=0x%x\n",data));
     FDC.LastCommand=data;
     /* !!!! NOTE StepIn means move towards the centre of the disc - i.e.*/
     /*           increase track!!!                                      */
@@ -663,9 +612,7 @@ static void FDC_NewCommand(ARMul_State *state, ARMword data) {
 
     case 0x60: /* Step Out (Type I command) */
     case 0x70:
-#ifdef DEBUG_FDC
-      fprintf(stderr,"FDC_NewCommand: Step out data=0x%x\n",data);
-#endif
+      DBG((stderr,"FDC_NewCommand: Step out data=0x%x\n",data));
       FDC.LastCommand=data;
       /* !!!! NOTE StepOut means move towards the centre of the disc - i.e.*/
       /*           decrease track!!!                                       */
@@ -674,9 +621,7 @@ static void FDC_NewCommand(ARMul_State *state, ARMword data) {
 
     case 0x80: /* Read Sector (Type II command) */
     case 0x90:
-#ifdef DEBUG_FDC
-      fprintf(stderr,"FDC_NewCommand: Read sector data=0x%x\n",data);
-#endif
+      DBG((stderr,"FDC_NewCommand: Read sector data=0x%x\n",data));
      /* {
         static int count=4;
         count--;
@@ -690,39 +635,29 @@ static void FDC_NewCommand(ARMul_State *state, ARMword data) {
 
     case 0xa0: /* Write Sector (Type II command) */
     case 0xb0:
-#ifdef DEBUG_FDC
-      fprintf(stderr,"FDC_NewCommand: Write sector data=0x%x\n",data);
-#endif
+      DBG((stderr,"FDC_NewCommand: Write sector data=0x%x\n",data));
       FDC.LastCommand=data;
       FDC_WriteCommand(state);
       break;
 
     case 0xc0: /* Read Address (Type III command) */
-#ifdef DEBUG_FDC
-      fprintf(stderr,"FDC_NewCommand: Read address data=0x%x (PC=0x%x)\n",data,ARMul_GetPC(state));
-#endif
+      DBG((stderr,"FDC_NewCommand: Read address data=0x%x (PC=0x%x)\n",data,ARMul_GetPC(state)));
       FDC.LastCommand=data;
       FDC_ReadAddressCommand(state);
       break;
 
     case 0xd0: /* Force Interrupt (Type IV command) */
-#ifdef DEBUG_FDC
-      fprintf(stderr,"FDC_NewCommand: Force interrupt data=0x%x\n",data);
-#endif
+      DBG((stderr,"FDC_NewCommand: Force interrupt data=0x%x\n",data));
       FDC.LastCommand=data;
       break;
 
     case 0xe0: /* Read Track (Type III command) */
-#ifdef DEBUG_FDC
-      fprintf(stderr,"FDC_NewCommand: Read track data=0x%x\n",data);
-#endif
+      DBG((stderr,"FDC_NewCommand: Read track data=0x%x\n",data));
       FDC.LastCommand=data;
       break;
 
     case 0xf0: /* Write Track (Type III command) */
-#ifdef DEBUG_FDC
-      fprintf(stderr,"FDC_NewCommand: Write track data=0x%x\n",data);
-#endif
+      DBG((stderr,"FDC_NewCommand: Write track data=0x%x\n",data));
       FDC.LastCommand=data;
       break;
 
@@ -739,16 +674,12 @@ ARMword FDC_Write(ARMul_State *state, ARMword offset, ARMword data, int bNw) {
       break;
 
     case 1: /* Track register */
-#ifdef DEBUG_FDC
-      fprintf(stderr,"FDC_Write: Track reg=0x%x\n",data);
-#endif
+      DBG((stderr,"FDC_Write: Track reg=0x%x\n",data));
       FDC.Track=data;
       break;
 
     case 2: /* Sector register */
-#ifdef DEBUG_FDC
-      fprintf(stderr,"FDC_Write: Sector reg=0x%x\n",data);
-#endif
+      DBG((stderr,"FDC_Write: Sector reg=0x%x\n",data));
       FDC.Sector=data;
       break;
 
@@ -825,9 +756,7 @@ void FDC_ReOpen(ARMul_State *state, int drive) {
     FDC.FloppyFile[drive]=fopen(tmp,"rb");
   };
 
-#ifdef DEBUG_FDC
-  fprintf(stderr,"FDC_ReOpen: Drive %d %s\n",drive,(FDC.FloppyFile[drive]==NULL)?"unable to reopen":"reopened");
-#endif
+  DBG((stderr,"FDC_ReOpen: Drive %d %s\n",drive,(FDC.FloppyFile[drive]==NULL)?"unable to reopen":"reopened"));
 }; /* FDC_ReOpen */
 
 /*--------------------------------------------------------------------------*/
@@ -887,10 +816,8 @@ void FDC_Init(ARMul_State *state) {
 
   FDC.DelayCount=10000;
   FDC.DelayLatch=10000;
-#ifdef DEBUG_FDC
-    fprintf(stderr, "FDC_Init: SectorSize=%d Sectors/Track=%d Tracks/Disc=%d Sector offset=%d\n",
+    DBG((stderr, "FDC_Init: SectorSize=%d Sectors/Track=%d Tracks/Disc=%d Sector offset=%d\n",
         format->bytes_per_sector, format->sectors_per_track,
-        format->num_tracks, format->sector_base);
-#endif
+        format->num_tracks, format->sector_base));
 }; /* FDC_Init */
 /*--------------------------------------------------------------------------*/
