@@ -1150,11 +1150,18 @@ static void ProcessKey(ARMul_State *state,XKeyEvent *key) {
       KBD.Buffer[KBD.BuffOcc].KeyRowToSend=PresPtr->row;
       KBD.Buffer[KBD.BuffOcc].KeyUpNDown = key->type == KeyRelease;
 #ifdef DEBUG_KBD
-      fprintf(stderr,"ProcessKey: Got Col,Row=%d,%d UpNDown=%d BuffOcc=%d\n", 
-              KBD.Buffer[KBD.BuffOcc].KeyColToSend,
-               KBD.Buffer[KBD.BuffOcc].KeyRowToSend,
-               KBD.Buffer[KBD.BuffOcc].KeyUpNDown,
-              KBD.BuffOcc);
+            {
+                char *s;
+
+                s = XKeysymToString(sym);
+                fprintf(stderr, "ProcessKey: found Keysym %-12s at "
+                    "%2d, %2d going %-4s.  BuffOcc=%d\n",
+                    s ? s : "unknown",
+                    KBD.Buffer[KBD.BuffOcc].KeyColToSend,
+                    KBD.Buffer[KBD.BuffOcc].KeyRowToSend,
+                    KBD.Buffer[KBD.BuffOcc].KeyUpNDown ? "up" : "down",
+                    KBD.BuffOcc);
+            }
 #endif
       KBD.BuffOcc++;
       return;
