@@ -1107,12 +1107,12 @@ static void ProcessKey(ARMul_State *state,XKeyEvent *key) {
   KeySym sym;
 
   /* Just take the unshifted version of the key */
-  sym=XLookupKeysym(key,0);
+  sym = XLookupKeysym(key,0);
 
   /* Trap the special key for mouse following */
-  if (sym==MOUSEKEY) {
+  if (sym == MOUSEKEY) {
     /* And when it is pressed toggle the mouse follow mode */
-    if (key->type==KeyPress) {
+    if (key->type == KeyPress) {
       fprintf(stderr,"Doing Mouse tracking\n");
       DC.DoingMouseFollow^=1;
       if (DC.DoingMouseFollow)

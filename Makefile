@@ -87,9 +87,11 @@ LIBS += -L/usr/X11R6/lib -lXext -lX11
 endif
 
 ifeq (${SYSTEM},win)
-CFLAGS += -DSYSTEM_win
+CFLAGS += -DSYSTEM_win -mno-cygwin
 OBJS += win/gui.o win/win.o
-LIBS += -luser32 -lgdi32
+LIBS += -luser32 -lgdi32 -mno-cygwin
+# Comment the following line to have a console window
+LIBS += -mwindows
 endif
 
 
@@ -115,7 +117,7 @@ $(TARGET): $(OBJS) $(MODEL).o
  
 
 clean:
-	rm -f *.o arch/*.o arcem core *.bb *.bbg *.da
+	rm -f *.o arch/*.o $(SYSTEM)/*.o arcem core *.bb *.bbg *.da
 
 distclean: clean
 	rm -f *~
@@ -222,7 +224,7 @@ arch/ReadConfig.o: arch/ReadConfig.c arch/ReadConfig.h arch/DispKbd.h \
 	arch/armarc.h
 	$(CC) $(CFLAGS) -c $*.c -o arch/ReadConfig.o
 
-win/gui.o: win/gui.rc win/gui.h win/gui.ico
+win/gui.o: win/gui.rc win/gui.h win/arc.ico
 	windres $*.rc -o win/gui.o
 
 

@@ -277,7 +277,7 @@ typedef struct {
 
 typedef RDI_NameList const *rdi_namelistproc(void);
 
-typedef int rdi_errmessproc(char *buf, int buflen, int errno);
+typedef int rdi_errmessproc(char *buf, int buflen, int err);
 
 struct RDIProcVec {
     char rditypename[12];

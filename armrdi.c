@@ -18,6 +18,7 @@
 #include <string.h>
 #include <ctype.h>
 
+#include "arch/Version.h"
 #include "armdefs.h"
 #include "armemu.h"
 #include "armos.h"
@@ -197,7 +198,7 @@ static int RDI_open(unsigned type, const Dbg_ConfigBlock *config,
        unsigned processor = processors[req]->val;
        ARMul_SelectProcessor(emu_state, processor);
        ARMul_Reset(emu_state);
-       ARMul_ConsolePrint(emu_state, "ARMulator V1.50, %s", processors[req]->name);
+       ARMul_ConsolePrint(emu_state, "%s, %s\n", Version, processors[req]->name);
      }
      if (ARMul_MemoryInit(emu_state,config->memorysize) == FALSE)
        InitFail(1, "Memory");
