@@ -163,6 +163,10 @@ SOURCE=..\arch\DispKbd.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\arch\DispKbdShared.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\arch\extnrom.c
 # End Source File
 # Begin Source File
