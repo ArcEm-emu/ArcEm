@@ -19,6 +19,36 @@
 #include "ControlPane.h"
 #include "fdc1772.h"
 
+/* Type I commands. */
+#define CMD_RESTORE 0x00
+#define CMD_RESTORE_MASK 0xf0
+#define CMD_SEEK 0x10
+#define CMD_SEEK_MASK 0xf0
+#define CMD_STEP 0x20
+#define CMD_STEP_MASK 0xe0
+#define CMD_STEP_IN 0x40
+#define CMD_STEP_IN_MASK 0xe0
+#define CMD_STEP_OUT 0x60
+#define CMD_STEP_OUT_MASK 0xe0
+/* Type II commands. */
+#define CMD_READ_SECTOR 0x80
+#define CMD_READ_SECTOR_MASK 0xe0
+#define CMD_WRITE_SECTOR 0xa0
+#define CMD_WRITE_SECTOR_MASK 0xe0
+/* Type III commands. */
+#define CMD_READ_ADDR 0xc0
+#define CMD_READ_ADDR_MASK 0xf0
+#define CMD_READ_TRACK 0xe0
+#define CMD_READ_TRACK_MASK 0xf0
+#define CMD_WRITE_TRACK 0xf0
+#define CMD_WRITE_TRACK_MASK 0xf0
+/* Type IV commands. */
+#define CMD_FORCE_INTR 0xd0
+#define CMD_FORCE_INTR_MASK 0xf0
+
+#define IS_CMD(data, cmd) \
+    (((data) & CMD_ ## cmd ## _MASK) == CMD_ ## cmd)
+
 #define READSPACING 1
 #define WRITESPACING 1
 #define READADDRSTART 50
@@ -606,49 +636,37 @@ static void FDC_RestoreCommand(ARMul_State *state) {
   FDC.DelayCount=FDC.DelayLatch=READSPACING;
 }; /* FDC_RestoreCommand */
 /*--------------------------------------------------------------------------*/
-static void FDC_NewCommand(ARMul_State *state, ARMword data) {
-  ClearInterrupt(state);
-  switch (data & 0xf0) {
-    case 0x00: /* Restore (Type I command) */
+
+static void FDC_NewCommand(ARMul_State *state, ARMword data)
+{
+    ClearInterrupt(state);
+
+    if (IS_CMD(data, RESTORE)) {
       DBG((stderr,"FDC_NewCommand: Restore data=0x%x pc=%08x r[15]=%08x\n",
               data,state->pc,state->Reg[15]));
       FDC.LastCommand=data;
       FDC_RestoreCommand(state);
-      break;
-
-    case 0x10: /* Seek (Type I command) */
+    } else if (IS_CMD(data, SEEK)) {
       DBG((stderr,"FDC_NewCommand: Seek data=0x%x\n",data));
       FDC.LastCommand=data;
       FDC_SeekCommand(state);
-      break;
-
-    case 0x20: /* Step (Type I command) */
-    case 0x30:
+    } else if (IS_CMD(data, STEP)) {
       DBG((stderr,"FDC_NewCommand: Step data=0x%x\n",data));
       FDC.LastCommand=data;
       FDC_StepDirCommand(state,FDC.Direction);
-      break;
-
-    case 0x40: /* Step In (Type I command) */
-    case 0x50:
+    } else if (IS_CMD(data, STEP_IN)) {
     DBG((stderr,"FDC_NewCommand: Step in data=0x%x\n",data));
     FDC.LastCommand=data;
     /* !!!! NOTE StepIn means move towards the centre of the disc - i.e.*/
     /*           increase track!!!                                      */
       FDC_StepDirCommand(state,+1);
-      break;
-
-    case 0x60: /* Step Out (Type I command) */
-    case 0x70:
+    } else if (IS_CMD(data, STEP_OUT)) {
       DBG((stderr,"FDC_NewCommand: Step out data=0x%x\n",data));
       FDC.LastCommand=data;
       /* !!!! NOTE StepOut means move towards the centre of the disc - i.e.*/
       /*           decrease track!!!                                       */
       FDC_StepDirCommand(state,-1);
-      break;
-
-    case 0x80: /* Read Sector (Type II command) */
-    case 0x90:
+    } else if (IS_CMD(data, READ_SECTOR)) {
       DBG((stderr,"FDC_NewCommand: Read sector data=0x%x\n",data));
      /* {
         static int count=4;
@@ -659,38 +677,29 @@ static void FDC_NewCommand(ARMul_State *state, ARMword data) {
       }; */
       FDC.LastCommand=data;
       FDC_ReadCommand(state);
-      break;
-
-    case 0xa0: /* Write Sector (Type II command) */
-    case 0xb0:
+    } else if (IS_CMD(data, WRITE_SECTOR)) {
       DBG((stderr,"FDC_NewCommand: Write sector data=0x%x\n",data));
       FDC.LastCommand=data;
       FDC_WriteCommand(state);
-      break;
-
-    case 0xc0: /* Read Address (Type III command) */
+    } else if (IS_CMD(data, READ_ADDR)) {
       DBG((stderr,"FDC_NewCommand: Read address data=0x%x (PC=0x%x)\n",data,ARMul_GetPC(state)));
       FDC.LastCommand=data;
       FDC_ReadAddressCommand(state);
-      break;
-
-    case 0xd0: /* Force Interrupt (Type IV command) */
-      DBG((stderr,"FDC_NewCommand: Force interrupt data=0x%x\n",data));
-      FDC.LastCommand=data;
-      break;
-
-    case 0xe0: /* Read Track (Type III command) */
+    } else if (IS_CMD(data, READ_TRACK)) {
       DBG((stderr,"FDC_NewCommand: Read track data=0x%x\n",data));
       FDC.LastCommand=data;
-      break;
-
-    case 0xf0: /* Write Track (Type III command) */
+    } else if (IS_CMD(data, WRITE_TRACK)) {
       DBG((stderr,"FDC_NewCommand: Write track data=0x%x\n",data));
       FDC.LastCommand=data;
-      break;
+    } else if (IS_CMD(data, FORCE_INTR)) {
+      DBG((stderr,"FDC_NewCommand: Force interrupt data=0x%x\n",data));
+      FDC.LastCommand=data;
+    } else {
+        fprintf(stderr, "unknown FDC command received: %#x\n", data);
+    }
 
-  }; /* Command type switch */
-}; /* FDC_NewCommand */
+    return;
+}
 
 /*--------------------------------------------------------------------------*/
 ARMword FDC_Write(ARMul_State *state, ARMword offset, ARMword data, int bNw) {
