@@ -822,6 +822,12 @@ char *fdc_insert_floppy(int drive, char *image)
     int len;
     floppy_format *ff;
 
+    if (FDC.LastCommand != 0xd0) {
+        fprintf(stderr, "fdc busy (%#x), can't insert floppy.\n",
+            FDC.LastCommand);
+        return "fdc busy, try again later";
+    }
+
     dr = FDC.drive + drive;
 
     if ((fp = fopen(image, "rb+")) != NULL) {
