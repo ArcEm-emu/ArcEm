@@ -405,9 +405,9 @@ static void set_4bpp_colourmap(ARMul_State *state)
 static void set_8bpp_colourmap(ARMul_State *state)
 {
     int c;
-    int b4;
-    int b65;
-    int b7;
+    int l4;
+    int l65;
+    int l7;
     unsigned int pal;
     XColor col;
 
@@ -416,14 +416,14 @@ static void set_8bpp_colourmap(ARMul_State *state)
     }
 
     for (c = 0; c < 256; c++) {
-        b4 = c >> 1 & 8;
-        b65 = c >> 3 & 0xc;
-        b7 = c >> 4 & 8;
+        l4 = c >> 1 & 8;
+        l65 = c >> 3 & 0xc;
+        l7 = c >> 4 & 8;
 
         pal = VIDC.Palette[c & 0xf];
-        col.red = b4 | (pal & 7);
-        col.green = b65 | (pal >> 4 & 3);
-        col.blue = b7 | (pal >> 8 & 7);
+        col.red = l4 | (pal & 7);
+        col.green = l65 | (pal >> 4 & 3);
+        col.blue = l7 | (pal >> 8 & 7);
 
         MULT_BY_0x1111(col.red);
         MULT_BY_0x1111(col.green);
@@ -505,9 +505,9 @@ static void set_4bpp_pixelmap(ARMul_State *state)
 static void set_8bpp_pixelmap(ARMul_State *state)
 {
     int c;
-    int b4;
-    int b65;
-    int b7;
+    int l4;
+    int l65;
+    int l7;
     unsigned int pal;
     unsigned short r;
     unsigned short g;
@@ -518,14 +518,14 @@ static void set_8bpp_pixelmap(ARMul_State *state)
     }
 
     for (c = 0; c < 256; c++) {
-        b4 = c >> 1 & 8;
-        b65 = c >> 3 & 0xc;
-        b7 = c >> 4 & 8;
+        l4 = c >> 1 & 8;
+        l65 = c >> 3 & 0xc;
+        l7 = c >> 4 & 8;
 
         pal = VIDC.Palette[c & 0xf];
-        r = b4 | (pal & 7);
-        g = b65 | (pal >> 4 & 3);
-        b = b7 | (pal >> 8 & 7);
+        r = l4 | (pal & 7);
+        g = l65 | (pal >> 4 & 3);
+        b = l7 | (pal >> 8 & 7);
 
         MULT_BY_0x1111(r);
         MULT_BY_0x1111(g);
