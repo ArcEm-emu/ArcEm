@@ -164,20 +164,19 @@ arm-support.o: arm-support.s instructions
 rhs.o: rhs.s
 	$(CC) rhs.s -c
 
-instructions: arm_code/Mov arm_code/Movs arm_code/Mvn arm_code/Mvns
+instructions: armsuppmov.s armsuppmovs.s armsuppmvn.s armsuppmvns.s
 
-arm_code/Mov: conditions.s
-	sed s#ARMINS#Mov# < conditions.s >arm_code/Mov
+armsuppmov.s: conditions.s
+	sed s#ARMINS#Mov# <conditions.s >armsuppmov.s
 
-arm_code/Movs: conditions.s
-	sed s#ARMINS#Movs# < conditions.s >arm_code/Movs
+armsuppmovs.s: conditions.s
+	sed s#ARMINS#Movs# <conditions.s >armsuppmovs.s
 
-arm_code/Mvn: conditions.s
-	sed s#ARMINS#Mvn# < conditions.s >arm_code/Mvn
+armsuppmvn.s: conditions.s
+	sed s#ARMINS#Mvn# <conditions.s >armsuppmvn.s
 
-arm_code/Mvns: conditions.s
-	sed s#ARMINS#Mvns# < conditions.s >arm_code/Mvns
-
+armsuppmvns.s: conditions.s
+	sed s#ARMINS#Mvns# <conditions.s >armsuppmvns.s
 
 arminit.o: arminit.c armdefs.h armemu.h
 	$(CC) $(CFLAGS) -c $*.c

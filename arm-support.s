@@ -53,7 +53,7 @@ __f7	FN	7
 	DCD	|emu_state|
 
 
-#include "arm_code/Mov"
+#include "armsuppmov.s"
 
 	mov	__a1, __a1, lsr #10
 	and	__a1, __a1, #60
@@ -81,7 +81,7 @@ __f7	FN	7
 
 
 
-#include "arm_code/Movs"
+#include "armsuppmovs.s"
 
 	mov	__a1, __a1, lsr #10
 	and	__a1, __a1, #60
@@ -143,7 +143,7 @@ __f7	FN	7
 
 
 
-#include "arm_code/Mvn"
+#include "armsuppmvn.s"
 
 	mvn	__a2, __a2
 
@@ -174,7 +174,7 @@ __f7	FN	7
 
 
 
-#include "arm_code/Mvns"
+#include "armsuppmvns.s"
 
 	mvn	__a2, __a2		; MVN
 

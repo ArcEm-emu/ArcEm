@@ -642,20 +642,6 @@
 			path = Version.h;
 			refType = 4;
 		};
-		D1E0F9DF02B41B0301D1F43F = {
-			children = (
-				D1E0F9E002B41B0301D1F43F,
-			);
-			isa = PBXGroup;
-			name = arm_code;
-			path = /Users/michael/Dev/arcem/clean/arcem/arm_code;
-			refType = 0;
-		};
-		D1E0F9E002B41B0301D1F43F = {
-			isa = PBXFileReference;
-			path = .cvsignore;
-			refType = 4;
-		};
 		D1E0F9E202B41B0301D1F43F = {
 			isa = PBXFileReference;
 			name = armcopro.c;
