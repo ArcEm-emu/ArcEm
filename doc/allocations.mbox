@@ -1,0 +1,102 @@
+From ralph@inputplus.co.uk  Thu Jul 24 10:50:48 2003
+Delivery-Date: Wed Jul 23 11:44:00 2003
+Return-Path: <ralph@inputplus.co.uk>
+Received: from blake.inputplus.co.uk (ralph@localhost)
+	by blake.inputplus.co.uk (8.11.6/8.11.6) with ESMTP id h6NAhxv03830;
+	Wed, 23 Jul 2003 11:43:59 +0100
+Message-Id: <200307231043.h6NAhxv03830@blake.inputplus.co.uk>
+To: allocate@riscos.com
+Subject: Allocation Request for !ArcEm Application.
+Date: Wed, 23 Jul 2003 11:43:59 +0100
+From: Ralph Corderoy <ralph@inputplus.co.uk>
+
+
+Hi,
+
+Here's an allocation request related to the !ArcEm Archimedes Hardware
+Emulator.  A little background:  !ArcEm is the emulator application
+which can be run under RISC OS itself.  The ArcEm module provides hooks
+into the emulator from within the emulated RISC OS, e.g. a SWI to cause
+the emulator to exit.
+
+Thanks,
+
+
+Ralph.
+
+begin 644 request
+N04Q,3T-!5$5D````!````%)A;'!H($-O<F1E<F]Y````````````````````````
+N`````````````&%R8V5M($%R8VAI;65D97,@2&%R9'=A<F4@16UU;&%T;W(@<```
+N<F]J96-T``````````````````````````!H='1P.B\O87)C96TN<V8N;F5T+P``
+N````````````````````````````````````````````````````````````````
+N````````````````````````````````````````````````````````````````
+N````````````````````````````````````````````````````````````````
+N````````````````````````````````````````````````````````````````
+N````````````````````````````````````````````````````````````````
+N````````````````````````````````````````````````````````````````
+N`````')A;'!H0&EN<'5T<&QU<RYC;RYU:P``````````````````````````````
+N````````````````>````$%R8T5M````````````````````07)C16T@0V]N=```
+N<F]L````````````````````````````````````````````````````````````
+N```````````````````````````````````````````````````````````"````
+N```\````(4%R8T5M````````````````````````````````````````````````
+N07!P3F%M90``````/$QI/I@``!`"````/````"%A<F-E;0``````````````````
+N`````````````````````````````%=I;7!3<')I=&4``(L!``"2`0```@``````
+N/````'-M(6%R8V5M``````````````````````````````````````````!7:0``
+N;7!3<')I=&4`````````````/$QI/N`'`!!D[@$``````'!.86UE*2X@5&AE(```
+`
+end
+
+From alan@chorazin.org  Thu Jul 24 10:50:48 2003
+Delivery-Date: Wed Jul 23 22:19:31 2003
+Return-Path: <alan@chorazin.org>
+Received: from localhost (localhost [127.0.0.1])
+	by blake.inputplus.co.uk (8.11.6/8.11.6) with ESMTP id h6NLJUm13560
+	for <ralph@localhost>; Wed, 23 Jul 2003 22:19:31 +0100
+Delivered-To: inputplu-inputplus:co:uk-ralph@inputplus.co.uk
+X-Envelope-To: ralph@inputplus.co.uk
+Received: from inputplus.co.uk [66.39.34.92]
+	by localhost with IMAP (fetchmail-5.9.0)
+	for ralph@localhost (single-drop); Wed, 23 Jul 2003 22:19:31 +0100 (BST)
+Received: (qmail 65068 invoked from network); 23 Jul 2003 20:42:17 -0000
+Received: from unknown (HELO ns.aglover.org) (212.67.194.136)
+  by ruis.pair.com with SMTP; 23 Jul 2003 20:42:17 -0000
+Received: from amg.chorazin.org (pc2-cmbg3-6-cust38.cmbg.cable.ntl.com [81.96.67.38])
+	(authenticated)
+	by ns.aglover.org (8.10.2/8.10.2) with ESMTP id h6NKg1b06790
+	for <ralph@inputplus.co.uk>; Wed, 23 Jul 2003 21:42:12 +0100
+Message-Id: <5.2.1.1.2.20030723214047.0283aeb0@www.aglover.org>
+X-Sender: mbox1@www.aglover.org
+X-Mailer: QUALCOMM Windows Eudora Version 5.2.1
+Date: Wed, 23 Jul 2003 21:42:05 +0100
+To: Ralph Corderoy <ralph@inputplus.co.uk>
+From: Alan Glover <allocate@pinesoft.demon.co.uk>
+Subject: Re: Allocation Request for !ArcEm Application.
+In-Reply-To: <200307231043.h6NAhxv03830@blake.inputplus.co.uk>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+X-Spam-Filtered: 52d0813afd638bc4ffa68db06ca49a29
+X-Spam-Status: No, hits=-5.4 required=4.0 tests=BAYES_01,IN_REP_TO,MSG_ID_ADDED_BY_MTA_3,EMAIL_ATTRIBUTION
+X-Spam-Flag: NO
+X-Spam-Level: 
+
+At 11:43 23-07-2003 +0100, you wrote:
+>Hi,
+>
+>Here's an allocation request related to the !ArcEm Archimedes Hardware
+>Emulator.  A little background:  !ArcEm is the emulator application
+>which can be run under RISC OS itself.  The ArcEm module provides hooks
+>into the emulator from within the emulated RISC OS, e.g. a SWI to cause
+>the emulator to exit.
+>
+>Thanks,
+>
+>
+>Ralph.
+
+Hi Ralph,
+
+All ok. SWI chunk is 0x56ac0.
+
+Alan
+
+
