@@ -1,7 +1,7 @@
 #include "windows.h"
 #include "gui.h"
 
-GuiIcon ICON win/gui.ico
+GuiIcon ICON win/arc.ico
 
 GuiMenu MENU
 BEGIN

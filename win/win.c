@@ -44,7 +44,7 @@ int mouseMF = 0;
 int nButton = 0;
 int buttF = 0;
 
-static DWORD threadWindow(LPVOID param)
+static DWORD WINAPI threadWindow(LPVOID param)
 {
 //	xSize = w;
 //	ySize = h;
@@ -102,7 +102,7 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
    mainWin = CreateWindow( szWindowClass,
-			"Archimedes emulator",
+			"Archimedes Emulator",
 			WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX, //WS_OVERLAPPEDWINDOW,
 			CW_USEDEFAULT, 
 			CW_USEDEFAULT,
@@ -141,8 +141,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	int wmId, wmEvent;
 	PAINTSTRUCT ps;
 	HDC hdc;
-//	char *szHello = "Unregistred demo!";
-//	LoadString(hInst, IDS_HELLO, szHello, MAX_LOADSTRING);
 
 	switch (message) 
 	{
@@ -291,7 +289,7 @@ int createWindow(int x, int y)
 
    CreateThread(NULL,
 	     16384,
-	     (LPTHREAD_START_ROUTINE)threadWindow,
+	     threadWindow,
 	     NULL,
 	     0,
 	     &tid);

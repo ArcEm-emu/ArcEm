@@ -609,9 +609,8 @@ static void ProcessKey(ARMul_State *state) {
     return;
   };
 
-
   /* Should set up KeyColToSend and KeyRowToSend and KeyUpNDown */
-  for(PresPtr=transTable;PresPtr->row!=-1;PresPtr++) {
+  for(PresPtr = transTable; PresPtr->row != -1; PresPtr++) {
     if (PresPtr->sym==sym) {
       /* Found the key */
       /* Now add it to the buffer */
