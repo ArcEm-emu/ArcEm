@@ -983,17 +983,17 @@ PutVal(ARMul_State *state, ARMword address, ARMword data, int byteNotword,
         break;
 
       case 4: /* Sstart */
-	RegVal *= 16;
-	MEMC.Sstart = RegVal;
-	/* The data sheet does not define what happens if you write start before end. */
-	MEMC.NextSoundBufferValid = 1;
+        RegVal *= 16;
+        MEMC.Sstart = RegVal;
+        /* The data sheet does not define what happens if you write start before end. */
+        MEMC.NextSoundBufferValid = 1;
         ioc.IRQStatus &= ~0x200; /* Take sound interrupt off */
         IO_UpdateNirq();
         dbug_memc("Write to MEMC Sstart register\n");
         break;
 
       case 5: /* SendN */
-	RegVal *= 16;
+        RegVal *= 16;
         MEMC.SendN = RegVal;
         dbug_memc("Write to MEMC SendN register\n");
         break;
@@ -1001,17 +1001,19 @@ PutVal(ARMul_State *state, ARMword address, ARMword data, int byteNotword,
       case 6: /* Sptr */
 
         dbug_memc("Write to MEMC Sptr register\n");
-	/* Note this never actually sets Sptr directly, instead
-	 * it causes a first buffer to be swapped in. */
-	ARMword swap;
-	MEMC.Sptr = MEMC.Sstart;
-	swap = MEMC.SendC;
-	MEMC.SendC = MEMC.SendN;
-	MEMC.SendN = swap;
-	MEMC.SstartC = MEMC.Sptr;
-	MEMC.NextSoundBufferValid = 0;
-	ioc.IRQStatus |= 0x200; /* Take sound interrupt on */
-        IO_UpdateNirq();
+        /* Note this never actually sets Sptr directly, instead
+         * it causes a first buffer to be swapped in. */
+        {
+          ARMword swap;
+          MEMC.Sptr = MEMC.Sstart;
+          swap = MEMC.SendC;
+          MEMC.SendC = MEMC.SendN;
+          MEMC.SendN = swap;
+          MEMC.SstartC = MEMC.Sptr;
+          MEMC.NextSoundBufferValid = 0;
+          ioc.IRQStatus |= 0x200; /* Take sound interrupt on */
+          IO_UpdateNirq();
+        }
         break;
 
       case 7: /* MEMC Control register */
