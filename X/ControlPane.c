@@ -175,7 +175,6 @@ void ControlPane_Init(ARMul_State *state) {
   XSetWindowBackground(HD.disp,HD.ControlPane,HD.OffWhite.pixel);
 
   XSelectInput(HD.disp,HD.ControlPane,ExposureMask |
-                                   VisibilityChangeMask |
                                    KeyPressMask | KeyReleaseMask);
 
   XMapWindow(HD.disp,HD.ControlPane);

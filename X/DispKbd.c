@@ -969,15 +969,12 @@ void DisplayKbd_Init(ARMul_State *state) {
 
 
   XSelectInput(HD.disp,HD.BackingWindow,ExposureMask |
-                                   VisibilityChangeMask |
                                    KeyPressMask | KeyReleaseMask);
   XSelectInput(HD.disp,HD.MainPane,ExposureMask |
-                                   VisibilityChangeMask |
-                                   FocusChangeMask | PointerMotionMask |
+                                   PointerMotionMask |
                                    EnterWindowMask | LeaveWindowMask | /* For changing colour maps */
                                    KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask);
   XSelectInput(HD.disp,HD.CursorPane,ExposureMask |
-                                   VisibilityChangeMask |
                                    FocusChangeMask |
                                    KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask);
   HD.DefaultColormap=DefaultColormapOfScreen(HD.xScreen);
