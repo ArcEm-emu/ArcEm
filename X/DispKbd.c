@@ -55,6 +55,14 @@ static void set_cursor_pixelmap(void);
 
 static int (*prev_x_error_handler)(Display *, XErrorEvent *);
 
+static struct {
+    char *name;
+    KeySym keysym;
+} mouse_key = {
+    "KP_Add",
+    XK_KP_Add
+};
+
 /* ------------------------------------------------------------------ */
 
 typedef struct {
@@ -190,8 +198,6 @@ static keysym_to_arch_key keysym_to_arch_key_map[] = {
 #undef X
     { NoSymbol },
 };
-
-#define MOUSEKEY XK_KP_Add
 
 /* ------------------------------------------------------------------ */
 
@@ -1089,6 +1095,8 @@ static int DisplayKbd_XError(Display* disp, XErrorEvent *err)
 
 /*----------------------------------------------------------------------------*/
 void DisplayKbd_Init(ARMul_State *state) {
+    char *s;
+    KeySym ks;
     XSetWindowAttributes attr;
   XColor tmpcol;
   int prescol;
@@ -1108,6 +1116,16 @@ void DisplayKbd_Init(ARMul_State *state) {
     if (getenv("ARCEMXSYNC")) {
         XSynchronize(HD.disp, 1);
         fputs("arcem: synchronous X protocol selected.\n", stderr);
+    }
+
+    if ((s = getenv("ARCEMXMOUSEKEY"))) {
+        if ((ks = XStringToKeysym(s))) {
+            mouse_key.name = s;
+            mouse_key.keysym = ks;
+        } else {
+            fprintf(stderr, "unknown mouse_key keysym: %s\n", s);
+        }
+        fprintf(stderr, "mouse_key is %s\n", mouse_key.name);
     }
 
   HD.xScreen=XDefaultScreenOfDisplay(HD.disp);
@@ -1363,12 +1381,12 @@ static void ProcessKey(ARMul_State *state,XKeyEvent *key) {
     XLookupString(key, NULL, 0, &sym, NULL);
 
   /* Trap the special key for mouse following */
-  if (sym == MOUSEKEY) {
+  if (sym == mouse_key.keysym) {
     /* And when it is pressed toggle the mouse follow mode */
     if (key->type == KeyPress) {
       DC.DoingMouseFollow^=1;
-      fprintf(stderr, "MOUSEKEY pressed, turning mouse tracking %s.\n",
-          DC.DoingMouseFollow ? "on" : "off");
+      fprintf(stderr, "%s pressed, turning mouse tracking %s.\n",
+          mouse_key.name, DC.DoingMouseFollow ? "on" : "off");
       if (DC.DoingMouseFollow)
       {
 	XColor black, dummy;
