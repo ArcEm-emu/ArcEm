@@ -68,7 +68,12 @@
 #define TYPE2_BIT_MULTISECTOR (1<<4)
 
 static floppy_format avail_format[] = {
+    /* First is default for `ejected' discs. */
     { "ADFS 800KB", 1024, 5, 0, 80, 2 },
+    { "ADFS 160KB", 256, 16, 0, 40, 1 },
+    { "ADFS 320KB", 256, 16, 0, 80, 1 },
+    { "ADFS 640KB", 256, 16, 0, 80, 2 },
+    { "DOS 360KB", 512, 9, 1, 40, 2 },
     { "DOS 720KB", 512, 9, 1, 80, 2 },
 };
 
