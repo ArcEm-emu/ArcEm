@@ -6,7 +6,7 @@
 #include "../armdefs.h"
 #include "../armopts.h"
 
-#if !defined(__riscos__) && !defined(__CYGWIN__)
+#ifdef SYSTEM_X
 #include "X11/Xlib.h"
 #include "X11/Xutil.h"
 #endif
@@ -77,7 +77,7 @@ typedef struct {
     unsigned int StereoImageReg[8];
   } Vidc;
 
-#ifdef __CYGWIN__
+#ifdef WIN32
   struct {
     char *ImageData,*CursorImageData;
 

@@ -35,7 +35,7 @@ int ReadConfigFile(ARMul_State *state) {
     return 0;
   };
 
-#ifdef __CYGWIN__
+#ifdef WIN32
   strcpy(nameConf, "arcemrc");
 #else
   sprintf(nameConf, "%s/.arcemrc", HomeVar);

@@ -84,7 +84,9 @@ static void DumpHandler(int sig) {
 
   fprintf(stderr,"SIGUSR2 at PC=0x%x R[15]=0x%x\n",(unsigned int)statestr.pc,
                                             (unsigned int)statestr.Reg[15]);
+#ifndef WIN32
   signal(SIGUSR2,DumpHandler);
+#endif
 
   FDC_ReOpen(state,0);
   return;
@@ -374,7 +376,9 @@ unsigned ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
  };
 
  sigavailablestate = state;
+#ifndef WIN32
  signal(SIGUSR2,DumpHandler);
+#endif
 
 
  MEMC.RAMSize = initmemsize;
@@ -462,8 +466,11 @@ unsigned ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
  MEMC.OldAddress1 = -1;
  MEMC.OldPage1    = -1;
 
+#ifdef DEBUG
  ARMul_ConsolePrint(state, " Archimedes memory ");
  ARMul_ConsolePrint(state, Version);
+ ARMul_ConsolePrint(state, "\n");
+#endif
 
  return(TRUE);
 }
