@@ -904,11 +904,12 @@ static void RefreshDisplay(ARMul_State *state) {
 
   /*fprintf(stderr,"RefreshDisplay: Refreshed %d-%d\n",DC.miny,DC.maxy); */
   /* Only tell X to redisplay those bits which we've replotted into the image */
-  if (DC.miny<DC.maxy) {
+  if (DC.miny < DC.maxy) {
     XPutImage(HD.disp, HD.MainPane, HD.MainPaneGC, HD.DisplayImage,
               0, DC.miny, /* source pos. in image */
               0, DC.miny, /* Position on window */
-              MonitorWidth, (DC.maxy - DC.miny) + 1);
+              (VIDC.Horiz_DisplayEnd - VIDC.Horiz_DisplayStart) * 2, // width of current mode, not MonitorWidth
+              (DC.maxy - DC.miny) + 1);
   }
 
   XPutImage(HD.disp, HD.CursorPane, HD.MainPaneGC, HD.CursorImage,
@@ -1465,7 +1466,7 @@ void DisplayKbd_Init(ARMul_State *state) {
 
 static void BackingWindow_Event(ARMul_State *state,XEvent *e) {
     fprintf(stderr, "unwanted BackingWindow_Event type=%d\n", e->type);
-}; /* BackingWindow_Event */
+} /* BackingWindow_Event */
 
 
 
@@ -1524,23 +1525,23 @@ static void ProcessKey(ARMul_State *state, XKeyEvent *key)
 
 static void ProcessButton(ARMul_State *state, XButtonEvent *button)
 {
-    arch_key_id kid;
+  arch_key_id kid;
 
-    switch (button->button) {
+  switch (button->button) {
     case Button1:
-        kid = ARCH_KEY_button_1;
-        break;
+      kid = ARCH_KEY_button_1;
+      break;
     case Button2:
-        kid = ARCH_KEY_button_2;
-        break;
+      kid = ARCH_KEY_button_2;
+      break;
     case Button3:
-        kid = ARCH_KEY_button_3;
-        break;
+      kid = ARCH_KEY_button_3;
+      break;
     default:
-        return;
-    }
+      return;
+  }
 
-    keyboard_key_changed(&KBD, kid, button->type == ButtonRelease);
+  keyboard_key_changed(&KBD, kid, button->type == ButtonRelease);
 }
 
 
@@ -2047,5 +2048,7 @@ static void Resize_Window(void)
     XResizeWindow(HD.disp, HD.BackingWindow,
                   x + (VIDC_BORDER * 2),
                   y + (VIDC_BORDER * 2) );
+                  
+    XResizeWindow(HD.disp, HD.MainPane, x, y);
   }
 }
