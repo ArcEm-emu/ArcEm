@@ -31,15 +31,18 @@
 #define VK_BACK		(-1)
 #define VK_TAB		(48)
 #define VK_CLEAR	(12)
-#define VK_RETURN	(37)
+#define VK_RETURN	(36)
 #define VK_SHIFT	(56)
 #define VK_CONTROL	(59)
 #define VK_MENU		(-1)
 #define VK_PAUSE	(-1)
+#define VK_PAGEUP	(116)
+#define VK_PAGEDOWN	(121)
 #define VK_CAPITAL	(57)
 #define VK_ESCAPE	(53)
 #define VK_SPACE	(49)
 #define VK_PRIOR	(33)
+#define VK_ALT		(58)
 #define VK_NEXT		(34)
 #define VK_END		(119)
 #define VK_HOME		(115)
@@ -49,7 +52,7 @@
 #define VK_DOWN		(125)
 #define VK_SELECT	(-1)
 #define VK_PRINT	(-1)
-#define VK_EXECUTE	(36)
+#define VK_EXECUTE	(76)
 #define VK_SNAPSHOT	(-1)
 #define VK_INSERT	(-1)
 #define VK_DELETE	(51)
@@ -176,9 +179,7 @@ struct ArcKeyTrans transTable[]={
 
   {VK_HOME,2,0},
 /* For some screwy reason these seem to be missing in X11R5 */
-#ifdef XK_Page_Up  
-  {0x21,2,1},
-#endif
+  {VK_PAGEUP,2,1},
   {VK_NUMLOCK,2,2},
   {VK_DIVIDE,2,3},{VK_MULTIPLY,2,4},{VK_SEPARATOR,2,5}, /* X doesn't define
                                                              a # on the keypad -
@@ -193,9 +194,7 @@ struct ArcKeyTrans transTable[]={
   {VK_BRACKETRIGHT,3,2},
   {VK_BACKSLASH,3,3},
   {VK_DELETE,3,4},{VK_END,3,5},
-#ifdef XK_Page_Down
-  {XK_Page_Down,3,6},
-#endif
+  {VK_PAGEDOWN,3,6},
   {VK_NUMPAD7,3,7},{VK_NUMPAD8,3,8},{VK_NUMPAD9,3,9},
   {VK_SUBTRACT,3,10},{VK_LCONTROL,3,11},
   {VK_A,3,12},{VK_S,3,13},{VK_D,3,14},{VK_F,3,15},
@@ -213,7 +212,7 @@ struct ArcKeyTrans transTable[]={
   {VK_SLASH,5,7},
   {VK_RSHIFT,5,8},{VK_UP,5,9},{VK_NUMPAD1,5,10},
   {VK_NUMPAD2,5,11},{VK_NUMPAD3,5,12},{VK_CAPITAL,5,13},
-/*  {XK_Alt_L,5,14}, */
+  {VK_ALT,5,14},
   {VK_SPACE,5,15},
 
 /*  {XK_Alt_R,6,0}, */
