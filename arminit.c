@@ -129,7 +129,7 @@ void ARMul_Reset(ARMul_State *state)
  state->abortSig = LOW;
  state->AbortAddr = 1;
 
- state->Numcycles = 0;
+ state->NumCycles = 0;
 #ifdef ASIM    
   (void)ARMul_MemoryInit();
   ARMul_OSInit(state);
