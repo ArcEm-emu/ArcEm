@@ -144,16 +144,6 @@ ARMword ARMul_DoProg(ARMul_State *state) {
   return(pc);
 }
 
-
-static void SWI_Report(ARMul_State *state) {
-  ARMword pc = ARMul_GetPC(state);
-  ARMword value = GetWord(pc) & 0xfdffff;
-
-  if ((value & 0xfdffc0) == 0x41200) {
-    printf("%x\n", value);
-  }
-}
-
 /***************************************************************************\
 * This routine causes an Abort to occur, including selecting the correct    *
 * mode, register bank, and the saving of registers.  Call with the          *
@@ -193,8 +183,12 @@ void ARMul_Abort(ARMul_State *state, ARMword vector) {
                (unsigned int)(state->Reg[14])); */
        break;
  
-    case ARMul_SWIV : /* Software Interrupt */
-       SWI_Report(state);
+#define ARCEM_SWI_CHUNK 0x56ac0
+#define ARCEM_SWI_MISC (ARCEM_SWI_CHUNK + 0)
+    case ARMul_SWIV: /* Software Interrupt */
+        if ((GetWord(ARMul_GetPC(state) - 8) & 0xffffff) == ARCEM_SWI_MISC) {
+            exit(statestr.Reg[0] & 0xff);
+        }
        state->Spsr[SVCBANK] = CPSR;
        SETABORT(IBIT,SVC26MODE);
        ARMul_CPSRAltered(state);
