@@ -12,7 +12,7 @@
    "RISC OS Support for extension ROMs", a text file
 */
 
-#if defined(SYSTEM_X) || defined(MACOSX)
+#if defined(SYSTEM_X) || defined(MACOSX) || defined(SYSTEM_win)
 
 #include <assert.h>
 #include <errno.h>
@@ -20,11 +20,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <dirent.h>
-#include <unistd.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-
+#include "filecalls.h"
 #include "../armdefs.h"
 #include "extnrom.h"
 
@@ -133,8 +129,8 @@ extnrom_calculate_checksum(const ARMword *start_addr, unsigned size)
 unsigned
 extnrom_calculate_size(unsigned *entry_count)
 {
-  DIR *d;
-  struct dirent *entry;
+  Directory hDir;
+  char *sFilename;
   unsigned required_size = 0;
 
   assert(entry_count != NULL);
@@ -142,41 +138,40 @@ extnrom_calculate_size(unsigned *entry_count)
   *entry_count = 0;
 
   /* Read list of files and calculate total size */
-  d = opendir(EXTNROM_DIRECTORY);
-  if (!d) {
+  if(!Directory_Open(EXTNROM_DIRECTORY, &hDir)) {
     fprintf(stderr, "Could not open Extension Rom directory \'%s\': %s\n",
             EXTNROM_DIRECTORY, strerror(errno));
     return 0;
   }
 
-  while ((entry = readdir(d)) != NULL) {
-    char path[PATH_MAX];
-    struct stat entry_info;
+  while ((sFilename = Directory_GetNextEntry(&hDir)) != NULL) {
+    char path[ARCEM_PATH_MAX];
+    FileInfo hFileInfo;
 
     /* Ignore hidden entries - those starting with '.' */
-    if (entry->d_name[0] == '.') {
+    if (sFilename[0] == '.') {
       continue;
     }
 
     /* Construct relative path to the entry */
     strcpy(path, EXTNROM_DIRECTORY);
     strcat(path, "/");
-    strcat(path, entry->d_name);
+    strcat(path, sFilename);
 
     /* Read information about the entry */
-    if (stat(path, &entry_info) != 0) {
-      fprintf(stderr, "Warning: could not stat() entry \'%s\': %s\n",
-              path, strerror(errno));
+    if (!File_GetInfo(path, &hFileInfo)) {
+      fprintf(stderr, "Warning: could not get info on file \'%s\'\n",
+              path);
       continue;
     }
 
-    if (!S_ISREG(entry_info.st_mode)) {
+    if (!hFileInfo.bIsRegularFile) {
       /* Not a regular file - skip it */
       continue;
     }
 
     /* Add on size of file */
-    required_size += ROUND_UP_TO_4(entry_info.st_size);
+    required_size += ROUND_UP_TO_4(hFileInfo.ulFilesize);
 
     /* Add on overhead for each file */
     required_size += 12; /* 8 for Chunk directory info, 4 for size prefix */
@@ -185,7 +180,7 @@ extnrom_calculate_size(unsigned *entry_count)
     (*entry_count) ++;
   }
 
-  closedir(d);
+  Directory_Close(hDir);
 
   /* If no files, then no space required */
   if (*entry_count == 0) {
@@ -213,8 +208,8 @@ extnrom_load(unsigned size, unsigned entry_count, void *address)
 {
   ARMword *start_addr = address;
   ARMword *chunk, *modules;
-  DIR *d;
-  struct dirent *entry;
+  Directory hDir;
+  char *sFilename;
   unsigned size_in_words = size / 4;
 
   assert(((size != 0) && (entry_count != 0)) ||
@@ -253,10 +248,9 @@ extnrom_load(unsigned size, unsigned entry_count, void *address)
   start_addr[3] = 0;
 
   /* Read list of files, create Chunk Directory and load them in */
-  d = opendir(EXTNROM_DIRECTORY);
-  if (!d) {
-    fprintf(stderr, "Could not open Extension Rom directory \'%s\': %s\n",
-            EXTNROM_DIRECTORY, strerror(errno));
+  if(!Directory_Open(EXTNROM_DIRECTORY, &hDir)) {
+    fprintf(stderr, "Could not open Extension Rom directory \'%s\'\n",
+            EXTNROM_DIRECTORY);
     return;
   }
 
@@ -282,28 +276,28 @@ extnrom_load(unsigned size, unsigned entry_count, void *address)
   modules += ROUND_UP_TO_4(strlen(DESCRIPTION_STRING) + 1) / 4;
 
   /* Process the modules */
-  while ((entry = readdir(d)) != NULL) {
-    char path[PATH_MAX];
-    struct stat entry_info;
+  while ((sFilename = Directory_GetNextEntry(&hDir)) != NULL) {
+    char path[ARCEM_PATH_MAX];
+    FileInfo hFileInfo;
     unsigned offset;
     FILE *f;
 
     /* Ignore hidden entries - those starting with '.' */
-    if (entry->d_name[0] == '.') {
+    if (sFilename[0] == '.') {
       continue;
     }
 
     /* Construct relative path to the entry */
     strcpy(path, EXTNROM_DIRECTORY);
     strcat(path, "/");
-    strcat(path, entry->d_name);
+    strcat(path, sFilename);
 
     /* Read information about the entry */
-    if (stat(path, &entry_info) != 0) {
+    if (!File_GetInfo(path, &hFileInfo)) {
       continue;
     }
 
-    if (!S_ISREG(entry_info.st_mode)) {
+    if (!hFileInfo.bIsRegularFile) {
       /* Not a regular file - skip it */
       continue;
     }
@@ -313,11 +307,11 @@ extnrom_load(unsigned size, unsigned entry_count, void *address)
 
     /* Prepare Chunk Directory information for this entry */
     chunk[0] = OS_ID_BYTE_RISCOS_MODULE |
-               (entry_info.st_size << 8);
+               (hFileInfo.ulFilesize << 8);
     chunk[1] = offset;
 
     /* Prepare undocumented size prefix - size includes the size data */
-    modules[0] = entry_info.st_size + 4;
+    modules[0] = hFileInfo.ulFilesize + 4;
 
     /* Point to next word within module area - after the size */
     modules++;
@@ -330,7 +324,7 @@ extnrom_load(unsigned size, unsigned entry_count, void *address)
       continue;
     }
 
-    if (fread(modules, 1, entry_info.st_size, f) != entry_info.st_size) {
+    if (fread(modules, 1, hFileInfo.ulFilesize, f) != hFileInfo.ulFilesize) {
       fprintf(stderr, "Error while loading file \'%s\': %s\n",
               path, strerror(errno));
       fclose(f);
@@ -340,14 +334,14 @@ extnrom_load(unsigned size, unsigned entry_count, void *address)
     fclose(f);
 
     /* Byte-swap module from little-endian to host processor */
-    extnrom_endian_correct(modules, entry_info.st_size);
+    extnrom_endian_correct(modules, hFileInfo.ulFilesize);
 
     /* Move chunk and module pointers on */
     chunk += 2;
-    modules += ROUND_UP_TO_4(entry_info.st_size) / 4;
+    modules += ROUND_UP_TO_4(hFileInfo.ulFilesize) / 4;
   }
 
-  closedir(d);
+  Directory_Close(hDir);
 
   /* Fill in chunk directory terminator */
   chunk[0] = 0;
@@ -370,4 +364,4 @@ extnrom_load(unsigned size, unsigned entry_count, void *address)
   }*/
 }
 
-#endif /* defined(SYSTEM_X) || defined(MACOSX) */
+#endif /* defined(SYSTEM_X) || defined(MACOSX) || defined(SYSTEM_win) */
