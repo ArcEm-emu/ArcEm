@@ -6,29 +6,43 @@
 
 #define DEBUG_KEYBOARD 0
 
-void keyboard_key_changed(struct arch_keyboard *kb, int row, int col,
+typedef struct {
+    char *name;
+    unsigned char row;
+    unsigned char col;
+} key_info;
+
+static key_info keys[] = {
+#define X(key, row, col) { #key, row, col },
+    ARCH_KEYBOARD_DEFINITION
+#undef X
+};
+
+/* ------------------------------------------------------------------ */
+
+void keyboard_key_changed(struct arch_keyboard *kb, arch_key_id kid,
     int up)
 {
+    key_info *ki;
     KbdEntry *e;
 
-    if (kb->BuffOcc >= KBDBUFFLEN) {
+    ki = keys + kid;
+    
 #if DEBUG_KEYBOARD
-        fputs("keyboard_key_changed: key/button discarded, buffer "
-            "would overflow\n", stderr);
+    fprintf(stderr, "keyboard_key_changed(kb, \"%s\", %d)\n", ki->name,
+        up);
 #endif
+
+    if (kb->BuffOcc >= KBDBUFFLEN) {
+        fprintf(stderr, "keyboard_key_changed: key \"%s\" discarded, "
+            "buffer full\n", ki->name);
         return;
     }
 
     e = kb->Buffer + kb->BuffOcc++;
-    e->KeyColToSend = col;
-    e->KeyRowToSend = row;
+    e->KeyColToSend = ki->col;
+    e->KeyRowToSend = ki->row;
     e->KeyUpNDown = up;
-
-#if DEBUG_KEYBOARD
-    fprintf(stderr, "keyboard_key_changed: %2d, %2d going %-4s.  "
-        "BuffOcc=%d\n", e->KeyColToSend, e->KeyRowToSend,
-        e->KeyUpNDown ? "up" : "down", e - kb->Buffer);
-#endif
 
     return;
 }

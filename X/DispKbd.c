@@ -5,8 +5,6 @@
    changes properly in TrueColor - in particular it doesn't force a redraw if
    the palette is changed which it really needs to */
 
-#define MOUSEKEY XK_KP_Add
-
 #define KEYREENABLEDELAY 1000
 #define POLLGAP 125
 //#define POLLGAP 1250
@@ -31,11 +29,10 @@
 
 #include "../armdefs.h"
 #include "armarc.h"
+#include "arch/keyboard.h"
 #include "DispKbd.h"
-#include "KeyTable.h"
 #include "archio.h"
 #include "hdc63463.h"
-#include "arch/keyboard.h"
 
 #include "ControlPane.h" 
 
@@ -47,6 +44,145 @@
 /* HOSTDISPLAY is too verbose here - but HD could be hard disc somewhere else */
 #define HD HOSTDISPLAY
 #define DC DISPLAYCONTROL
+
+/* ------------------------------------------------------------------ */
+
+typedef struct {
+    KeySym sym;
+    arch_key_id kid;
+} keysym_to_arch_key;
+
+static keysym_to_arch_key keysym_to_arch_key_map[] = {
+#define X(sym, kid) { XK_ ## sym, ARCH_KEY_ ## kid },
+    X(0, 0)
+    X(1, 1)
+    X(2, 2)
+    X(3, 3)
+    X(4, 4)
+    X(5, 5)
+    X(6, 6)
+    X(7, 7)
+    X(8, 8)
+    X(9, 9)
+    X(Alt_L, alt_l)
+    X(Alt_R, alt_r)
+    X(BackSpace, backspace)
+    X(Break, break)
+    X(Caps_Lock, caps_lock)
+    X(Control_L, control_l)
+    X(Control_R, control_r)
+    X(Delete, delete)
+    X(Down, down)
+    X(End, copy)
+    X(Escape, escape)
+    X(F1, f1)
+    X(F10, f10)
+    X(F11, f11)
+    X(F12, f12)
+    X(F2, f2)
+    X(F3, f3)
+    X(F4, f4)
+    X(F5, f5)
+    X(F6, f6)
+    X(F7, f7)
+    X(F8, f8)
+    X(F9, f9)
+    X(Home, home)
+    X(Insert, insert)
+    X(KP_0, kp_0)
+    X(KP_1, kp_1)
+    X(KP_2, kp_2)
+    X(KP_3, kp_3)
+    X(KP_4, kp_4)
+    X(KP_5, kp_5)
+    X(KP_6, kp_6)
+    X(KP_7, kp_7)
+    X(KP_8, kp_8)
+    X(KP_9, kp_9)
+    X(KP_Add, kp_plus)
+    X(KP_Decimal, kp_decimal)
+    X(KP_Divide, kp_slash)
+    X(KP_Enter, kp_enter)
+    /* X doesn't define a # on the keypad - so we use KP_F1 - but most
+     * keypads don't have that either. */
+    X(KP_F1, kp_hash)
+    X(KP_Multiply, kp_star)
+    X(KP_Subtract, kp_minus)
+    X(Left, left)
+    X(Num_Lock, num_lock)
+    /* For some screwy reason these seem to be missing in X11R5. */
+#ifdef XK_Page_Up  
+    X(Page_Up, page_up)
+#endif
+#ifdef XK_Page_Down
+    X(Page_Down, page_down)
+#endif
+    X(Pause, break)
+    X(Print, print)
+    X(Return, return)
+    X(Right, right)
+    X(Scroll_Lock, scroll_lock)
+    X(Shift_L, shift_l)
+    X(Shift_R, shift_r)
+    X(Tab, tab)
+    X(Up, up)
+    X(a, a)
+    X(apostrophe, apostrophe)
+    X(asciitilde, grave)
+    X(b, b)
+    X(backslash, backslash)
+    X(bar, backslash)
+    X(braceleft, bracket_l)
+    X(braceleft, bracket_r)
+    X(bracketleft, bracket_l)
+    X(bracketright, bracket_r)
+    X(c, c)
+    X(colon, semicolon)
+    X(comma, comma)
+    X(currency, sterling)
+    X(d, d)
+    X(e, e)
+    X(equal, equal)
+    X(f, f)
+    X(g, g)
+    X(greater, period)
+    X(h, h)
+    X(i, i)
+    X(j, j)
+    X(k, k)
+    X(l, l)
+    X(less, comma)
+    X(m, m)
+    X(minus, minus)
+    X(n, n)
+    X(o, o)
+    X(p, p)
+    X(period, period)
+    X(plus, equal)
+    X(q, q)
+    X(question, slash)
+    X(quotedbl, apostrophe)
+    X(r, r)
+    X(s, s)
+    X(semicolon, semicolon)
+    X(slash, slash)
+    X(space, space)
+    X(sterling, sterling)
+    X(t, t)
+    X(u, u)
+    X(underscore, minus)
+    X(v, v)
+    X(w, w)
+    X(x, x)
+    X(y, y)
+    X(z, z)
+#undef X
+    { NoSymbol },
+};
+
+#define MOUSEKEY XK_KP_Add
+
+/* ------------------------------------------------------------------ */
 
 static unsigned AutoKey(ARMul_State *state);
 
@@ -1104,8 +1240,8 @@ static void BackingWindow_Event(ARMul_State *state,XEvent *e) {
 
 /*----------------------------------------------------------------------------*/
 static void ProcessKey(ARMul_State *state,XKeyEvent *key) {
-  struct ArcKeyTrans *PresPtr;
   KeySym sym;
+    keysym_to_arch_key *ktak;
 
     XLookupString(key, NULL, 0, &sym, NULL);
 
@@ -1134,37 +1270,41 @@ static void ProcessKey(ARMul_State *state,XKeyEvent *key) {
   /* Just take the unshifted version of the key */
   sym = XLookupKeysym(key,0);
 
-  /* Should set up KeyColToSend and KeyRowToSend and KeyUpNDown */
-  for(PresPtr=transTable;PresPtr->row!=-1;PresPtr++) {
-    if (PresPtr->sym==sym) {
-            keyboard_key_changed(&KBD, PresPtr->row, PresPtr->col,
+    for (ktak = keysym_to_arch_key_map; ktak->sym; ktak++) {
+        if (ktak->sym == sym) {
+            keyboard_key_changed(&KBD, ktak->kid,
                 key->type == KeyRelease);
-      return;
-    };
-  }; /* Key search loop */
+            return;
+        }
+    }
 
   fprintf(stderr,"ProcessKey: Unknown key sym=%ld!\n",sym);
 }; /* ProcessKey */
 
 /*----------------------------------------------------------------------------*/
-static void ProcessButton(ARMul_State *state,XButtonEvent *button) {
-    int b;
-    int arch_button;
 
-    b = button->button;
-    if (b == Button1) {
-        arch_button = 0;
-    } else if (b == Button2) {
-        arch_button = 1;
-    } else if (b == Button3) {
-        arch_button = 2;
-    } else {
+static void ProcessButton(ARMul_State *state, XButtonEvent *button)
+{
+    arch_key_id kid;
+
+    switch (button->button) {
+    case Button1:
+        kid = ARCH_KEY_button_1;
+        break;
+    case Button2:
+        kid = ARCH_KEY_button_2;
+        break;
+    case Button3:
+        kid = ARCH_KEY_button_3;
+        break;
+    default:
         return;
     }
 
-    keyboard_key_changed(&KBD, 7, arch_button,
-        button->type == ButtonRelease);
-}; /* ProcessButton */
+    keyboard_key_changed(&KBD, kid, button->type == ButtonRelease);
+
+    return;
+}
 
 /*----------------------------------------------------------------------------*/
 /* Send the first byte of a data transaction with the host                     */
