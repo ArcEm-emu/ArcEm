@@ -6,6 +6,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
 #define __USE_FIXED_PROTOTYPES__
 #include <errno.h>
@@ -836,6 +837,10 @@ char *fdc_insert_floppy(int drive, char *image)
     int len;
     floppy_format *ff;
 
+    assert(drive >= 0 && drive < sizeof FDC.drive /
+        sizeof FDC.drive[0]);
+    assert(image);
+
     if (FDC.LastCommand != 0xd0) {
         fprintf(stderr, "fdc busy (%#x), can't insert floppy.\n",
             FDC.LastCommand);
@@ -843,6 +848,8 @@ char *fdc_insert_floppy(int drive, char *image)
     }
 
     dr = FDC.drive + drive;
+
+    assert(dr->fp == NULL);
 
     if ((fp = fopen(image, "rb+")) != NULL) {
         dr->write_protected = FALSE;
@@ -884,14 +891,16 @@ char *fdc_eject_floppy(int drive)
 {
     floppy_drive *dr;
 
+    assert(drive >= 0 && drive < sizeof FDC.drive /
+        sizeof FDC.drive[0]);
+
     dr = FDC.drive + drive;
 
-    if (dr->fp != NULL)
-    {
-        if (fclose(dr->fp)) {
-            fprintf(stderr, "error closing floppy drive %d: %s\n",
-                    drive, strerror(errno));
-        }
+    assert(dr->fp);
+
+    if (fclose(dr->fp)) {
+        fprintf(stderr, "error closing floppy drive %d: %s\n",
+            drive, strerror(errno));
     }
 
     dr->fp = NULL;
