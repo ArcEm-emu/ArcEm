@@ -63,14 +63,15 @@ OBJS = armcopro.o armemu.o arminit.o \
 	armsupp.o main.o dagstandalone.o armos.o \
 		armrdi.o $(SYSTEM)/DispKbd.o arch/i2c.o arch/archio.o \
     arch/fdc1772.o $(SYSTEM)/ControlPane.o arch/hdc63463.o arch/ReadConfig.o \
-    arch/keyboard.o arch/extnrom.o $(SYSTEM)/filecalls.o
+    arch/keyboard.o arch/extnrom.o $(SYSTEM)/filecalls.o arch/DispKbdShared.o
 
 SRCS = armcopro.c armemu.c arminit.c arch/armarc.c \
 	armsupp.c main.c dagstandalone.c armos.c  \
 	arm-support.s conditions.s rhs.s \
 	armrdi.c $(SYSTEM)/DispKbd.c arch/i2c.c arch/archio.c \
 	arch/fdc1772.c $(SYSTEM)/ControlPane.c arch/hdc63463.c \
-	arch/ReadConfig.c arch/keyboard.c $(SYSTEM)/filecalls.c
+	arch/ReadConfig.c arch/keyboard.c $(SYSTEM)/filecalls.c \
+	arch/DispKbdShared.c
 
 INCS = armdefs.h armemu.h armfpe.h armopts.h armos.h \
 	dbg_conf.h dbg_cp.h dbg_hif.h dbg_rdi.h $(SYSTEM)/KeyTable.h \
