@@ -49,7 +49,7 @@ int Vendold;
 
 #endif
 
-
+/* Memory map locations */
 #define MEMORY_R_ROM_HIGH   0x3800000  /* Some sections of the memory map    */
 #define MEMORY_W_LOG2PHYS   0x3800000  /* have different functions when read */
 #define MEMORY_R_ROM_LOW    0x3400000  /* or written to.                     */
@@ -60,7 +60,11 @@ int Vendold;
 
 #define MEMORY_RAM_PHYS   0x2000000
 
-
+/* Page size flags */
+#define MEMC_PAGESIZE_O_4K     0
+#define MEMC_PAGESIZE_1_8K     1
+#define MEMC_PAGESIZE_2_16K    2
+#define MEMC_PAGESIZE_3_32K    3
 
 
 struct MEMCStruct memc;
@@ -118,22 +122,22 @@ ARMword GetPhysAddress(unsigned int address) {
     return 0;
 
   switch (MEMC.PageSizeFlags) {
-    case 0:
+    case MEMC_PAGESIZE_O_4K:
       /* 4K */
       PhysPage = pagetabval & 127;
       return (address & 0xfff) | (PhysPage << 12);
 
-    case 1:
+    case MEMC_PAGESIZE_1_8K:
       /* 8K */
       PhysPage = ((pagetabval >> 1) & 0x3f) | ((pagetabval & 1) << 6);
       return (address & 0x1fff) | (PhysPage << 13);
 
-    case 2:
+    case MEMC_PAGESIZE_2_16K:
       /* 16K */
       PhysPage = ((pagetabval >> 2) & 0x1f) | ((pagetabval & 3) << 5);
       return (address & 0x3fff) | (PhysPage << 14);
 
-    case 3:
+    case MEMC_PAGESIZE_3_32K:
       /* 32K */
       PhysPage = ((pagetabval >> 3) & 0xf) | ((pagetabval & 1) << 4) |
                  ((pagetabval & 2) << 5) | ((pagetabval & 4) << 3);
@@ -160,25 +164,25 @@ int FindPageTableEntry_Search(unsigned int address, ARMword *PageTabVal) {
   unsigned int mask;
 
   switch (MEMC.PageSizeFlags) {
-    case 0: /* 4K */
+    case MEMC_PAGESIZE_O_4K: /* 4K */
       matchaddr = ((address & 0x7ff) << 12) |
                   ((address & 0x1800) >> 1);
       mask = 0x807ffc00;
       break;
 
-    case 1: /* 8K */
+    case MEMC_PAGESIZE_1_8K: /* 8K */
       matchaddr = ((address & 0x3ff) << 13) |
                    (address & 0xc00);
       mask = 0x807fec00;
       break;
 
-    case 2: /* 16K */
+    case MEMC_PAGESIZE_2_16K: /* 16K */
       matchaddr = ((address & 0x1ff) << 14) |
                   ((address & 0x600) << 1);
       mask = 0x807fcc00;
       break;
 
-    case 3: /* 32K */
+    case MEMC_PAGESIZE_3_32K: /* 32K */
       matchaddr = ((address & 0xff) << 15) |
                   ((address & 0x300) << 2);
       mask = 0x807f8c00;
@@ -186,19 +190,19 @@ int FindPageTableEntry_Search(unsigned int address, ARMword *PageTabVal) {
 
     default:
       abort();
-  };
+  }
 
   for (Current = 0; Current < 128; Current++) {
-    if ((MEMC.PageTable[Current] & mask)==matchaddr) {
+    if ((MEMC.PageTable[Current] & mask) == matchaddr) {
       MEMC.OldAddress1 = address;
       MEMC.OldPage1 = MEMC.PageTable[Current];
       *PageTabVal   = MEMC.PageTable[Current];
       return(1);
-    };
-  };
+    }
+  }
 
   return(0);
-}; /* FindPageTableEntry_Search */
+} /* FindPageTableEntry_Search */
 
 
 static int FindPageTableEntry(unsigned int address, ARMword *PageTabVal) {
@@ -206,7 +210,7 @@ static int FindPageTableEntry(unsigned int address, ARMword *PageTabVal) {
   if (address == MEMC.OldAddress1) {
     *PageTabVal = MEMC.OldPage1;
     return(1);
-  };
+  }
 
   return FindPageTableEntry_Search(address, PageTabVal);
 }
@@ -306,7 +310,7 @@ static int CheckAbortW(int address) {
     return(0);
   }
 
-  MEMC.TmpPage=PageTabVal;
+  MEMC.TmpPage = PageTabVal;
 
   /* The page exists - so if it's superviser then it's OK */
   if (PRIVILEGED)
@@ -360,7 +364,7 @@ unsigned ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
 {
   PrivateDataType *PrivDPtr;
   FILE *ROMFile;
-  unsigned int ROMWordNum,ROMWord;
+  unsigned int ROMWordNum, ROMWord;
   int PresPage;
   unsigned int i;
   unsigned extnrom_size = 0;
@@ -372,76 +376,76 @@ unsigned ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
   if (PrivDPtr == NULL) {
     fprintf(stderr,"ARMul_MemoryInit: malloc of PrivateDataType failed\n");
     exit(3);
-  };
+  }
 
   statestr.MemDataPtr = (unsigned char *)PrivDPtr;
 
- dbug("Reading config file....\n");
- ReadConfigFile(state);
+  dbug("Reading config file....\n");
+  ReadConfigFile(state);
 
- if (initmemsize) {
+  if (initmemsize) {
    statestr.MemSize = initmemsize;
- } else {
-   statestr.MemSize = initmemsize = 4 * 1024 * 1024; /* seems like a good value! */
- };
+  } else {
+    statestr.MemSize = initmemsize = 4 * 1024 * 1024; /* seems like a good value! */
+  }
 
- sigavailablestate = state;
+  sigavailablestate = state;
 #ifndef WIN32
- signal(SIGUSR2,DumpHandler);
+  signal(SIGUSR2,DumpHandler);
 #endif
 
 
- MEMC.RAMSize = initmemsize;
- /* and now the RAM */
- /* Was malloc - but I want it 0 init */
- MEMC.PhysRam = calloc(MEMC.RAMSize,1);
- MEMC.PhysRamfuncs = malloc(((MEMC.RAMSize) / 4) * sizeof(ARMEmuFunc));
- if ((MEMC.PhysRam == NULL) || (MEMC.PhysRamfuncs == NULL)) {
-  fprintf(stderr,"Couldn't allocate RAM space\n");
-  exit(3);
- };
+  MEMC.RAMSize = initmemsize;
+  /* and now the RAM */
+  /* Was malloc - but I want it 0 init */
+  MEMC.PhysRam = calloc(MEMC.RAMSize,1);
+  MEMC.PhysRamfuncs = malloc(((MEMC.RAMSize) / 4) * sizeof(ARMEmuFunc));
+  if ((MEMC.PhysRam == NULL) || (MEMC.PhysRamfuncs == NULL)) {
+    fprintf(stderr,"Couldn't allocate RAM space\n");
+    exit(3);
+  }
 
-    for (i = 0; i < MEMC.RAMSize / 4; i++) {
-        MEMC.PhysRamfuncs[i] = ARMul_Emulate_DecodeInstr;
-    }
+  for (i = 0; i < MEMC.RAMSize / 4; i++) {
+    MEMC.PhysRamfuncs[i] = ARMul_Emulate_DecodeInstr;
+  }
 
-  MEMC.ROMMapFlag = 1; /* Map ROM to address 0 */
-  MEMC.ControlReg=0; /* Defaults */
-  MEMC.PageSizeFlags=0;
+  MEMC.ROMMapFlag    = 1; /* Map ROM to address 0 */
+  MEMC.ControlReg    = 0; /* Defaults */
+  MEMC.PageSizeFlags = MEMC_PAGESIZE_O_4K;
 
- /* Top bit set means it isn't valid */
- for (PresPage = 0; PresPage <128; PresPage++)
-   MEMC.PageTable[PresPage]=0xffffffff;
+  /* Top bit set means it isn't valid */
+  for (PresPage = 0; PresPage <128; PresPage++)
+    MEMC.PageTable[PresPage] = 0xffffffff;
 
- dbug(" Loading ROM....\n ");
+  dbug(" Loading ROM....\n ");
 
 
 #ifdef __riscos__
- if (ROMFile = fopen("<ArcEm$Dir>.^.ROM", "rb"), ROMFile == NULL) {
-   exit(2);
- }
+  if (ROMFile = fopen("<ArcEm$Dir>.^.ROM", "rb"), ROMFile == NULL) {
+    exit(2);
+  }
 #else
 #ifdef MACOSX
- {
-     chdir(arcemDir);
- }
- if (ROMFile = fopen("ROM", "rb"), ROMFile == NULL) {
-     arcem_exit("Couldn't open ROM file");
- }
+  {
+    chdir(arcemDir);
+  }
+  if (ROMFile = fopen("ROM", "rb"), ROMFile == NULL) {
+    arcem_exit("Couldn't open ROM file");
+  }
 #else
- if (ROMFile = fopen("ROM", "rb"), ROMFile == NULL) {
-   fprintf(stderr, "Couldn't open ROM file\n");
-   exit(1);
- };
+  if (ROMFile = fopen("ROM", "rb"), ROMFile == NULL) {
+    fprintf(stderr, "Couldn't open ROM file\n");
+    exit(1);
+  }
 #endif
 #endif
 
- /* Find the rom file size */
- fseek(ROMFile, 0l, SEEK_END);
+  /* Find the rom file size */
+  fseek(ROMFile, 0l, SEEK_END);
 
- MEMC.ROMSize = (unsigned int)ftell(ROMFile);
+  MEMC.ROMSize = (unsigned int)ftell(ROMFile);
 
- fseek(ROMFile, 0l, SEEK_SET);
+  fseek(ROMFile, 0l, SEEK_SET);
 
 #if defined(SYSTEM_X) || defined(MACOSX)
   /* Add the space required by an Extension Rom */
@@ -452,17 +456,17 @@ unsigned ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
   dbug("Total ROM size required = %u KB\n",
        (MEMC.ROMSize + extnrom_size) / 1024);
 
- /* Allocate the ROM space */
- /* 128 is to try and ensure gap with next malloc to stop cache thrashing */
+  /* Allocate the ROM space */
+  /* 128 is to try and ensure gap with next malloc to stop cache thrashing */
   /* calloc() now used to ensure that Extension ROM space is zero'ed */
   MEMC.ROM = malloc(MEMC.ROMSize + extnrom_size + 128);
   memset(MEMC.ROM, 0x00, MEMC.ROMSize + extnrom_size + 128);
   MEMC.Romfuncs = malloc(((MEMC.ROMSize + extnrom_size) / 4) * sizeof(ARMEmuFunc));
 
- if ((MEMC.ROM==NULL) || (MEMC.Romfuncs==NULL)) {
-  fprintf(stderr,"Couldn't allocate space for ROM\n");
-  exit(3);
- }
+  if ((MEMC.ROM == NULL) || (MEMC.Romfuncs == NULL)) {
+    fprintf(stderr,"Couldn't allocate space for ROM\n");
+    exit(3);
+  }
 
   for (ROMWordNum = 0; ROMWordNum < MEMC.ROMSize / 4; ROMWordNum++) {
 #ifdef DEBUG
@@ -515,7 +519,7 @@ unsigned ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
   ARMul_ConsolePrint(state, "\n");
 #endif
 
- return(TRUE);
+  return(TRUE);
 }
 
 /**
@@ -541,9 +545,9 @@ void ARMul_MemoryExit(ARMul_State *state)
  * @param address
  * @returns
  */
-ARMword ARMul_LoadWordS(ARMul_State *state, ARMword address) {
+ARMword ARMul_LoadWordS(ARMul_State *state, ARMword address)
+{
   statestr.NumCycles++;
-
   address &= 0x3ffffff;
 
   if (CheckAbortR(address)) {
@@ -553,7 +557,7 @@ ARMword ARMul_LoadWordS(ARMul_State *state, ARMword address) {
          address, statestr.pc, statestr.Reg[15], PRIVILEGED, OSMODE(state), statestr.Mode);
     ARMul_DATAABORT(address);
     return(ARMul_ABORTWORD);
-  };
+  }
 
   return GetWord(address);
 }
@@ -602,7 +606,7 @@ ARMword ARMul_LoadByte(ARMul_State *state, ARMword address) {
   statestr.NumCycles++;
 
   if (CheckAbortR(address)) {
-   ARMul_CLEARABORT;
+    ARMul_CLEARABORT;
   } else {
     dbug("ARMul_LoadByte abort on address 0x%08x PC=0x%x R[15]=0x%x priv=%d osmode=%d mode=%d\n",
          address, statestr.pc, statestr.Reg[15], PRIVILEGED, OSMODE(state), statestr.Mode);
@@ -842,15 +846,15 @@ ARMword GetWord(ARMword address) {
  * Set a value of an address in the archimedes memory map
  * The caller MUST check for aborts before calling us!
  *
- * @param state       Emulator state
- * @param address     Address to write to
- * @param data        Data to write
- * @param bNw         Non-zero if this is a byte store, not a word store
+ * @param state        Emulator state
+ * @param address      Address to write to
+ * @param data         Data to write
+ * @param byteNotword  Non-zero if this is a byte store, not a word store
  * @param Statechange
  * @param newfunc
  */
 void
-PutVal(ARMul_State *state, ARMword address, ARMword data, int bNw,
+PutVal(ARMul_State *state, ARMword address, ARMword data, int byteNotword,
        int Statechange, ARMEmuFunc newfunc)
 {
   if (address >= MEMORY_W_LOG2PHYS) {
@@ -874,7 +878,7 @@ PutVal(ARMul_State *state, ARMword address, ARMword data, int bNw,
 
       logbaseaddr=(tmp >>15) & 255;
       logbaseaddr|=(tmp >>2) & (256|512);
-      logbaseaddr<<=(12+MEMC.PageSizeFlags); /* Actually all that masking is only OK for 32K */
+      logbaseaddr<<=(12 + MEMC.PageSizeFlags); /* Actually all that masking is only OK for 32K */
       Entry=(tmp >>3)&0xf;
       Entry|=(tmp<<4)&16;
       Entry|=(tmp<<3)&32;
@@ -958,7 +962,7 @@ PutVal(ARMul_State *state, ARMword address, ARMword data, int bNw,
     if (MEMC.ROMMapFlag == 2)
       MEMC.ROMMapFlag = 0;
     /* VIDC */
-    VIDC_PutVal(state,address,data,bNw);
+    VIDC_PutVal(state, address, data, byteNotword);
     return;
   }
 
@@ -969,7 +973,7 @@ PutVal(ARMul_State *state, ARMword address, ARMword data, int bNw,
     if (MEMC.ROMMapFlag == 2)
       MEMC.ROMMapFlag = 0;
     /* IOC */
-    PutValIO(state,address,data,bNw);
+    PutValIO(state, address, data, byteNotword);
     return;
   }
 
@@ -992,7 +996,7 @@ PutVal(ARMul_State *state, ARMword address, ARMword data, int bNw,
     MEMC.UpdateFlags[address/UPDATEBLOCKSIZE]++;
 
   /* Handle byte stores */
-  if (bNw) {
+  if (byteNotword) {
     /* Essentially we read the word in RAM,
        clear the byte we want to write to,
        and fill the byte with the value to be written */
