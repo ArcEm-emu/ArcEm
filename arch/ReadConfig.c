@@ -30,13 +30,18 @@ int ReadConfigFile(ARMul_State *state) {
     return 0;
   };
 
-  if (nameConf = malloc(strlen(HomeVar) + 32),nameConf==NULL) {
+  if (nameConf = malloc(strlen(HomeVar) + 32), nameConf == NULL) {
     fprintf(stderr,"Couldn't allocate memory for name of config file\n");
     return 0;
   };
 
-  sprintf(nameConf,"%s/.arcemrc",HomeVar);
-  if (fConf=fopen(nameConf,"r"),fConf==NULL) {
+#ifdef __CYGWIN__
+  strcpy(nameConf, "arcemrc");
+#else
+  sprintf(nameConf, "%s/.arcemrc", HomeVar);
+#endif
+
+  if (fConf = fopen(nameConf, "r"), fConf==NULL) {
     fprintf(stderr,"Couldn't open config file\n");
     return 0;
   };

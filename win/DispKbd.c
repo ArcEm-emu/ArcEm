@@ -603,7 +603,9 @@ static void ProcessKey(ARMul_State *state) {
   keyF = 0;
 
   if (KBD.BuffOcc>=KBDBUFFLEN) {
+#ifdef DEBUG_KBD
     fprintf(stderr,"KBD: Missed key - still busy sending another one\n");
+#endif
     return;
   };
 
@@ -628,7 +630,9 @@ static void ProcessKey(ARMul_State *state) {
     };
   }; /* Key search loop */
 
+#ifdef DEBUG_KBD
   fprintf(stderr,"ProcessKey: Unknown key sym=%04X!\n",sym);
+#endif
 }; /* ProcessKey */
 
 
@@ -641,7 +645,9 @@ static void ProcessButton(ARMul_State *state) {
   if (ButtonNum<0) return;
 
   if (KBD.BuffOcc>=KBDBUFFLEN) {
+#ifdef DEBUG_KBD
     fprintf(stderr,"KBD: Missed mouse event - buffer full\n");
+#endif
     return;
   };
 
@@ -747,12 +753,16 @@ static void Kbd_CodeFromHost(ARMul_State *state, unsigned char FromHost) {
       if (FromHost==0xff) {
         if (IOC_WriteKbdRx(state,0xff)!=-1) {
           KBD.KbdState=KbdState_SentHardReset;
+#ifdef DEBUG_KBD
           fprintf(stderr,"KBD: Received Reset and sent Reset\n");
         } else {
-          fprintf(stderr,"KBD: Couldn't respond to Reset - Kart full\n");
+          fprintf(stderr,"KBD: Couldn't respond to Reset - cart full\n");
+#endif
         };
+#ifdef DEBUG_KBD
       } else {
         fprintf(stderr,"KBD: JustStarted; Got bad code 0x%x\n",FromHost);
+#endif
       };
       break;
 
@@ -761,12 +771,16 @@ static void Kbd_CodeFromHost(ARMul_State *state, unsigned char FromHost) {
       if (FromHost==0xfe) {
         if (IOC_WriteKbdRx(state,0xfe)!=-1) {
           KBD.KbdState=KbdState_SentAck1;
+#ifdef DEBUG_KBD
           fprintf(stderr,"KBD: Received Ack1 and sent Ack1\n");
         } else {
           fprintf(stderr,"KBD: Couldn't respond to Ack1 - Kart full\n");
+#endif
         };
       } else {
+#ifdef DEBUG_KBD
         fprintf(stderr,"KBD: SentAck1; Got bad code 0x%x - sending reset\n",FromHost);
+#endif
         IOC_WriteKbdRx(state,0xff);
         KBD.KbdState=KbdState_SentHardReset; /* Or should that be just started? */
       };
@@ -777,12 +791,16 @@ static void Kbd_CodeFromHost(ARMul_State *state, unsigned char FromHost) {
       if (FromHost==0xfd) {
         if (IOC_WriteKbdRx(state,0xfd)!=-1) {
           KBD.KbdState=KbdState_SentAck2;
+#ifdef DEBUG_KBD
           fprintf(stderr,"KBD: Received and ack'd to Ack2\n");
         } else {
           fprintf(stderr,"KBD: Couldn't respond to Ack2 - Kart full\n");
+#endif
         };
+#ifdef DEBUG_KBD
       } else {
         fprintf(stderr,"KBD: SentAck2; Got bad code 0x%x\n",FromHost);
+#endif
       };
       break;
 
@@ -790,9 +808,11 @@ static void Kbd_CodeFromHost(ARMul_State *state, unsigned char FromHost) {
       if (FromHost==0xff) {
         if (IOC_WriteKbdRx(state,0xff)!=-1) {
           KBD.KbdState=KbdState_SentHardReset;
+#ifdef DEBUG_KBD
           fprintf(stderr,"KBD: Received and ack'd to hardware reset\n");
         } else {
           fprintf(stderr,"KBD: Couldn't respond to hardware reset - Kart full\n");
+#endif
         };
         return;
       };
@@ -800,7 +820,9 @@ static void Kbd_CodeFromHost(ARMul_State *state, unsigned char FromHost) {
       switch (FromHost & 0xf0) {
         case 0: /* May be LED switch */
           if ((FromHost & 0x08)==0x08) {
+#ifdef DEBUG_KBD
             fprintf(stderr,"KBD: Received bad code: 0x%x\n",FromHost);
+#endif
             return;
           }
           /*printf("KBD: LED state now: 0x%x\n",FromHost & 0x7); */
@@ -811,7 +833,7 @@ static void Kbd_CodeFromHost(ARMul_State *state, unsigned char FromHost) {
 #ifdef LEDENABLE
           /* I think we have to acknowledge - but I don't know with what */
           if (IOC_WriteKbdRx(state,0xa0 | (FromHost & 0x7))) {
-            fprintf(stderr,"KBD: acked led's\n");
+            fprintf(stderr,"KBD: acked LEDs\n");
           } else {
             fprintf(stderr,"KBD: Couldn't respond to LED - Kart full\n");
           };
@@ -821,7 +843,9 @@ static void Kbd_CodeFromHost(ARMul_State *state, unsigned char FromHost) {
         case 0x20: /* Host requests keyboard id - or mouse position */
           KBD.HostCommand=FromHost;
           Kbd_StartToHost(state);
-          fprintf(stderr,"KBD: Host requested keyboard id\n");
+#ifdef DEBUG_KBD
+          fprintf(stderr,"KBD: Host requested keyboard ID\n");
+#endif
           return;
 
         case 0x30: /* Its probably an ack of some type */
@@ -846,16 +870,22 @@ static void Kbd_CodeFromHost(ARMul_State *state, unsigned char FromHost) {
             case 0xf: /* First byte ack */
               if ((KBD.KbdState!=KbdState_SentKeyByte1) &&
                   (KBD.KbdState!=KbdState_SentMouseByte1)) {
+#ifdef DEBUG_KBD
                 fprintf(stderr,"KBD: Got 1st byte ack when we haven't sent one!\n");
+#endif
               } else {
                 if (KBD.KbdState==KbdState_SentMouseByte1) {
                   if (IOC_WriteKbdRx(state,KBD.MouseYToSend)==-1) {
+#ifdef DEBUG_KBD
                     fprintf(stderr,"KBD: Couldn't send 2nd byte of mouse value - Kart full\n");
+#endif
                   };
                   KBD.KbdState=KbdState_SentMouseByte2;
                 } else {
                   if (IOC_WriteKbdRx(state,(KBD.KeyUpNDown?0xd0:0xc0) | KBD.KeyColToSend)==-1) {
+#ifdef DEBUG_KBD
                     fprintf(stderr,"KBD: Couldn't send 2nd byte of key value - Kart full\n");
+#endif
                   };
                   KBD.KbdState=KbdState_SentKeyByte2;
                   /* Indicate that the key has been sent */
@@ -865,18 +895,24 @@ static void Kbd_CodeFromHost(ARMul_State *state, unsigned char FromHost) {
               }; /* Have sent 1st byte test */
               break;
 
+#ifdef DEBUG_KBD
             default:
               fprintf(stderr,"KBD: Bad ack type received 0x%x\n",FromHost);
               break;
-          }; /* bottom nybble of ack switch */
+#endif
+          }; /* bottom nibble of ack switch */
           return;
 
         case 0x40: /* Host just sends us some data....*/
+#ifdef DEBUG_KBD
           fprintf(stderr,"KBD: Host sent us some data: 0x%x\n",FromHost);
+#endif
           return;
 
         default:
+#ifdef DEBUG_KBD
           fprintf(stderr,"KBD: Unknown code received from host 0x%x\n",FromHost);
+#endif
           return;
       }; /* FromHost top nybble switch */
   }; /* current state switch */

@@ -45,7 +45,8 @@ static void I2C_SetupTransmit(ARMul_State *state) {
   I2C.NumberOfBitsSoFar=1;
 }; /* I2C_SetupTransmit */
 
-/*------------------------------------------------------------------------------*/
+
+/*----------------------------------------------------------------------------*/
 static void SaveCMOS(ARMul_State *state) {
   int loop,dest;
   unsigned char val;
@@ -58,7 +59,7 @@ static void SaveCMOS(ARMul_State *state) {
     return;
   }
 #else
-  OutFile = fopen("hexcmos.updated","w");
+  OutFile = fopen("hexcmos","w");
   if (OutFile == NULL) {
     fprintf(stderr,"SaveCMOS: Could not open (hexcmos.updated) CMOS settings file\n");
     exit(1);

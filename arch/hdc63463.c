@@ -286,7 +286,9 @@ static ARMword HDC_DMARead(ARMul_State *state, int offset) {
 #endif
 
   if (HDC.CurrentlyOpenDataBuffer==-1) {
+#ifdef DEBUG
     fprintf(stderr,"HDC_DMARead: DTR - from non-open data buffer\n");
+#endif
     return(0x5aa5);
   };
 
@@ -371,7 +373,9 @@ static int GetParams(ARMul_State *state, const int NParams, ...) {
   };
 
   if (HDC.PBPtr>NParams) {
+#ifdef DEBUG_DATA
     fprintf(stderr,"HDC:GetParams - warning: Too many parameters passed to hdc\n");
+#endif
   };
 
   va_start(args,NParams);
@@ -425,13 +429,17 @@ static int SetFilePtr(ARMul_State *state,int drive,
 #endif
 
   if (HDC.HardFile[drive]==NULL) {
+#ifdef DEBUG_DATA
     fprintf(stderr,"HDC:SetFilePtr - file handle was NULL\n");
+#endif
     Cause_Error(state,ERR_NRY);
     return(0);
   };
 
   if (fseek(HDC.HardFile[drive],ptr,SEEK_SET)!=0) {
+#ifdef DEBUG_DATA
     fprintf(stderr,"HDC:SetFilePtr - fseek failed (errno=%d)\n",errno);
+#endif
     Cause_Error(state,ERR_NRY);
     return(0);
   };
@@ -1519,7 +1527,9 @@ ARMword HDC_Read(ARMul_State *state, int offset) {
 
   /* Read of HDC registers */
   if (!rNw) {
-    fprintf(stderr,"HDC_Read: Read but address means write!!!!\n");
+#ifdef DEBUG
+    fprintf(stderr,"HDC_Read: Read but address means write\n");
+#endif
     return(0xff);
   };
 
@@ -1538,19 +1548,25 @@ ARMword HDC_Read(ARMul_State *state, int offset) {
         /*fprintf(stderr,"HDC_Read: DTR - from param buffer - 0x%x\n",tmpres);*/
         return(tmpres);
       } else {
+#ifdef DEBUG
         fprintf(stderr,"HDC_Read: DTR - from parameter buffer - but read past end!\n");
+#endif
         return(0xa55a);
       };
     } else {
       /* One of the data buffers */
       if (HDC.CurrentlyOpenDataBuffer==-1) {
+#ifdef DEBUG
         fprintf(stderr,"HDC_Read: DTR - from non-open data buffer\n");
+#endif
         return(0x5a);
       };
 
       if (HDC.DBufPtrs[HDC.CurrentlyOpenDataBuffer]>254) {
+#ifdef DEBUG
         fprintf(stderr,"HDC_Read: DTR - from data buffer %d - off end!\n",
                 HDC.CurrentlyOpenDataBuffer);
+#endif
         HDC.DREQ=0;
         UpdateInterrupt(state);
         return(0x1223);
@@ -1618,7 +1634,11 @@ void HDC_Init(ARMul_State *state) {
       }
     }
 
-    if (!HDC.HardFile[currentdrive]) fprintf(stderr,"HDC: Couldn't open image for drive %d\n",currentdrive);
+#ifdef DEBUG
+    if (!HDC.HardFile[currentdrive]) {
+      fprintf(stderr,"HDC: Couldn't open image for drive %d\n", currentdrive);
+    }
+#endif
   }; /* Image opening */
 
   HDC.DREQ=0;

@@ -362,7 +362,9 @@ unsigned ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
 
  statestr.MemDataPtr = (unsigned char *)PrivDPtr;
 
+#ifdef DEBUG
  fprintf(stderr,"Reading config file....\n");
+#endif
  ReadConfigFile(state);
 
  if (initmemsize) {
@@ -395,7 +397,9 @@ unsigned ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
  for (PresPage = 0; PresPage <128; PresPage++)
    MEMC.PageTable[PresPage]=0xffffffff;
 
+#ifdef DEBUG
  fprintf(stderr," Loading ROM....\n ");
+#endif
 
 
 #ifdef __riscos__
@@ -424,21 +428,25 @@ unsigned ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
   exit(3);
  };
 
- for(ROMWordNum=0;ROMWordNum<MEMC.ROMSize/4;ROMWordNum++) {
-  if (!(ROMWordNum & 0x1ff)) {
-    fprintf(stderr,".");
-    fflush(stderr);
-  };
+ for (ROMWordNum = 0; ROMWordNum < MEMC.ROMSize / 4; ROMWordNum++) {
+#ifdef DEBUG
+   if (!(ROMWordNum & 0x1ff)) {
+     fprintf(stderr, ".");
+     fflush(stderr);
+   };
+#endif
 
-  ROMWord  =  fgetc(ROMFile);
-  ROMWord |= (fgetc(ROMFile) << 8);
-  ROMWord |= (fgetc(ROMFile) << 16);
-  ROMWord |= (fgetc(ROMFile) << 24);
-  MEMC.ROM[ROMWordNum] = ROMWord;
-  MEMC.Romfuncs[ROMWordNum] = ARMul_Emulate_DecodeInstr;
+   ROMWord  =  fgetc(ROMFile);
+   ROMWord |= (fgetc(ROMFile) << 8);
+   ROMWord |= (fgetc(ROMFile) << 16);
+   ROMWord |= (fgetc(ROMFile) << 24);
+   MEMC.ROM[ROMWordNum] = ROMWord;
+   MEMC.Romfuncs[ROMWordNum] = ARMul_Emulate_DecodeInstr;
  };
 
+#ifdef DEBUG
  fprintf(stderr," ..Done\n ");
+#endif
 
  DisplayKbd_Init(state);
 
@@ -703,10 +711,12 @@ ARMword GetWord(ARMword address) {
       };
       address-=0x2000000;
 
-      /* I used to think memory wrapped after the real RAM - but it doesn't appear
-         to */
-      if (address>=MEMC.RAMSize) {
+      /* I used to think memory wrapped after the real RAM - but it doesn't */
+      /* appear to */
+      if  (address >= MEMC.RAMSize) {
+#ifdef DEBUG_MEMC
         fprintf(stderr,"GetWord returning dead0bad - after PhysRam\n");
+#endif
         return(0xdead0bad);
         /*while (address>MEMC.RAMSize)
           address-=MEMC.RAMSize; */
@@ -719,10 +729,12 @@ ARMword GetWord(ARMword address) {
       /* Logically mapped RAM */
       address=GetPhysAddress(address);
 
-      /* I used to think memory wrapped after the real RAM - but it doesn't appear
-         to */
-      if (address>=MEMC.RAMSize) {
+      /* I used to think memory wrapped after the real RAM - but it doesn't */
+      /* appear to */
+      if (address >= MEMC.RAMSize) {
+#ifdef DEBUG_MEMC
         fprintf(stderr,"GetWord returning dead0bad - after PhysRam (from log ram)\n");
+#endif
         return(0xdead0bad);
         /*while (address>MEMC.RAMSize)
           address-=MEMC.RAMSize; */
@@ -802,21 +814,29 @@ static void PutVal(ARMul_State *state,ARMword address, ARMword data,int bNw,int 
         MEMC.Sstart=RegVal;
         ioc.IRQStatus &= ~0x20; /* Take sound interrupt off */
         IO_UpdateNirq();
+#ifdef DEBUG_MEMC
         fprintf(stderr,"Write to MEMC Sstart register\n");
+#endif
         break;
 
       case 5: /* SendN */
-        MEMC.SendN=RegVal;
+        MEMC.SendN = RegVal;
+#ifdef DEBUG_MEMC
         fprintf(stderr,"Write to MEMC Send register\n");
+#endif
         break;
 
       case 6: /* Sptr */
+#ifdef DEBUG_MEMC
         fprintf(stderr,"Write to MEMC Sptr register\n");
-        MEMC.Sptr=RegVal; /* !!! NO !!!! Should just cause a sound buffer swap ? ? */
+#endif
+        MEMC.Sptr = RegVal; /* NO. Should just cause a sound buffer swap? */
         break;
 
       case 7: /* MEMC Control register */
+#ifdef DEBUG_MEMC
         fprintf(stderr,"MEMC Control register set to 0x%x by PC=0x%x R[15]=0x%x\n",address,(unsigned int)statestr.pc,(unsigned int)statestr.Reg[15]);
+#endif
         MEMC.ControlReg=address;
         MEMC.PageSizeFlags = (MEMC.ControlReg & 12) >> 2;
         MEMC.OldAddress1 = -1;

@@ -459,18 +459,24 @@ ARMword GetWord_IO(ARMul_State *state, ARMword address) {
         break;
 
       case 2:
+#ifdef IOC_TRACE
         fprintf(stderr,"Read from Econet register (addr=0x%x speed=0x%x offset=0x%x)\n",
                         (unsigned int)address,speed,offset);
+#endif
         break;
 
       case 3:
+#ifdef IOC_TRACE
         fprintf(stderr,"Read from Serial port register (addr=0x%x speed=0x%x offset=0x%x)\n",
                         (unsigned int)address,speed,offset);
+#endif
         break;
 
       case 4:
+#ifdef IOC_TRACE
         fprintf(stderr,"Read from Internal expansion card (addr=0x%x speed=0x%x offset=0x%x)\n",
                         (unsigned int)address,speed,offset);
+#endif
         break;
 
       case 5:
@@ -479,13 +485,17 @@ ARMword GetWord_IO(ARMul_State *state, ARMword address) {
         break;
         
       case 6:
+#ifdef IOC_TRACE
         fprintf(stderr,"Read from Bank 6 (addr=0x%x speed=0x%x offset=0x%x)\n",
                         (unsigned int)address,speed,offset);
+#endif
         break;
 
       case 7:
+#ifdef IOC_TRACE
         fprintf(stderr,"Read from External expansion card (addr=0x%x speed=0x%x offset=0x%x)\n",
                         (unsigned int)address,speed,offset);
+#endif
         break;
     }; /* Bank switch */
   }; /* Yep - IOC space */
@@ -525,6 +535,7 @@ void PutValIO(ARMul_State *state,ARMword address, ARMword data,int bNw) {
         FDC_Write(state,offset,data & 0xff,bNw);
         break;
 
+#ifdef IOC_TRACE
       case 2:
         fprintf(stderr,"Write to Econet register (addr=0x%x speed=0x%x offset=0x%x data=0x%x %c\n",
                         (unsigned int)address,speed,offset,(unsigned int)data,
@@ -540,9 +551,10 @@ void PutValIO(ARMul_State *state,ARMword address, ARMword data,int bNw) {
         fprintf(stderr,"Write to Internal expansion card (addr=0x%x speed=0x%x offset=0x%x data=0x%x\n",
                         (unsigned int)address,speed,offset,(unsigned int)data);
         break;
+#endif
 
       case 5:
-        /* Its either Latch A/B, printer DATA  or the HDC */
+        /* It's either Latch A/B, printer DATA  or the HDC */
         switch (offset & 0x58) {
           case 0x00:
             /*fprintf(stderr,"HDC write: address=0x%x speed=%d\n",address,speed); */
@@ -554,18 +566,24 @@ void PutValIO(ARMul_State *state,ARMword address, ARMword data,int bNw) {
             break;
 
           case 0x10:
+#ifdef IOC_TRACE
             fprintf(stderr,"Write to Printer data latch offset=0x%x data=0x%x\n",offset,(unsigned int)data);
+#endif
             break;
 
           case 0x18:
+#ifdef IOC_TRACE
             fprintf(stderr,"Write to Latch B offset=0x%x data=0x%x\n",offset,(unsigned int)data);
+#endif
             ioc.LatchB=data & 0xff;
             FDC_LatchBChange(state);
             ioc.LatchBold=data & 0xff;
             break;
 
           case 0x40:
+#ifdef IOC_TRACE
             fprintf(stderr,"Write to Latch A offset=0x%x data=0x%x\n",offset,(unsigned int)data);
+#endif
             ioc.LatchA=data & 0xff;
             FDC_LatchAChange(state);
             ioc.LatchAold=data & 0xff;
@@ -573,12 +591,15 @@ void PutValIO(ARMul_State *state,ARMword address, ARMword data,int bNw) {
 
 
           default:
+#ifdef IOC_TRACE
             fprintf(stderr,"Writing to non-defined bank 5 address offset=0x%x data=0x%x\n",
                     offset,(unsigned int)data);
+#endif
             break;
         };
         break;
         
+#ifdef IOC_TRACE
       case 6:
         fprintf(stderr,"Write to Bank 6 (addr=0x%x speed=0x%x offset=0x%x data=0x%x\n",
                         (unsigned int)address,speed,offset,(unsigned int)data);
@@ -588,6 +609,7 @@ void PutValIO(ARMul_State *state,ARMword address, ARMword data,int bNw) {
         fprintf(stderr,"Write to External expansion card (addr=0x%x speed=0x%x offset=0x%x data=0x%x\n",
                         (unsigned int)address,speed,offset,(unsigned int)data);
         break;
+#endif
     }; /* Bank switch */
   }; /* Yep - IOC space */
 }; /* PutValIO */
