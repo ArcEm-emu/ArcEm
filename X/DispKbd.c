@@ -46,7 +46,6 @@
 #define DC DISPLAYCONTROL
 
 static unsigned AutoKey(ARMul_State *state);
-static unsigned DisplayKbd_XPoll(void *data);
 
 static struct EventNode enodes[4];
 //static int autokeyenode=0; /* Flips between 0 and 1 */
@@ -1579,7 +1578,7 @@ static void CursorPane_Event(ARMul_State *state,XEvent *e) {
 /*----------------------------------------------------------------------------*/
 /* Called using an ARM_ScheduleEvent - it also sets itself up to be called
    again.                                                                     */
-unsigned DisplayKbd_XPoll(void *data) {
+unsigned int DisplayKbd_XPoll(void *data) {
   ARMul_State *state = data;
   XEvent e;
   int KbdSerialVal;

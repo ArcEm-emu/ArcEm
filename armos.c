@@ -97,6 +97,7 @@ struct OSblock {
 #define FIXCRLF(t,c) c 
 #endif
 
+#if 0
 static ARMword softvectorcode[] =
 {   /* basic: swi tidyexception + event; mov pc, lr;
               ldmia r11,{r11,pc}; swi generateexception + event
@@ -112,6 +113,7 @@ static ARMword softvectorcode[] =
   0xef000098, 0xe1a0e00f, 0xe89b8800, 0xef000088, /*Error*/
   0xe1a0f00e /* default handler */
 };
+#endif
 
 /***************************************************************************\
 *            Time for the Operating System to initialise itself.            *
@@ -134,6 +136,6 @@ void ARMul_OSExit(ARMul_State *state)
 
 ARMword ARMul_OSLastErrorP(ARMul_State *state)
 {
-  return ((struct OSblock *)state->OSptr)->ErrorP;
+  return ((struct OSblock *)(void *)state->OSptr)->ErrorP;
 }
 
