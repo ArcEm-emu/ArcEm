@@ -12,12 +12,17 @@
 /* Erm - this has to be 256....*/
 #define UPDATEBLOCKSIZE 256
 
-ARMword GetWord(ARMword address);
-
-
 typedef void (*ARMWriteFunc)(ARMul_State* state, ARMword addr, ARMword data, int bNw);
 typedef ARMword (*ARMReadFunc)(ARMul_State* state, ARMword addr);
 typedef void (*ARMEmuFunc)(ARMword instr, ARMword pc);
+
+ARMword GetWord(ARMword address);
+void PutVal(ARMul_State *state, ARMword address, ARMword data, int bNw,
+            int Statechange, ARMEmuFunc newfunc);
+
+#define PutWord(state, address, data) \
+        PutVal(state, address, data, 0, 1, ARMul_Emulate_DecodeInstr)
+
 
 void ARMul_Emulate_DecodeInstr(ARMword instr, ARMword pc);
 
@@ -49,7 +54,7 @@ struct MEMCStruct {
 #ifdef NEWSTYLEMEM
   /* Even though IO and ROM aren't paged finely we still use 4K entries for
      them just so it makes the look up in one pass
-     
+
      1st sub is priveliged (1) for priv
      2nd sub is OS setting in MEMC (1) for OS mode
      */
@@ -98,7 +103,7 @@ typedef enum {
 int ArmArc_ReadKbdTx(ARMul_State *state);
 
 
-/* Places a byte in the keyboard serialiser rx register; returns -1 if its 
+/* Places a byte in the keyboard serialiser rx register; returns -1 if its
    still full.                                                                  */
 int ArmArc_WriteKbdRx(ARMul_State *state, unsigned char value);
 

@@ -50,9 +50,9 @@ int Vendold;
 #endif
 
 
-#define MEMORY_R_ROM_HIGH   0x3800000  /* Some sections of the memory map   */
-#define MEMORY_W_LOG2PHYS   0x3800000  /* have differnt fucntions when read */
-#define MEMORY_R_ROM_LOW    0x3400000  /* or written too.                   */ 
+#define MEMORY_R_ROM_HIGH   0x3800000  /* Some sections of the memory map    */
+#define MEMORY_W_LOG2PHYS   0x3800000  /* have different functions when read */
+#define MEMORY_R_ROM_LOW    0x3400000  /* or written to.                     */
 #define MEMORY_W_DMA_GEN    0x3600000
 #define MEMORY_W_VIDEOCON   0x3400000
 
@@ -63,14 +63,9 @@ int Vendold;
 
 
 
-static void PutVal(ARMul_State *state,ARMword address, ARMword data,int bNw,int Statechange, ARMEmuFunc newfunc);
-
 struct MEMCStruct memc;
 
 /*-----------------------------------------------------------------------------*/
-
-#define PutWord(state, address, data) \
-        PutVal(state, address, data, 0, 1, ARMul_Emulate_DecodeInstr)
 
 
 #define PRIVILEGED (statestr.NtransSig)
@@ -110,7 +105,7 @@ static void DumpHandler(int sig) {
  * GetPhysAddress
  *
  * Uses MEMC.TmpPage which must have been previously been set up by a call to
- * checkabort 
+ * checkabort
  *
  * @param address
  * @returns
@@ -154,7 +149,7 @@ ARMword GetPhysAddress(unsigned int address) {
  *
  * Look up an address in the pagetable and return the raw entry
  * Return 1 if we find it
- * 
+ *
  * @param address
  * @param PageTabVal
  * @returns 1 if we find it
@@ -222,7 +217,7 @@ static int FindPageTableEntry(unsigned int address, ARMword *PageTabVal) {
  *
  * Would a read to the address cause an abort?
  *
- * @param address Address to check 
+ * @param address Address to check
  * @returns 0 if we should abort. non zero if fine
  */
 static int CheckAbortR(int address) {
@@ -287,7 +282,7 @@ static int CheckAbortR(int address) {
  *
  * Would a write to the address cause an abort?
  *
- * @param address Address to check 
+ * @param address Address to check
  * @returns 0 if we should abort, non zero if fine
  */
 static int CheckAbortW(int address) {
@@ -708,7 +703,7 @@ void ARMul_StoreByte(ARMul_State *state, ARMword address, ARMword data)
  * @param state
  * @param address
  * @param data
- * @returns 
+ * @returns
  */
 ARMword ARMul_SwapWord(ARMul_State *state, ARMword address, ARMword data)
 {
@@ -738,7 +733,7 @@ ARMword ARMul_SwapWord(ARMul_State *state, ARMword address, ARMword data)
  * @param state
  * @param address
  * @param data
- * @returns 
+ * @returns
  */
 ARMword ARMul_SwapByte(ARMul_State *state, ARMword address, ARMword data)
 {
@@ -762,7 +757,7 @@ ARMword ARMul_SwapByte(ARMul_State *state, ARMword address, ARMword data)
  *
  * Return the contents of an address in the archimedes memory map.
  * The caller MUST perform a full abort check first - if only to ensure that
- * a page in logical RAM does not abort.                                      
+ * a page in logical RAM does not abort.
  *
  * @param address Address to get value of
  * @returns Content of address
@@ -782,7 +777,7 @@ ARMword GetWord(ARMword address) {
   }
 
   switch ((address >> 24) & 3) {
-    case 3: /* 0x03000000 - 0x03FFFFFF - 16MB - IO Controllers (8MB) and ROM space 2 x 4MB */ 
+    case 3: /* 0x03000000 - 0x03FFFFFF - 16MB - IO Controllers (8MB) and ROM space 2 x 4MB */
       if (address >= MEMORY_R_ROM_LOW) {
         if (address >= MEMORY_R_ROM_HIGH)
           address -= MEMORY_R_ROM_HIGH;
@@ -845,18 +840,19 @@ ARMword GetWord(ARMword address) {
  * PutVal
  *
  * Set a value of an address in the archimedes memory map
- * The caller MUST check for aborts before calling us!                        
+ * The caller MUST check for aborts before calling us!
  *
- * @param state
+ * @param state       Emulator state
  * @param address     Address to write to
- * @param data        Data to write 
- * @param bNW
+ * @param data        Data to write
+ * @param bNw         Non-zero if this is a byte store, not a word store
  * @param Statechange
  * @param newfunc
  */
-static void PutVal(ARMul_State *state, ARMword address, ARMword data,
-                   int bNw, int Statechange, ARMEmuFunc newfunc) {
-
+void
+PutVal(ARMul_State *state, ARMword address, ARMword data, int bNw,
+       int Statechange, ARMEmuFunc newfunc)
+{
   if (address >= MEMORY_W_LOG2PHYS) {
     /* Logical-to-physical address translation */
     int tmp;
@@ -995,15 +991,21 @@ static void PutVal(ARMul_State *state, ARMword address, ARMword data,
   if (address<512*1024)
     MEMC.UpdateFlags[address/UPDATEBLOCKSIZE]++;
 
+  /* Handle byte stores */
   if (bNw) {
-    static unsigned int masktab[]={ 0xffffff00, 0xffff00ff, 0xff00ffff, 0x00ffffff };
+    /* Essentially we read the word in RAM,
+       clear the byte we want to write to,
+       and fill the byte with the value to be written */
+    static const unsigned masktab[] = {
+      0xffffff00, 0xffff00ff, 0xff00ffff, 0x00ffffff
+    };
     ARMword mask;
     ARMword tmp;
-    data&=0xff;
+    data &= 0xff;
 
     mask = masktab[address & 3];
-    tmp = MEMC.PhysRam[address/4] & mask;
-    data = tmp | (data << ((address & 3)*8));
+    tmp = MEMC.PhysRam[address / 4] & mask;
+    data = tmp | (data << ((address & 3) * 8));
   }
 
 #ifdef DIRECT_DISPLAY
