@@ -1009,7 +1009,10 @@ void DisplayKbd_Init(ARMul_State *state) {
 
     prev_x_error_handler = XSetErrorHandler(DisplayKbd_XError);
 
-  /* for debug -- XSynchronize(HD.disp, 1); */
+    if (getenv("ARCEMXSYNC")) {
+        XSynchronize(HD.disp, 1);
+        fputs("arcem: synchronous X protocol selected.\n", stderr);
+    }
 
   HD.xScreen=XDefaultScreenOfDisplay(HD.disp);
   HD.ScreenNum=XScreenNumberOfScreen(HD.xScreen);
