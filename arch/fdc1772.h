@@ -19,6 +19,9 @@ typedef struct {
 typedef struct {
     /* To access the disc image.  NULL if disc ejected. */
     FILE *fp;
+    /* Based on whether read/write access to the disc image was
+     * obtained. */
+    int write_protected;
     /* Points to an element of avail_format. */
     floppy_format *form;
 } floppy_drive;

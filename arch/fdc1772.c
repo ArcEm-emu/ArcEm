@@ -31,6 +31,7 @@
 #define BIT_CRC (1<<3)
 #define BIT_RECNOTFOUND (1<<4)
 #define BIT_MOTORSPINUP (1<<5)
+#define BIT_WRITEPROT (1 << 6)
 #define BIT_MOTORON (1<<7)
 #define TYPE1_UPDATETRACK (1<<4)
 #define TYPE2_BIT_MOTORON (1<<2)
@@ -489,7 +490,8 @@ static void FDC_ReadAddressCommand(ARMul_State *state) {
     long offset;
   int Side=(ioc.LatchA & (1<<4))?0:1; /* Note: Inverted??? Yep!!! */
   FDC.StatusReg|=BIT_BUSY;
-  FDC.StatusReg&=~(BIT_DRQ | BIT_LOSTDATA | (1<<5) | (1<<6) | BIT_RECNOTFOUND);
+    FDC.StatusReg &= ~(BIT_DRQ | BIT_LOSTDATA | (1<<5) | BIT_WRITEPROT |
+        BIT_RECNOTFOUND);
 
     offset = SECTOR_LOC_TO_BYTE_OFF(FDC.Track, Side, FDC.Sector);
     if (offset < 0) {
@@ -521,7 +523,8 @@ static void FDC_ReadCommand(ARMul_State *state) {
   int Side=(ioc.LatchA & (1<<4))?0:1; /* Note: Inverted??? Yep!!! */
 
   FDC.StatusReg|=BIT_BUSY;
-  FDC.StatusReg&=~(BIT_DRQ | BIT_LOSTDATA | (1<<5) | (1<<6) | BIT_RECNOTFOUND);
+    FDC.StatusReg &= ~(BIT_DRQ | BIT_LOSTDATA | (1<<5) | BIT_WRITEPROT |
+        BIT_RECNOTFOUND);
 
   DBG((stderr,"FDC_ReadCommand: Starting with Side=%d Track=%d Sector=%d (CurrentDisc=%d)\n",
                  Side,FDC.Track,FDC.Sector,FDC.CurrentDisc));
@@ -575,10 +578,19 @@ static void FDC_WriteCommand(ARMul_State *state) {
   unsigned long offset;
   int Side=(ioc.LatchA & (1<<4))?0:1; /* Note: Inverted??? Yep!!! */
   FDC.StatusReg|=BIT_BUSY;
-  FDC.StatusReg&=~(BIT_DRQ | BIT_LOSTDATA | (1<<5) | (1<<6) | BIT_RECNOTFOUND);
+    FDC.StatusReg &= ~(BIT_DRQ | BIT_LOSTDATA | (1<<5) | BIT_WRITEPROT |
+        BIT_RECNOTFOUND);
 
   DBG((stderr,"FDC_WriteCommand: Starting with Side=%d Track=%d Sector=%d\n",
                  Side,FDC.Track,FDC.Sector));
+
+    if (FDC.drive[FDC.CurrentDisc].write_protected) {
+        FDC.StatusReg |= BIT_WRITEPROT;
+        FDC.StatusReg &= ~BIT_BUSY;
+        FDC.LastCommand = 0xd0;
+        GenInterrupt(state, "disc write protected");
+        return;
+    }
 
     offset = SECTOR_LOC_TO_BYTE_OFF(FDC.Track, Side, FDC.Sector);
     efseek(FDC.drive[FDC.CurrentDisc].fp, offset, SEEK_SET);
@@ -812,10 +824,11 @@ char *fdc_insert_floppy(int drive, char *image)
 
     dr = FDC.drive + drive;
 
-    /* FIXME:  shouldn't the read-only status of the file be reflected
-     * in the `write protect' state of the floppy? */
-    if ((fp = fopen(image, "rb+")) == NULL &&
-        (fp = fopen(image, "rb")) == NULL) {
+    if ((fp = fopen(image, "rb+")) != NULL) {
+        dr->write_protected = FALSE;
+    } else if ((fp = fopen(image, "rb")) != NULL) {
+        dr->write_protected = TRUE;
+    } else {
         fprintf(stderr, "couldn't open disc image %s on drive %d\n",
             image, drive);
         return "couldn't open disc image";
@@ -838,8 +851,9 @@ char *fdc_insert_floppy(int drive, char *image)
             break;
         }
     }
-    fprintf(stderr, "floppy format %s used for drive %d's %d length "
-        "image.\n", dr->form->name, drive, len);
+    fprintf(stderr, "floppy format %s used for drive %d's r/%c, %d "
+        "length, image.\n", dr->form->name, drive,
+        "wo"[dr->write_protected], len);
 
     return NULL;
 }
