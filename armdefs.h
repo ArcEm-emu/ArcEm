@@ -75,7 +75,7 @@ struct ARMul_State {
    ARMword Mode;            /* the current mode */
    ARMword instr, pc, temp; /* saved register state */
    ARMword loaded, decoded; /* saved pipeline state */
-   unsigned long Numcycles;
+   unsigned long NumCycles;
    enum ARMStartIns NextInstr;
    unsigned VectorCatch;      /* caught exception mask */
 
@@ -217,7 +217,7 @@ struct EventNode {        /* An event list node */
 void ARMul_ScheduleEvent(struct EventNode* event, unsigned long delay,
                         unsigned (*func)(void *));
 void ARMul_EnvokeEvent(void);
-#define ARMul_Time (statestr.Numcycles)
+#define ARMul_Time (statestr.NumCycles)
 
 /***************************************************************************\
 *                          Useful support routines                          *

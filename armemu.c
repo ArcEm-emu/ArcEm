@@ -39,17 +39,6 @@ ARMEmuFunc* pInstrFunc;  /* These are only used by the writeback of the instruct
 ARMEmuFunc* pDecFunc;    /* But they are invalidated by word/byte write to point to a dummy location */
 ARMEmuFunc* pLoadedFunc; /* So that a fetched instruction followed by an overwrite of its location   */
                         /* doesn't get its function pointer overwritten by the original instruction */
-/*------------------------------------------------------------------------------*/
-/*void IO_UpdateNirq(void) {
-  register unsigned int tmp=statestr.Exception & ~1;
-
-  if (ioc.IRQStatus & ioc.IRQMask) {
-  */  /* Cause interrupt! */
-/*    tmp|=1;
-  };
-
-  statestr.Exception=tmp;
-} */
 
 /***************************************************************************\
 *                   Load Instruction                                        *
@@ -70,7 +59,7 @@ static ARMword ARMul_LoadInstr(ARMword address, ARMEmuFunc** func)
   static ARMEmuFunc badfunc;
   ARMword PageTabVal;
 
-  statestr.Numcycles++;
+  statestr.NumCycles++;
   address &= 0x3ffffff;
 
   /* First check if we are doing ROM remapping and are accessing a remapped */
@@ -93,7 +82,8 @@ static ARMword ARMul_LoadInstr(ARMword address, ARMEmuFunc** func)
       if (address>=0x3400000) {
         /* It's ROM read - no hassle */
         ARMul_CLEARABORT;
-        if (address>=0x3800000) address-=0x3800000; else address-=0x3400000;
+//        if (address>=0x3800000) address-=0x3800000; else address-=0x3400000;
+        address &= 0x7fffff;
 
         if ((MEMC.ROMMapFlag==2)) {
           MEMC.OldAddress1=-1;
@@ -102,8 +92,9 @@ static ARMword ARMul_LoadInstr(ARMword address, ARMEmuFunc** func)
         };
 
         /* A simple ROM wrap around */
-        while (address>MEMC.ROMSize)
-          address-=MEMC.ROMSize;
+//        while (address>MEMC.ROMSize)
+//          address-=MEMC.ROMSize;
+        address %= MEMC.ROMSize;
 
         *func=&(MEMC.Romfuncs[address/4]);
         return(MEMC.ROM[address/4]);
@@ -128,7 +119,7 @@ static ARMword ARMul_LoadInstr(ARMword address, ARMEmuFunc** func)
       /* NOTE: No break, IOC has same permissions as physical RAM */
 
     case 2:
-      /* Priveliged only */
+      /* Privileged only */
       if (statestr.NtransSig) {
         ARMul_CLEARABORT;
         if ((MEMC.ROMMapFlag==2)) {
@@ -174,7 +165,7 @@ static ARMword ARMul_LoadInstr(ARMword address, ARMEmuFunc** func)
 
       MEMC.TmpPage=PageTabVal;
 
-      /* If it's not superviser, and not OS mode, and the page is read protected then prefetch abort */
+      /* If it's not supervisor, and not OS mode, and the page is read protected then prefetch abort */
       if ((!(statestr.NtransSig)) && (!(MEMC.ControlReg & (1<<12))) && (PageTabVal & 512)) {
         ARMul_PREFETCHABORT(address);
         badfunc=ARMul_Emulate_DecodeInstr;
@@ -215,7 +206,7 @@ static void ARMul_LoadInstrTriplet(ARMword address,ARMword* pw1, ARMword* pw2, A
     return;
   };
 
-  statestr.Numcycles+=3;
+  statestr.NumCycles+=3;
   address&=0x3ffffff;
 
   switch ((address>>24)&3) {
@@ -224,7 +215,8 @@ static void ARMul_LoadInstrTriplet(ARMword address,ARMword* pw1, ARMword* pw2, A
       if (address>=0x3400000) {
         /* It's ROM read - no hassle */
         ARMul_CLEARABORT;
-        if (address>=0x3800000) address-=0x3800000; else address-=0x3400000;
+//        if (address>=0x3800000) address-=0x3800000; else address-=0x3400000;
+        address &= 0x7fffff;
 
         if ((MEMC.ROMMapFlag==2)) {
           MEMC.OldAddress1=-1;
@@ -233,8 +225,9 @@ static void ARMul_LoadInstrTriplet(ARMword address,ARMword* pw1, ARMword* pw2, A
         };
 
         /* A simple ROM wrap around */
-        while (address>MEMC.ROMSize)
-          address-=MEMC.ROMSize;
+//        while (address>MEMC.ROMSize)
+//          address-=MEMC.ROMSize;
+        address %= MEMC.ROMSize;
 
         address = address / 4;
         *pw1 = MEMC.ROM[address];
@@ -277,7 +270,7 @@ static void ARMul_LoadInstrTriplet(ARMword address,ARMword* pw1, ARMword* pw2, A
       /* NOTE: No break, IOC has same permissions as physical RAM */
 
     case 2:
-      /* Priveliged only */
+      /* Privileged only */
       if (statestr.NtransSig) {
         ARMul_CLEARABORT;
         if ((MEMC.ROMMapFlag==2)) {
@@ -353,7 +346,7 @@ static void ARMul_LoadInstrTriplet(ARMword address,ARMword* pw1, ARMword* pw2, A
       printf("LITrip(lmap) add=0x%x PTab=0x%x NT=%d MEMC.Ctrl b 12=%d\n",address,PageTabVal,statestr.NtransSig,MEMC.ControlReg & (1<<12));
 #endif
 
-      /* The page exists - so if its superviser then its OK */
+      /* The page exists - so if itis supervisor then it's OK */
       if ((!(statestr.NtransSig)) && (!(MEMC.ControlReg & (1<<12))) && (PageTabVal & 512)) {
         ARMul_PREFETCHABORT(address);
         ARMul_PREFETCHABORT((address+4));
@@ -416,7 +409,7 @@ static void ARMul_InvokeEvent(void)
 
 void ARMul_Icycles(unsigned number)
 {
-  statestr.Numcycles += number;
+  statestr.NumCycles += number;
   ARMul_CLEARABORT;
 }
 
@@ -429,8 +422,6 @@ void ARMul_NegZero(ARMul_State *state, ARMword result)
 {
     ASSIGNN(NEG(result));
     ASSIGNZ(result == 0);
-
-    return;
 }
 
 
@@ -442,8 +433,6 @@ void ARMul_AddCarry(ARMul_State *state, ARMword a,ARMword b,ARMword result)
 {
     ASSIGNC((NEG(a) && (NEG(b) || POS(result))) ||
         (NEG(b) && POS(result)));
-
-    return;
 }
 
 /***************************************************************************\
@@ -945,7 +934,7 @@ static void LoadSMult(ARMul_State *state, ARMword instr,
     }
 #endif
 
- /* Actually do the write back!!!! (Hey guys - this is in after the mode change!) DAG */
+ /* Actually do the write back (Hey guys - this is in after the mode change!) DAG */
  if (BIT(21) && LHSReg != 15)
     LSBase = WBBase;
 
