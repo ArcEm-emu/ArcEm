@@ -15,10 +15,10 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. */
 
-/*****************************************************************/
-/* Modified by Dave Gilbert (arcem@treblig.org) to be more
-   independant. Not very cleanly done - more of a hack than anything */
-/*****************************************************************/
+/*********************************************************************/
+/* Modified by Dave Gilbert (arcem@treblig.org) to be more           */
+/* independent. Not very cleanly done - more of a hack than anything */
+/*********************************************************************/
 
 #include <sys/types.h>
 #include <signal.h>
@@ -32,20 +32,6 @@
 #include "dbg_hif.h"
 #include "dbg_rdi.h"
 
-/* The pipes between the two processes */
-extern int mumdagstandalone[2];
-extern int dagstandalonemum[2];
-
-/* The maximum number of file descriptors */
-extern int nfds;
-
-/* The machine name */
-#define MAXHOSTNAMELENGTH 64
-extern char localhost[MAXHOSTNAMELENGTH + 1];
-
-/* The socket number */
-extern unsigned int socketnumber;
-
 /* RDI interface */
 extern const struct RDIProcVec armul_rdi;
 
@@ -58,10 +44,10 @@ static int rdi_state = 0;
 /**************************************************************/
 static void dagstandalone_handlesignal(int sig) {
 #ifdef DEBUG
-  fprintf(stderr, "Terminate ARMulator excecution\n");
+  fprintf(stderr, "Terminate ARMulator - excecution\n");
 #endif
 #ifdef BENCHMARKEXIT
-  printf("Emulated cycles=%ld\n",ARMul_Time);
+  printf("Emulated cycles = %ld\n", ARMul_Time);
   exit(0);
 #endif
   if (sig != SIGUSR1) {
@@ -71,31 +57,38 @@ static void dagstandalone_handlesignal(int sig) {
   armul_rdi.info(RDISignal_Stop, NULL, NULL);
 }
 
+
 /* Functions to be called by the emulator core - based on gdbhost.* */
 static void myprint(void *arg,const char *format, va_list ap) {
   vfprintf(stderr,format, ap);
 };
 
+
 static void mypause(void *arg) {
   /* Should wait for the user to do something */
 };
+
 
 static void mywritec(void *arg, int c) {
   putchar(c);
 };
 
+
 static int myreadc(void *arg) {
   return(getchar());
 };
+
 
 /* I don't quite understand what's going on here! */
 static int mywrite(void *arg, char const *buffer, int len) {
   return 0;
 };
 
+
 static char *mygets(void *arg, char *buffer, int len) {
   return buffer;
 };
+
 
 void dagstandalone(void) {
   int i;
@@ -105,7 +98,7 @@ void dagstandalone(void) {
   Dbg_HostosInterface hostif;
   struct Dbg_MCState *MCState;
   
-  ARMword RegVals[]={0}; /* PC - reset*/
+  ARMword RegVals[]= { 0 }; /* PC - reset*/
   
   /* Setup a signal handler for SIGUSR1 */
   action.sa_handler = dagstandalone_handlesignal;
@@ -118,7 +111,7 @@ void dagstandalone(void) {
   BAG_newbag();
 
   config.processor = ARM2;
-  config.memorysize = 4096*1024; /* 1M doesn't work */
+  config.memorysize = 4096 * 1024; /* 1M doesn't work */
   config.bytesex = RDISex_Little;
 
   hostif.dbgprint = myprint;
@@ -139,7 +132,7 @@ void dagstandalone(void) {
   i = armul_rdi.open(0, &config, &hostif, MCState);
   rdi_state = 1;
 
-  armul_rdi.CPUwrite(3 /* That should just about be svc 26 */,RDIReg_PC,
+  armul_rdi.CPUwrite(3 /* That should just about be svc 26 */, RDIReg_PC,
       RegVals);
   /*x = ~0x4;
   armul_rdi.info(RDIVector_Catch, &x, 0); */

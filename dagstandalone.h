@@ -1,4 +1,4 @@
-/*  main.c -- top level of ARMulator:  ARM6 Instruction Emulator.
+/*  dagstandalone.h -- ARMulator RDP/RDI interface:  ARM6 Instruction Emulator.
     Copyright (C) 1994 Advanced RISC Machines Ltd.
  
     This program is free software; you can redistribute it and/or modify
@@ -15,13 +15,4 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. */
 
-#include "dagstandalone.h"
-
-int main(int argc, char *argv[]) {
-  dagstandalone();
-  return 1;
-}
-
-
-
-
+void dagstandalone(void);

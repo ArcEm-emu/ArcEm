@@ -28,20 +28,6 @@
 #include "armdefs.h"
 #include "armemu.h"
 
-/*ARMword GetDPRegRHS(ARMul_State *state, ARMword instr);
-ARMword GetDPSRegRHS(ARMul_State *state, ARMword instr);
-static void WriteR15(ARMul_State *state, ARMword src);
-static void WriteSR15(ARMul_State *state, ARMword src);
-static ARMword GetLSRegRHS(ARMul_State *state, ARMword instr);
-static unsigned LoadWord(ARMul_State *state, ARMword instr, ARMword address);
-static unsigned LoadByte(ARMul_State *state, ARMword instr, ARMword address);
-static unsigned StoreWord(ARMul_State *state, ARMword instr, ARMword address);
-static unsigned StoreByte(ARMul_State *state, ARMword instr, ARMword address);
-static void LoadMult(ARMul_State *state, ARMword address, ARMword instr, ARMword WBBase);
-static void StoreMult(ARMul_State *state, ARMword address, ARMword instr, ARMword WBBase);
-static void LoadSMult(ARMul_State *state, ARMword address, ARMword instr, ARMword WBBase);
-static void StoreSMult(ARMul_State *state, ARMword address, ARMword instr, ARMword WBBase);*/
-
 ARMul_State statestr;
 
 ARMword *armflags = &statestr.NFlag;
@@ -196,7 +182,7 @@ static ARMword ARMul_LoadInstr(ARMword address, ARMEmuFunc** func)
 
  ARMul_CLEARABORT;
  /* Logically mapped RAM */
- address=GetPhysAddress(address);
+ address = GetPhysAddress(address);
 
  /* I used to think memory wrapped after the real RAM - but it doesn't appear
     to */
@@ -209,8 +195,8 @@ static ARMword ARMul_LoadInstr(ARMword address, ARMEmuFunc** func)
      address-=MEMC.RAMSize; */
  };
 
- *func=&(MEMC.PhysRamfuncs[address/4]);
- return(MEMC.PhysRam[address/4]);
+ *func = &(MEMC.PhysRamfuncs[address/4]);
+ return (MEMC.PhysRam[address / 4]);
 }
 
 /* --------------------------------------------------------------------------- */
@@ -247,13 +233,13 @@ static void ARMul_LoadInstrTriplet(ARMword address,ARMword* pw1, ARMword* pw2, A
         while (address>MEMC.ROMSize)
           address-=MEMC.ROMSize;
 
-        address=address/4;
-        *pw1=MEMC.ROM[address];
-        *func1=&(MEMC.Romfuncs[address]);
-        *pw2=MEMC.ROM[address+1];
-        *func2=&(MEMC.Romfuncs[address+1]);
-        *pw3=MEMC.ROM[address+2];
-        *func3=&(MEMC.Romfuncs[address+2]);
+        address = address / 4;
+        *pw1 = MEMC.ROM[address];
+        *func1 = &(MEMC.Romfuncs[address]);
+        *pw2 = MEMC.ROM[address+1];
+        *func2 = &(MEMC.Romfuncs[address+1]);
+        *pw3 = MEMC.ROM[address+2];
+        *func3 = &(MEMC.Romfuncs[address+2]);
         return;
       } else {
         if (statestr.NtransSig) {
@@ -263,25 +249,25 @@ static void ARMul_LoadInstrTriplet(ARMword address,ARMword* pw1, ARMword* pw2, A
             MEMC.OldAddress1=-1;
             MEMC.OldPage1=-1;
           };
-          *pw1=GetWord_IO(emu_state, address);
-          *pw2=GetWord_IO(emu_state, address + 4);
-          *pw3=GetWord_IO(emu_state, address + 8);
-          badfunc=ARMul_Emulate_DecodeInstr;
-          *func1=&badfunc;
-          *func2=&badfunc;
-          *func3=&badfunc;
+          *pw1 = GetWord_IO(emu_state, address);
+          *pw2 = GetWord_IO(emu_state, address + 4);
+          *pw3 = GetWord_IO(emu_state, address + 8);
+          badfunc = ARMul_Emulate_DecodeInstr;
+          *func1 = &badfunc;
+          *func2 = &badfunc;
+          *func3 = &badfunc;
           return;
         } else {
           ARMul_PREFETCHABORT(address);
-          ARMul_PREFETCHABORT((address+4));
-          ARMul_PREFETCHABORT((address+8));
-          *pw1=ARMul_ABORTWORD;
-          *pw2=ARMul_ABORTWORD;
-          *pw3=ARMul_ABORTWORD;
+          ARMul_PREFETCHABORT((address + 4));
+          ARMul_PREFETCHABORT((address + 8));
+          *pw1 = ARMul_ABORTWORD;
+          *pw2 = ARMul_ABORTWORD;
+          *pw3 = ARMul_ABORTWORD;
           badfunc=ARMul_Emulate_DecodeInstr;
-          *func1=&badfunc;
-          *func2=&badfunc;
-          *func3=&badfunc;
+          *func1 = &badfunc;
+          *func2 = &badfunc;
+          *func3 = &badfunc;
           return;
         };
       };
@@ -298,9 +284,8 @@ static void ARMul_LoadInstrTriplet(ARMword address,ARMword* pw1, ARMword* pw2, A
         };
         address-=0x2000000;
 
-        /* I used to think memory wrapped after the real RAM - but it doesn't appear
-           to */
-        if (address>=MEMC.RAMSize) {
+        /* I used to think memory wrapped after the real RAM - but it doesn't appear to */
+        if (address >= MEMC.RAMSize) {
           fprintf(stderr,"LoadInstrTriplet returning dead0bad - after PhysRam address=%x+0x2000000\n",address);
           *pw1=0xdead0bad;
           *pw2=0xdead0bad;
@@ -322,7 +307,9 @@ static void ARMul_LoadInstrTriplet(ARMword address,ARMword* pw1, ARMword* pw2, A
         *pw3=MEMC.PhysRam[address+2];
         *func3=&(MEMC.PhysRamfuncs[address+2]);
         return;
+
       } else {
+
         ARMul_PREFETCHABORT(address);
         ARMul_PREFETCHABORT((address+4));
         ARMul_PREFETCHABORT((address+8));
@@ -423,10 +410,13 @@ static void ARMul_InvokeEvent(void)
   }
 }
 
-void ARMul_Icycles(unsigned number) {
+
+void ARMul_Icycles(unsigned number)
+{
   statestr.Numcycles += number;
   ARMul_CLEARABORT;
 }
+
 
 /***************************************************************************\
 * Assigns the N and Z flags depending on the value of result                *
@@ -434,10 +424,21 @@ void ARMul_Icycles(unsigned number) {
 
 void ARMul_NegZero(ARMul_State *state, ARMword result)
 {
- if (NEG(result)) { SETN; CLEARZ; }
- else if (result == 0) { CLEARN; SETZ; }
- else { CLEARN; CLEARZ; };
- }
+  if (NEG(result)) {
+    SETN;
+    CLEARZ;
+
+  } else if (result == 0) {
+    CLEARN;
+    SETZ;
+
+  } else {
+    CLEARN;
+    CLEARZ;
+
+  };
+}
+
 
 /***************************************************************************\
 * Assigns the C flag after an addition of a and b to give result            *
@@ -445,10 +446,11 @@ void ARMul_NegZero(ARMul_State *state, ARMword result)
 
 void ARMul_AddCarry(ARMul_State *state, ARMword a,ARMword b,ARMword result)
 {
- ASSIGNC( (NEG(a) && NEG(b)) ||
-          (NEG(a) && POS(result)) ||
-          (NEG(b) && POS(result)) );
- }
+  ASSIGNC( (NEG(a) && NEG(b)) ||
+           (NEG(a) && POS(result)) ||
+           (NEG(b) && POS(result)) );
+}
+
 
 /***************************************************************************\
 * Assigns the V flag after an addition of a and b to give result            *
@@ -456,9 +458,10 @@ void ARMul_AddCarry(ARMul_State *state, ARMword a,ARMword b,ARMword result)
 
 void ARMul_AddOverflow(ARMul_State *state, ARMword a,ARMword b,ARMword result)
 {
- ASSIGNV( (NEG(a) && NEG(b) && POS(result)) ||
-          (POS(a) && POS(b) && NEG(result)) );
- }
+  ASSIGNV( (NEG(a) && NEG(b) && POS(result)) ||
+           (POS(a) && POS(b) && NEG(result)) );
+}
+
 
 /***************************************************************************\
 * Assigns the C flag after an subtraction of a and b to give result         *
@@ -684,6 +687,7 @@ ARMword GetDPSRegRHS(ARMul_State *state, ARMword instr)
  }
 #endif
 
+
 /***************************************************************************\
 * This routine handles writes to register 15 when the S bit is not set.     *
 \***************************************************************************/
@@ -698,6 +702,7 @@ static void WriteR15(ARMul_State *state, ARMword src)
 #endif
  FLUSHPIPE;
  }
+
 
 /***************************************************************************\
 * This routine handles writes to register 15 when the S bit is set.         *
@@ -720,6 +725,7 @@ static void WriteSR15(ARMul_State *state, ARMword src)
 #endif
  FLUSHPIPE;
  }
+
 
 /***************************************************************************\
 * This routine evaluates most Load and Store register RHSs.  It is         *
@@ -745,11 +751,13 @@ static ARMword GetLSRegRHS(ARMul_State *state, ARMword instr)
                   return(0);
                else
                   return(base >> shamt);
+
     case ASR: if (shamt == 0)
                   return((ARMword)((int)base >> 31L));
                else
                   return((ARMword)((int)base >> (int)shamt));
-    case ROR: if (shamt==0) /* its an RRX */
+
+    case ROR: if (shamt == 0) /* it's an RRX */
                   return((base >> 1) | (CFLAG << 31));
                else
                   return((base << (32-shamt)) | (base >> shamt));

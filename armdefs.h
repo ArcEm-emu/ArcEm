@@ -199,10 +199,11 @@ struct ARMul_State {
 *                  Definitons of things in the emulator                     *
 \***************************************************************************/
 
-extern void ARMul_EmulateInit(void);
-extern ARMul_State *ARMul_NewState(void);
-extern void ARMul_Reset(ARMul_State *state);
-extern ARMword ARMul_DoProg(ARMul_State *state);
+void ARMul_EmulateInit(void);
+ARMul_State *ARMul_NewState(void);
+void ARMul_SelectProcessor(ARMul_State *state, unsigned int processor);
+void ARMul_Reset(ARMul_State *state);
+ARMword ARMul_DoProg(ARMul_State *state);
 
 /***************************************************************************\
 *                Definitons of things for event handling                    *
@@ -213,25 +214,25 @@ struct EventNode {        /* An event list node */
   struct EventNode *next;
 };
 
-extern void ARMul_ScheduleEvent(struct EventNode* event, unsigned long delay, unsigned (*func)(void) );
-extern void ARMul_EnvokeEvent(void);
+void ARMul_ScheduleEvent(struct EventNode* event, unsigned long delay, unsigned (*func)(void) );
+void ARMul_EnvokeEvent(void);
 #define ARMul_Time (statestr.Numcycles)
 
 /***************************************************************************\
 *                          Useful support routines                          *
 \***************************************************************************/
 
-extern void ARMul_SetReg(ARMul_State *state, unsigned mode, unsigned reg, ARMword value);
-extern ARMword ARMul_GetPC(ARMul_State *state);
-extern ARMword ARMul_GetNextPC(ARMul_State *state);
-extern void ARMul_SetPC(ARMul_State *state, ARMword value);
-extern ARMword ARMul_GetR15(ARMul_State *state);
-extern void ARMul_SetR15(ARMul_State *state, ARMword value);
+void ARMul_SetReg(ARMul_State *state, unsigned mode, unsigned reg, ARMword value);
+ARMword ARMul_GetPC(ARMul_State *state);
+ARMword ARMul_GetNextPC(ARMul_State *state);
+void ARMul_SetPC(ARMul_State *state, ARMword value);
+ARMword ARMul_GetR15(ARMul_State *state);
+void ARMul_SetR15(ARMul_State *state, ARMword value);
 
-extern ARMword ARMul_GetCPSR(ARMul_State *state);
-extern void ARMul_SetCPSR(ARMul_State *state, ARMword value);
-extern ARMword ARMul_GetSPSR(ARMul_State *state, ARMword mode);
-extern void ARMul_SetSPSR(ARMul_State *state, ARMword mode, ARMword value);
+ARMword ARMul_GetCPSR(ARMul_State *state);
+void ARMul_SetCPSR(ARMul_State *state, ARMword value);
+ARMword ARMul_GetSPSR(ARMul_State *state, ARMword mode);
+void ARMul_SetSPSR(ARMul_State *state, ARMword mode, ARMword value);
 
 /***************************************************************************\
 *                  Definitons of things to handle aborts                    *

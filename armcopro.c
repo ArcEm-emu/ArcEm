@@ -21,9 +21,9 @@
 *                            Dummy Co-processors                            *
 \***************************************************************************/
 
-static unsigned NoCoPro3R(ARMul_State *state,unsigned,ARMword) ;
-static unsigned NoCoPro4R(ARMul_State *state,unsigned,ARMword,ARMword) ;
-static unsigned NoCoPro4W(ARMul_State *state,unsigned,ARMword,ARMword *) ;
+static unsigned NoCoPro3R(ARMul_State *state,unsigned,ARMword);
+static unsigned NoCoPro4R(ARMul_State *state,unsigned,ARMword,ARMword);
+static unsigned NoCoPro4W(ARMul_State *state,unsigned,ARMword,ARMword *);
 
 /***************************************************************************\
 *                Define Co-Processor instruction handlers here              *
@@ -34,40 +34,46 @@ static unsigned NoCoPro4W(ARMul_State *state,unsigned,ARMword,ARMword *) ;
 *         Install co-processor instruction handlers in this routine         *
 \***************************************************************************/
 
-unsigned ARMul_CoProInit(ARMul_State *state)
-{register unsigned i ;
+unsigned ARMul_CoProInit(ARMul_State *state) {
+  unsigned int i;
 
- for (i = 0 ; i < 16 ; i++) /* initialise tham all first */
-    ARMul_CoProDetach(state, i) ;
+  /* initialise them all first */
+  for (i = 0; i < 16; i++) {
+    ARMul_CoProDetach(state, i);
+  }
 
  /* Install CoPro Instruction handlers here
     The format is
     ARMul_CoProAttach(state, CP Number, Init routine, Exit routine
                       LDC routine, STC routine, MRC routine, MCR routine,
-                      CDP routine, Read Reg routine, Write Reg routine) ;
+                      CDP routine, Read Reg routine, Write Reg routine);
    */
 
     /* No handlers below here */
 
-    for (i = 0 ; i < 16 ; i++) /* Call all the initialisation routines */
-       if (state->CPInit[i])
-          (state->CPInit[i])(state) ;
-    return(TRUE) ;
- }
+    for (i = 0; i < 16; i++) {
+      /* Call all the initialisation routines */
+     if (state->CPInit[i]) {
+       (state->CPInit[i])(state);
+     }
+   }
+   return(TRUE);
+}
+
 
 /***************************************************************************\
 *         Install co-processor finalisation routines in this routine        *
 \***************************************************************************/
 
-void ARMul_CoProExit(ARMul_State *state)
-{register unsigned i ;
+void ARMul_CoProExit(ARMul_State *state) {
+  unsigned int i;
 
- for (i = 0 ; i < 16 ; i++)
+  for (i = 0; i < 16; i++)
     if (state->CPExit[i])
-       (state->CPExit[i])(state) ;
- for (i = 0 ; i < 16 ; i++) /* Detach all handlers */
-    ARMul_CoProDetach(state, i) ;
- }
+      (state->CPExit[i])(state);
+  for (i = 0; i < 16; i++) /* Detach all handlers */
+     ARMul_CoProDetach(state, i);
+}
 
 /***************************************************************************\
 *              Routines to hook Co-processors into ARMulator                 *
@@ -79,33 +85,33 @@ void ARMul_CoProAttach(ARMul_State *state, unsigned number,
                        ARMul_MRCs *mrc,  ARMul_MCRs *mcr,  ARMul_CDPs *cdp,
                        ARMul_CPReads *reads, ARMul_CPWrites *writes)
 {if (init != NULL)
-    state->CPInit[number] = init ;
+    state->CPInit[number] = init;
  if (exits != NULL)
-    state->CPExit[number] = exits ;
+    state->CPExit[number] = exits;
  if (ldc != NULL)
-    state->LDC[number] = ldc ;
+    state->LDC[number] = ldc;
  if (stc != NULL)
-    state->STC[number] = stc ;
+    state->STC[number] = stc;
  if (mrc != NULL)
-    state->MRC[number] = mrc ;
+    state->MRC[number] = mrc;
  if (mcr != NULL)
-    state->MCR[number] = mcr ;
+    state->MCR[number] = mcr;
  if (cdp != NULL)
-    state->CDP[number] = cdp ;
+    state->CDP[number] = cdp;
  if (reads != NULL)
-    state->CPRead[number] = reads ;
+    state->CPRead[number] = reads;
  if (writes != NULL)
-    state->CPWrite[number] = writes ;
+    state->CPWrite[number] = writes;
 }
 
 void ARMul_CoProDetach(ARMul_State *state, unsigned number)
 {ARMul_CoProAttach(state, number, NULL, NULL,
                    NoCoPro4R, NoCoPro4W, NoCoPro4W, NoCoPro4R,
-                   NoCoPro3R, NULL, NULL) ;
- state->CPInit[number] = NULL ;
- state->CPExit[number] = NULL ;
- state->CPRead[number] = NULL ;
- state->CPWrite[number] = NULL ;
+                   NoCoPro3R, NULL, NULL);
+ state->CPInit[number] = NULL;
+ state->CPExit[number] = NULL;
+ state->CPRead[number] = NULL;
+ state->CPWrite[number] = NULL;
 }
 
 /***************************************************************************\
@@ -113,10 +119,10 @@ void ARMul_CoProDetach(ARMul_State *state, unsigned number)
 \***************************************************************************/
 
 static unsigned NoCoPro3R(ARMul_State *state,unsigned a,ARMword b)
-{return(ARMul_CANT) ;}
+{return(ARMul_CANT);}
 
 static unsigned NoCoPro4R(ARMul_State *state, unsigned a,ARMword b,ARMword c)
-{return(ARMul_CANT) ;}
+{return(ARMul_CANT);}
 
 static unsigned NoCoPro4W(ARMul_State *state, unsigned a,ARMword b,ARMword *c)
-{return(ARMul_CANT) ;}
+{return(ARMul_CANT);}
