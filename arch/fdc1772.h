@@ -12,8 +12,8 @@ typedef struct {
     int bytes_per_sector;
     int sectors_per_track;
     int sector_base;
-    /* FIXME:  this is really num_cyl. */
-    int num_tracks;
+    int num_cyl;
+    int num_sides;
 } floppy_format;
 
 typedef struct {

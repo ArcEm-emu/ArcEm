@@ -37,16 +37,17 @@
 #define TYPE2_BIT_MULTISECTOR (1<<4)
 
 static floppy_format avail_format[] = {
-    { "ADFS 800KB", 1024, 5, 0, 80 },
-    { "DOS 720KB", 512, 9, 1, 80 },
+    { "ADFS 800KB", 1024, 5, 0, 80, 2 },
+    { "DOS 720KB", 512, 9, 1, 80, 2 },
 };
 
 /* A temporary method of getting the current drive's format. */
 #define CURRENT_FORMAT (FDC.drive[FDC.CurrentDisc].form)
 
 /* give the byte offset of a given sector. */
-#define SECTOR_LOC_TO_BYTE_OFF(track, side, sector) \
-    (((track * 2 + side) * CURRENT_FORMAT->sectors_per_track + \
+#define SECTOR_LOC_TO_BYTE_OFF(cyl, side, sector) \
+    (((cyl * CURRENT_FORMAT->num_sides + side) * \
+        CURRENT_FORMAT->sectors_per_track + \
         (sector - CURRENT_FORMAT->sector_base)) * \
         CURRENT_FORMAT->bytes_per_sector)
 
@@ -342,7 +343,7 @@ static void FDC_DoDRQ(ARMul_State *state) {
 
 static void FDC_NextTrack(ARMul_State *state)
 {
-    if (FDC.Track < CURRENT_FORMAT->num_tracks) {
+    if (FDC.Track < CURRENT_FORMAT->num_cyl) {
         FDC.Track++;
     }
 
@@ -451,7 +452,7 @@ static void FDC_SeekCommand(ARMul_State *state) {
   ClearInterrupt(state);
   ClearDRQ(state);
 
-  if (FDC.Data >= CURRENT_FORMAT->num_tracks) {
+  if (FDC.Data >= CURRENT_FORMAT->num_cyl) {
     /* Fail!! */
     FDC.StatusReg|=BIT_RECNOTFOUND;
     GenInterrupt(state,"Seek fail");
@@ -473,7 +474,7 @@ static void FDC_StepDirCommand(ARMul_State *state,int Dir) {
 
   FDC.Direction=Dir;
 
-  if (DesiredTrack >= CURRENT_FORMAT->num_tracks || DesiredTrack < 0) {
+  if (DesiredTrack >= CURRENT_FORMAT->num_cyl || DesiredTrack < 0) {
     /* Fail!! */
     FDC.StatusReg|=BIT_RECNOTFOUND;
     GenInterrupt(state,"Step fail");
@@ -831,7 +832,7 @@ char *fdc_insert_floppy(int drive, char *image)
     dr->form = avail_format;
     for (ff = avail_format; ff < avail_format +
         (sizeof avail_format / sizeof(avail_format[0])); ff++) {
-        if (len == 2 * ff->num_tracks * ff->sectors_per_track *
+        if (len == ff->num_sides * ff->num_cyl * ff->sectors_per_track *
             ff->bytes_per_sector) {
             dr->form = ff;
             break;
