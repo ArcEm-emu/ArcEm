@@ -39,9 +39,17 @@
 
 #include "ControlPane.h" 
 
-/* The dimensions of the area set aside for the video data. */
-#define MonitorWidth 800
-#define MonitorHeight 600
+/* A sensible set of defaults for the start window, the OS
+   will call the VIDC and push this smaller or bigger later. */
+#define InitialVideoWidth 640
+#define InitialVideoHeight 480
+
+/* An upper limit on how big to support monitor size, used for
+   allocating a scanline buffer and bounds checking. It's much
+   more than a VIDC1 can handle, and should be pushing the RPC/A7000
+   VIDC too, if we ever get around to supporting that. */
+#define MaxVideoWidth 2048
+#define MaxVideoHeight 1536
 
 /* The size of the border surrounding the video data. */
 #define VIDC_BORDER 10
@@ -93,6 +101,10 @@ static struct {
 
 /* Structure to hold most of the X windows values, shared with ControlPane.c */
 struct host_display HD;
+
+/* One temp scanline buffer of MaxVideoWidth wide */
+static unsigned char ScanLineBuffer[MaxVideoWidth];
+
 
 
 /* ------------------------------------------------------------------ */
@@ -435,310 +447,242 @@ static void RefreshMouse(ARMul_State *state) {
   } /* y */
 
   if (HD.ShapeEnabled) {
-    HD.shape_mask=XCreatePixmapFromBitmapData(HD.disp,HD.CursorPane,HD.ShapePixmapData,
-                                             32,MonitorHeight,0,1,1);
-    /* Eek - a lot of this is copied from XEyes - unfortunatly the manual
-    page for this call is somewhat lacking.  To quote its bugs entry:
-      'This manual page needs a lot more work' */
-    XShapeCombineMask(HD.disp,HD.CursorPane,ShapeBounding,0,0,HD.shape_mask,
-                      ShapeSet);
-    XFreePixmap(HD.disp,HD.shape_mask);
+    int DisplayHeight =  VIDC.Vert_DisplayEnd  - VIDC.Vert_DisplayStart;
+
+    if(DisplayHeight > 0) 
+    {
+      HD.shape_mask = XCreatePixmapFromBitmapData(HD.disp, HD.CursorPane, 
+                                                  HD.ShapePixmapData,
+                                                  32, DisplayHeight, 0, 1, 1);
+      /* Eek - a lot of this is copied from XEyes - unfortunatly the manual
+         page for this call is somewhat lacking.  To quote its bugs entry:
+        'This manual page needs a lot more work' */
+      XShapeCombineMask(HD.disp,HD.CursorPane,ShapeBounding,0,0,HD.shape_mask,
+                        ShapeSet);
+      XFreePixmap(HD.disp,HD.shape_mask);
+    }
+
   }; /* Shape enabled */
 }; /* RefreshMouse */
 
 /*----------------------------------------------------------------------------*/
 static void RefreshDisplay_PseudoColor_1bpp(ARMul_State *state, int DisplayHeight, int DisplayWidth) {
   int x,y,memoffset;
-  int VisibleDisplayWidth;
-  char Buffer[MonitorWidth/8];
   char *ImgPtr=HD.ImageData;
 
   if (DC.video_palette_dirty) {
     set_video_4bpp_colourmap();
   }
 
-  /* Cope with screwy display widths/height */
-  if (DisplayHeight>MonitorHeight) DisplayHeight=MonitorHeight;
-  if (DisplayWidth>MonitorWidth) 
-    VisibleDisplayWidth=MonitorWidth;
-  else
-    VisibleDisplayWidth=DisplayWidth;
-
   for(y=0,memoffset=0;y<DisplayHeight;
-                      y++,memoffset+=DisplayWidth/8,ImgPtr+=MonitorWidth) {
-    if ((DC.MustRedraw) || (QueryRamChange(state,memoffset,VisibleDisplayWidth/8))) {
+                      y++,memoffset+=DisplayWidth/8,ImgPtr+=DisplayWidth) {
+    if ((DC.MustRedraw) || (QueryRamChange(state, memoffset, DisplayWidth/8))) {
       if (y<DC.miny) DC.miny=y;
       if (y>DC.maxy) DC.maxy=y;
-      CopyScreenRAM(state,memoffset,VisibleDisplayWidth/8, Buffer);
+      CopyScreenRAM(state ,memoffset, DisplayWidth/8, ScanLineBuffer);
 
-      for(x=0;x<VisibleDisplayWidth;x+=8) {
+      for(x=0;x<DisplayWidth;x+=8) {
         int bit;
         /* We are now running along the scan line */
         /* we'll get this a bit more efficient when it works! */
         for(bit=0;bit<=8;bit++) {
-          ImgPtr[x+bit]=(Buffer[x/8]>>bit) &1;
-        }; /* bit */
-      }; /* x */
-    }; /* Refresh test */
-  }; /* y */
+          ImgPtr[x+bit]=(ScanLineBuffer[x/8]>>bit) &1;
+        } /* bit */
+      } /* x */
+    } /* Refresh test */
+  } /* y */
   DC.MustRedraw=0;
   MarkAsUpdated(state,memoffset);
-}; /* RefreshDisplay_PseudoColor_1bpp */
+} /* RefreshDisplay_PseudoColor_1bpp */
 
 /*----------------------------------------------------------------------------*/
 static void RefreshDisplay_PseudoColor_2bpp(ARMul_State *state, int DisplayHeight, int DisplayWidth) {
   int x,y,memoffset;
-  int VisibleDisplayWidth;
-  char Buffer[MonitorWidth/4];
   char *ImgPtr=HD.ImageData;
 
   if (DC.video_palette_dirty) {
     set_video_4bpp_colourmap();
   }
 
-  /* Cope with screwy display widths/height */
-  if (DisplayHeight>MonitorHeight) DisplayHeight=MonitorHeight;
-  if (DisplayWidth>MonitorWidth) 
-    VisibleDisplayWidth=MonitorWidth;
-  else
-    VisibleDisplayWidth=DisplayWidth;
-
   for(y=0,memoffset=0;y<DisplayHeight;
-                      y++,memoffset+=DisplayWidth/4,ImgPtr+=MonitorWidth) {
-    if ((DC.MustRedraw) || (QueryRamChange(state,memoffset,VisibleDisplayWidth/4))) {
+                      y++,memoffset+=DisplayWidth/4,ImgPtr+=DisplayWidth) {
+    if ((DC.MustRedraw) || (QueryRamChange(state,memoffset,DisplayWidth/4))) {
       if (y<DC.miny) DC.miny=y;
       if (y>DC.maxy) DC.maxy=y;
-      CopyScreenRAM(state,memoffset,VisibleDisplayWidth/4, Buffer);
+      CopyScreenRAM(state, memoffset, DisplayWidth/4, ScanLineBuffer);
 
-      for(x=0;x<VisibleDisplayWidth;x+=4) {
+      for(x=0; x<DisplayWidth; x+=4) {
         int pixel;
         /* We are now running along the scan line */
         /* we'll get this a bit more efficient when it works! */
         for(pixel=0;pixel<4;pixel++) {
-          ImgPtr[x+pixel]=(Buffer[x/4]>>(pixel*2)) &3;
-        }; /* pixel */
-      }; /* x */
-    }; /* Update test */
-  }; /* y */
+          ImgPtr[x+pixel]=(ScanLineBuffer[x/4]>>(pixel*2)) &3;
+        } /* pixel */
+      } /* x */
+    } /* Update test */
+  } /* y */
   DC.MustRedraw=0;
   MarkAsUpdated(state,memoffset);
-}; /* RefreshDisplay_PseudoColor_2bpp */
+} /* RefreshDisplay_PseudoColor_2bpp */
 
 /*----------------------------------------------------------------------------*/
 static void RefreshDisplay_PseudoColor_4bpp(ARMul_State *state, int DisplayHeight, int DisplayWidth) {
   int x,y,memoffset;
-  int VisibleDisplayWidth;
-  char Buffer[MonitorWidth/2];
   char *ImgPtr=HD.ImageData;
 
   if (DC.video_palette_dirty) {
     set_video_4bpp_colourmap();
   }
 
-  /* Cope with screwy display widths/height */
-  if (DisplayHeight>MonitorHeight) DisplayHeight=MonitorHeight;
-  if (DisplayWidth>MonitorWidth) 
-    VisibleDisplayWidth=MonitorWidth;
-  else
-    VisibleDisplayWidth=DisplayWidth;
-
-  for(y=0,memoffset=0;y<DisplayHeight;
-                      y++,memoffset+=(DisplayWidth/2),ImgPtr+=MonitorWidth) {
-    if ((DC.MustRedraw) || (QueryRamChange(state,memoffset,VisibleDisplayWidth/2))) {
+  for(y=0,memoffset=0; y<DisplayHeight;
+                      y++,memoffset+=(DisplayWidth/2),ImgPtr+=DisplayWidth) {
+    if ((DC.MustRedraw) || (QueryRamChange(state, memoffset, DisplayWidth/2))) {
       if (y<DC.miny) DC.miny=y;
       if (y>DC.maxy) DC.maxy=y;
-      CopyScreenRAM(state,memoffset,VisibleDisplayWidth/2, Buffer);
+      CopyScreenRAM(state, memoffset, DisplayWidth/2, ScanLineBuffer);
 
-      for(x=0;x<VisibleDisplayWidth;x+=2) {
+      for(x=0; x<DisplayWidth; x+=2) {
         int pixel;
         /* We are now running along the scan line */
         /* we'll get this a bit more efficient when it works! */
-        for(pixel=0;pixel<2;pixel++) {
-          ImgPtr[x+pixel]=(Buffer[x/2]>>(pixel*4)) &15;
-        }; /* pixel */
-      }; /* x */
-    }; /* Refresh test */
-  }; /* y */
+        for(pixel=0; pixel<2; pixel++) {
+          ImgPtr[x+pixel] = (ScanLineBuffer[x/2]>>(pixel*4)) &15;
+        } /* pixel */
+      } /* x */
+    } /* Refresh test */
+  } /* y */
   DC.MustRedraw=0;
   MarkAsUpdated(state,memoffset);
-}; /* RefreshDisplay_PseudoColor_4bpp */
+} /* RefreshDisplay_PseudoColor_4bpp */
 
 /*----------------------------------------------------------------------------*/
 static void RefreshDisplay_PseudoColor_8bpp(ARMul_State *state, int DisplayHeight, int DisplayWidth) {
   int y,memoffset;
-  int VisibleDisplayWidth;
   char *ImgPtr=HD.ImageData;
  
   if (DC.video_palette_dirty) {
     set_video_8bpp_colourmap();
   }
 
-  /* Cope with screwy display widths/height */
-  if (DisplayHeight>MonitorHeight) DisplayHeight=MonitorHeight;
-  if (DisplayWidth>MonitorWidth) 
-    VisibleDisplayWidth=MonitorWidth;
-  else
-    VisibleDisplayWidth=DisplayWidth;
-
   for(y=0,memoffset=0;y<DisplayHeight;
-                      y++,memoffset+=DisplayWidth,ImgPtr+=MonitorWidth) {
-    if ((DC.MustRedraw) || (QueryRamChange(state,memoffset,VisibleDisplayWidth))) {
+                      y++,memoffset+=DisplayWidth,ImgPtr+=DisplayWidth) {
+    if ((DC.MustRedraw) || (QueryRamChange(state, memoffset, DisplayWidth))) {
       if (y<DC.miny) DC.miny=y;
       if (y>DC.maxy) DC.maxy=y;
-      CopyScreenRAM(state,memoffset,VisibleDisplayWidth, ImgPtr);
-    }; /* Refresh test */
-  }; /* y */
+      CopyScreenRAM(state, memoffset, DisplayWidth, ImgPtr);
+    } /* Refresh test */
+  } /* y */
   DC.MustRedraw=0;
   MarkAsUpdated(state,memoffset);
-}; /* RefreshDisplay_PseudoColor_8bpp */
+} /* RefreshDisplay_PseudoColor_8bpp */
 
 /*----------------------------------------------------------------------------*/
 static void RefreshDisplay_TrueColor_1bpp(ARMul_State *state, int DisplayHeight, int DisplayWidth) {
   int x,y,memoffset;
-  int VisibleDisplayWidth;
-  char Buffer[MonitorWidth/8];
-  char *ImgPtr=HD.ImageData;
 
   if (DC.video_palette_dirty) {
     set_video_4bpp_pixelmap();
   }
 
-  /* Cope with screwy display widths/height */
-  if (DisplayHeight>MonitorHeight) DisplayHeight=MonitorHeight;
-  if (DisplayWidth>MonitorWidth) 
-    VisibleDisplayWidth=MonitorWidth;
-  else
-    VisibleDisplayWidth=DisplayWidth;
-
   for(y=0,memoffset=0;y<DisplayHeight;
-                      y++,memoffset+=DisplayWidth/8,ImgPtr+=MonitorWidth) {
-    if ((DC.MustRedraw) || (QueryRamChange(state,memoffset,VisibleDisplayWidth/8))) {
+                      y++,memoffset+=DisplayWidth/8) {
+    if ((DC.MustRedraw) || (QueryRamChange(state, memoffset, DisplayWidth/8))) {
       if (y<DC.miny) DC.miny=y;
       if (y>DC.maxy) DC.maxy=y;
-      CopyScreenRAM(state,memoffset,VisibleDisplayWidth/8, Buffer);
+      CopyScreenRAM(state, memoffset, DisplayWidth/8, ScanLineBuffer);
 
-      for(x=0;x<VisibleDisplayWidth;x+=8) {
+      for(x=0; x<DisplayWidth; x+=8) {
         int bit;
         /* We are now running along the scan line */
         /* we'll get this a bit more efficient when it works! */
         for(bit=0;bit<=8;bit++) {
-          XPutPixel(HD.DisplayImage,x+bit,y,HD.pixelMap[(Buffer[x/8]>>bit) &1]);
-        }; /* bit */
-      }; /* x */
-    }; /* Refresh test */
-  }; /* y */
+          XPutPixel(HD.DisplayImage,x+bit,y,HD.pixelMap[(ScanLineBuffer[x/8]>>bit) &1]);
+        } /* bit */
+      } /* x */
+    } /* Refresh test */
+  } /* y */
   DC.MustRedraw=0;
-  MarkAsUpdated(state,memoffset);
-}; /* RefreshDisplay_TrueColor_1bpp */
+  MarkAsUpdated(state, memoffset);
+} /* RefreshDisplay_TrueColor_1bpp */
 
 /*----------------------------------------------------------------------------*/
 static void RefreshDisplay_TrueColor_2bpp(ARMul_State *state, int DisplayHeight, int DisplayWidth) {
   int x,y,memoffset;
-  int VisibleDisplayWidth;
-  char Buffer[MonitorWidth/4];
-  char *ImgPtr=HD.ImageData;
 
   if (DC.video_palette_dirty) {
     set_video_4bpp_pixelmap();
   }
 
-  /* Cope with screwy display widths/height */
-  if (DisplayHeight>MonitorHeight) DisplayHeight=MonitorHeight;
-  if (DisplayWidth>MonitorWidth) 
-    VisibleDisplayWidth=MonitorWidth;
-  else
-    VisibleDisplayWidth=DisplayWidth;
-
   for(y=0,memoffset=0;y<DisplayHeight;
-                      y++,memoffset+=DisplayWidth/4,ImgPtr+=MonitorWidth) {
-    if ((DC.MustRedraw) || (QueryRamChange(state,memoffset,VisibleDisplayWidth/4))) {
+                      y++,memoffset+=DisplayWidth/4) {
+    if ((DC.MustRedraw) || (QueryRamChange(state, memoffset, DisplayWidth/4))) {
       if (y<DC.miny) DC.miny=y;
       if (y>DC.maxy) DC.maxy=y;
-      CopyScreenRAM(state,memoffset,VisibleDisplayWidth/4, Buffer);
+      CopyScreenRAM(state, memoffset, DisplayWidth/4, ScanLineBuffer);
 
-      for(x=0;x<VisibleDisplayWidth;x+=4) {
+      for(x=0; x<DisplayWidth; x+=4) {
         int pixel;
         /* We are now running along the scan line */
         /* we'll get this a bit more efficient when it works! */
         for(pixel=0;pixel<4;pixel++) {
-          XPutPixel(HD.DisplayImage,x+pixel,y,HD.pixelMap[(Buffer[x/4]>>(pixel*2)) &3]);
-        }; /* pixel */
-      }; /* x */
-    }; /* Update test */
-  }; /* y */
+          XPutPixel(HD.DisplayImage,x+pixel,y,HD.pixelMap[(ScanLineBuffer[x/4]>>(pixel*2)) &3]);
+        } /* pixel */
+      } /* x */
+    } /* Update test */
+  } /* y */
   DC.MustRedraw=0;
   MarkAsUpdated(state,memoffset);
-}; /* RefreshDisplay_TrueColor_2bpp */
+} /* RefreshDisplay_TrueColor_2bpp */
 
 /*----------------------------------------------------------------------------*/
 static void RefreshDisplay_TrueColor_4bpp(ARMul_State *state, int DisplayHeight, int DisplayWidth) {
   int x,y,memoffset;
-  int VisibleDisplayWidth;
-  char Buffer[MonitorWidth/2];
-  char *ImgPtr=HD.ImageData;
 
   if (DC.video_palette_dirty) {
     set_video_4bpp_pixelmap();
   }
 
-  /* Cope with screwy display widths/height */
-  if (DisplayHeight>MonitorHeight) DisplayHeight=MonitorHeight;
-  if (DisplayWidth>MonitorWidth) 
-    VisibleDisplayWidth=MonitorWidth;
-  else
-    VisibleDisplayWidth=DisplayWidth;
-
   for(y=0,memoffset=0;y<DisplayHeight;
-                      y++,memoffset+=(DisplayWidth/2),ImgPtr+=MonitorWidth) {
-    if ((DC.MustRedraw) || (QueryRamChange(state,memoffset,VisibleDisplayWidth/2))) {
+                      y++,memoffset+=(DisplayWidth/2)) {
+    if ((DC.MustRedraw) || (QueryRamChange(state,memoffset, DisplayWidth/2))) {
       if (y<DC.miny) DC.miny=y;
       if (y>DC.maxy) DC.maxy=y;
-      CopyScreenRAM(state,memoffset,VisibleDisplayWidth/2, Buffer);
+      CopyScreenRAM(state, memoffset, DisplayWidth/2, ScanLineBuffer);
 
-      for(x=0;x<VisibleDisplayWidth;x+=2) {
+      for(x=0; x<DisplayWidth; x+=2) {
         int pixel;
         /* We are now running along the scan line */
         /* we'll get this a bit more efficient when it works! */
-        for(pixel=0;pixel<2;pixel++) {
-          XPutPixel(HD.DisplayImage,x+pixel,y,HD.pixelMap[(Buffer[x/2]>>(pixel*4)) &15]);
-        }; /* pixel */
-      }; /* x */
-    }; /* Refresh test */
-  }; /* y */
+        for(pixel=0; pixel<2; pixel++) {
+          XPutPixel(HD.DisplayImage, x+pixel, y, HD.pixelMap[(ScanLineBuffer[x/2]>>(pixel*4)) &15]);
+        } /* pixel */
+      } /* x */
+    } /* Refresh test */
+  } /* y */
   DC.MustRedraw=0;
   MarkAsUpdated(state,memoffset);
-}; /* RefreshDisplay_TrueColor_4bpp */
+} /* RefreshDisplay_TrueColor_4bpp */
 
 /*----------------------------------------------------------------------------*/
 static void RefreshDisplay_TrueColor_8bpp(ARMul_State *state, int DisplayHeight, int DisplayWidth) {
   int x,y,memoffset;
-  int VisibleDisplayWidth;
-  unsigned char Buffer[MonitorWidth];
-  char *ImgPtr=HD.ImageData;
   
   if (DC.video_palette_dirty) {
     set_video_8bpp_pixelmap();
   }
 
-  /* Cope with screwy display widths/height */
-  if (DisplayHeight>MonitorHeight) DisplayHeight=MonitorHeight;
-  if (DisplayWidth>MonitorWidth) 
-    VisibleDisplayWidth=MonitorWidth;
-  else
-    VisibleDisplayWidth=DisplayWidth;
-
   for(y=0,memoffset=0;y<DisplayHeight;
-                      y++,memoffset+=DisplayWidth,ImgPtr+=MonitorWidth) {
-    if ((DC.MustRedraw) || (QueryRamChange(state,memoffset,VisibleDisplayWidth))) {
+                      y++,memoffset+=DisplayWidth) {
+    if ((DC.MustRedraw) || (QueryRamChange(state, memoffset, DisplayWidth))) {
       if (y<DC.miny) DC.miny=y;
       if (y>DC.maxy) DC.maxy=y;
-      CopyScreenRAM(state,memoffset,VisibleDisplayWidth, Buffer);
+      CopyScreenRAM(state, memoffset, DisplayWidth, ScanLineBuffer);
 
-      for(x=0;x<VisibleDisplayWidth;x++) {
-        XPutPixel(HD.DisplayImage,x,y,HD.pixelMap[Buffer[x]]);
-      }; /* X loop */
-    }; /* Refresh test */
-  }; /* y */
+      for(x=0; x<DisplayWidth; x++) {
+        XPutPixel(HD.DisplayImage, x, y, HD.pixelMap[ScanLineBuffer[x]]);
+      } /* X loop */
+    } /* Refresh test */
+  } /* y */
   DC.MustRedraw=0;
   MarkAsUpdated(state,memoffset);
 } /* RefreshDisplay_TrueColor_8bpp */
@@ -755,7 +699,7 @@ static void RefreshDisplay(ARMul_State *state) {
 
   RefreshMouse(state);
 
-  DC.miny = MonitorHeight - 1;
+  DC.miny = DisplayHeight - 1;
   DC.maxy = 0;
 
   /* First figure out number of BPP */
@@ -1072,19 +1016,19 @@ static void set_cursor_pixelmap(void)
 
 static int DisplayKbd_XError(Display* disp, XErrorEvent *err)
 {
-    char s[1024];
+  char s[1024];
 
-    XGetErrorText(disp, err->error_code, s, 1023);
+  XGetErrorText(disp, err->error_code, s, 1023);
 
-    fprintf(stderr,
+  fprintf(stderr,
 "arcem X error detected: '%s'\n"
 "If you didn't close arcem's windows to cause it please report it\n"
 "along with this text to arcem-devel@lists.sourceforge.net.\n"
 "Original error message follows.\n", s);
 
-    (*prev_x_error_handler)(disp, err);
+  (*prev_x_error_handler)(disp, err);
 
-    exit(1);
+  exit(EXIT_FAILURE);
 }
 
 /*----------------------------------------------------------------------------*/
@@ -1102,8 +1046,8 @@ void DisplayKbd_Init(ARMul_State *state) {
   HD.disp=XOpenDisplay(NULL);
   if (HD.disp==NULL) {
     fprintf(stderr,"DisplayKbd_Init: Couldn't open display\n");
-    exit(1);
-  };
+    exit(EXIT_FAILURE);
+  }
 
   prev_x_error_handler = XSetErrorHandler(DisplayKbd_XError);
 
@@ -1147,9 +1091,9 @@ void DisplayKbd_Init(ARMul_State *state) {
                                                          HD.blue_shift,HD.blue_prec);
     } else {
       fprintf(stderr,"DisplayKbd_Init: Failed to find a matching visual - I'm looking for either 8 bit Pseudo colour, or 32,24,16,  or 15 bit TrueColour - sorry\n");
-      exit(1);
-    };
-  };
+      exit(EXIT_FAILURE);
+    }
+  }
 
 #ifdef DEBUG_X_INIT
   {
@@ -1181,7 +1125,7 @@ void DisplayKbd_Init(ARMul_State *state) {
      pushed bigger when the VIDC recieves instructions to change video 
      mode */
   HD.BackingWindow = XCreateWindow(HD.disp, HD.RootWindow, 500, 500,
-        MonitorWidth + VIDC_BORDER * 2, MonitorHeight + VIDC_BORDER * 2,
+        InitialVideoWidth + VIDC_BORDER * 2, InitialVideoHeight + VIDC_BORDER * 2,
         0, HD.visInfo.depth, InputOutput, HD.visInfo.visual, attrmask,
         &attr);
 
@@ -1190,7 +1134,7 @@ void DisplayKbd_Init(ARMul_State *state) {
 
     if (XStringListToTextProperty(&title, 1, &name) == 0) {
       fprintf(stderr,"Could not allocate window name\n");
-      exit(1);
+      exit(EXIT_FAILURE);
     }
 
     XSetWMName(HD.disp,HD.BackingWindow,&name);
@@ -1199,61 +1143,65 @@ void DisplayKbd_Init(ARMul_State *state) {
 
 
   HD.MainPane = XCreateWindow(HD.disp, HD.BackingWindow, VIDC_BORDER,
-      VIDC_BORDER, MonitorWidth, MonitorHeight, 0, CopyFromParent,
+      VIDC_BORDER, InitialVideoWidth, InitialVideoHeight, 0, CopyFromParent,
       InputOutput, CopyFromParent, 0, NULL);
 
-  HD.CursorPane=XCreateWindow(HD.disp,
-                              HD.MainPane,
-                              0,0, 
-                              32,MonitorHeight,
-                              0, /* Border width */
-                              CopyFromParent, /* depth */
-                              InputOutput, /* class */
-                              CopyFromParent, /* visual */
-                              0, /* valuemask */
-                              NULL /* attribs */);
+  HD.CursorPane = XCreateWindow(HD.disp,
+                                HD.MainPane,
+                                0, 0, 
+                                32, InitialVideoHeight,
+                                0, /* Border width */
+                                CopyFromParent, /* depth */
+                                InputOutput, /* class */
+                                CopyFromParent, /* visual */
+                                0, /* valuemask */
+                                NULL /* attribs */);
 
 
 
   /* Allocate the memory for the actual display image */
   //TODO!! Need to allocate more for truecolour
-  HD.ImageData = malloc(4 * (MonitorWidth+ 32) * MonitorHeight);
+  HD.ImageData = malloc(4 * (InitialVideoWidth+ 32) * InitialVideoHeight);
 
   if (HD.ImageData == NULL) {
-    fprintf(stderr,"DisplayKbd_Init: Couldn't allocate image memory\n");
-    exit(1);
+    fprintf(stderr, "DisplayKbd_Init: Couldn't allocate image memory\n");
+    exit(EXIT_FAILURE);
   }
 
-  HD.DisplayImage = XCreateImage(HD.disp,DefaultVisual(HD.disp,HD.ScreenNum),
-                                 HD.visInfo.depth,ZPixmap,0,HD.ImageData,
-                                 MonitorWidth,MonitorHeight,32,
+  HD.DisplayImage = XCreateImage(HD.disp, DefaultVisual(HD.disp, HD.ScreenNum),
+                                 HD.visInfo.depth, ZPixmap, 0, HD.ImageData,
+                                 InitialVideoWidth, InitialVideoHeight, 32,
                                  0);
-  if (HD.DisplayImage==NULL) {
-    fprintf(stderr,"DisplayKbd_Init: Couldn't create image\n");
-    exit(1);
+  if (HD.DisplayImage == NULL) {
+    fprintf(stderr, "DisplayKbd_Init: Couldn't create image\n");
+    exit(EXIT_FAILURE);
   }
 
   /* Now the same for the cursor image */
-  HD.CursorImageData=malloc(4*64*MonitorHeight);
-  if (HD.CursorImageData==NULL) {
-    fprintf(stderr,"DisplayKbd_Init: Couldn't allocate cursor image memory\n");
-    exit(1);
-  };
+  HD.CursorImageData = malloc(4 * 64 * InitialVideoHeight);
+  if (HD.CursorImageData == NULL) {
+    fprintf(stderr, "DisplayKbd_Init: Couldn't allocate cursor image memory\n");
+    exit(EXIT_FAILURE);
+  }
 
-  HD.CursorImage=XCreateImage(HD.disp,DefaultVisual(HD.disp,HD.ScreenNum),
-                              HD.visInfo.depth,ZPixmap,0,HD.CursorImageData,
-                              32,MonitorHeight,32,
-                              0);
-  if (HD.CursorImage==NULL) {
-    fprintf(stderr,"DisplayKbd_Init: Couldn't create cursor image\n");
-    exit(1);
-  };
+  HD.CursorImage = XCreateImage(HD.disp, DefaultVisual(HD.disp, HD.ScreenNum),
+                                HD.visInfo.depth, ZPixmap, 0, HD.CursorImageData,
+                                32, InitialVideoHeight, 32,
+                                0);
+  if (HD.CursorImage == NULL) {
+    fprintf(stderr, "DisplayKbd_Init: Couldn't create cursor image\n");
+    exit(EXIT_FAILURE);
+  }
 
 
   XSelectInput(HD.disp,HD.MainPane,ExposureMask |
                                    PointerMotionMask |
-                                   EnterWindowMask | LeaveWindowMask | /* For changing colour maps */
-                                   KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask);
+                                   EnterWindowMask | /* For changing colour maps */
+                                   LeaveWindowMask | /* For changing colour maps */
+                                   KeyPressMask |
+                                   KeyReleaseMask |
+                                   ButtonPressMask |
+                                   ButtonReleaseMask);
   XSelectInput(HD.disp,HD.CursorPane,ExposureMask |
                                    FocusChangeMask |
                                    KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask);
@@ -1316,28 +1264,27 @@ void DisplayKbd_Init(ARMul_State *state) {
   HD.MainPaneGC = XCreateGC(HD.disp, HD.MainPane, 0, NULL);
 
   /* Calloc to clear it as well */
-  HD.ShapePixmapData = calloc(32*MonitorHeight,1);
-  if (HD.ShapePixmapData==NULL) {
-    fprintf(stderr,"Couldn't allocate memory for pixmap data\n");
-    exit(0);
-  };
+  HD.ShapePixmapData = calloc(32 * InitialVideoHeight, 1);
+  if (HD.ShapePixmapData == NULL) {
+    fprintf(stderr, "Couldn't allocate memory for pixmap data\n");
+    exit(EXIT_FAILURE);
+  }
 
   /* Shape stuff for the mouse cursor window */
-  if (!XShapeQueryExtension(HD.disp,&shape_event_base,&shape_error_base)) {
-    HD.ShapeEnabled=0;
-    HD.shape_mask=0;
+  if (!XShapeQueryExtension(HD.disp, &shape_event_base, &shape_error_base)) {
+    HD.ShapeEnabled = 0;
+    HD.shape_mask = 0;
   } else {
-    HD.ShapeEnabled=1;
+    HD.ShapeEnabled = 1;
 
-    /*HD.shape_mask=XCreatePixmap(HD.disp,HD.CursorPane,32,MonitorHeight,1); */
-    HD.shape_mask=XCreatePixmapFromBitmapData(HD.disp,HD.CursorPane,HD.ShapePixmapData,
-                                             32,MonitorHeight,0,1,1);
+    HD.shape_mask = XCreatePixmapFromBitmapData(HD.disp, HD.CursorPane, HD.ShapePixmapData,
+                                                32, InitialVideoHeight, 0, 1, 1);
     /* Eek - a lot of this is copied from XEyes - unfortunatly the manual
        page for this call is somewhat lacking.  To quote its bugs entry:
       'This manual page needs a lot more work' */
-    XShapeCombineMask(HD.disp,HD.CursorPane,ShapeBounding,0,0,HD.shape_mask,
+    XShapeCombineMask(HD.disp, HD.CursorPane, ShapeBounding, 0, 0, HD.shape_mask,
                       ShapeSet);
-    XFreePixmap(HD.disp,HD.shape_mask);
+    XFreePixmap(HD.disp, HD.shape_mask);
   };
 
   DC.PollCount=0;
@@ -1704,7 +1651,7 @@ unsigned int DisplayKbd_XPoll(void *data) {
     } else {
       fprintf(stderr, "event on unknown window: %#lx %d\n",
               e.xany.window, e.type);
-      exit(1);
+      exit(EXIT_FAILURE);
     }
   }
 
@@ -1956,10 +1903,68 @@ static void Resize_Window(void)
   int y = VIDC.Vert_DisplayEnd - VIDC.Vert_DisplayStart;
 
   if(x > 0 && y > 0) {
+    /* Upper bounds checking */
+    #define MaxVideoWidth 2048
+#define MaxVideoHeight 1536
+    if(x > MaxVideoWidth || y > MaxVideoHeight) {
+      fprintf(stderr, "Resize_Window: Request to display a mode larger than we can handle (%dx%d)\n", x, y);
+      exit(EXIT_FAILURE);
+    }
+      
+    /* resize outer window including border */
     XResizeWindow(HD.disp, HD.BackingWindow,
                   x + (VIDC_BORDER * 2),
                   y + (VIDC_BORDER * 2) );
                   
+    /* resize inner window excluding border */              
     XResizeWindow(HD.disp, HD.MainPane, x, y);
+    
+    /* clean up previous images used as display and cursor */
+    XDestroyImage(HD.DisplayImage);
+    XDestroyImage(HD.CursorImage);
+    free(HD.ShapePixmapData);
+    
+    /* realocate space for new screen image */
+    HD.ImageData = malloc(4 * (x + 32) * y);
+    if (HD.ImageData == NULL) {
+      fprintf(stderr, "Resize_Window: Couldn't allocate image memory\n");
+      exit(EXIT_FAILURE);
+    }
+
+    HD.DisplayImage = XCreateImage(HD.disp,
+                                   DefaultVisual(HD.disp, HD.ScreenNum),
+                                   HD.visInfo.depth, ZPixmap, 0,
+                                   HD.ImageData,
+                                   x, y, 32,
+                                   0);
+    if (HD.DisplayImage == NULL) {
+      fprintf(stderr, "Resize_Window: Couldn't create image\n");
+      exit(EXIT_FAILURE);
+    }
+    
+    /* realocate space for new cursor image */
+    HD.CursorImageData = malloc(4 * 64 * y);
+    if (HD.CursorImageData == NULL) {
+      fprintf(stderr, "Resize_Window: Couldn't allocate cursor image memory\n");
+      exit(EXIT_FAILURE);
+    }
+
+    HD.CursorImage = XCreateImage(HD.disp,
+                                  DefaultVisual(HD.disp, HD.ScreenNum),
+                                  HD.visInfo.depth, ZPixmap, 0,
+                                  HD.CursorImageData,
+                                  32, y, 32,
+                                  0);
+    if (HD.CursorImage == NULL) {
+      fprintf(stderr, "Resize_Window: Couldn't create cursor image\n");
+      exit(EXIT_FAILURE);
+    }
+    
+    /* Calloc to clear it as well */
+    HD.ShapePixmapData = calloc(32 * y, 1);
+    if (HD.ShapePixmapData == NULL) {
+      fprintf(stderr, "Resize_Window: Couldn't allocate memory for pixmap data\n");
+      exit(EXIT_FAILURE);
+    }
   }
 }
