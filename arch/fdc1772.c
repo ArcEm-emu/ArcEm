@@ -339,12 +339,16 @@ static void FDC_DoDRQ(ARMul_State *state) {
 }; /* FDC_DoDRQ */
 
 /*--------------------------------------------------------------------------*/
-static void FDC_NextTrack(ARMul_State *state) {
-  FDC.Track++;
-  if (FDC.Track==80) {
-    FDC.Track=80;
-  };
-}; /* FDC_NextTrack */
+
+static void FDC_NextTrack(ARMul_State *state)
+{
+    if (FDC.Track < CURRENT_FORMAT->num_tracks) {
+        FDC.Track++;
+    }
+
+    return;
+}
+
 /*--------------------------------------------------------------------------*/
 static void FDC_NextSector(ARMul_State *state) {
   FDC.Sector++;
