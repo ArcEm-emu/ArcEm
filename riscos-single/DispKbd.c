@@ -43,6 +43,7 @@ static unsigned AutoKey(ARMul_State *state);
 static void UpdateCursorPos(ARMul_State *state);
 static void SelectROScreenMode(int x, int y, int bpp);
 
+static void set_cursor_palette(unsigned int *pal);
 
 static struct EventNode enodes[4];
 static int xpollenode = 2; /* Flips between 2 and 3 */
@@ -195,15 +196,7 @@ static void DoColourMap_2(ARMul_State *state) {
     _swi(OS_WriteC, _IN(0), ((VIDC.Palette[c] >> 8) & 15) * 17);
   };
 
-  /* Now do the ones for the cursor */
-  for(c=0;c<3;c++) {
-    _swi(OS_WriteI+19, 0);
-    _swi(OS_WriteI+c+1, 0); // For setting 'real' pointer colours
-    _swi(OS_WriteI+25, 0);
-    _swi(OS_WriteC, _IN(0), (VIDC.CursorPalette[c] & 15)*17);
-    _swi(OS_WriteC, _IN(0), ((VIDC.CursorPalette[c]>>4) & 15)*17);
-    _swi(OS_WriteC, _IN(0), ((VIDC.CursorPalette[c]>>8) & 15)*17);
-  };
+    set_cursor_palette(VIDC.CursorPalette);
 
   DC.MustResetPalette=0;
 }; /* DoColourMap_2 */
@@ -226,15 +219,7 @@ static void DoColourMap_4(ARMul_State *state) {
     _swi(OS_WriteC, _IN(0), ((VIDC.Palette[c]>>8) & 15)*17);
   };
 
-  /* Now do the ones for the cursor */
-  for(c=0;c<3;c++) {
-    _swi(OS_WriteI+19, 0);
-    _swi(OS_WriteI+c+1, 0); // For setting 'real' pointer colours
-    _swi(OS_WriteI+25, 0);
-    _swi(OS_WriteC, _IN(0), (VIDC.CursorPalette[c] & 15)*17);
-    _swi(OS_WriteC, _IN(0), ((VIDC.CursorPalette[c]>>4) & 15)*17);
-    _swi(OS_WriteC, _IN(0), ((VIDC.CursorPalette[c]>>8) & 15)*17);
-  };
+    set_cursor_palette(VIDC.CursorPalette);
 
   DC.MustResetPalette=0;
 }; /* DoColourMap_4 */
@@ -257,15 +242,7 @@ static void DoColourMap_16(ARMul_State *state) {
     _swi(OS_WriteC, _IN(0), ((VIDC.Palette[c]>>8) & 15)*17);
   };
 
-  /* Now do the ones for the cursor */
-  for(c=0;c<3;c++) {
-    _swi(OS_WriteI+19, 0);
-    _swi(OS_WriteI+c+1, 0); // For setting 'real' pointer colours
-    _swi(OS_WriteI+25, 0);
-    _swi(OS_WriteC, _IN(0), (VIDC.CursorPalette[c] & 15)*17);
-    _swi(OS_WriteC, _IN(0), ((VIDC.CursorPalette[c]>>4) & 15)*17);
-    _swi(OS_WriteC, _IN(0), ((VIDC.CursorPalette[c]>>8) & 15)*17);
-  };
+    set_cursor_palette(VIDC.CursorPalette);
 
   DC.MustResetPalette=0;
 }; /* DoColourMap_16 */
@@ -293,20 +270,31 @@ static void DoColourMap_256(ARMul_State *state) {
     _swi(OS_WriteC, _IN(0), (((VIDC.Palette[palentry] >> 8) & 7) | (L7<<3))*17);
   }
 
-  /* Now do the ones for the cursor */
-  for(c=0;c<3;c++) {
-    _swi(OS_WriteI+19, 0);
-    _swi(OS_WriteI+c+1, 0); // For setting 'real' pointer colours
-    _swi(OS_WriteI+25, 0);
-    _swi(OS_WriteC, _IN(0), (VIDC.CursorPalette[c] & 15)*17);
-    _swi(OS_WriteC, _IN(0), ((VIDC.CursorPalette[c]>>4) & 15)*17);
-    _swi(OS_WriteC, _IN(0), ((VIDC.CursorPalette[c]>>8) & 15)*17);
-  };
+    set_cursor_palette(VIDC.CursorPalette);
+
   DC.MustResetPalette=0;
 }; /* DoColourMap_Standard */
 
+/* ------------------------------------------------------------------ */
 
-/*-----------------------------------------------------------------------------*/
+static void set_cursor_palette(unsigned int *pal)
+{
+    int c;
+
+    for(c = 0; c < 3; c++) {
+        _swi(OS_WriteI + 19, 0);
+        _swi(OS_WriteI + c + 1, 0); /* For `real' pointer colours. */
+        _swi(OS_WriteI + 25, 0);
+        _swi(OS_WriteC, _IN(0), (pal[c] & 0xf) * 0x11);
+        _swi(OS_WriteC, _IN(0), (pal[c] >> 4 & 0xf) * 0x11);
+        _swi(OS_WriteC, _IN(0), (pal[c] >> 8 & 0xf) * 0x11);
+    }
+
+    return;
+}
+
+/* ------------------------------------------------------------------ */
+
 /* Refresh the mouse's image                                                    */
 static void RefreshMouse(ARMul_State *state) {
   int height;
