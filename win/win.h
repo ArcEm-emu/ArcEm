@@ -1,3 +1,5 @@
+
+
 extern int nVirtKey;
 extern int lKeyData;
 extern int nKeyStat;
@@ -15,5 +17,5 @@ extern int nButton;
 extern int buttF;
 
 extern int createWindow(int w, int h);
-extern int updateDisplay();
+extern int updateDisplay(void);
 extern int resizeWindow(int hWidth, int hHeight);

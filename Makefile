@@ -36,8 +36,8 @@ WARN = -Wall -Wno-return-type -Wno-unknown-pragmas -Wshadow -Wundef \
 
 
 # add -DHOST_BIGENDIAN for big endian hosts, e.g. Sun, SGI, HP
-CFLAGS = -O3 -D$(ENDIAN) $(CFL) -DNOOS -DNOFPE $(WARN) \
- -I@ -I$(SYSTEM) -Iarch -funroll-loops -fexpensive-optimizations -ffast-math \
+CFLAGS = -O3 -D$(ENDIAN) $(CFL) -DNOOS -DNOFPE $(WARN) -DSYSTEM_$(SYSTEM) \
+ -I$(SYSTEM) -Iarch -funroll-loops -fexpensive-optimizations -ffast-math \
  -fomit-frame-pointer -frerun-cse-after-loop
 
 
@@ -63,8 +63,8 @@ SRCS = armcopro.c armemu.c arminit.c arch/armarc.c \
 	arch/ReadConfig.c
 
 INCS = armdefs.h armemu.h armfpe.h armopts.h bag.h armos.h \
-	dbg_conf.h dbg_cp.h dbg_hif.h dbg_rdi.h arch/KeyTable.h \
-  arch/i2c.h arch/archio.h arch/fdc1772.h $(SYSTEM)/ControlPane.h \
+	dbg_conf.h dbg_cp.h dbg_hif.h dbg_rdi.h $(SYSTEM)/KeyTable.h \
+  arch/i2c.h arch/archio.h arch/fdc1772.h arch/ControlPane.h \
   arch/hdc63463.h
 
 TARGET=armul-arc
@@ -87,7 +87,8 @@ LIBS +=  -L/usr/X11R6/lib -lXext -lX11
 endif
 
 ifeq (${SYSTEM},win)
-OBJS += win/gui.o
+OBJS += win/gui.o win/win.o
+LIBS += -luser32 -lgdi32
 endif
 
 
@@ -139,7 +140,8 @@ armul.tar.gz:
 
 # memory models
 
-arch/armarc.o: armdefs.h arch/armarc.c $(SYSTEM)/DispKbd.h arch/armarc.h arch/fdc1772.h
+arch/armarc.o: armdefs.h arch/armarc.c arch/DispKbd.h arch/armarc.h \
+               arch/fdc1772.h
 	$(CC) $(CFLAGS) -c $*.c -o arch/armarc.o
 
 # other objects
@@ -193,13 +195,16 @@ main.o: main.c armdefs.h dbg_rdi.h dbg_conf.h
 bag.o: bag.c bag.h
 	$(CC) $(CFLAGS) -c $*.c
 
-$(SYSTEM)/DispKbd.o: $(SYSTEM)/DispKbd.c $(SYSTEM)/DispKbd.h arch/KeyTable.h arch/armarc.h arch/fdc1772.h arch/hdc63463.h
+$(SYSTEM)/DispKbd.o: $(SYSTEM)/DispKbd.c arch/DispKbd.h $(SYSTEM)/KeyTable.h \
+                     arch/armarc.h arch/fdc1772.h arch/hdc63463.h
 	$(CC) $(CFLAGS) -c $*.c -o $(SYSTEM)/DispKbd.o
 
-arch/i2c.o: arch/i2c.c arch/i2c.h arch/armarc.h $(SYSTEM)/DispKbd.h arch/archio.h arch/fdc1772.h arch/hdc63463.h
+arch/i2c.o: arch/i2c.c arch/i2c.h arch/armarc.h arch/DispKbd.h arch/archio.h \
+            arch/fdc1772.h arch/hdc63463.h
 	$(CC) $(CFLAGS) -c $*.c -o arch/i2c.o
 
-arch/archio.o: arch/archio.c arch/archio.h arch/armarc.h arch/i2c.h $(SYSTEM)/DispKbd.h arch/fdc1772.h arch/hdc63463.h
+arch/archio.o: arch/archio.c arch/archio.h arch/armarc.h arch/i2c.h \
+        arch/DispKbd.h arch/fdc1772.h arch/hdc63463.h
 	$(CC) $(CFLAGS) -c $*.c -o arch/archio.o
 
 arch/fdc1772.o: arch/fdc1772.c arch/fdc1772.h arch/armarc.h
@@ -208,14 +213,16 @@ arch/fdc1772.o: arch/fdc1772.c arch/fdc1772.h arch/armarc.h
 arch/hdc63463.o: arch/hdc63463.c arch/hdc63463.h arch/armarc.h
 	$(CC) $(CFLAGS) -c $*.c -o arch/hdc63463.o
 
-$(SYSTEM)/ControlPane.o: $(SYSTEM)/ControlPane.c $(SYSTEM)/ControlPane.h $(SYSTEM)/DispKbd.h arch/armarc.h
+$(SYSTEM)/ControlPane.o: $(SYSTEM)/ControlPane.c arch/ControlPane.h \
+        arch/DispKbd.h arch/armarc.h
 	$(CC) $(CFLAGS) -c $*.c -o $(SYSTEM)/ControlPane.o
 
-arch/ReadConfig.o: arch/ReadConfig.c arch/ReadConfig.h $(SYSTEM)/DispKbd.h arch/armarc.h
+arch/ReadConfig.o: arch/ReadConfig.c arch/ReadConfig.h arch/DispKbd.h \
+	arch/armarc.h
 	$(CC) $(CFLAGS) -c $*.c -o arch/ReadConfig.o
 
 win/gui.o: win/gui.rc win/gui.h win/gui.ico
-	windres $*.rc -o arch/gui.o
+	windres $*.rc -o win/gui.o
 
 
 # DO NOT DELETE

@@ -25,7 +25,7 @@ LRESULT CALLBACK	WndProc(HWND, UINT, WPARAM, LPARAM);
 
 MSG msg;
 HANDLE hInst;
-HWND hWnd;
+HWND mainWin;
 DWORD tid;
 
 //char *dibbmp;
@@ -44,9 +44,7 @@ int mouseMF = 0;
 int nButton = 0;
 int buttF = 0;
 
-extern int isRunning;
-
-ULONG threadWindow(PVOID param)
+static DWORD threadWindow(LPVOID param)
 {
 //	xSize = w;
 //	ySize = h;
@@ -103,9 +101,7 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 //
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
-//   hInst = hInstance; // Store instance handle in our global variable
-
-   hWnd = CreateWindow( szWindowClass,
+   mainWin = CreateWindow( szWindowClass,
 			"Archimedes emulator",
 			WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX, //WS_OVERLAPPEDWINDOW,
 			CW_USEDEFAULT, 
@@ -119,13 +115,13 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 			hInstance,
 			NULL);
 
-   if (!hWnd)
+   if (!mainWin)
    {
       return FALSE;
    }
 
-   ShowWindow(hWnd, nCmdShow);
-   UpdateWindow(hWnd);
+   ShowWindow(mainWin, nCmdShow);
+   UpdateWindow(mainWin);
 
    return TRUE;
 }
@@ -162,8 +158,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				case IDM_COPY:
 				   break;
 				case IDM_EXIT:
-				   isRunning = 0;
         			   DestroyWindow(hWnd);
+        			   exit(0);
 				   break;
 				default:
 				   return DefWindowProc(hWnd, message, wParam, lParam);
@@ -193,8 +189,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			};
 			break;
 		case WM_DESTROY:
-			isRunning = 0;
 			PostQuitMessage(0);
+			exit(0);
 			break;
 		case WM_KEYDOWN:
 			nVirtKey = (TCHAR) wParam;    // character code 
@@ -295,7 +291,7 @@ int createWindow(int x, int y)
 
    CreateThread(NULL,
 	     16384,
-	     threadWindow,
+	     (LPTHREAD_START_ROUTINE)threadWindow,
 	     NULL,
 	     0,
 	     &tid);
@@ -315,8 +311,8 @@ int updateDisplay()
   GetWindowRect(hWnd, &r);
   SetCursorPos(r.left+w, r.top+h);
  */
-  InvalidateRect(hWnd,NULL,0);
-  UpdateWindow(hWnd);
+  InvalidateRect(mainWin,NULL,0);
+  UpdateWindow(mainWin);
 }
 
 int resizeWindow(int hWidth, int hHeight)
@@ -328,7 +324,7 @@ int resizeWindow(int hWidth, int hHeight)
   if (hWidth <= 0 || hWidth > xSize) return 0;
   if (hHeight <= 0 || hHeight > ySize) return 0;
 
-  if (GetWindowRect(hWnd, &r) != TRUE) return 0;
+  if (GetWindowRect(mainWin, &r) != TRUE) return 0;
 
   w = hWidth+GetSystemMetrics(SM_CXFIXEDFRAME)*2;
   h = hHeight+GetSystemMetrics(SM_CYFIXEDFRAME)*2
@@ -336,7 +332,7 @@ int resizeWindow(int hWidth, int hHeight)
 	+GetSystemMetrics(SM_CYMENU);
 
   MoveWindow(
-	hWnd,
+	mainWin,
 	r.left,
 	r.top,
 	w,

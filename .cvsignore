@@ -3,4 +3,6 @@ ROM*
 HardImage?
 FloppyImage?
 hexcmos*
-armul-arc
+armul-arc*
+cygwin1.dll
+

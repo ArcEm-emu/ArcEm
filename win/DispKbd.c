@@ -19,7 +19,6 @@ extern unsigned short *dibbmp;
 extern unsigned short *curbmp;
 
 static struct EventNode enodes[4];
-static int autokeyenode=0; /* Flips between 0 and 1 */
 static int xpollenode=2; /* Flips between 2 and 3 */
 
 int rMouseX=0;
@@ -77,8 +76,9 @@ static void MouseMoved(ARMul_State *state) {
 #endif
 }; /* MouseMoved */
 
-unsigned DisplayKbd_XPoll(ARMul_State *state)
+unsigned int DisplayKbd_XPoll(void *data)
 {
+  ARMul_State *state = data;
   int KbdSerialVal;
   static int KbdPollInt=0;
   static int discconttog=0;
@@ -126,10 +126,10 @@ static void MarkAsUpdated(ARMul_State *state, int end) {
 
 }; /* MarkAsUpdated */
 
-/*-----------------------------------------------------------------------------*/
-/* Check to see if the area of memory has changed.                             */
-/* Returns true if there is any chance that the given area has changed         */
-int QueryRamChange(ARMul_State *state,int offset, int len) {
+/*----------------------------------------------------------------------------*/
+/* Check to see if the area of memory has changed.                            */
+/* Returns true if there is any chance that the given area has changed        */
+static int QueryRamChange(ARMul_State *state,int offset, int len) {
   unsigned int Vinit=MEMC.Vinit;
   unsigned int Vstart=MEMC.Vstart;
   unsigned int Vend=MEMC.Vend;
@@ -505,15 +505,15 @@ static void RefreshMouse(ARMul_State *state) {
   int x,y,height,offset, pix;
   int memptr;
   unsigned short *ImgPtr;
-  int HorizPos=(int)VIDC.Horiz_CursorStart - (int)VIDC.Horiz_DisplayStart*2;
-  int Height=(int)VIDC.Vert_CursorEnd-(int)VIDC.Vert_CursorStart; //+1;
-  int VertPos,tmp;
+  int HorizPos = (int)VIDC.Horiz_CursorStart - (int)VIDC.Horiz_DisplayStart*2;
+  int Height = (int)VIDC.Vert_CursorEnd - (int)VIDC.Vert_CursorStart; //+1;
+  int VertPos;
 
-  VertPos=(int)VIDC.Vert_CursorStart;
-  tmp=(signed int)VIDC.Vert_DisplayStart;
-  VertPos-=tmp;
-  if (Height<1) Height=1;
-  if (VertPos<0) VertPos=0;
+  VertPos = (int)VIDC.Vert_CursorStart;
+  VertPos -= (signed int)VIDC.Vert_DisplayStart;
+
+  if (Height < 1) Height = 1;
+  if (VertPos < 0) VertPos = 0;
 
   rMouseX = HorizPos;
   rMouseY = VertPos;

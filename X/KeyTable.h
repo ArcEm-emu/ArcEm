@@ -1,10 +1,5 @@
 
 
-#ifdef __riscos__
-//#include "ROKeys.h"
-#endif
-
-
 struct ArcKeyTrans {
   KeySym sym;
   int row,col;
@@ -30,10 +25,11 @@ struct ArcKeyTrans transTable[]={
   {XK_Page_Up,2,1},
 #endif
   {XK_Num_Lock,2,2},
-  {XK_KP_Divide,2,3},{XK_KP_Multiply,2,4},{XK_KP_F1,2,5}, /* X doesn't define
-                                                             a # on the keypad -
-                                                             so we use KP_F1 - but
-                                                             most keypads don't have that either! */
+
+
+  /* X doesn't define a # on the keypad - so we use KP_F1 - but
+     most keypads don't have that either.                      */
+  {XK_KP_Divide,2,3},{XK_KP_Multiply,2,4},{XK_KP_F1,2,5}, 
 
   {XK_Tab,2,6},{XK_q,2,7},{XK_w,2,8},{XK_e,2,9},
   {XK_r,2,10},{XK_t,2,11},{XK_y,2,12},{XK_u,2,13},
