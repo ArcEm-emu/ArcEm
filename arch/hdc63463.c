@@ -663,7 +663,9 @@ static void SeekCommand(ARMul_State *state) {
 
   if (DesiredCylinder>HDC.specshape.NCyls) {
     /* Ook - bad cylinder address */
-    fprintf(stderr,"Seek - cylinder address greater than specified (=%d)\n",DesiredCylinder);
+        fprintf(stderr, "seek: cylinder address greater than "
+            "specified, %u > %u\n", DesiredCylinder,
+            HDC.specshape.NCyls);
     Cause_Error(state,ERR_INC); /* Invalid NCA */
     ReturnParams(state,4,0,HDC.SSB,US,0);
     return;
@@ -671,7 +673,9 @@ static void SeekCommand(ARMul_State *state) {
 
   if (DesiredCylinder>=HDC.configshape[US].NCyls) {
     /* Ook - bad cylinder address */
-    fprintf(stderr,"Seek - cylinder address greater than configured (=%d)\n",DesiredCylinder);
+        fprintf(stderr, "seek: cylinder address greater than "
+            "or equal to configured, %u >= %u\n", DesiredCylinder,
+            HDC.configshape[US].NCyls);
     Cause_Error(state,ERR_NSC); /* Seek screwed up */
     ReturnParams(state,4,0,HDC.SSB,US,0);
     return;
