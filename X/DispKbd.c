@@ -447,9 +447,7 @@ static void RefreshMouse(ARMul_State *state) {
 }; /* RefreshMouse */
 
 /*----------------------------------------------------------------------------*/
-static void RefreshDisplay_PseudoColor_1bpp(ARMul_State *state) {
-  int DisplayHeight=VIDC.Vert_DisplayEnd-VIDC.Vert_DisplayStart;
-  int DisplayWidth=(VIDC.Horiz_DisplayEnd-VIDC.Horiz_DisplayStart)*2;
+static void RefreshDisplay_PseudoColor_1bpp(ARMul_State *state, int DisplayHeight, int DisplayWidth) {
   int x,y,memoffset;
   int VisibleDisplayWidth;
   char Buffer[MonitorWidth/8];
@@ -458,16 +456,6 @@ static void RefreshDisplay_PseudoColor_1bpp(ARMul_State *state) {
   if (DC.video_palette_dirty) {
     set_video_4bpp_colourmap();
   }
-
-  if (DisplayHeight<=0) {
-    fprintf(stderr,"RefreshDisplay_PseudoColor_1bpp: 0 or -ve display height\n");
-    return;
-  };
-
-  if (DisplayWidth<=0) {
-    fprintf(stderr,"RefreshDisplay_PseudoColor_1bpp: 0 or -ve display width\n");
-    return;
-  };
 
   /* Cope with screwy display widths/height */
   if (DisplayHeight>MonitorHeight) DisplayHeight=MonitorHeight;
@@ -498,9 +486,7 @@ static void RefreshDisplay_PseudoColor_1bpp(ARMul_State *state) {
 }; /* RefreshDisplay_PseudoColor_1bpp */
 
 /*----------------------------------------------------------------------------*/
-static void RefreshDisplay_PseudoColor_2bpp(ARMul_State *state) {
-  int DisplayHeight=VIDC.Vert_DisplayEnd-VIDC.Vert_DisplayStart;
-  int DisplayWidth=(VIDC.Horiz_DisplayEnd-VIDC.Horiz_DisplayStart)*2;
+static void RefreshDisplay_PseudoColor_2bpp(ARMul_State *state, int DisplayHeight, int DisplayWidth) {
   int x,y,memoffset;
   int VisibleDisplayWidth;
   char Buffer[MonitorWidth/4];
@@ -509,16 +495,6 @@ static void RefreshDisplay_PseudoColor_2bpp(ARMul_State *state) {
   if (DC.video_palette_dirty) {
     set_video_4bpp_colourmap();
   }
-
-  if (DisplayHeight<=0) {
-    fprintf(stderr,"RefreshDisplay_PseudoColor_2bpp: 0 or -ve display height\n");
-    return;
-  };
-
-  if (DisplayWidth<=0) {
-    fprintf(stderr,"RefreshDisplay_PseudoColor_2bpp: 0 or -ve display width\n");
-    return;
-  };
 
   /* Cope with screwy display widths/height */
   if (DisplayHeight>MonitorHeight) DisplayHeight=MonitorHeight;
@@ -549,9 +525,7 @@ static void RefreshDisplay_PseudoColor_2bpp(ARMul_State *state) {
 }; /* RefreshDisplay_PseudoColor_2bpp */
 
 /*----------------------------------------------------------------------------*/
-static void RefreshDisplay_PseudoColor_4bpp(ARMul_State *state) {
-  int DisplayHeight=VIDC.Vert_DisplayEnd-VIDC.Vert_DisplayStart;
-  int DisplayWidth=(VIDC.Horiz_DisplayEnd-VIDC.Horiz_DisplayStart)*2;
+static void RefreshDisplay_PseudoColor_4bpp(ARMul_State *state, int DisplayHeight, int DisplayWidth) {
   int x,y,memoffset;
   int VisibleDisplayWidth;
   char Buffer[MonitorWidth/2];
@@ -561,18 +535,6 @@ static void RefreshDisplay_PseudoColor_4bpp(ARMul_State *state) {
     set_video_4bpp_colourmap();
   }
 
-  if (DisplayHeight<=0) {
-    fprintf(stderr,"RefreshDisplay_PseudoColor_4bpp: 0 or -ve display height\n");
-    return;
-  };
-
-  if (DisplayWidth<=0) {
-    fprintf(stderr,"RefreshDisplay_PseudoColor_4bpp: 0 or -ve display width\n");
-    return;
-  };
-
-  /*fprintf(stderr,"RefreshDisplay_PseudoColor_4bpp: DisplayWidth=%d DisplayHeight=%d\n",
-          DisplayWidth,DisplayHeight); */
   /* Cope with screwy display widths/height */
   if (DisplayHeight>MonitorHeight) DisplayHeight=MonitorHeight;
   if (DisplayWidth>MonitorWidth) 
@@ -602,9 +564,7 @@ static void RefreshDisplay_PseudoColor_4bpp(ARMul_State *state) {
 }; /* RefreshDisplay_PseudoColor_4bpp */
 
 /*----------------------------------------------------------------------------*/
-static void RefreshDisplay_PseudoColor_8bpp(ARMul_State *state) {
-  int DisplayHeight=VIDC.Vert_DisplayEnd-VIDC.Vert_DisplayStart;
-  int DisplayWidth=(VIDC.Horiz_DisplayEnd-VIDC.Horiz_DisplayStart)*2;
+static void RefreshDisplay_PseudoColor_8bpp(ARMul_State *state, int DisplayHeight, int DisplayWidth) {
   int y,memoffset;
   int VisibleDisplayWidth;
   char *ImgPtr=HD.ImageData;
@@ -612,16 +572,6 @@ static void RefreshDisplay_PseudoColor_8bpp(ARMul_State *state) {
   if (DC.video_palette_dirty) {
     set_video_8bpp_colourmap();
   }
-
-  if (DisplayHeight<=0) {
-    fprintf(stderr,"RefreshDisplay_PseudoColor_8bpp: 0 or -ve display height\n");
-    return;
-  };
-
-  if (DisplayWidth<=0) {
-    fprintf(stderr,"RefreshDisplay_PseudoColor_8bpp: 0 or -ve display width\n");
-    return;
-  };
 
   /* Cope with screwy display widths/height */
   if (DisplayHeight>MonitorHeight) DisplayHeight=MonitorHeight;
@@ -643,9 +593,7 @@ static void RefreshDisplay_PseudoColor_8bpp(ARMul_State *state) {
 }; /* RefreshDisplay_PseudoColor_8bpp */
 
 /*----------------------------------------------------------------------------*/
-static void RefreshDisplay_TrueColor_1bpp(ARMul_State *state) {
-  int DisplayHeight=VIDC.Vert_DisplayEnd-VIDC.Vert_DisplayStart;
-  int DisplayWidth=(VIDC.Horiz_DisplayEnd-VIDC.Horiz_DisplayStart)*2;
+static void RefreshDisplay_TrueColor_1bpp(ARMul_State *state, int DisplayHeight, int DisplayWidth) {
   int x,y,memoffset;
   int VisibleDisplayWidth;
   char Buffer[MonitorWidth/8];
@@ -654,16 +602,6 @@ static void RefreshDisplay_TrueColor_1bpp(ARMul_State *state) {
   if (DC.video_palette_dirty) {
     set_video_4bpp_pixelmap();
   }
-
-  if (DisplayHeight<=0) {
-//    fprintf(stderr,"RefreshDisplay_TrueColor_1bpp: 0 or -ve display height\n");
-    return;
-  };
-
-  if (DisplayWidth<=0) {
-    fprintf(stderr,"RefreshDisplay_TrueColor_1bpp: 0 or -ve display width\n");
-    return;
-  };
 
   /* Cope with screwy display widths/height */
   if (DisplayHeight>MonitorHeight) DisplayHeight=MonitorHeight;
@@ -694,9 +632,7 @@ static void RefreshDisplay_TrueColor_1bpp(ARMul_State *state) {
 }; /* RefreshDisplay_TrueColor_1bpp */
 
 /*----------------------------------------------------------------------------*/
-static void RefreshDisplay_TrueColor_2bpp(ARMul_State *state) {
-  int DisplayHeight=VIDC.Vert_DisplayEnd-VIDC.Vert_DisplayStart;
-  int DisplayWidth=(VIDC.Horiz_DisplayEnd-VIDC.Horiz_DisplayStart)*2;
+static void RefreshDisplay_TrueColor_2bpp(ARMul_State *state, int DisplayHeight, int DisplayWidth) {
   int x,y,memoffset;
   int VisibleDisplayWidth;
   char Buffer[MonitorWidth/4];
@@ -705,16 +641,6 @@ static void RefreshDisplay_TrueColor_2bpp(ARMul_State *state) {
   if (DC.video_palette_dirty) {
     set_video_4bpp_pixelmap();
   }
-
-  if (DisplayHeight<=0) {
-    fprintf(stderr,"RefreshDisplay_TrueColor_2bpp: 0 or -ve display height\n");
-    return;
-  };
-
-  if (DisplayWidth<=0) {
-    fprintf(stderr,"RefreshDisplay_TrueColor_2bpp: 0 or -ve display width\n");
-    return;
-  };
 
   /* Cope with screwy display widths/height */
   if (DisplayHeight>MonitorHeight) DisplayHeight=MonitorHeight;
@@ -745,9 +671,7 @@ static void RefreshDisplay_TrueColor_2bpp(ARMul_State *state) {
 }; /* RefreshDisplay_TrueColor_2bpp */
 
 /*----------------------------------------------------------------------------*/
-static void RefreshDisplay_TrueColor_4bpp(ARMul_State *state) {
-  int DisplayHeight=VIDC.Vert_DisplayEnd-VIDC.Vert_DisplayStart;
-  int DisplayWidth=(VIDC.Horiz_DisplayEnd-VIDC.Horiz_DisplayStart)*2;
+static void RefreshDisplay_TrueColor_4bpp(ARMul_State *state, int DisplayHeight, int DisplayWidth) {
   int x,y,memoffset;
   int VisibleDisplayWidth;
   char Buffer[MonitorWidth/2];
@@ -757,18 +681,6 @@ static void RefreshDisplay_TrueColor_4bpp(ARMul_State *state) {
     set_video_4bpp_pixelmap();
   }
 
-  if (DisplayHeight<=0) {
-    fprintf(stderr,"RefreshDisplay_TrueColor_4bpp: 0 or -ve display height\n");
-    return;
-  };
-
-  if (DisplayWidth<=0) {
-    fprintf(stderr,"RefreshDisplay_TrueColor_4bpp: 0 or -ve display width\n");
-    return;
-  };
-
-  /*fprintf(stderr,"RefreshDisplay_TrueColor_4bpp: DisplayWidth=%d DisplayHeight=%d\n",
-          DisplayWidth,DisplayHeight); */
   /* Cope with screwy display widths/height */
   if (DisplayHeight>MonitorHeight) DisplayHeight=MonitorHeight;
   if (DisplayWidth>MonitorWidth) 
@@ -798,9 +710,7 @@ static void RefreshDisplay_TrueColor_4bpp(ARMul_State *state) {
 }; /* RefreshDisplay_TrueColor_4bpp */
 
 /*----------------------------------------------------------------------------*/
-static void RefreshDisplay_TrueColor_8bpp(ARMul_State *state) {
-  int DisplayHeight=VIDC.Vert_DisplayEnd-VIDC.Vert_DisplayStart;
-  int DisplayWidth=(VIDC.Horiz_DisplayEnd-VIDC.Horiz_DisplayStart)*2;
+static void RefreshDisplay_TrueColor_8bpp(ARMul_State *state, int DisplayHeight, int DisplayWidth) {
   int x,y,memoffset;
   int VisibleDisplayWidth;
   unsigned char Buffer[MonitorWidth];
@@ -809,16 +719,6 @@ static void RefreshDisplay_TrueColor_8bpp(ARMul_State *state) {
   if (DC.video_palette_dirty) {
     set_video_8bpp_pixelmap();
   }
-
-  if (DisplayHeight<=0) {
-    fprintf(stderr,"RefreshDisplay_TrueColor_8bpp: 0 or -ve display height\n");
-    return;
-  };
-
-  if (DisplayWidth<=0) {
-    fprintf(stderr,"RefreshDisplay_TrueColor_8bpp: 0 or -ve display width\n");
-    return;
-  };
 
   /* Cope with screwy display widths/height */
   if (DisplayHeight>MonitorHeight) DisplayHeight=MonitorHeight;
@@ -845,15 +745,18 @@ static void RefreshDisplay_TrueColor_8bpp(ARMul_State *state) {
 
 /*----------------------------------------------------------------------------*/
 static void RefreshDisplay(ARMul_State *state) {
-  DC.AutoRefresh=AUTOREFRESHPOLL;
-  ioc.IRQStatus|=8; /* VSync */
-  ioc.IRQStatus |= 0x20; /* Sound - just an experiment */
+  int DisplayHeight =  VIDC.Vert_DisplayEnd  - VIDC.Vert_DisplayStart;
+  int DisplayWidth  = (VIDC.Horiz_DisplayEnd - VIDC.Horiz_DisplayStart) * 2;
+
+  DC.AutoRefresh  = AUTOREFRESHPOLL;
+  ioc.IRQStatus  |= 8; /* VSync */
+  ioc.IRQStatus  |= 0x20; /* Sound - just an experiment */
   IO_UpdateNirq();
 
   RefreshMouse(state);
 
-  DC.miny=MonitorHeight-1;
-  DC.maxy=0;
+  DC.miny = MonitorHeight - 1;
+  DC.maxy = 0;
 
   /* First figure out number of BPP */
   if (HD.visInfo.class == PseudoColor) {
@@ -864,20 +767,24 @@ static void RefreshDisplay(ARMul_State *state) {
       set_cursor_colourmap();
     }
 
-    switch ((VIDC.ControlReg & 0xC)>>2) {
-      case 0: /* 1bpp */
-        RefreshDisplay_PseudoColor_1bpp(state);
-        break;
-      case 1: /* 2bpp */
-        RefreshDisplay_PseudoColor_2bpp(state);
-        break;
-      case 2: /* 4bpp */
-        RefreshDisplay_PseudoColor_4bpp(state);
-        break;
-      case 3: /* 8bpp */
-        RefreshDisplay_PseudoColor_8bpp(state);
-        break;
-    };
+    if (DisplayHeight > 0 && DisplayWidth > 0) {
+      switch ((VIDC.ControlReg & 0xC)>>2) {
+        case 0: /* 1bpp */
+          RefreshDisplay_PseudoColor_1bpp(state, DisplayHeight, DisplayWidth);
+          break;
+        case 1: /* 2bpp */
+          RefreshDisplay_PseudoColor_2bpp(state, DisplayHeight, DisplayWidth);
+          break;
+        case 2: /* 4bpp */
+          RefreshDisplay_PseudoColor_4bpp(state, DisplayHeight, DisplayWidth);
+          break;
+        case 3: /* 8bpp */
+          RefreshDisplay_PseudoColor_8bpp(state, DisplayHeight, DisplayWidth);
+          break;
+      }
+    } else {
+      fprintf(stderr,"RefreshDisplay_PseudoColor: 0 or -ve display width or height\n");
+    }
   } else {
     if (DC.border_palette_dirty) {
       set_border_pixelmap();
@@ -886,21 +793,25 @@ static void RefreshDisplay(ARMul_State *state) {
       set_cursor_pixelmap();
     }
 
-    switch ((VIDC.ControlReg & 0xC)>>2) {
-      case 0: /* 1bpp */
-        RefreshDisplay_TrueColor_1bpp(state);
+    if (DisplayHeight > 0 && DisplayWidth > 0) {
+      switch ((VIDC.ControlReg & 0xC)>>2) {
+        case 0: /* 1bpp */
+          RefreshDisplay_TrueColor_1bpp(state, DisplayHeight, DisplayWidth);
+          break;
+        case 1: /* 2bpp */
+          RefreshDisplay_TrueColor_2bpp(state, DisplayHeight, DisplayWidth);
         break;
-      case 1: /* 2bpp */
-        RefreshDisplay_TrueColor_2bpp(state);
-        break;
-      case 2: /* 4bpp */
-        RefreshDisplay_TrueColor_4bpp(state);
-        break;
-      case 3: /* 8bpp */
-        RefreshDisplay_TrueColor_8bpp(state);
-        break;
-    };
-  };
+        case 2: /* 4bpp */
+          RefreshDisplay_TrueColor_4bpp(state, DisplayHeight, DisplayWidth);
+          break;
+        case 3: /* 8bpp */
+          RefreshDisplay_TrueColor_8bpp(state, DisplayHeight, DisplayWidth);
+          break;
+      }
+    } else {
+      fprintf(stderr,"RefreshDisplay_TrueColor: 0 or -ve display width or height\n");
+    }
+  }
 
   /*fprintf(stderr,"RefreshDisplay: Refreshed %d-%d\n",DC.miny,DC.maxy); */
   /* Only tell X to redisplay those bits which we've replotted into the image */
@@ -908,7 +819,7 @@ static void RefreshDisplay(ARMul_State *state) {
     XPutImage(HD.disp, HD.MainPane, HD.MainPaneGC, HD.DisplayImage,
               0, DC.miny, /* source pos. in image */
               0, DC.miny, /* Position on window */
-              (VIDC.Horiz_DisplayEnd - VIDC.Horiz_DisplayStart) * 2, // width of current mode, not MonitorWidth
+              DisplayWidth, // width of current mode, not MonitorWidth
               (DC.maxy - DC.miny) + 1);
   }
 
