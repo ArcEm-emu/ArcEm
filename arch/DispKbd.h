@@ -94,7 +94,7 @@ typedef struct {
 #else
 
 #ifdef SYSTEM_X
-  struct {
+  struct host_display {
     Window RootWindow,BackingWindow,MainPane,ControlPane,CursorPane;
     Display *disp;
     Screen *xScreen;
@@ -119,6 +119,7 @@ typedef struct {
     int green_shift,green_prec;
     int blue_shift,blue_prec;
   } HostDisplay;
+
 #endif
 
 #endif
@@ -159,5 +160,11 @@ unsigned int DisplayKbd_XPoll(void *data);
 void DisplayKbd_Init(ARMul_State *state);
 void VIDC_PutVal(ARMul_State *state,ARMword address, ARMword data,int bNw);
 
+#ifdef SYSTEM_X
+
+/* adjust to gaining or losing the keyboard and pointer focus. */
+void hostdisplay_change_focus(struct host_display *hd, int focus);
+
+#endif
 
 #endif
