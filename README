@@ -1,66 +1,260 @@
-******************* NOTE!! This is the readme for the original emulator -
-   not the modified version for arcem included in this distribution
+Archimedes emulator by David Alan Gilbert
+(arcem@treblig.org)
 
-   Please do not bother the original armulator authors about this modified
-   version.
+Version 0.60
 
-   ************************************* Dave Gilbert
+Archimedes hardware emulation code (c) David Alan Gilbert 1995-1999
+It uses the GPL release of the ARMulator V1.0 by ARM Ltd
 
-This is the README file for ARMulator version 1.0, an ARM6 instruction 
-emulator.
+This is an emulation of the hardware of an Acorn Archimedes (somewhere around
+the A3xx and A4xx series).
 
-Configuration:
-	The armulator has one configuration option, the default endianness
-	of the processor.  This can be changed by building with ENDIAN=BIGEND
-	to produce a big-endian variant.  The debugger can also select the
-	endianness at run-time.
+All code is (c) David Alan Gilbert 1995-1998 under the GNU Public license
+except the code which is part of the original ARMulator which is released
+under its original copyright.
 
-Build instructions:
+It has been tested on:
+  Linux/Alpha
+  Linux/ARM
+  Linux/x86
 
-	This program is known to compile using GCC 2.6.0 on a Sun4.  Other
-	builds are untested.  It almost certainly will not work on non-32bit
-	machines.
+Earlier versions have been tested on:
+  Linux/ARM (aout)
+  Solaris
+  Sun/OS
+  IRIX
+  HP-UX
+  Linux/x86
 
-	To build the program simply type make in the source directory,
-	followed by "make install"
+All the hardware is documented in something publicly available - although
+sometimes you have to do a lot of searching!  Thanks are due to a
+number of people at Acorn/ARM etc. for helping me find things which
+were not obvious.
 
-Using the emulator:
+Places to find documentation:
+  VLSI Technology Inc. : VL86C010 RISC Family Data Manual
+  Data sheets for the 1772 floppy controlller and HD controller
+  Acorn's Technical Reference Manuals
+  Data sheet for I2C clock/ram chip
 
-	The emulator runs as a separate process, and communicates with a 
-	debugger via tcp.  To start the emulator type
-		armul <socknum>
-	where socknum is any number between 1024 and 65535.  If the socket is
-	already in use, armul will exit with an error.
+Dave (arcem@treblig.org)
+---------------------------------------------------------------------------
 
-	This version of armul has been designed to work with gdb-4.13
-	with the ARM/RDP/RDI extensions added (available separately).  To
-	connect gdb to the ARMulator, start gdb and type
-		target arm <hostname>:<socknum>
-	where hostname is the name of the machine on which the armulator
-	is running, and socknum is the socket number specified when armul
-	was started.
+Changes since 0.50
+------------------
+  Support for running RISC OS, by Alex Macfarlane Smith and Peter Naulls
+  Splitting of the windowing ascpects of the code, to allow independent
+  development.
+  Some small speed ups.
+  Source code tidying and warning fixes. 
 
-IMPORTANT:
+Changes since 0.40
+------------------
+  Now runs on TrueColour X visuals (16, 32 bit)
 
-	This program is free software; you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation; either version 2 of the License, or
-	(at your option) any later version.
+  Known bugs: It still sometimes seems to give a bus error in the programs
+  running in the emulator; this is completely non-repeatable.
 
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
+Changes since 0.30
+------------------
+  80%+ speed increase over 0.20 (now over 3 times faster than 0.10!)
+  Moved a lot of things into the core emulator file; allows
+  inlining.
+  Rewrote handling of IOC timers, exceptions, the MEMC page search
+  
+Changes since 0.20
+------------------
+  Heavily modify ARM's emulator core to remove 32 bit support for speed
+  changed event scheduling to speed up
+  Rewrote IOC_UpdateTimer (a few times) - for speed; still expensive!
+  Now distribute as one tar rather than patches to ARMulator
+  70%+ speed increases!!
 
-	You should have received a copy of the GNU General Public License
-	along with this program; if not, write to the Free Software
-	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+Changes since 0.10
+------------------
+  Various bug fixes, in particular it should work on 64 bit machines
+  and in particular Linux/Alpha.
 
-	Advanced RISC Machines welcomes bug reports for this package,
-	but no undertaking can be made to provide support or reply to email.
-	Bugs should be sent to:
-		armgnu@armltd.co.uk
+  Now tells the user if they are running it on 24 bit displays and tells
+  them to change!
+
+---------------------------------------------------------------------------
+
+    --------------------------------------------------------------
+    N  N  OOO   TTTTT EEEE    *
+    NN N O   O    T   E      *
+    N NN O   O    T   EEE   ***---------------------------
+    N  N O   O    T   E      *
+    N  N  OOO     T   EEEE    *
+
+    If you are running on a Big Endian machine (e.g. Sun, SG, HP)
+    you MUST add 
+
+    -DHOST_BIGENDIAN
+
+    to the CFLAGS line in the top level Makefile - DO NOT change
+    the other endian def.
+
+    There appears to be a bug in the floppy code which means
+    it won't read 720K disc images....sometimes!
+
+    Arcem 0.50 now supports true colour X displays; your best bet is
+    16bpp, or a mode where X runs in 32 bpp (i.e. 24 bpp with 8 bit padding) -
+    it hasn't been tested (and may not work) in a true 24 bpp mode - i.e.
+    where pixels are 3 bytes apart.  Reports on this are welcome.
+
+    Anybody who mails me about one of these issues without having
+    read this will be thrown to the daemons.
+    --------------------------------------------------------------
 
 
+Hardware emulated:
+  MEMC (see bug note below)
+  IOC  (Although Timers are a bit accelerated)
+  VIDC (No sound :-) )
+  Real time clock/CMOS Ram (But the clock itself isn't emulated - just the RAM)
+  Keyboard
+  FDC
+  HDC
 
-	
+Not emulated (or broken!):
+  Serial, parallel
+  Econet (a virtual TCP/IP econet with my emulated Beeb would be cute :-) )
+  
+NOTES:
+  The emulator needs a little endian ROM image to boot from - an ARM/Linux boot
+  ROM can be found in the same directory that this emulator is distributed in.
+  Other ROMs should work - but it's probably dodgy to try many other appropriate
+  ROMS due to copyright. The ROM image should be in the file 'ROM' under the
+  main emulator directory.
+
+  CMOS Ram configuration is held in the file hexcmos.  Each line holds
+  the value (in hex!) of a location of the CMOS Ram.  Line 'n' contains
+  the value for address 'n-1' of the CMOS as measured in the Arcs
+  addressing scheme (not the hardware address on the chip). Thanks to
+  Richard York's CMOS Ram save code when ever the CMOS is changed a new
+  file hexcmos.updated is created. You can copy this into hexcmos if you
+  want to. A sample hexcmos file is probvided.
+
+  You will need a .arcemrc in your home directory, a file containing the
+  following will do, it defines two hard drives of about 20MB (drive,
+  cylinders,heads,sectors, sector size (fixed!)):
+  
+     MFM disc
+     1 612 4 32 256
+     MFM disc
+     2 612 4 32 256
+
+  dot.arcemrc in the distribution contains that.
+
+  The main window uses its own colourmap to be able to cope with 256
+  colour modes - I'd like to incorporate the control panel above the
+  main pane - but I can't figure out how to make one subpane within one
+  toplevel pane have a different colourmap. If anyone knows tell me!
+
+  Everything is done via XLib directly.
+
+  The keyboard works but is slow - 
+  The key map is very simple. It uses the unshifted version of each key
+  to map to the Arcs key map.  For example the '2' key when shifted is
+  always '@' as on an Arc - whatever it is on your keyboard. This
+  weird arrangment is essential otherwise you can get very strange things
+  happening if you release a key before releasing the key. So you can
+  type about 64 characters blind and it will slowly filter in.  Page-up,
+  page-down only work if you compile with X11R6 libraries (or at least
+  something which defines the necessary keysyms).  Scroll lock/print
+  screen don't seem to work on my Linux box - mind you it doesn't seem
+  to be generating keysym's for them.  You should press any lock key
+  twice  (X only gives me one event for each since it locks).  The +
+  on the numberic keypad is used to enable mouse tracking so isn't
+  available for normal use and X doesn't define a keysym for a # sign on
+  the keypad; so I use KP_F1 (this isn't tested!).
+
+  Timing is a bit weird at the mo.  The IOC timers get incremented at
+  about CPU cycles/2 - all cycles take the same time (sequential/non
+  /ROM etc.) Frame interrupts occur whenver I refresh.
+
+  It's amazing what runs on this emulator.
+
+  There is a MEMC problem - I don't think it correctly emulates
+  the MEMC when programmed with the wrong page size - so in particular a
+  1MB machine with a MEMC programmed to 32K goes screwy - unfortunatly I
+  think this happens when OSes try to figure out how much RAM they have.
+  everything works fine for 4MB - 1MB dies - somehow 2MB seems to work!
+  Although I'm not sure, I think what should happen is that if you have
+  1MB and your programmed in 32K page mode, then physical RAM should
+  still be 4MB long - but with 8K in and then gaps of 24K.
+
+  It uses the public release of the ARM emulator
+  It's been hacked about heavily; the facilities for connecting to debuggers
+  have gone, as has 32 bit mode support, its full event scheduling mechanism,
+  most of the RDI code, and bits of the Archemedes emulation have crept
+  into the ARM emulator core for speed.  There are also some bug
+  fixes to the emulator core.
+
+  Screen refresh is done with a little intelligence.  A flag is kept on
+  each 256 bytes of the first 512K of physical RAM and lines aren't
+  refreshed unless that RAM has changed. (I suspect the code to mark RAM
+  as refreshed is a little over optimistic - but it hasn't hit
+  problems...yet).
+
+  I've profiled it and I've put some tricks in so that it now spends
+  most of its time in ARM emulation. One of these is a single entry TLAB
+  into the MEMC emulation; that helps a LOT (emulationg CAM in software
+  is a little slow!).   I've tried other approaches but this seems to be
+  the fastest so far.
+
+Floppy
+------
+  Floppy drive: in the directory from which the binary is run should be
+  a file (or symlink) called 'FloppyImage0'. 'arcem' can support either
+  Acorn E-Format discs or DOS 720K images (Which are more useful for Linux).
+  'arcem' is normally distributed configured for DOS format; this can
+  be changed by commenting out the 
+
+  #define DOSDISC
+
+  line in arch/fdc1772.c and RECOMPILE.
+
+  The best way to get E-format images is using !Zap on an Arc;
+  you can get DOS disc images using 'dd if=/dev/fd0 of=imagefile' from Linux.
+
+  If you are transferring the file over NFS from an Arc  remember to set
+  the type of the file to 'data' (or anything other than the
+  load/execute type) before transferring it.  (If you forget, Acorn's PC-NFS
+  will be 'clever' and tack some extra bytes on for you). Similarly you
+  can have FloppyImage1,2, and 3. If these files don't open then
+  attempting to access one of the floppy drives will go very badly
+  wrong.
+
+  At the moment there is a quick hack set up so that if you send the
+  emulator a SIGUSR2 it will reopen the FloppyImage0 file - that allows
+  you to swap floppies while the emulator is running.
+
+Hard drives
+-----------
+  Hard drives: The Image file 'HardImage1' (and probably HardImage2 ...)
+  represent the ST506 hard drives connected to the A4x0's HD63463
+  controller. The file is ordered in cylinder,head,sector format - i.e.
+  sector 1 of any given track is after sector 0.  The sectors for head 1
+  of a track are after those for head 0.  Cylinder n head 0 is after
+  cylinder n-1 head (max head)'s data.  At the moment large drives (more
+  than 8?) heads are not catered for.  The hard drive is an extremly
+  speedy drive with almost 0 step time and an incredibly fast rotational
+  speed.  There are however some delays between commands starting and in
+  between sectors being transferred.
+
+  Using the mouse: To move the mouse cursor, you must switch into 'mouse
+  following mode'.  To do this move the X mouse pointer close to the arc
+  pointer.  Then press '+' on the numeric keypad - this toggles the
+  mouse following mode.  Move the mouse slowly (it won't actually try
+  and follow until the mouse is moved).  The X cursor will then be
+  locked into the centre of the window; as you move your OS should shift the
+  mouse cursor in response to the mouse requests.
+
+  The mouse buttons are just the X mouse's buttons (in the same order).
+
+If you happen to notice anything which is obviously wrong etc. - please
+tell me.
+
+Dave (arcem@treblig.org)
