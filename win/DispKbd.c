@@ -48,7 +48,11 @@ static void ProcessButton(ARMul_State *state);
 
 
 
-
+static unsigned long get_pixelval(unsigned int red, unsigned int green, unsigned int blue) {
+    return (((red >> (16 - HD.red_prec)) << HD.red_shift) +
+           ((green >> (16 - HD.green_prec)) << HD.green_shift) +
+           ((blue >> (16 - HD.blue_prec)) << HD.blue_shift));
+} /* get_pixval */
 
 
 

@@ -15,27 +15,6 @@
 #include "armarc.h"
 
 
-/* Shared between X/Mac OS X/Windows */
-
-/**
- * get_pixelval
- *
- *
- *
- * @param red
- * @param green
- * @param blue
- * @returns
- */
-unsigned long get_pixelval(unsigned int red, unsigned int green, unsigned int blue)
-{
-  return (((red  >> (16 - HOSTDISPLAY.red_prec))   << HOSTDISPLAY.red_shift) +
-         ((green >> (16 - HOSTDISPLAY.green_prec)) << HOSTDISPLAY.green_shift) +
-         ((blue  >> (16 - HOSTDISPLAY.blue_prec))  << HOSTDISPLAY.blue_shift));
-}
-
-
-
 /**
  * MarkAsUpdated
  *
