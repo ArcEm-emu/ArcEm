@@ -27,6 +27,7 @@ int xSize, ySize;
 ATOM			MyRegisterClass(HINSTANCE hInstance);
 BOOL			InitInstance(HINSTANCE, int);
 LRESULT CALLBACK	WndProc(HWND, UINT, WPARAM, LPARAM);
+BOOL    CALLBACK AboutDlgProc (HWND, UINT, WPARAM, LPARAM);
 
 MSG msg;
 HANDLE hInst;
@@ -156,7 +157,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			switch (wmId)
 			{
 				case IDM_ABOUT:
-//				   DialogBox(hInst, (LPCTSTR)IDD_ABOUTBOX, hWnd, (DLGPROC)About);
+				   DialogBox(hInst, (LPCTSTR)IDD_ABOUTBOX, hWnd, (DLGPROC)AboutDlgProc);
 				   break;
 				case IDM_COPY:
 				   break;
@@ -282,6 +283,26 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
    }
    return TRUE;
 }
+
+BOOL CALLBACK AboutDlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam)
+{
+	switch (iMsg)
+	{
+	case WM_INITDIALOG :
+		return TRUE ;
+		
+	case WM_COMMAND :
+		switch (LOWORD (wParam))
+		{
+		case IDOK :
+		case IDCANCEL :
+			EndDialog (hDlg, 0) ;
+			return TRUE ;
+		}
+		break ;
+	}
+	return FALSE ;
+} 
 
 int createWindow(int x, int y)
 {
