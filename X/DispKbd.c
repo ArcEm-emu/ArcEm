@@ -50,6 +50,7 @@
     x |= x << 4; \
     x |= x << 8
 
+static void set_cursor_colourmap(void);
 static void set_cursor_pixelmap(void);
 
 static int (*prev_x_error_handler)(Display *, XErrorEvent *);
@@ -354,67 +355,109 @@ static void CopyScreenRAM(ARMul_State *state,int offset, int len, char *Buffer) 
 #endif
 }; /* CopyScreenRAM */
 
-/*----------------------------------------------------------------------------*/
-/* Configure the colourmap for the standard 1,2,4 bpp modes                   */
-static void DoColourMap_Standard(ARMul_State *state) {
-  XColor tmp;
-  int c;
+/* ------------------------------------------------------------------ */
 
-  if (!(DC.MustRedraw || DC.MustResetPalette)) return;
+static void set_4bpp_colourmap(ARMul_State *state)
+{
+    int c;
+    unsigned int pal;
+    XColor col;
 
-  for(c=0;c<16;c++) {
-    tmp.flags=DoRed|DoGreen|DoBlue;
-    tmp.pixel=c;
-    tmp.red=(VIDC.Palette[c] & 15)<<12;
-    tmp.green=((VIDC.Palette[c]>>4) & 15)<<12;
-    tmp.blue=((VIDC.Palette[c]>>8) & 15)<<12;
-    /* I suppose I should do something with the supremacy bit....*/
-    XStoreColor(HD.disp,HD.ArcsColormap,&tmp); /* Should use XStoreColors */
-  };
+    if (!DC.MustRedraw && !DC.MustResetPalette) {
+        return;
+    }
 
-  /* Now do the ones for the cursor */
-  for(c=0;c<3;c++) {
-    tmp.flags=DoRed|DoGreen|DoBlue;
-    tmp.pixel=c+CURSORCOLBASE;
-    tmp.red=(VIDC.CursorPalette[c] &15)<<12;
-    tmp.green=((VIDC.CursorPalette[c]>>4) &15)<<12;
-    tmp.blue=((VIDC.CursorPalette[c]>>8) &15)<<12;
+    for (c = 0; c < 16; c++) {
+        pal = VIDC.Palette[c];
 
-    XStoreColor(HD.disp,HD.ArcsColormap,&tmp);
-  };
+        col.flags = DoRed | DoGreen | DoBlue;
+        col.pixel = c;
+        col.red = pal & 0xf;
+        col.green = pal >> 4 & 0xf;
+        col.blue = pal >> 8 & 0xf;
+        MULT_BY_0x1111(col.red);
+        MULT_BY_0x1111(col.green);
+        MULT_BY_0x1111(col.blue);
 
-  DC.MustResetPalette=0;
-}; /* DoColourMap_Standard */
-/*----------------------------------------------------------------------------*/
-/* Configure the colourmap for the 8bpp modes                                 */
-static void DoColourMap_256(ARMul_State *state) {
-  XColor tmp;
-  int c;
+        /* I suppose I should do something with the supremacy bit... */
+        XStoreColor(HD.disp, HD.ArcsColormap, &col);
+    }
 
-  if (!(DC.MustRedraw || DC.MustResetPalette)) return;
+    set_cursor_colourmap();
 
-  for(c=0;c<256;c++) {
-    int palentry=c &15;
-    int L4=(c>>4) &1;
-    int L65=(c>>5) &3;
-    int L7=(c>>7) &1;
+    DC.MustResetPalette = 0;
 
-    tmp.flags=DoRed|DoGreen|DoBlue;
-    tmp.pixel=c;
-    tmp.red=((VIDC.Palette[palentry] & 7) | (L4<<3))<<12;
-    tmp.green=(((VIDC.Palette[palentry] >> 4) & 3) | (L65<<2))<<12;
-    tmp.blue=(((VIDC.Palette[palentry] >> 8) & 7) | (L7<<3))<<12;
-    /* I suppose I should do something with the supremacy bit....*/
-    XStoreColor(HD.disp,HD.ArcsColormap,&tmp); /* Should use XStoreColors */
-  };
-  DC.MustResetPalette=0;
-}; /* DoColourMap_Standard */
+    return;
+}
 
 /* ------------------------------------------------------------------ */
 
-/* Configure the TrueColor pixelmap for the standard 1/2/4bpp modes. */
+static void set_8bpp_colourmap(ARMul_State *state)
+{
+    int c;
+    int b4;
+    int b65;
+    int b7;
+    unsigned int pal;
+    XColor col;
 
-static void DoPixelMap_Standard(ARMul_State *state)
+    if (!DC.MustRedraw && !DC.MustResetPalette) {
+        return;
+    }
+
+    for (c = 0; c < 256; c++) {
+        b4 = c >> 1 & 8;
+        b65 = c >> 3 & 0xc;
+        b7 = c >> 4 & 8;
+
+        pal = VIDC.Palette[c & 0xf];
+        col.red = b4 | (pal & 7);
+        col.green = b65 | (pal >> 4 & 3);
+        col.blue = b7 | (pal >> 8 & 7);
+
+        MULT_BY_0x1111(col.red);
+        MULT_BY_0x1111(col.green);
+        MULT_BY_0x1111(col.blue);
+
+        /* I suppose I should do something with the supremacy bit... */
+        XStoreColor(HD.disp, HD.ArcsColormap, &col);
+    }
+
+    set_cursor_colourmap();
+
+    DC.MustResetPalette = 0;
+
+    return;
+}
+
+/* ------------------------------------------------------------------ */
+
+static void set_cursor_colourmap(void)
+{
+    int c;
+    unsigned int pal;
+    XColor col;
+
+    for (c = 0; c < 3; c++) {
+        pal = VIDC.CursorPalette[c];
+        col.flags = DoRed | DoGreen | DoBlue;
+        col.pixel = c + CURSORCOLBASE;
+        col.red = pal & 0xf;
+        col.green = pal >> 4 & 0xf;
+        col.blue = pal >> 8 & 0xf;
+        MULT_BY_0x1111(col.red);
+        MULT_BY_0x1111(col.green);
+        MULT_BY_0x1111(col.blue);
+
+        XStoreColor(HD.disp, HD.ArcsColormap, &col);
+    }
+
+    return;
+}
+
+/* ------------------------------------------------------------------ */
+
+static void set_4bpp_pixelmap(ARMul_State *state)
 {
     int c;
     unsigned int pal;
@@ -449,9 +492,7 @@ static void DoPixelMap_Standard(ARMul_State *state)
 
 /* ------------------------------------------------------------------ */
 
-/* Configure the TrueColor pixel map for the 8bpp modes. */
-
-static void DoPixelMap_256(ARMul_State *state)
+static void set_8bpp_pixelmap(ARMul_State *state)
 {
     int c;
     int b4;
@@ -519,7 +560,8 @@ static void set_cursor_pixelmap(void)
     return;
 }
 
-/*----------------------------------------------------------------------------*/
+/* ------------------------------------------------------------------ */
+
 /* Refresh the mouses image                                                   */
 static void RefreshMouse(ARMul_State *state) {
   int x,y,height,offset;
@@ -583,7 +625,7 @@ static void RefreshDisplay_PseudoColor_1bpp(ARMul_State *state) {
   char *ImgPtr=HD.ImageData;
 
   /* First configure the colourmap */
-   DoColourMap_Standard(state);
+   set_4bpp_colourmap(state);
 
   if (DisplayHeight<=0) {
     fprintf(stderr,"RefreshDisplay_PseudoColor_1bpp: 0 or -ve display height\n");
@@ -633,7 +675,7 @@ static void RefreshDisplay_PseudoColor_2bpp(ARMul_State *state) {
   char *ImgPtr=HD.ImageData;
 
   /* First configure the colourmap */
-  DoColourMap_Standard(state);
+  set_4bpp_colourmap(state);
 
   if (DisplayHeight<=0) {
     fprintf(stderr,"RefreshDisplay_PseudoColor_2bpp: 0 or -ve display height\n");
@@ -683,7 +725,7 @@ static void RefreshDisplay_PseudoColor_4bpp(ARMul_State *state) {
   char *ImgPtr=HD.ImageData;
 
   /* First configure the colourmap */
-  DoColourMap_Standard(state);
+  set_4bpp_colourmap(state);
 
   if (DisplayHeight<=0) {
     fprintf(stderr,"RefreshDisplay_PseudoColor_4bpp: 0 or -ve display height\n");
@@ -734,7 +776,7 @@ static void RefreshDisplay_PseudoColor_8bpp(ARMul_State *state) {
   char *ImgPtr=HD.ImageData;
   
   /* First configure the colourmap */
-  DoColourMap_256(state);
+  set_8bpp_colourmap(state);
 
   if (DisplayHeight<=0) {
     fprintf(stderr,"RefreshDisplay_PseudoColor_8bpp: 0 or -ve display height\n");
@@ -775,7 +817,7 @@ static void RefreshDisplay_TrueColor_1bpp(ARMul_State *state) {
   char *ImgPtr=HD.ImageData;
 
   /* First configure the colourmap */
-  DoPixelMap_Standard(state);
+  set_4bpp_pixelmap(state);
 
   if (DisplayHeight<=0) {
     fprintf(stderr,"RefreshDisplay_TrueColor_1bpp: 0 or -ve display height\n");
@@ -825,7 +867,7 @@ static void RefreshDisplay_TrueColor_2bpp(ARMul_State *state) {
   char *ImgPtr=HD.ImageData;
 
   /* First configure the colourmap */
-  DoPixelMap_Standard(state);
+  set_4bpp_pixelmap(state);
 
   if (DisplayHeight<=0) {
     fprintf(stderr,"RefreshDisplay_TrueColor_2bpp: 0 or -ve display height\n");
@@ -875,7 +917,7 @@ static void RefreshDisplay_TrueColor_4bpp(ARMul_State *state) {
   char *ImgPtr=HD.ImageData;
 
   /* First configure the colourmap */
-  DoPixelMap_Standard(state);
+  set_4bpp_pixelmap(state);
 
   if (DisplayHeight<=0) {
     fprintf(stderr,"RefreshDisplay_TrueColor_4bpp: 0 or -ve display height\n");
@@ -927,7 +969,7 @@ static void RefreshDisplay_TrueColor_8bpp(ARMul_State *state) {
   char *ImgPtr=HD.ImageData;
   
   /* First configure the colourmap */
-  DoPixelMap_256(state);
+  set_8bpp_pixelmap(state);
 
   if (DisplayHeight<=0) {
     fprintf(stderr,"RefreshDisplay_TrueColor_8bpp: 0 or -ve display height\n");
