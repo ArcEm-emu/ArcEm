@@ -53,18 +53,16 @@ static ARMword ARMul_LoadInstr(ARMword address, ARMEmuFunc** func)
   address &= 0x3ffffff;
 
   /* First check if we are doing ROM remapping and are accessing a remapped */
-  /* location.  If it is then map it into the ROM space                     */
-  if ((MEMC.ROMMapFlag) && (address < 0xC00000)) {
-    if (address >= 0x800000) address -= 0x800000;
+  /* location.  If it is then map it into the High ROM space                */
+  if ((MEMC.ROMMapFlag) && (address < 0x800000)) {
     MEMC.ROMMapFlag = 2;
     /* A simple ROM wrap around */
-    while (address > MEMC.ROMSize)
-      address -= MEMC.ROMSize;
-
+    address %= MEMC.ROMHighSize;
+  
     ARMul_CLEARABORT;
-    *func=&(MEMC.Romfuncs[address/4]);
-    return(MEMC.ROM[address/4]);
-  };
+    *func = &MEMC.ROMHighFuncs[address / 4];
+    return MEMC.ROMHigh[address / 4];
+  }
 
   switch ((address>>24)&3) {
     case 3:
@@ -72,8 +70,6 @@ static ARMword ARMul_LoadInstr(ARMword address, ARMEmuFunc** func)
       if (address>=0x3400000) {
         /* It's ROM read - no hassle */
         ARMul_CLEARABORT;
-//        if (address>=0x3800000) address-=0x3800000; else address-=0x3400000;
-        address &= 0x7fffff;
 
         if ((MEMC.ROMMapFlag==2)) {
           MEMC.OldAddress1=-1;
@@ -81,13 +77,23 @@ static ARMword ARMul_LoadInstr(ARMword address, ARMEmuFunc** func)
           MEMC.ROMMapFlag=0;
         };
 
-        /* A simple ROM wrap around */
-//        while (address>MEMC.ROMSize)
-//          address-=MEMC.ROMSize;
-        address %= MEMC.ROMSize;
+        if (address >= 0x3800000) {
+          address -= 0x3800000;
+          address %= MEMC.ROMHighSize;
 
-        *func=&(MEMC.Romfuncs[address/4]);
-        return(MEMC.ROM[address/4]);
+          *func = &MEMC.ROMHighFuncs[address / 4];
+          return MEMC.ROMHigh[address / 4];
+        } else {
+          if (MEMC.ROMLow) {
+            address -= 0x3400000;
+            address %= MEMC.ROMLowSize;
+
+            *func = &MEMC.ROMLowFuncs[address / 4];
+            return MEMC.ROMLow[address / 4];
+          } else {
+            return 0;
+          }
+        }
       } else {
         if (statestr.NtransSig) {
 
@@ -104,8 +110,8 @@ static ARMword ARMul_LoadInstr(ARMword address, ARMEmuFunc** func)
           badfunc=ARMul_Emulate_DecodeInstr;
           *func=&badfunc;
           return(ARMul_ABORTWORD);
-        };
-      };
+        }
+      }
       /* NOTE: No break, IOC has same permissions as physical RAM */
 
     case 2:
@@ -116,7 +122,7 @@ static ARMword ARMul_LoadInstr(ARMword address, ARMEmuFunc** func)
           MEMC.ROMMapFlag=0;
           MEMC.OldAddress1=-1;
           MEMC.OldPage1=-1;
-        };
+        }
         address-=0x2000000;
 
         /* I used to think memory wrapped after the real RAM - but it doesn't appear
@@ -128,7 +134,7 @@ static ARMword ARMul_LoadInstr(ARMword address, ARMEmuFunc** func)
           return(0xdead0bad);
           /*while (address>MEMC.RAMSize)
             address-=MEMC.RAMSize; */
-        };
+        }
 
         *func=&(MEMC.PhysRamfuncs[address/4]);
         return(MEMC.PhysRam[address/4]);
@@ -205,8 +211,6 @@ static void ARMul_LoadInstrTriplet(ARMword address,ARMword* pw1, ARMword* pw2, A
       if (address>=0x3400000) {
         /* It's ROM read - no hassle */
         ARMul_CLEARABORT;
-//        if (address>=0x3800000) address-=0x3800000; else address-=0x3400000;
-        address &= 0x7fffff;
 
         if ((MEMC.ROMMapFlag==2)) {
           MEMC.OldAddress1=-1;
@@ -214,18 +218,37 @@ static void ARMul_LoadInstrTriplet(ARMword address,ARMword* pw1, ARMword* pw2, A
           MEMC.ROMMapFlag=0;
         };
 
-        /* A simple ROM wrap around */
-//        while (address>MEMC.ROMSize)
-//          address-=MEMC.ROMSize;
-        address %= MEMC.ROMSize;
+        if (address >= 0x3800000) {
+          address -= 0x3800000;
+          address %= MEMC.ROMHighSize;
 
-        address = address / 4;
-        *pw1 = MEMC.ROM[address];
-        *func1 = &(MEMC.Romfuncs[address]);
-        *pw2 = MEMC.ROM[address+1];
-        *func2 = &(MEMC.Romfuncs[address+1]);
-        *pw3 = MEMC.ROM[address+2];
-        *func3 = &(MEMC.Romfuncs[address+2]);
+          address /= 4;
+          *pw1 = MEMC.ROMHigh[address];
+          *func1 = &(MEMC.ROMHighFuncs[address]);
+          *pw2 = MEMC.ROMHigh[address+1];
+          *func2 = &(MEMC.ROMHighFuncs[address+1]);
+          *pw3 = MEMC.ROMHigh[address+2];
+          *func3 = &(MEMC.ROMHighFuncs[address+2]);
+        } else {
+          if (MEMC.ROMLow) {
+            address -= 0x3400000;
+            address %= MEMC.ROMLowSize;
+
+            address /= 4;
+            *pw1 = MEMC.ROMLow[address];
+            *func1 = &(MEMC.ROMLowFuncs[address]);
+            *pw2 = MEMC.ROMLow[address+1];
+            *func2 = &(MEMC.ROMLowFuncs[address+1]);
+            *pw3 = MEMC.ROMLow[address+2];
+            *func3 = &(MEMC.ROMLowFuncs[address+2]);
+          } else {
+            /* We should never reach here:
+             * Because no ROM is mapped in the ROM Low address space,
+             * reading data from it will return 0,
+             * and RISC OS should not attempt to execute code from */
+            abort();
+          }
+        }
         return;
       } else {
         if (statestr.NtransSig) {

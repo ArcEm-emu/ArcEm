@@ -36,8 +36,10 @@ typedef struct {
 } pageDesc;               /* Description for one 4K page */
 
 struct MEMCStruct {
-  ARMword *ROM;
-  unsigned int ROMSize;
+  ARMword *ROMHigh;           /* ROM high and low are to seperate rom areas */
+  ARMword ROMHighSize;        /* For mapping in ROMs of different types eg. */
+  ARMword *ROMLow;            /* 8bit Rom and 32bit Rom, or access speeds */ 
+  ARMword ROMLowSize;
   ARMword *PhysRam;
   unsigned int RAMSize;
 
@@ -77,7 +79,8 @@ struct MEMCStruct {
   unsigned int OldAddress1,OldPage1; /* TLAB */
 #endif
 
-  ARMEmuFunc *Romfuncs;
+  ARMEmuFunc *ROMHighFuncs;
+  ARMEmuFunc *ROMLowFuncs;
   ARMEmuFunc *PhysRamfuncs;
 };
 

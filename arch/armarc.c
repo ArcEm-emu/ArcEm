@@ -422,7 +422,6 @@ ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
   signal(SIGUSR2,DumpHandler);
 #endif
 
-
   MEMC.RAMSize = initmemsize;
   /* and now the RAM */
   /* Was malloc - but I want it 0 init */
@@ -476,7 +475,7 @@ ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
   /* Find the rom file size */
   fseek(ROMFile, 0l, SEEK_END);
 
-  MEMC.ROMSize = (unsigned int)ftell(ROMFile);
+  MEMC.ROMHighSize = (ARMword) ftell(ROMFile);
 
   fseek(ROMFile, 0l, SEEK_SET);
 
@@ -487,21 +486,19 @@ ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
           extnrom_size, extnrom_entry_count);
 #endif /* SYSTEM_X */
   dbug("Total ROM size required = %u KB\n",
-       (MEMC.ROMSize + extnrom_size) / 1024);
+       (MEMC.ROMHighSize + extnrom_size) / 1024);
 
-  /* Allocate the ROM space */
+  /* Allocate the space for the system ROM in ROMHigh */
   /* 128 is to try and ensure gap with next malloc to stop cache thrashing */
-  /* calloc() now used to ensure that Extension ROM space is zero'ed */
-  MEMC.ROM = malloc(MEMC.ROMSize + extnrom_size + 128);
-  memset(MEMC.ROM, 0x00, MEMC.ROMSize + extnrom_size + 128);
-  MEMC.Romfuncs = malloc(((MEMC.ROMSize + extnrom_size) / 4) * sizeof(ARMEmuFunc));
+  MEMC.ROMHigh = calloc(MEMC.ROMHighSize + 128, 1);
+  MEMC.ROMHighFuncs = malloc((MEMC.ROMHighSize / 4) * sizeof(ARMEmuFunc));
 
-  if ((MEMC.ROM == NULL) || (MEMC.Romfuncs == NULL)) {
-    fprintf(stderr,"Couldn't allocate space for ROM\n");
+  if ((MEMC.ROMHigh == NULL) || (MEMC.ROMHighFuncs == NULL)) {
+    fprintf(stderr,"Couldn't allocate space for ROM High\n");
     exit(3);
   }
 
-  for (ROMWordNum = 0; ROMWordNum < MEMC.ROMSize / 4; ROMWordNum++) {
+  for (ROMWordNum = 0; ROMWordNum < MEMC.ROMHighSize / 4; ROMWordNum++) {
 #ifdef DEBUG
     if (!(ROMWordNum & 0x1ff)) {
       fprintf(stderr, ".");
@@ -513,28 +510,40 @@ ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
     ROMWord |= (fgetc(ROMFile) << 8);
     ROMWord |= (fgetc(ROMFile) << 16);
     ROMWord |= (fgetc(ROMFile) << 24);
-    MEMC.ROM[ROMWordNum] = ROMWord;
+    MEMC.ROMHigh[ROMWordNum] = ROMWord;
+    MEMC.ROMHighFuncs[ROMWordNum] = ARMul_Emulate_DecodeInstr;
   }
 
-  for (ROMWordNum = 0; ROMWordNum < (MEMC.ROMSize + extnrom_size) / 4;
-       ROMWordNum++)
-  {
-    MEMC.Romfuncs[ROMWordNum] = ARMul_Emulate_DecodeInstr;
-  }
-
-  /* Close Rom File */
+  /* Close System ROM Image File */
   fclose(ROMFile);
 
+  /* Create Space for extension ROM in ROMLow */
+  if (extnrom_size) {
+    MEMC.ROMLowSize = extnrom_size;
+
+    /* calloc() now used to ensure that Extension ROM space is zero'ed */
+    MEMC.ROMLow = calloc(MEMC.ROMLowSize, 1);
+    MEMC.ROMLowFuncs = malloc((MEMC.ROMLowSize / 4) * sizeof(ARMEmuFunc));
+
+    if ((MEMC.ROMLow == NULL) || (MEMC.ROMLowFuncs == NULL)) {
+      fprintf(stderr,"Couldn't allocate space for ROM Low\n");
+      exit(3);
+    }
 #if defined(SYSTEM_X) || defined(MACOSX)
-  /* Load extension ROM */
-  dbug("Loading Extension ROM...\n");
-  extnrom_load(extnrom_size, extnrom_entry_count,
-               ((unsigned char *) MEMC.ROM) + MEMC.ROMSize);
+    /* Load extension ROM */
+    dbug("Loading Extension ROM...\n");
+    extnrom_load(extnrom_size, extnrom_entry_count,
+                 (unsigned char *) MEMC.ROMLow);
 #endif
+
+    for (ROMWordNum = 0; ROMWordNum < MEMC.ROMLowSize / 4; ROMWordNum++) {
+      MEMC.ROMLowFuncs[ROMWordNum] = ARMul_Emulate_DecodeInstr;
+    }
+  }
 
   dbug(" ..Done\n ");
 
-  MEMC.ROMSize += extnrom_size;
+//  MEMC.ROMHighSize += extnrom_size;
 
   IO_Init(state);
   DisplayKbd_Init(state);
@@ -568,7 +577,14 @@ ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
 void ARMul_MemoryExit(ARMul_State *state)
 {
   free(MEMC.PhysRam);
-  free(MEMC.ROM);
+  free(MEMC.ROMHigh);
+  free(MEMC.ROMHighFuncs);
+  if (MEMC.ROMLow) {
+    free(MEMC.ROMLow);
+  }
+  if (MEMC.ROMLowFuncs) {
+    free(MEMC.ROMLowFuncs);
+  }
   free(PRIVD);
 }
 
@@ -805,24 +821,15 @@ ARMword ARMul_SwapByte(ARMul_State *state, ARMword address, ARMword data)
 ARMword GetWord(ARMword address) {
 
   /* First check if we are doing ROM remapping and are accessing a remapped */
-  /* location.  If it is then map it into the ROM space                     */
-  if ((MEMC.ROMMapFlag) && (address < 0xc00000)) {
-    MEMC.ROMMapFlag = 2;
-
-    if (address >= MEMORY_R_ROM_HIGH - MEMORY_R_ROM_LOW)
-      address -= (MEMORY_R_ROM_HIGH - MEMORY_R_ROM_LOW);
-
+  /* location.  If it is then map it into the High ROM space                */
+  if ((MEMC.ROMMapFlag) && (address < 0x800000)) {
     /* A simple ROM wrap around */
-    return MEMC.ROM[(address % MEMC.ROMSize) / 4];
+    return MEMC.ROMHigh[(address % MEMC.ROMHighSize) / 4];
   }
 
   switch ((address >> 24) & 3) {
-    case 3: /* 0x03000000 - 0x03FFFFFF - 16MB - IO Controllers (8MB) and ROM space 2 x 4MB */
+    case 3: /* 0x03000000 - 0x03FFFFFF - 16MB - IO Controllers (4MB) and ROM space 4 + 8MB */
       if (address >= MEMORY_R_ROM_LOW) {
-        if (address >= MEMORY_R_ROM_HIGH)
-          address -= MEMORY_R_ROM_HIGH;
-        else
-          address -= MEMORY_R_ROM_LOW;
 
         if ((MEMC.ROMMapFlag == 2)) {
           MEMC.OldAddress1 = -1;
@@ -830,8 +837,18 @@ ARMword GetWord(ARMword address) {
           MEMC.ROMMapFlag = 0;
         }
 
-        /* A simple ROM wrap around */
-        return MEMC.ROM[(address % MEMC.ROMSize) / 4];
+        /* Both ROM areas wrap around */
+        if (address >= MEMORY_R_ROM_HIGH) {
+          address -= MEMORY_R_ROM_HIGH;
+          return MEMC.ROMHigh[(address % MEMC.ROMHighSize) / 4];
+        } else {
+          if (MEMC.ROMLow) {
+            address -= MEMORY_R_ROM_LOW;
+            return MEMC.ROMLow[(address % MEMC.ROMLowSize) / 4];
+          } else {
+            return 0;
+          }
+        }
       }
 
       if ((MEMC.ROMMapFlag == 2)) {
@@ -869,7 +886,7 @@ ARMword GetWord(ARMword address) {
       if (address >= MEMC.RAMSize) {
         dbug_memc("GetWord returning dead0bad - after PhysRam (from log ram)\n");
         return(0xdead0bad);
-      };
+      }
 
       return (MEMC.PhysRam[address / 4]);
   }
