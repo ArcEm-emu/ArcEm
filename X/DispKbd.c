@@ -838,7 +838,8 @@ static int DisplayKbd_XError(Display* disp, XErrorEvent *err) {
   fprintf(stderr,"Oh heck! We just got an X error - it said: '%s'\n",errbuf);
   fprintf(stderr,"\n\nThat probably shouldn't have happened!\n\nBUT\n");
   fprintf(stderr,"Oh - you'll probably get an error if you just close my window to shut me down - but don't worry about that...\n");
-  fprintf(stderr,"\n\nIf that is NOT the problem then report the bug to Dave at arcem@treblig.org\n");
+  fprintf(stderr, "\n\nIf that is NOT the problem then report the bug at"
+      "http://arcem.sf.net/\n");
   exit(1);
 };
 /*----------------------------------------------------------------------------*/
