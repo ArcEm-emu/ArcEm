@@ -86,7 +86,6 @@ void EnableTrace(void) {
 /* OK - this is getting treeted as an odds/sodds engine - just hook up anything
    you need to do occasionally! */
 static void DumpHandler(int sig) {
-  ARMul_State *state=sigavailablestate;
   FILE *res;
 
   exit(0);
@@ -99,9 +98,6 @@ static void DumpHandler(int sig) {
 #ifndef WIN32
   signal(SIGUSR2,DumpHandler);
 #endif
-
-  FDC_ReOpen(state,0);
-  return;
 
   Trace=1;
   return;
