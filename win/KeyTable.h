@@ -1,4 +1,5 @@
 /* Virtual Key codes */
+
 #define VK_LBUTTON	(1)
 #define VK_RBUTTON	(2)
 #define VK_CANCEL	(3)

@@ -15,7 +15,12 @@ HBITMAP cbmp = NULL;
 BITMAPINFO pbmi;
 BITMAPINFO cbmi;
 
-static char	szWindowClass[32]="GenericClass";
+static char	szWindowClass[32] = "GenericClass";
+
+static BOOL captureMouse = FALSE;
+static RECT rcClip;           // new area for ClipCursor
+static RECT rcOldClip;        // previous area for ClipCursor
+
 
 int xSize, ySize;
 
@@ -106,10 +111,10 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 			WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX, //WS_OVERLAPPEDWINDOW,
 			CW_USEDEFAULT, 
 			CW_USEDEFAULT,
-			xSize+GetSystemMetrics(SM_CXFIXEDFRAME)*2,
-			ySize+GetSystemMetrics(SM_CYFIXEDFRAME)*2
-			+GetSystemMetrics(SM_CYCAPTION)
-			+GetSystemMetrics(SM_CYMENU),
+			xSize + GetSystemMetrics(SM_CXFIXEDFRAME) * 2,
+			ySize + GetSystemMetrics(SM_CYFIXEDFRAME) * 2
+			+ GetSystemMetrics(SM_CYCAPTION)
+			+ GetSystemMetrics(SM_CYMENU),
 			NULL,
 			NULL,
 			hInstance,
@@ -163,15 +168,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				   return DefWindowProc(hWnd, message, wParam, lParam);
 			}
 			break;
+
 		case WM_PAINT: {
-//			RECT rt;
 			HDC hsrc;
 			HDC hsrc1;
 
 			hdc = BeginPaint(hWnd, &ps);
-			// TODO: Add any drawing code here...
-//			GetClientRect(hWnd, &rt);
-//			DrawText(hdc, szHello, strlen(szHello), &rt, DT_CENTER);
 
 			hsrc=CreateCompatibleDC(hdc);
 			SelectObject(hsrc,hbmp);
@@ -186,63 +188,99 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			EndPaint(hWnd, &ps);
 			};
 			break;
+
 		case WM_DESTROY:
 			PostQuitMessage(0);
 			exit(0);
 			break;
+
 		case WM_KEYDOWN:
 			nVirtKey = (TCHAR) wParam;    // character code 
-//			if (nVirtKey == VK_SHIFT) {
-//				nVirtKey = GetKeyState(nVirtKey);
-//			}
+
+			if (nVirtKey == VK_ADD) {
+		      captureMouse = !captureMouse;
+
+			  if (captureMouse) {
+                GetClipCursor(&rcOldClip); 
+                GetWindowRect(hWnd, &rcClip); 
+                ClipCursor(&rcClip);
+				SetCursor(NULL);
+
+			  } else {
+                ClipCursor(&rcOldClip); 	
+
+			  }
+              break;  
+			}
+			
 			lKeyData = lParam;              // key data 
 			nKeyStat = 0;
 			keyF = 1;
 			break;
+
 		case WM_KEYUP:
 			nVirtKey = (TCHAR) wParam;    // character code 
-//			if (nVirtKey == VK_SHIFT) {
-//				nVirtKey = GetKeyState(nVirtKey);
-//			}
+
 			lKeyData = lParam;              // key data 
 			nKeyStat = 1;
 			keyF = 1;
 			break;
-		case WM_MOUSEMOVE:
+
+		case WM_MOUSEMOVE:						
 			if (mouseMF == 0) {
 			  nMouseX = LOWORD(lParam);  // horizontal position of cursor 
+			  if (captureMouse) nMouseX *= 2;
 			  nMouseY = HIWORD(lParam);  // vertical position of cursor 
+			  if (captureMouse) nMouseY *= 2;
 			}
+			if (captureMouse) {
+			  SetCursor(NULL);
+			}
+
 			mouseMF = 1;
 			break;
+
 		case WM_LBUTTONDOWN:
 			nButton = 0x00;
 			buttF = 1;
 			break;
+
 		case WM_MBUTTONDOWN:
 			nButton = 0x01;
 			buttF = 1;
 			break;
+
 		case WM_RBUTTONDOWN:
 			nButton = 0x02;
 			buttF = 1;
 			break;
+
 		case WM_LBUTTONUP:
 			nButton = 0x80;
 			buttF = 1;
 			break;
+
 		case WM_MBUTTONUP:
 			nButton = 0x81;
 			buttF = 1;
 			break;
+
 		case WM_RBUTTONUP:
 			nButton = 0x82;
 			buttF = 1;
 			break;
+
+		case WM_SETCURSOR:
+			if (captureMouse)
+			  SetCursor(NULL);
+			else
+			  SetCursor(LoadCursor(NULL, IDC_ARROW));
+			break;
+
 		default:
 			return DefWindowProc(hWnd, message, wParam, lParam);
    }
-   return 0;
+   return TRUE;
 }
 
 int createWindow(int x, int y)
@@ -299,19 +337,23 @@ int createWindow(int x, int y)
 
 int updateDisplay()
 {
-/*
-  RECT r;
-  int w, h;
+  /*if (captureMouse) {
+    RECT rect;
+    int width, height;
 
-  w = rMouseX+GetSystemMetrics(SM_CXFIXEDFRAME);
-  h = rMouseY+GetSystemMetrics(SM_CYFIXEDFRAME)
-	+GetSystemMetrics(SM_CYCAPTION)
-	+GetSystemMetrics(SM_CYMENU);
+	width  = rMouseX + GetSystemMetrics(SM_CXFIXEDFRAME);
+    height = rMouseY + GetSystemMetrics(SM_CYFIXEDFRAME)
+	 + GetSystemMetrics(SM_CYCAPTION)
+	 + GetSystemMetrics(SM_CYMENU);
 
-  GetWindowRect(hWnd, &r);
-  SetCursorPos(r.left+w, r.top+h);
- */
-  InvalidateRect(mainWin,NULL,0);
+
+//	captureFB = TRUE;
+    GetWindowRect(mainWin, &rect);
+//    SetCursorPos(rect.left + width, rect.top + height);
+    SetCursorPos(rect.left + (rect.right - rect.left) /2, rect.top + height);
+  }*/
+ 
+  InvalidateRect(mainWin, NULL, 0);
   UpdateWindow(mainWin);
 
   return 0;

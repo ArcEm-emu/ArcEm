@@ -24,9 +24,9 @@ extern unsigned short *curbmp;
 static struct EventNode enodes[4];
 static int xpollenode=2; /* Flips between 2 and 3 */
 
-int rMouseX=0;
-int rMouseY=0;
-int rMouseHeight=0;
+int rMouseX = 0;
+int rMouseY = 0;
+int rMouseHeight = 0;
 int oldMouseX = 0;
 int oldMouseY = 0;
 
@@ -45,23 +45,18 @@ static unsigned long get_pixelval(unsigned int red, unsigned int green, unsigned
 
 
 static void MouseMoved(ARMul_State *state) {
-  int xdiff,ydiff;
-
-  /* We are now only using differences from the reference position */
-//  if ((nMouseX==MonitorWidth/2) && (nMouseY==MonitorHeight/2)) return;
-
-//  XWarpPointer(HD.disp,None,HD.MainPane,0,0,9999,9999,MonitorWidth/2,MonitorHeight/2);
-
-#ifdef DEBUG_MOUSEMOVEMENT
-  fprintf(stderr,"MouseMoved: CursorStart=%d xmotion->x=%d\n",
-          VIDC.Horiz_CursorStart,xmotion->x);
-#endif
+  int xdiff, ydiff;
 
   xdiff = -(oldMouseX - nMouseX);
   ydiff = oldMouseY - nMouseY;
 
-  if (xdiff>63) xdiff=63;
-  if (xdiff<-63) xdiff=-63;
+#ifdef DEBUG_MOUSEMOVEMENT
+  fprintf(stderr,"MouseMoved: xdiff = %d  ydiff = %d\n",
+          xdiff, ydiff);
+#endif
+
+  if (xdiff > 63) xdiff=63;
+  if (xdiff < -63) xdiff=-63;
 
   if (ydiff>63) ydiff=63;
   if (ydiff<-63) ydiff=-63;
@@ -70,8 +65,8 @@ static void MouseMoved(ARMul_State *state) {
   oldMouseX = nMouseX;
   oldMouseY = nMouseY;
 
-  KBD.MouseXCount=xdiff & 127;
-  KBD.MouseYCount=ydiff & 127;
+  KBD.MouseXCount = xdiff & 127;
+  KBD.MouseYCount = ydiff & 127;
 
   mouseMF = 0;
 #ifdef DEBUG_MOUSEMOVEMENT
@@ -114,7 +109,7 @@ unsigned int DisplayKbd_XPoll(void *data)
 }
 
 /*-----------------------------------------------------------------------------*/
-/* I'm not confident that this is completely correct - if its wrong all hell
+/* I'm not confident that this is completely correct - if it's wrong all hell
    is bound to break loose! If it works however it should speed things up nicely!
 */
 static void MarkAsUpdated(ARMul_State *state, int end) {
@@ -506,7 +501,7 @@ static void RefreshDisplay_TrueColor_8bpp(ARMul_State *state) {
 
 
 /*-----------------------------------------------------------------------------*/
-/* Refresh the mouses image                                                    */
+/* Refresh the mouse's image                                                    */
 static void RefreshMouse(ARMul_State *state) {
   int x,y,height,offset, pix;
   int memptr;
@@ -697,11 +692,12 @@ static void Kbd_StartToHost(ARMul_State *state) {
     case 0x22: /* Request mouse position */
 printf("Mouse request! ------------------\n");
 getchar();
-      KBD.MouseXToSend=KBD.MouseXCount;
-      KBD.MouseYToSend=KBD.MouseYCount;
-      if (IOC_WriteKbdRx(state, (unsigned char)KBD.MouseXToSend)!=-1) {
-        KBD.KbdState=KbdState_SentMouseByte1;
-        KBD.HostCommand=0;
+      KBD.MouseXToSend = KBD.MouseXCount;
+      KBD.MouseYToSend = KBD.MouseYCount;
+
+      if (IOC_WriteKbdRx(state, (unsigned char)KBD.MouseXToSend) != -1) {
+        KBD.KbdState = KbdState_SentMouseByte1;
+        KBD.HostCommand = 0;
       };
       return;
   };

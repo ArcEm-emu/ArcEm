@@ -21,9 +21,15 @@
 */
 int ReadConfigFile(ARMul_State *state) {
   FILE *fConf;
+#ifndef WIN32
   char *HomeVar = getenv("HOME");
+#endif
   char *nameConf;
   char tmpbuf[1024];
+
+#ifdef WIN32
+  nameConf = strdup("arcemrc");
+#else
 
   if (HomeVar==NULL) {
     fprintf(stderr,"Couldn't read $HOME and thus couldn't load config file\n");
@@ -35,9 +41,6 @@ int ReadConfigFile(ARMul_State *state) {
     return 0;
   };
 
-#ifdef WIN32
-  strcpy(nameConf, "arcemrc");
-#else
   sprintf(nameConf, "%s/.arcemrc", HomeVar);
 #endif
 
