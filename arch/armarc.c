@@ -341,7 +341,7 @@ unsigned ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
   int PresPage;
   unsigned int i;
   unsigned extnrom_size = 0;
-#ifdef SYSTEM_X
+#if defined(SYSTEM_X) || defined(MACOSX)
   unsigned extnrom_entry_count;
 #endif
 
@@ -420,7 +420,7 @@ unsigned ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
 
  fseek(ROMFile, 0l, SEEK_SET);
 
-#ifdef SYSTEM_X
+#if defined(SYSTEM_X) || defined(MACOSX)
   /* Add the space required by an Extension Rom */
   extnrom_size = extnrom_calculate_size(&extnrom_entry_count);
   fprintf(stderr, "extnrom_size = %u, extnrom_entry_count= %u\n",
@@ -462,7 +462,7 @@ unsigned ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
     MEMC.Romfuncs[ROMWordNum] = ARMul_Emulate_DecodeInstr;
   }
 
-#ifdef SYSTEM_X
+#if defined(SYSTEM_X) || defined(MACOSX)
   /* Load extension ROM */
   dbug("Loading Extension ROM...\n");
   extnrom_load(extnrom_size, extnrom_entry_count,

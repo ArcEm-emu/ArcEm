@@ -12,7 +12,7 @@
    "RISC OS Support for extension ROMs", a text file
 */
 
-#ifdef SYSTEM_X
+#if defined(SYSTEM_X) || defined(MACOSX)  
 
 #include <assert.h>
 #include <errno.h>
