@@ -199,7 +199,8 @@ bag.o: bag.c bag.h
 	$(CC) $(CFLAGS) -c $*.c
 
 $(SYSTEM)/DispKbd.o: $(SYSTEM)/DispKbd.c arch/DispKbd.h $(SYSTEM)/KeyTable.h \
-                     arch/armarc.h arch/fdc1772.h arch/hdc63463.h
+                     arch/armarc.h arch/fdc1772.h arch/hdc63463.h \
+                     arch/keyboard.h
 	$(CC) $(CFLAGS) -c $*.c -o $(SYSTEM)/DispKbd.o
 
 arch/i2c.o: arch/i2c.c arch/i2c.h arch/armarc.h arch/DispKbd.h arch/archio.h \
@@ -224,7 +225,7 @@ arch/ReadConfig.o: arch/ReadConfig.c arch/ReadConfig.h arch/DispKbd.h \
 	arch/armarc.h
 	$(CC) $(CFLAGS) -c $*.c -o arch/ReadConfig.o
 
-arch/keyboard.o: arch/keyboard.c
+arch/keyboard.o: arch/keyboard.c arch/keyboard.h
 	$(CC) $(CFLAGS) -c $*.c -o arch/keyboard.o
 
 win/gui.o: win/gui.rc win/gui.h win/arc.ico
