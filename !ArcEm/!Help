@@ -1,0 +1,61 @@
+Archimedes Emulator
+===================
+Version 0.60
+This is the 2nd RISC OS Release
+
+Ported by Alex Macfarlane Smith and Peter Naulls
+Contact:  peter@chocky.org
+
+Written by Dave Alan Gilbert
+
+This is completely experimental, and horribly slow, and not supported.
+However, you can boot RISC OS and ARM Linux on it.
+
+
+
+
+Installing:
+
+  You will require the !Unixhome application.  This is avilable from
+  http://www.chocky.org/unix/programs/
+  Put the file /arcemrc inside !UnixHome (double click on it)
+  Put the !ArcEm application anywhere you like along with the 'ROM'
+  file.
+
+
+Running ARM Linux:
+
+  The provided 'ROM' file will boot ARM Linux.  However, to get further
+  than a kernel panic, you will require the Harddrive image from
+    ftp://ftp.arm.linux.org.uk/pub/linux/arcem/
+  Uncompress, and also place in the same dir as !ArcEm.
+  Run the application.
+  Login as "root".
+
+
+Running RISC OS:
+
+  You'll need to obtain a RISC OS 3.1 (or whatever) ROM image.  If you
+  have 4 files, you'll need to join these into a 2MB file called "ROM"
+  in the same directory as !ArcEm.
+  Run the application.
+  Enjoy.
+
+
+You can quit the emulator with the escape key.
+
+Known Problems:
+
+  Hardware scrolling (e.g. F12 from desktop) doesn't work properly.
+  It's very slow.
+  Escape key quits, rather than sending escape to emulator (need a suitable
+  key combination to quit emulator).
+
+
+Source available upon request.
+Original source, documentation, etc, available from:
+
+  ftp://ftp.arm.linux.org.uk/pub/linux/arcem/
+
+
+

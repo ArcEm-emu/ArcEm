@@ -1,0 +1,27 @@
+#1) Copy all the files from this distribution directory
+
+#2) Untar arcem.tar.gz to create the directory arcem
+
+     gzip -d < arcem.tar.gz | tar -xvf -
+
+#3) Read arcem/arch/Readme.OrElse and if necessary
+    patch the makefile by adding flags for your 
+    machine, change your compiler etc.
+
+#5) Build the emulator
+     make
+
+#6 Unpack the hard drive image
+     gzip -d hardimage.gz
+     ln -s hardimage arcem/HardImage1
+     ln -s hardimage arcem/HardImage2
+
+#7 Unpack the ROM image
+     gzip -d linux.ROM.image.gz
+     ln -s linux.ROM.image ROM
+
+#8 Move the example cmos file in
+     mv hexcmos arcem/hexcmos
+
+#9 Remind to take a copy of the .arcemrc
+     echo remember to: cp my-.arcemrc ~/.arcemrc

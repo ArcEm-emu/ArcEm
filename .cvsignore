@@ -1,0 +1,6 @@
+ROM*
+*,ff8
+HardImage?
+FloppyImage?
+hexcmos*
+armul-arc
