@@ -114,9 +114,11 @@ static void DumpHandler(int sig) {
  * @param address  Logical RAM address
  * @returns        Physical RAM address
  */
-ARMword GetPhysAddress(unsigned int address) {
+ARMword
+GetPhysAddress(unsigned address)
+{
   ARMword pagetabval = MEMC.TmpPage;
-  int PhysPage;
+  unsigned PhysPage;
 
   if (pagetabval == -1)
     return 0;
@@ -140,7 +142,8 @@ ARMword GetPhysAddress(unsigned int address) {
     case MEMC_PAGESIZE_3_32K:
       /* 32K */
       PhysPage = ((pagetabval >> 3) & 0xf) | ((pagetabval & 1) << 4) |
-                 ((pagetabval & 2) << 5) | ((pagetabval & 4) << 3);
+                 ((pagetabval & 2) << 5) | ((pagetabval & 4) << 3) |
+                 (pagetabval & 0x80);
       return (address & 0x7fff) | (PhysPage << 15);
   } /* Page size switch */
 
@@ -194,7 +197,7 @@ FindPageTableEntry_Search(unsigned address, ARMword *PageTabVal)
       abort();
   }
 
-  for (Current = 0; Current < 128; Current++) {
+  for (Current = 0; Current < 512; Current++) {
     if ((MEMC.PageTable[Current] & mask) == matchaddr) {
       MEMC.OldAddress1 = address;
       MEMC.OldPage1 = MEMC.PageTable[Current];
@@ -370,7 +373,8 @@ static int CheckAbortW(int address) {
  *                       in bytes. If 0 default to 4MB
  * @returns
  */
-unsigned ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
+unsigned
+ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
 {
   PrivateDataType *PrivDPtr;
   FILE *ROMFile;
@@ -424,7 +428,7 @@ unsigned ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
   MEMC.PageSizeFlags = MEMC_PAGESIZE_O_4K;
 
   /* Top bit set means it isn't valid */
-  for (PresPage = 0; PresPage <128; PresPage++)
+  for (PresPage = 0; PresPage < 512; PresPage++)
     MEMC.PageTable[PresPage] = 0xffffffff;
 
   dbug(" Loading ROM....\n ");
@@ -869,7 +873,7 @@ PutVal(ARMul_State *state, ARMword address, ARMword data, int byteNotword,
 {
   if (address >= MEMORY_W_LOG2PHYS) {
     /* Logical-to-physical address translation */
-    int tmp;
+    unsigned tmp;
 
     if (!Statechange)
       return;
@@ -883,22 +887,24 @@ PutVal(ARMul_State *state, ARMword address, ARMword data, int byteNotword,
     tmp = address - MEMORY_W_LOG2PHYS;
 #ifdef DEBUG_MEMC
     {
-      unsigned int logbaseaddr;
-      unsigned int Entry;
+      unsigned logbaseaddr;
+      unsigned Entry;
 
-      logbaseaddr=(tmp >>15) & 255;
-      logbaseaddr|=(tmp >>2) & (256|512);
-      logbaseaddr<<=(12 + MEMC.PageSizeFlags); /* Actually all that masking is only OK for 32K */
-      Entry=(tmp >>3)&0xf;
-      Entry|=(tmp<<4)&16;
-      Entry|=(tmp<<3)&32;
-      Entry|=(tmp<<5)&64;
-      fprintf(stderr,"PutVal: Pagetable write, address=0x%x entry=%d val=0x%x (logbaseaddress=0x%08x ppn=%d - for 32K size)\n",
-              address,address & 127, tmp & 0x0fffffff,logbaseaddr,Entry);
-    };
+      logbaseaddr =  (tmp >> 15) & 0xff;
+      logbaseaddr |= (tmp >> 2) & 0x300;
+      logbaseaddr <<= (12 + MEMC.PageSizeFlags); /* Actually all that masking is only OK for 32K */
+
+      Entry =  (tmp >> 3) & 0xf;
+      Entry |= (tmp << 4) & 0x10;
+      Entry |= (tmp << 3) & 0x20;
+      Entry |= (tmp << 5) & 0x40;
+      Entry |= tmp & 0x80;
+      fprintf(stderr,"PutVal: Pagetable write, address=0x%x entry=0x%x val=0x%x (logbaseaddress=0x%08x ppn=%d - for 32K size)\n",
+              address, address & 0xff, tmp & 0x0fffffff, logbaseaddr, Entry);
+    }
 #endif
 
-    MEMC.PageTable[address & 127] = tmp & 0x0fffffff;
+    MEMC.PageTable[address & 0xff] = tmp & 0x0fffffff;
 
     return;
   }

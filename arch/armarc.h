@@ -38,7 +38,7 @@ struct MEMCStruct {
   ARMword *PhysRam;
   unsigned int RAMSize;
 
-  int PageTable[128]; /* Good old fashioned MEMC1 page table */
+  int PageTable[512]; /* Good old fashioned MEMC1 page table */
   ARMword ControlReg;
   ARMword PageSizeFlags;
   ARMword Vinit,Vstart,Vend,Cinit,Sstart,SendN,Sptr;
