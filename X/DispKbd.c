@@ -1126,7 +1126,7 @@ static void ProcessKey(ARMul_State *state,XKeyEvent *key) {
        XDefineCursor(HD.disp, HD.MainPane, XCreatePixmapCursor(HD.disp, bm_no, bm_no, &black, &black,0, 0));
       }
       else
-	XDefineCursor(HD.disp, HD.MainPane, XCreateFontCursor(HD.disp, 132));
+                XUndefineCursor(HD.disp, HD.MainPane);
     };
     return;
   };
