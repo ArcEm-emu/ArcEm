@@ -427,19 +427,10 @@ void ARMul_Icycles(unsigned number)
 
 void ARMul_NegZero(ARMul_State *state, ARMword result)
 {
-  if (NEG(result)) {
-    SETN;
-    CLEARZ;
+    ASSIGNN(NEG(result));
+    ASSIGNZ(result == 0);
 
-  } else if (result == 0) {
-    CLEARN;
-    SETZ;
-
-  } else {
-    CLEARN;
-    CLEARZ;
-
-  };
+    return;
 }
 
 
@@ -449,11 +440,11 @@ void ARMul_NegZero(ARMul_State *state, ARMword result)
 
 void ARMul_AddCarry(ARMul_State *state, ARMword a,ARMword b,ARMword result)
 {
-  ASSIGNC( (NEG(a) && NEG(b)) ||
-           (NEG(a) && POS(result)) ||
-           (NEG(b) && POS(result)) );
-}
+    ASSIGNC((NEG(a) && (NEG(b) || POS(result))) ||
+        (NEG(b) && POS(result)));
 
+    return;
+}
 
 /***************************************************************************\
 * Assigns the V flag after an addition of a and b to give result            *
