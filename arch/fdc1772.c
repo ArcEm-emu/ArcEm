@@ -115,12 +115,12 @@ unsigned int FDC_Regular(ARMul_State *state)
       FDC.StatusReg|=BIT_MOTORON | BIT_MOTORSPINUP | BIT_TR00;
       FDC.Track=0;
       GenInterrupt(state,"Restore complete");
-      FDC.LastCommand=0xd0;
+        FDC.LastCommand = CMD_FORCE_INTR;
       FDC.StatusReg&=~BIT_BUSY;
 
     } else if (IS_CMD(FDC.LastCommand, SEEK)) {
       /* It will complete now. */
-      FDC.LastCommand=0xd0;
+        FDC.LastCommand = CMD_FORCE_INTR;
       FDC.StatusReg&=~BIT_BUSY;
       FDC.StatusReg|=BIT_MOTORSPINUP|BIT_MOTORON;
       FDC.Track=FDC.Data; /* Got to the desired track */
@@ -137,7 +137,7 @@ unsigned int FDC_Regular(ARMul_State *state)
       if (FDC.LastCommand & TYPE1_UPDATETRACK)
         FDC.Track=ActualTrack; /* Got to the desired track */
       if (ActualTrack==0) FDC.StatusReg|=BIT_TR00;
-      FDC.LastCommand=0xd0;
+        FDC.LastCommand = CMD_FORCE_INTR;
       GenInterrupt(state,"Step complete");
 
     } else if (IS_CMD(FDC.LastCommand, READ_SECTOR)) {
@@ -299,7 +299,8 @@ static void ReadDataRegSpecial(ARMul_State *state)
        * interrupt. */
       if (!FDC.BytesToGo) {
         GenInterrupt(state,"Read end (b)");
-        FDC.LastCommand=0xd0; /* Force int with no interrupt */
+            /* Force int with no interrupt. */
+            FDC.LastCommand = CMD_FORCE_INTR;
         FDC.StatusReg&=~BIT_BUSY;
       };
 
@@ -308,7 +309,8 @@ static void ReadDataRegSpecial(ARMul_State *state)
        * interrupt. */
       if (!FDC.BytesToGo) {
         GenInterrupt(state,"Read addr end");
-        FDC.LastCommand=0xd0; /* Force int with no interrupt */
+            /* Force int with no interrupt. */
+            FDC.LastCommand = CMD_FORCE_INTR;
         FDC.StatusReg&=~BIT_BUSY;
         /* Supposed to copy the track into the sector register */
         FDC.Sector=FDC.Track;
@@ -431,7 +433,8 @@ static void FDC_DoReadAddressChar(ARMul_State *state) {
       };
       DBG((stderr,"FDC: ReadAddressChar: Terminating command at end\n"));
       GenInterrupt(state,"Read end");
-      FDC.LastCommand=0xd0; /* Force int with no interrupt */
+        /* Force int with no interrupt. */
+        FDC.LastCommand = CMD_FORCE_INTR;
       FDC.StatusReg&=~BIT_BUSY;
       /* Supposed to copy the track into the sector register */
       FDC.Sector=FDC.Track;
@@ -479,7 +482,7 @@ static void FDC_SeekCommand(ARMul_State *state) {
     /* Fail!! */
     FDC.StatusReg|=BIT_RECNOTFOUND;
     GenInterrupt(state,"Seek fail");
-    FDC.LastCommand=0xd0;
+        FDC.LastCommand = CMD_FORCE_INTR;
     FDC.StatusReg&=~BIT_BUSY;
   };
   FDC.DelayCount=FDC.DelayLatch=SEEKDELAY;
@@ -501,7 +504,7 @@ static void FDC_StepDirCommand(ARMul_State *state,int Dir) {
     /* Fail!! */
     FDC.StatusReg|=BIT_RECNOTFOUND;
     GenInterrupt(state,"Step fail");
-    FDC.LastCommand=0xd0;
+        FDC.LastCommand = CMD_FORCE_INTR;
     FDC.StatusReg&=~BIT_BUSY;
   };
   FDC.DelayCount=FDC.DelayLatch=SEEKDELAY;
@@ -534,7 +537,7 @@ static void FDC_ReadAddressCommand(ARMul_State *state) {
   } else {
     FDC.StatusReg|=BIT_RECNOTFOUND;
     GenInterrupt(state,"Couldnt read disc file in ReadAddress");
-    FDC.LastCommand=0xd0;
+        FDC.LastCommand = CMD_FORCE_INTR;
     FDC.StatusReg&=~BIT_BUSY;
   };
 }; /* ReadAddressCommand */
@@ -590,7 +593,8 @@ static void FDC_DoWriteChar(ARMul_State *state) {
   } else {
     /* really the end */
     GenInterrupt(state,"end write");
-    FDC.LastCommand=0xd0; /* Force int with no interrupt */
+        /* Force int with no interrupt. */
+        FDC.LastCommand = CMD_FORCE_INTR;
     FDC.StatusReg&=~BIT_BUSY;
     ClearDRQ(state);
   };
@@ -609,7 +613,7 @@ static void FDC_WriteCommand(ARMul_State *state) {
     if (FDC.drive[FDC.CurrentDisc].write_protected) {
         FDC.StatusReg |= BIT_WRITEPROT;
         FDC.StatusReg &= ~BIT_BUSY;
-        FDC.LastCommand = 0xd0;
+        FDC.LastCommand = CMD_FORCE_INTR;
         GenInterrupt(state, "disc write protected");
         return;
     }
@@ -750,7 +754,7 @@ void FDC_ReOpen(ARMul_State *state, int drive) {
   
   if (drive>3) return;
 
-  if (FDC.LastCommand!=0xd0) {
+    if (FDC.LastCommand != CMD_FORCE_INTR) {
     fprintf(stderr,"FDC not idle - can't change floppy\n");
     return;
   };
@@ -780,7 +784,8 @@ void FDC_Init(ARMul_State *state) {
   FDC.Track=0;
   FDC.Sector = 0;
   FDC.Data=0;
-  FDC.LastCommand=0xd0; /* force interrupt - but actuall not doing */
+  FDC.LastCommand = CMD_FORCE_INTR; /* Force interrupt - but actually
+                                     * not doing. */
   FDC.Direction=1;
   FDC.CurrentDisc=0;
     FDC.leds_changed = NULL;
@@ -824,7 +829,7 @@ char *fdc_insert_floppy(int drive, char *image)
         sizeof FDC.drive[0]);
     assert(image);
 
-    if (FDC.LastCommand != 0xd0) {
+    if (FDC.LastCommand != CMD_FORCE_INTR) {
         fprintf(stderr, "fdc busy (%#x), can't insert floppy.\n",
             FDC.LastCommand);
         return "fdc busy, try again later";
