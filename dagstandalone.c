@@ -27,15 +27,15 @@
 #include <linux/time.h>
 #endif
 
+#include "dagstandalone.h"
 #include "armdefs.h"
+#include "armrdi.h"
 #include "dbg_conf.h"
 #include "dbg_hif.h"
 #include "dbg_rdi.h"
+#include "bag.h"
 
 /* RDI interface */
-extern const struct RDIProcVec armul_rdi;
-
-static int MYrdp_level = 0;
 
 static int rdi_state = 0;
 
@@ -122,7 +122,7 @@ void dagstandalone(void) {
   hostif.write = mywrite;
   hostif.gets = mygets;
   hostif.reset = mypause; /* do nothing */
-  hostif.resetarg = (void *)"Do I love resetting or what!\n";
+  hostif.resetarg = "Do I love resetting or what!\n";
 
   if (rdi_state)
   {

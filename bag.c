@@ -40,7 +40,7 @@ typedef struct hashentry {
 Hashentry *lookupbyfirst[HASH_TABLE_SIZE];
 Hashentry *lookupbysecond[HASH_TABLE_SIZE];
 
-void addtolist(Hashentry **add, long first, long second) {
+static void addtolist(Hashentry **add, long first, long second) {
   while (*add) add = &((*add)->next);
   /* Malloc will never fail? :o( */
   (*add) = (Hashentry *) malloc(sizeof(Hashentry));
@@ -49,7 +49,8 @@ void addtolist(Hashentry **add, long first, long second) {
   (*add)->second = second;
 }
 
-void killwholelist(Hashentry *p) {
+
+static void killwholelist(Hashentry *p) {
   Hashentry *q;
 
   while (p) {
@@ -59,7 +60,7 @@ void killwholelist(Hashentry *p) {
   }
 }
 
-void removefromlist(Hashentry **p, long first, long second) {
+static void removefromlist(Hashentry **p, long first, long second) {
   Hashentry *q;
 
   while (*p) {

@@ -43,5 +43,5 @@ struct Dbg_HostosInterface {
     void *hostosarg;
 
     Hif_RDIResetProc *reset;
-    void *resetarg;
+    const void *resetarg;
 };
