@@ -51,6 +51,11 @@ static floppy_format avail_format[] = {
 /* points to an element of avail_format. */
 static floppy_format *format;
 
+/* give the byte offset of a given sector. */
+#define SECTOR_LOC_TO_BYTE_OFF(track, side, sector) \
+    (((track * 2 + side) * format->sectors_per_track + \
+        (sector - format->sector_base)) * format->bytes_per_sector)
+
 static void FDC_DoWriteChar(ARMul_State *state);
 static void FDC_DoReadChar(ARMul_State *state);
 static void FDC_DoReadAddressChar(ARMul_State *state);
@@ -508,8 +513,7 @@ static void FDC_ReadAddressCommand(ARMul_State *state) {
   FDC.StatusReg|=BIT_BUSY;
   FDC.StatusReg&=~(BIT_DRQ | BIT_LOSTDATA | (1<<5) | (1<<6) | BIT_RECNOTFOUND);
 
-    offset = ((Side + FDC.Track * 2) * format->sectors_per_track +
-        (FDC.Sector - format->sector_base)) * format->bytes_per_sector;
+    offset = SECTOR_LOC_TO_BYTE_OFF(FDC.Track, Side, FDC.Sector);
 
   if (FDC.FloppyFile[FDC.CurrentDisc]!=NULL) {
     fseek(FDC.FloppyFile[FDC.CurrentDisc],offset,SEEK_SET);
@@ -543,8 +547,7 @@ static void FDC_ReadCommand(ARMul_State *state) {
                  Side,FDC.Track,FDC.Sector,FDC.CurrentDisc);
 #endif
 
-    offset = ((Side + FDC.Track * 2) * format->sectors_per_track +
-        (FDC.Sector - format->sector_base)) * format->bytes_per_sector;
+    offset = SECTOR_LOC_TO_BYTE_OFF(FDC.Track, Side, FDC.Sector);
 
   if (FDC.FloppyFile[FDC.CurrentDisc]!=NULL) {
     if (fseek(FDC.FloppyFile[FDC.CurrentDisc],offset,SEEK_SET)!=0) {
@@ -601,9 +604,8 @@ static void FDC_WriteCommand(ARMul_State *state) {
   fprintf(stderr,"FDC_WriteCommand: Starting with Side=%d Track=%d Sector=%d\n",
                  Side,FDC.Track,FDC.Sector);
 #endif
-    offset = ((Side + FDC.Track * 2) * format->sectors_per_track +
-        (FDC.Sector - format->sector_base)) * format->bytes_per_sector;
 
+    offset = SECTOR_LOC_TO_BYTE_OFF(FDC.Track, Side, FDC.Sector);
   fseek(FDC.FloppyFile[FDC.CurrentDisc],offset,SEEK_SET);
 
   FDC.BytesToGo = format->bytes_per_sector + 1;
