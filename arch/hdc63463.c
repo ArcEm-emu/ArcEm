@@ -96,6 +96,7 @@ static void ReturnParams(ARMul_State *state,const int NParams, ...);
 
 /*---------------------------------------------------------------------------*/
 /* Dump 256 bytes of data in hex dump format                                 */
+#ifdef DEBUG_DATA
 static void Dump256Block(unsigned char *Data) {
   int oindex,iindex;
 
@@ -117,6 +118,8 @@ static void Dump256Block(unsigned char *Data) {
   }; /* oindex */
   fputc('\n',stderr);
 }; /* Dump256Block */
+#endif
+
 /*---------------------------------------------------------------------------*/
 unsigned int HDC_Regular(ARMul_State *state) {
   FDC_Regular(state);

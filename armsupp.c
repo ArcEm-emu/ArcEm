@@ -23,46 +23,6 @@
 extern ARMword *armflags;
 
 /***************************************************************************\
-*                    Definitions for the support routines                   *
-\***************************************************************************/
-
-/*void ARMul_SetReg(ARMul_State *state, unsigned mode, unsigned reg, ARMword value);
-ARMword ARMul_GetPC(ARMul_State *state);
-ARMword ARMul_GetNextPC(ARMul_State *state);
-void ARMul_SetPC(ARMul_State *state, ARMword value);
-ARMword ARMul_GetR15(ARMul_State *state);
-void ARMul_SetR15(ARMul_State *state, ARMword value);
-
-ARMword ARMul_GetCPSR(ARMul_State *state);
-void ARMul_SetCPSR(ARMul_State *state, ARMword value);
-void ARMul_FixCPSR(ARMul_State *state, ARMword instr, ARMword rhs);
-ARMword ARMul_GetSPSR(ARMul_State *state, ARMword mode);
-void ARMul_SetSPSR(ARMul_State *state, ARMword mode, ARMword value);
-void ARMul_FixSPSR(ARMul_State *state, ARMword instr, ARMword rhs);
-
-void ARMul_CPSRAltered(ARMul_State *state);
-void ARMul_R15Altered(ARMul_State *state);
-
-ARMword ARMul_SwitchMode(ARMul_State *state,ARMword oldmode, ARMword newmode);
-static ARMword ModeToBank(ARMul_State *state,ARMword mode);
-
-unsigned ARMul_NthReg(ARMword instr, unsigned number);
-
-void ARMul_LDC(ARMul_State *state,ARMword instr,ARMword address);
-void ARMul_STC(ARMul_State *state,ARMword instr,ARMword address);
-void ARMul_MCR(ARMul_State *state,ARMword instr, ARMword source);
-ARMword ARMul_MRC(ARMul_State *state,ARMword instr);
-void ARMul_CDP(ARMul_State *state,ARMword instr);
-void ARMul_UndefInstr(ARMul_State *state,ARMword instr);
-unsigned IntPending(ARMul_State *state);
-
-ARMword ARMul_Align(ARMul_State *state, ARMword address, ARMword data);
-
-void ARMul_InvokeEvent(void);
-static void InvokeList(unsigned long from, unsigned long to);*/
-
-
-/***************************************************************************\
 * Given a processor mode, this routine returns the register bank that       *
 * will be accessed in that mode.                                            *
 \***************************************************************************/
@@ -540,7 +500,8 @@ ARMword ARMul_Align(ARMul_State *state, ARMword address, ARMword data)
 * to the function. A delay of zero doesn't work, just call the function.    *
 \***************************************************************************/
 
-void ARMul_ScheduleEvent(struct EventNode* event, unsigned long delay, unsigned (*what)(void))
+void ARMul_ScheduleEvent(struct EventNode* event, unsigned long delay,
+                                                 unsigned (*what)(void *))
 {
   statestr.Now = ARMul_Time + delay;
   event->func = what;

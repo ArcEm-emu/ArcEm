@@ -11,6 +11,9 @@
 #include "archio.h"
 #include "armarc.h"
 #include "DispKbd.h"
+#include "ControlPane.h"
+
+#include <string.h>
 
 #define CTRLPANEWIDTH 640
 #define CTRLPANEHEIGHT 100
@@ -24,7 +27,7 @@
 #define DC DISPLAYCONTROL
 
 /*-----------------------------------------------------------------------------*/
-static void TextAt(ARMul_State *state,char *Text, int x, int y) {
+static void TextAt(ARMul_State *state, const char *Text, int x, int y) {
   XDrawImageString(HD.disp,HD.ControlPane,HD.ControlPaneGC,x,y,
                    Text,strlen(Text));
 }; /* TextAt */
@@ -32,7 +35,7 @@ static void TextAt(ARMul_State *state,char *Text, int x, int y) {
 /*-----------------------------------------------------------------------------*/
 /* Centeres the text in the 'lx rx' box placing the text so that its top edge
    is at 'ty'; it returns the position of the bottom of the text               */
-static int TextCenteredH(ARMul_State *state, char *Text, int ty,int lx,int rx) {
+static int TextCenteredH(ARMul_State *state, const char *Text, int ty,int lx,int rx) {
   int dirreturn,ascentret,descentret;
   XCharStruct overall;
   int x;
@@ -52,8 +55,8 @@ static int TextCenteredH(ARMul_State *state, char *Text, int ty,int lx,int rx) {
   return(ty+descentret);
 }; /* TextCenteredH */
 
-/*-----------------------------------------------------------------------------*/
-static void DoLED(ARMul_State *state,char *Text,int On,int ty, int lx) {
+/*----------------------------------------------------------------------------*/
+static void DoLED(ARMul_State *state, const char *Text,int On,int ty, int lx) {
   XSetBackground(HD.disp,HD.ControlPaneGC,HD.OffWhite.pixel);
   XSetForeground(HD.disp,HD.ControlPaneGC,HD.Black.pixel);
 
@@ -70,7 +73,7 @@ static void DoLED(ARMul_State *state,char *Text,int On,int ty, int lx) {
            0,360*64);
 }; /* DoLED */
 
-/*-----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 void ControlPane_RedrawLeds(ARMul_State *state) {
   int Drive;
   char Temp[32];
@@ -105,7 +108,7 @@ static void ControlPane_Redraw(ARMul_State *state,XExposeEvent *e) {
 
 }; /* ControlPane_Redraw */
 
-/*-----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 void ControlPane_Event(ARMul_State *state,XEvent *e) {
   switch (e->type) {
     case Expose:
@@ -118,7 +121,7 @@ void ControlPane_Event(ARMul_State *state,XEvent *e) {
   };
 }; /* ControlPane_Event */
 
-/*-----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 void ControlPane_Init(ARMul_State *state) {
   XGCValues gctmpval;
   XTextProperty name;
@@ -134,7 +137,7 @@ void ControlPane_Init(ARMul_State *state) {
                                      CopyFromParent, /* visual */
                                      0, /* valuemask */
                                      NULL /* attribs */);
-  tmpptr="Arc emulator - Control panel";
+  tmpptr = strdup("Arc emulator - Control panel");
   if (XStringListToTextProperty(&tmpptr,1,&name)==0) {
     fprintf(stderr,"Could not allocate window name\n");
     exit(1);

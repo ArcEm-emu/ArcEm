@@ -210,11 +210,12 @@ ARMword ARMul_DoProg(ARMul_State *state);
 \***************************************************************************/
 
 struct EventNode {        /* An event list node */
-  unsigned (*func)(void); /* The function to call */
+  unsigned (*func)(void *); /* The function to call */
   struct EventNode *next;
 };
 
-void ARMul_ScheduleEvent(struct EventNode* event, unsigned long delay, unsigned (*func)(void) );
+void ARMul_ScheduleEvent(struct EventNode* event, unsigned long delay,
+                        unsigned (*func)(void *));
 void ARMul_EnvokeEvent(void);
 #define ARMul_Time (statestr.Numcycles)
 

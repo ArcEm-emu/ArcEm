@@ -117,9 +117,8 @@ typedef struct {
                                                  FLAG=1;\
                                                };\
                                              };
-/*-----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 
-unsigned int DisplayKbd_XPoll(ARMul_State *state);
 void DisplayKbd_Init(ARMul_State *state);
 void VIDC_PutVal(ARMul_State *state,ARMword address, ARMword data,int bNw);
 

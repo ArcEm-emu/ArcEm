@@ -78,20 +78,22 @@ struct WatchNode { /* A watchpoint list node */
 BreakNode *BreakList = NULL;
 WatchNode *WatchList = NULL;
 
-void ARMul_DebugPrint_i(const Dbg_HostosInterface *hostif, const char *format, ...)
+#ifdef RDI_VERBOSE
+static void ARMul_DebugPrint_i(const Dbg_HostosInterface *hostif, const char *format, ...)
 { va_list ap;
   va_start(ap, format);
   hostif->dbgprint(hostif->dbgarg, format, ap);
   va_end(ap);
 }
 
-void ARMul_DebugPrint(ARMul_State *state, const char *format, ...)
+static void ARMul_DebugPrint(ARMul_State *state, const char *format, ...)
 { va_list ap;
   va_start(ap, format);
   if(!(rdi_log & 8))
     state->hostif->dbgprint(state->hostif->dbgarg, format, ap);
   va_end(ap);
 }
+#endif
 
 #define CONSOLE_PRINT_MAX_LEN 128
 
@@ -110,7 +112,7 @@ void ARMul_ConsolePrint(ARMul_State *state, const char *format, ...)
   }
 }
 
-void ARMul_DebugPause(ARMul_State *state)
+static void ARMul_DebugPause(ARMul_State *state)
 {
   if(!(rdi_log & 8))
   state->hostif->dbgpause(state->hostif->dbgarg);

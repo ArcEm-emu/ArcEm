@@ -1,9 +1,9 @@
 /* (c) David Alan Gilbert 1995-1999 - see Readme file for copying info */
 /* Display and keyboard interface for the Arc emulator */
 
-/* !!! Now does TrueColor and PseudoColor X modes; but doesnt handle palette changes
-properly in TrueColor - in particular it doesnt force a redraw if the palette is changed
-which it really needs to */
+/* Now does TrueColor and PseudoColor X modes; but doesnt handle palette
+   changes properly in TrueColor - in particular it doesn't force a redraw if
+   the palette is changed which it really needs to */
 
 #define MOUSEKEY XK_KP_Add
 
@@ -11,12 +11,13 @@ which it really needs to */
 #define POLLGAP 125
 //#define POLLGAP 1250
 /*#define DEBUG_VIDCREGS*/
-/* NOTE: Can't use ARMul's refresh function because it has a small limit on the time
-   delay from posting the event to it executing */
-/* Its actually decremented once every POLLGAP - that is called with the ARMul
-   schedular */
+/* NOTE: Can't use ARMul's refresh function because it has a small limit on the
+   time delay from posting the event to it executing */
+/* It's actually decremented once every POLLGAP - that is called with the ARMul
+   scheduler */
 #define AUTOREFRESHPOLL 2500
 
+#include <string.h>
 #include <stdio.h>
 #include <limits.h>
 
@@ -40,21 +41,21 @@ which it really needs to */
 #define ControlHeight 30
 #define CURSORCOLBASE 250
 
-/* HOSTDISPLAY is too verbose here - but HD could be hard disc somewhere else! */
+/* HOSTDISPLAY is too verbose here - but HD could be hard disc somewhere else */
 #define HD HOSTDISPLAY
 #define DC DISPLAYCONTROL
 
 static unsigned AutoKey(ARMul_State *state);
-unsigned DisplayKbd_XPoll(ARMul_State *state);
+static unsigned DisplayKbd_XPoll(void *data);
 
 static struct EventNode enodes[4];
 //static int autokeyenode=0; /* Flips between 0 and 1 */
 static int xpollenode=2; /* Flips between 2 and 3 */
 
 
-/*-----------------------------------------------------------------------------*/
-/* From the GIMP Drawing Kit, in the GTK+ toolkit from GNOME                   */
-/* Given a colour mask from a visual extract shift and bit precision values    */
+/*----------------------------------------------------------------------------*/
+/* From the GIMP Drawing Kit, in the GTK+ toolkit from GNOME                  */
+/* Given a colour mask from a visual extract shift and bit precision values   */
 static void
 gdk_visual_decompose_mask (unsigned long  mask,
          int   *shift,
@@ -76,9 +77,9 @@ gdk_visual_decompose_mask (unsigned long  mask,
     }
 }
 
-/*-----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 /* Also borrowed from GDK (with a little rework).  Get the XPixel value (as
-   passed to XPutPixel) based on 16 bit colour values                          */
+   passed to XPutPixel) based on 16 bit colour values                         */
 static unsigned long get_pixelval(unsigned int red, unsigned int green, unsigned int blue) {
     return (((red >> (16 - HD.red_prec)) << HD.red_shift) +
            ((green >> (16 - HD.green_prec)) << HD.green_shift) +
@@ -86,7 +87,7 @@ static unsigned long get_pixelval(unsigned int red, unsigned int green, unsigned
 
 } /* get_pixval */
 
-/*-----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 static unsigned AutoKey(ARMul_State *state) {
   /*fprintf(stderr,"AutoKey!\n"); */
   KBD.TimerIntHasHappened+=2;
@@ -94,9 +95,9 @@ static unsigned AutoKey(ARMul_State *state) {
   return 0;
 };
 /*-----------------------------------------------------------------------------*/
-/* I'm not confident that this is completely correct - if its wrong all hell
-   is bound to break loose! If it works however it should speed things up nicely!
-*/
+/* I'm not confident that this is completely correct - if it's wrong all hell
+  is bound to break loose! If it works however it should speed things up
+  nicely! */
 static void MarkAsUpdated(ARMul_State *state, int end) {
   unsigned int Addr=MEMC.Vinit*16;
   unsigned int Vend=MEMC.Vend*16;
@@ -109,10 +110,10 @@ static void MarkAsUpdated(ARMul_State *state, int end) {
 
 }; /* MarkAsUpdated */
 
-/*-----------------------------------------------------------------------------*/
-/* Check to see if the area of memory has changed.                             */
-/* Returns true if there is any chance that the given area has changed         */
-int QueryRamChange(ARMul_State *state,int offset, int len) {
+/*----------------------------------------------------------------------------*/
+/* Check to see if the area of memory has changed.                            */
+/* Returns true if there is any chance that the given area has changed        */
+static int QueryRamChange(ARMul_State *state,int offset, int len) {
   unsigned int Vinit=MEMC.Vinit;
   unsigned int Vstart=MEMC.Vstart;
   unsigned int Vend=MEMC.Vend;
@@ -123,9 +124,10 @@ int QueryRamChange(ARMul_State *state,int offset, int len) {
     /* Vinit-Vend */
     /* Now check to see if the whole buffer is in that area */
     if ((offset+len)>=(((Vend-Vinit)+1)*16)) {
-      /* Its split - so copy the bit upto Vend and then the rest */
+      /* It's split - so copy the bit upto Vend and then the rest */
 
-      /* Don't bother - this isn't going to happen much - lets say it changed */
+      /* Don't bother - this isn't going to happen much - let's say it
+         changed */
       return(1);
     } else {
       offset+=Vinit*16;
@@ -148,11 +150,11 @@ int QueryRamChange(ARMul_State *state,int offset, int len) {
   /* We've checked them all and their are no changes */
   return(0);
 }; /* QueryRamChange */
-/*-----------------------------------------------------------------------------*/
-/* Copy a lump of screen RAM into the buffer.  The section of screen ram is    */
+/*----------------------------------------------------------------------------*/
+/* Copy a lump of screen RAM into the buffer.  The section of screen RAM is   */
 /* len bytes from the top left of the screen.  The routine takes into account
-   all scrolling etc.                                                          */
-/* This routine may be burdened with undoing endianness                        */
+   all scrolling etc.                                                         */
+/* This routine may be burdened with undoing endianness                       */
 static void CopyScreenRAM(ARMul_State *state,int offset, int len, char *Buffer) {
   unsigned int Vinit=MEMC.Vinit;
   unsigned int Vstart=MEMC.Vstart;
@@ -204,8 +206,8 @@ static void CopyScreenRAM(ARMul_State *state,int offset, int len, char *Buffer) 
 #endif
 }; /* CopyScreenRAM */
 
-/*-----------------------------------------------------------------------------*/
-/* Configure the colourmap for the standard 1,2,4 bpp modes                    */
+/*----------------------------------------------------------------------------*/
+/* Configure the colourmap for the standard 1,2,4 bpp modes                   */
 static void DoColourMap_Standard(ARMul_State *state) {
   XColor tmp;
   int c;
@@ -235,8 +237,8 @@ static void DoColourMap_Standard(ARMul_State *state) {
 
   DC.MustResetPalette=0;
 }; /* DoColourMap_Standard */
-/*-----------------------------------------------------------------------------*/
-/* Configure the colourmap for the 8bpp modes                                  */
+/*----------------------------------------------------------------------------*/
+/* Configure the colourmap for the 8bpp modes                                 */
 static void DoColourMap_256(ARMul_State *state) {
   XColor tmp;
   int c;
@@ -260,8 +262,8 @@ static void DoColourMap_256(ARMul_State *state) {
   DC.MustResetPalette=0;
 }; /* DoColourMap_Standard */
 
-/*-----------------------------------------------------------------------------*/
-/* Configure the TrueColor pixelmap for the standard 1,2,4 bpp modes           */
+/*----------------------------------------------------------------------------*/
+/* Configure the TrueColor pixelmap for the standard 1,2,4 bpp modes          */
 static void DoPixelMap_Standard(ARMul_State *state) {
   char tmpstr[16];
   XColor tmp;
@@ -291,8 +293,8 @@ static void DoPixelMap_Standard(ARMul_State *state) {
 
   DC.MustResetPalette=0;
 }; /* DoPixelMap_Standard */
-/*-----------------------------------------------------------------------------*/
-/* Configure the true colour pixel map for the 8bpp modes                      */
+/*----------------------------------------------------------------------------*/
+/* Configure the true colour pixel map for the 8bpp modes                     */
 static void DoPixelMap_256(ARMul_State *state) {
   XColor tmp;
   int c;
@@ -326,8 +328,8 @@ static void DoPixelMap_256(ARMul_State *state) {
   DC.MustResetPalette=0;
 }; /* DoPixelMap_256 */
 
-/*-----------------------------------------------------------------------------*/
-/* Refresh the mouses image                                                    */
+/*----------------------------------------------------------------------------*/
+/* Refresh the mouses image                                                   */
 static void RefreshMouse(ARMul_State *state) {
   int x,y,height,offset;
   int memptr,TransBit;
@@ -380,7 +382,7 @@ static void RefreshMouse(ARMul_State *state) {
   }; /* Shape enabled */
 }; /* RefreshMouse */
 
-/*-----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 static void RefreshDisplay_PseudoColor_1bpp(ARMul_State *state) {
   int DisplayHeight=VIDC.Vert_DisplayEnd-VIDC.Vert_DisplayStart;
   int DisplayWidth=(VIDC.Horiz_DisplayEnd-VIDC.Horiz_DisplayStart)*2;
@@ -430,7 +432,7 @@ static void RefreshDisplay_PseudoColor_1bpp(ARMul_State *state) {
   MarkAsUpdated(state,memoffset);
 }; /* RefreshDisplay_PseudoColor_1bpp */
 
-/*-----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 static void RefreshDisplay_PseudoColor_2bpp(ARMul_State *state) {
   int DisplayHeight=VIDC.Vert_DisplayEnd-VIDC.Vert_DisplayStart;
   int DisplayWidth=(VIDC.Horiz_DisplayEnd-VIDC.Horiz_DisplayStart)*2;
@@ -480,7 +482,7 @@ static void RefreshDisplay_PseudoColor_2bpp(ARMul_State *state) {
   MarkAsUpdated(state,memoffset);
 }; /* RefreshDisplay_PseudoColor_2bpp */
 
-/*-----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 static void RefreshDisplay_PseudoColor_4bpp(ARMul_State *state) {
   int DisplayHeight=VIDC.Vert_DisplayEnd-VIDC.Vert_DisplayStart;
   int DisplayWidth=(VIDC.Horiz_DisplayEnd-VIDC.Horiz_DisplayStart)*2;
@@ -532,7 +534,7 @@ static void RefreshDisplay_PseudoColor_4bpp(ARMul_State *state) {
   MarkAsUpdated(state,memoffset);
 }; /* RefreshDisplay_PseudoColor_4bpp */
 
-/*-----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 static void RefreshDisplay_PseudoColor_8bpp(ARMul_State *state) {
   int DisplayHeight=VIDC.Vert_DisplayEnd-VIDC.Vert_DisplayStart;
   int DisplayWidth=(VIDC.Horiz_DisplayEnd-VIDC.Horiz_DisplayStart)*2;
@@ -572,7 +574,7 @@ static void RefreshDisplay_PseudoColor_8bpp(ARMul_State *state) {
   MarkAsUpdated(state,memoffset);
 }; /* RefreshDisplay_PseudoColor_8bpp */
 
-/*-----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 static void RefreshDisplay_TrueColor_1bpp(ARMul_State *state) {
   int DisplayHeight=VIDC.Vert_DisplayEnd-VIDC.Vert_DisplayStart;
   int DisplayWidth=(VIDC.Horiz_DisplayEnd-VIDC.Horiz_DisplayStart)*2;
@@ -622,7 +624,7 @@ static void RefreshDisplay_TrueColor_1bpp(ARMul_State *state) {
   MarkAsUpdated(state,memoffset);
 }; /* RefreshDisplay_TrueColor_1bpp */
 
-/*-----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 static void RefreshDisplay_TrueColor_2bpp(ARMul_State *state) {
   int DisplayHeight=VIDC.Vert_DisplayEnd-VIDC.Vert_DisplayStart;
   int DisplayWidth=(VIDC.Horiz_DisplayEnd-VIDC.Horiz_DisplayStart)*2;
@@ -672,7 +674,7 @@ static void RefreshDisplay_TrueColor_2bpp(ARMul_State *state) {
   MarkAsUpdated(state,memoffset);
 }; /* RefreshDisplay_TrueColor_2bpp */
 
-/*-----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 static void RefreshDisplay_TrueColor_4bpp(ARMul_State *state) {
   int DisplayHeight=VIDC.Vert_DisplayEnd-VIDC.Vert_DisplayStart;
   int DisplayWidth=(VIDC.Horiz_DisplayEnd-VIDC.Horiz_DisplayStart)*2;
@@ -724,7 +726,7 @@ static void RefreshDisplay_TrueColor_4bpp(ARMul_State *state) {
   MarkAsUpdated(state,memoffset);
 }; /* RefreshDisplay_TrueColor_4bpp */
 
-/*-----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 static void RefreshDisplay_TrueColor_8bpp(ARMul_State *state) {
   int DisplayHeight=VIDC.Vert_DisplayEnd-VIDC.Vert_DisplayStart;
   int DisplayWidth=(VIDC.Horiz_DisplayEnd-VIDC.Horiz_DisplayStart)*2;
@@ -769,7 +771,7 @@ static void RefreshDisplay_TrueColor_8bpp(ARMul_State *state) {
   MarkAsUpdated(state,memoffset);
 } /* RefreshDisplay_TrueColor_8bpp */
 
-/*-----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 static void RefreshDisplay(ARMul_State *state) {
   DC.AutoRefresh=AUTOREFRESHPOLL;
   ioc.IRQStatus|=8; /* VSync */
@@ -829,7 +831,7 @@ static void RefreshDisplay(ARMul_State *state) {
               32,((VIDC.Vert_CursorEnd-VIDC.Vert_CursorStart)-1));
 }; /* RefreshDisplay */
 
-/*-----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 static int DisplayKbd_XError(Display* disp, XErrorEvent *err) {
   char errbuf[1024];
   XGetErrorText(disp,err->error_code,errbuf,1023);
@@ -840,12 +842,12 @@ static int DisplayKbd_XError(Display* disp, XErrorEvent *err) {
   fprintf(stderr,"\n\nIf that is NOT the problem then report the bug to Dave at arcem@treblig.org\n");
   exit(1);
 };
-/*-----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 void DisplayKbd_Init(ARMul_State *state) {
   XColor tmpcol;
   XGCValues gctmpval;
   int prescol;
-  int index;
+  int mindex;
   XTextProperty name;
   char *tmpptr;
   int shape_event_base, shape_error_base;
@@ -898,7 +900,7 @@ void DisplayKbd_Init(ARMul_State *state) {
                                           HD.visInfo.visual,
                                           0, /* valuemask */
                                           NULL /* attribs */);
-  tmpptr="Arc emulator - Main display";
+  tmpptr = strdup("Arc emulator - Main display");
   if (XStringListToTextProperty(&tmpptr,1,&name)==0) {
     fprintf(stderr,"Could not allocate window name\n");
     exit(1);
@@ -1079,10 +1081,11 @@ void DisplayKbd_Init(ARMul_State *state) {
   KBD.Leds=0;
   DC.DoingMouseFollow=0;
 
-  /* Note the memory model sets its to 1 - note the ordering */
+  /* Note the memory model sets it to 1 - note the ordering */
   /* i.e. it must be updated */
-  for(index=0;index<(512*1024)/UPDATEBLOCKSIZE;index++)
-    DC.UpdateFlags[index]=0;
+  for (mindex = 0; mindex < (512*1024) / UPDATEBLOCKSIZE; mindex++) {
+    DC.UpdateFlags[mindex] = 0;
+  }
 
   XMapWindow(HD.disp,HD.BackingWindow);
   XMapSubwindows(HD.disp,HD.BackingWindow);
@@ -1090,16 +1093,16 @@ void DisplayKbd_Init(ARMul_State *state) {
 
   ControlPane_Init(state);
 
-  ARMul_ScheduleEvent(&(enodes[xpollenode]),POLLGAP,DisplayKbd_XPoll);
+  ARMul_ScheduleEvent(&(enodes[xpollenode]), POLLGAP, DisplayKbd_XPoll);
   xpollenode^=1;
 }; /* DisplayKbd_Init */
 
-/*-----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 static void BackingWindow_Event(ARMul_State *state,XEvent *e) {
   fprintf(stderr,"BackingWindow_Event type=%d\n",e->type);
 }; /* BackingWindow_Event */
 
-/*-----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 static void ProcessKey(ARMul_State *state,XKeyEvent *key) {
   struct ArcKeyTrans *PresPtr;
   KeySym sym;
@@ -1157,7 +1160,7 @@ static void ProcessKey(ARMul_State *state,XKeyEvent *key) {
   fprintf(stderr,"ProcessKey: Unknown key sym=%ld!\n",sym);
 }; /* ProcessKey */
 
-/*-----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 static void ProcessButton(ARMul_State *state,XButtonEvent *button) {
   int UpNDown=(button->type!=ButtonPress);
   int ButtonNum=-1;
@@ -1188,7 +1191,7 @@ static void ProcessButton(ARMul_State *state,XButtonEvent *button) {
 #endif
 }; /* ProcessButton */
 
-/*-----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 /* Send the first byte of a data transaction with the host                     */
 static void Kbd_StartToHost(ARMul_State *state) {
   /* Start a particular transmission - base don the HostCommand vlaue */
@@ -1259,7 +1262,7 @@ static void Kbd_StartToHost(ARMul_State *state) {
 
 }; /* Kbd_StartToHost */
 
-/*-----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 /* Move the Control pane window                                                */
 static void UpdateCursorPos(ARMul_State *state) {
   int HorizPos=(int)VIDC.Horiz_CursorStart-(int)VIDC.Horiz_DisplayStart*2;
@@ -1285,7 +1288,7 @@ static void UpdateCursorPos(ARMul_State *state) {
 #endif
   XMoveResizeWindow(HD.disp,HD.CursorPane,HorizPos,VertPos,32,Height);
 }; /* UpdateCursorPos */
-/*-----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 /* Called when their is some data in the serial tx register on the IOC         */
 static void Kbd_CodeFromHost(ARMul_State *state, unsigned char FromHost) {
 #ifdef DEBUG_KBD
@@ -1432,7 +1435,7 @@ static void Kbd_CodeFromHost(ARMul_State *state, unsigned char FromHost) {
       }; /* FromHost top nybble switch */
   }; /* current state switch */
 }; /* Kbd_CodeFromHost */
-/*-----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 /* Called on an X motion event */
 static void MouseMoved(ARMul_State *state,XMotionEvent *xmotion) {
   int xdiff,ydiff;
@@ -1484,7 +1487,7 @@ static void MouseMoved(ARMul_State *state,XMotionEvent *xmotion) {
   fprintf(stderr,"MouseMoved: generated counts %d,%d xdiff=%d ydifff=%d\n",KBD.MouseXCount,KBD.MouseYCount,xdiff,ydiff);
 #endif
 }; /* MouseMoved */
-/*-----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 static void MainPane_Event(ARMul_State *state,XEvent *e) {
   switch (e->type) {
     case EnterNotify:
@@ -1533,7 +1536,7 @@ static void MainPane_Event(ARMul_State *state,XEvent *e) {
   };
 }; /* MainPane_Event */
 
-/*-----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 static void CursorPane_Event(ARMul_State *state,XEvent *e) {
   /*fprintf(stderr,"CursorPane_Event type=%d\n",e->type); */
   switch (e->type) {
@@ -1573,10 +1576,11 @@ static void CursorPane_Event(ARMul_State *state,XEvent *e) {
   };
 }; /* CursorPane_Event */
 
-/*-----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 /* Called using an ARM_ScheduleEvent - it also sets itself up to be called
-   again.                                                                      */
-unsigned DisplayKbd_XPoll(ARMul_State *state) {
+   again.                                                                     */
+unsigned DisplayKbd_XPoll(void *data) {
+  ARMul_State *state = data;
   XEvent e;
   int KbdSerialVal;
   static int KbdPollInt=0;
@@ -1617,7 +1621,7 @@ unsigned DisplayKbd_XPoll(ARMul_State *state) {
 
   return 0;
 }; /* DisplayKbd_XPoll */
-/*-----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 void VIDC_PutVal(ARMul_State *state,ARMword address, ARMword data,int bNw) {
   unsigned int addr, val;
 

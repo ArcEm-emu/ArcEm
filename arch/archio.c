@@ -193,7 +193,7 @@ static int ParseIOCAddr(ARMword address, int *bank, int *speed, int *offset) {
 }; /* ParseIOCAddr */
 
 /*-----------------------------------------------------------------------------*/
-ARMword GetWord_IOCReg(ARMul_State *state, int Register) {
+static ARMword GetWord_IOCReg(ARMul_State *state, int Register) {
   ARMword Result;
   int Timer;
 
@@ -311,7 +311,7 @@ ARMword GetWord_IOCReg(ARMul_State *state, int Register) {
 }; /* GetWord_IOCReg */
 
 /*-----------------------------------------------------------------------------*/
-ARMword PutVal_IOCReg(ARMul_State *state, int Register, ARMword data, int bNw) {
+static ARMword PutVal_IOCReg(ARMul_State *state, int Register, ARMword data, int bNw) {
   int Timer;
 
   switch (Register) {

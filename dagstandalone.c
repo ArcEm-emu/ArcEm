@@ -96,9 +96,9 @@ void dagstandalone(void) {
   PointHandle point;
   Dbg_ConfigBlock config;
   Dbg_HostosInterface hostif;
-  struct Dbg_MCState *MCState;
+  struct Dbg_MCState *MCState = NULL;
   
-  ARMword RegVals[]= { 0 }; /* PC - reset*/
+  ARMword RegVals[] = { 0 }; /* PC - reset*/
   
   /* Setup a signal handler for SIGUSR1 */
   action.sa_handler = dagstandalone_handlesignal;
