@@ -45,6 +45,8 @@
 #define HD HOSTDISPLAY
 #define DC DISPLAYCONTROL
 
+static int (*prev_x_error_handler)(Display *, XErrorEvent *);
+
 /* ------------------------------------------------------------------ */
 
 typedef struct {
@@ -971,17 +973,24 @@ static void RefreshDisplay(ARMul_State *state) {
 }; /* RefreshDisplay */
 
 /*----------------------------------------------------------------------------*/
-static int DisplayKbd_XError(Display* disp, XErrorEvent *err) {
-  char errbuf[1024];
-  XGetErrorText(disp,err->error_code,errbuf,1023);
 
-  fprintf(stderr,"Oh heck! We just got an X error - it said: '%s'\n",errbuf);
-  fprintf(stderr,"\n\nThat probably shouldn't have happened!\n\nBUT\n");
-  fprintf(stderr,"Oh - you'll probably get an error if you just close my window to shut me down - but don't worry about that...\n");
-  fprintf(stderr, "\n\nIf that is NOT the problem then report the bug at"
-      "http://arcem.sf.net/\n");
-  exit(1);
-};
+static int DisplayKbd_XError(Display* disp, XErrorEvent *err)
+{
+    char s[1024];
+
+    XGetErrorText(disp, err->error_code, s, 1023);
+
+    fprintf(stderr,
+"arcem X error detected: '%s'\n"
+"If you didn't close arcem's windows to cause it please report it\n"
+"along with this text to arcem-devel@lists.sourceforge.net.\n"
+"Original error message follows.\n", s);
+
+    (*prev_x_error_handler)(disp, err);
+
+    exit(1);
+}
+
 /*----------------------------------------------------------------------------*/
 void DisplayKbd_Init(ARMul_State *state) {
   XColor tmpcol;
@@ -998,7 +1007,7 @@ void DisplayKbd_Init(ARMul_State *state) {
     exit(1);
   };
 
-  XSetErrorHandler(DisplayKbd_XError);
+    prev_x_error_handler = XSetErrorHandler(DisplayKbd_XError);
 
   /* for debug -- XSynchronize(HD.disp, 1); */
 
