@@ -125,7 +125,6 @@ void ControlPane_Event(ARMul_State *state,XEvent *e) {
 
 /*----------------------------------------------------------------------------*/
 void ControlPane_Init(ARMul_State *state) {
-  XGCValues gctmpval;
   XTextProperty name;
   char *tmpptr;
 
@@ -147,8 +146,7 @@ void ControlPane_Init(ARMul_State *state) {
   XSetWMName(HD.disp,HD.ControlPane,&name);
   XFree(name.value);
 
-  gctmpval.function=GXcopy;
-  HD.ControlPaneGC=XCreateGC(HD.disp,HD.ControlPane,GCFunction,&gctmpval);
+    HD.ControlPaneGC = XCreateGC(HD.disp, HD.ControlPane, 0, NULL);
   XCopyGC(HD.disp,DefaultGC(HD.disp,HD.ScreenNum),GCPlaneMask|GCSubwindowMode,
           HD.ControlPaneGC);
 
