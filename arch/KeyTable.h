@@ -1,7 +1,7 @@
 
 
 #ifdef __riscos__
-#include "ROKeys.h"
+//#include "ROKeys.h"
 #endif
 
 

@@ -314,8 +314,8 @@
 #define STORESMULT(instr,address,wb) StoreSMult(emu_state,instr,address,wb)
 
 #define POSBRANCH ((instr & 0x7fffff) << 2)
-/* DAG: NOTE! Constant in Negbranch was 0xff000000! - obviously wrong - corrupts top two bits
-of the branch offset */
+/* DAG: NOTE! Constant in Negbranch was 0xff000000! - obviously wrong -
+   corrupts top two bits of the branch offset */
 #define NEGBRANCH (0xfc000000 | ((instr & 0xffffff) << 2))
 
 /***************************************************************************\
@@ -359,7 +359,8 @@ void ARMul_FixCPSR(ARMul_State *state, ARMword instr, ARMword rhs);
 void ARMul_FixSPSR(ARMul_State *state, ARMword instr, ARMword rhs);
 void ARMul_UndefInstr(ARMul_State *state,ARMword instr);
 
-
+ARMword GetDPRegRHS(ARMul_State *state, ARMword instr);
+ARMword GetDPSRegRHS(ARMul_State *state, ARMword instr);
 
 
 #define EVENTLISTSIZE 1024UL

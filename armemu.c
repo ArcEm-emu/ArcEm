@@ -70,14 +70,14 @@ static ARMword ARMul_LoadInstr(ARMword address, ARMEmuFunc** func)
   statestr.Numcycles++;
   address &= 0x3ffffff;
 
-  /* First check if we are doing ROM remapping and are accessing a remapped location */
-  /* If it is then map it into the ROM space */
+  /* First check if we are doing ROM remapping and are accessing a remapped */
+  /* location.  If it is then map it into the ROM space                     */
   if ((MEMC.ROMMapFlag) && (address < 0xC00000)) {
     if (address >= 0x800000) address -= 0x800000;
     MEMC.ROMMapFlag = 2;
     /* A simple ROM wrap around */
-    while (address>MEMC.ROMSize)
-      address-=MEMC.ROMSize;
+    while (address > MEMC.ROMSize)
+      address -= MEMC.ROMSize;
 
     ARMul_CLEARABORT;
     *func=&(MEMC.Romfuncs[address/4]);
@@ -490,9 +490,7 @@ ASSIGNV( (NEG(a) && POS(b) && POS(result)) ||
 * filters the common case of an unshifted register with in line code        *
 \***************************************************************************/
 
-#ifdef __riscos__
-ARMword GetDPRegRHS(ARMul_State *state, ARMword instr);
-#else
+#ifndef __riscos__
 ARMword GetDPRegRHS(ARMul_State *state, ARMword instr)
 {
   ARMword shamt , base;
@@ -572,9 +570,7 @@ ARMword GetDPRegRHS(ARMul_State *state, ARMword instr)
 * with in line code                                                         *
 \***************************************************************************/
 
-#ifdef __riscos__
-ARMword GetDPSRegRHS(ARMul_State *state, ARMword instr);
-#else
+#ifndef __riscos__
 ARMword GetDPSRegRHS(ARMul_State *state, ARMword instr)
 {
   ARMword shamt , base;

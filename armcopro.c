@@ -118,11 +118,31 @@ void ARMul_CoProDetach(ARMul_State *state, unsigned number)
 *         There is no CoPro around, so Undefined Instruction trap           *
 \***************************************************************************/
 
-static unsigned NoCoPro3R(ARMul_State *state,unsigned a,ARMword b)
-{return(ARMul_CANT);}
+static unsigned NoCoPro3R(ARMul_State *state, unsigned a, ARMword b)
+{
+  state = state;
+  a = a;
+  b = b;
 
-static unsigned NoCoPro4R(ARMul_State *state, unsigned a,ARMword b,ARMword c)
-{return(ARMul_CANT);}
+  return(ARMul_CANT);
+}
 
-static unsigned NoCoPro4W(ARMul_State *state, unsigned a,ARMword b,ARMword *c)
-{return(ARMul_CANT);}
+static unsigned NoCoPro4R(ARMul_State *state, unsigned a, ARMword b, ARMword c)
+{
+  state = state;
+  a = a;
+  b = b;
+  c = c;
+
+  return(ARMul_CANT);
+}
+
+static unsigned NoCoPro4W(ARMul_State *state, unsigned a, ARMword b, ARMword *c)
+{
+  state = state;
+  a = a;
+  b = b;
+  c = c;
+
+  return(ARMul_CANT);
+}
