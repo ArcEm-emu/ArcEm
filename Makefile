@@ -26,6 +26,9 @@ ENDIAN=LITTLEEND
 # Sound support - currently experimental - to enable set to 'yes'
 SOUND_SUPPORT=no
 
+# HostFS support - currently experimental - to enable set to 'yes'
+HOSTFS_SUPPORT=yes
+
 # Windowing System
 ifeq ($(SYSTEM),)
 SYSTEM=X
@@ -116,6 +119,11 @@ LIBS += -lpthread
 INCS += arch/sound.h
 endif
 
+ifeq (${HOSTFS_SUPPORT},yes)
+CFLAGS += -DHOSTFS_SUPPORT
+OBJS += hostfs.o
+endif
+
 
 TARED = *.c *.s *.h README COPYING Makefile \
         X riscos riscos-single arch
@@ -131,7 +139,6 @@ install: all
 
 $(TARGET): $(OBJS) $(MODEL).o
 	$(CC) $(OBJS) $(LIBS) $(MODEL).o -o $@
-
 
 clean:
 	rm -f *.o arch/*.o $(SYSTEM)/*.o arcem core *.bb *.bbg *.da

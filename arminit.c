@@ -1,16 +1,16 @@
 /*  arminit.c -- ARMulator initialization:  ARM6 Instruction Emulator.
     Copyright (C) 1994 Advanced RISC Machines Ltd.
- 
+
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation; either version 2 of the License, or
     (at your option) any later version.
- 
+
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
- 
+
     You should have received a copy of the GNU General Public License
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. */
@@ -19,6 +19,9 @@
 #include "armdefs.h"
 #include "armemu.h"
 #include "armarc.h"
+#ifdef HOSTFS_SUPPORT
+# include "hostfs.h"
+#endif
 
 extern ARMword *armflags;
 
@@ -103,7 +106,7 @@ ARMul_State *ARMul_NewState(void)
 /***************************************************************************\
 *       Call this routine to set ARMulator to model a certain processor     *
 \***************************************************************************/
- 
+
 void ARMul_SelectProcessor(ARMul_State *state, unsigned int processor) {
   state->lateabtSig = LOW;
 }
@@ -130,10 +133,10 @@ void ARMul_Reset(ARMul_State *state)
  state->AbortAddr = 1;
 
  state->NumCycles = 0;
-#ifdef ASIM    
+#ifdef ASIM
   (void)ARMul_MemoryInit();
   ARMul_OSInit(state);
-#endif  
+#endif
 }
 
 
@@ -173,7 +176,7 @@ void ARMul_Abort(ARMul_State *state, ARMword vector) {
        ARMul_CPSRAltered(state);
        state->Reg[14] = temp;
        break;
- 
+
     case ARMul_UndefinedInstrV : /* Undefined Instruction */
        state->Spsr[SVCBANK] = CPSR;
        SETABORT(IBIT,SVC26MODE);
@@ -182,19 +185,49 @@ void ARMul_Abort(ARMul_State *state, ARMword vector) {
        /*fprintf(stderr,"DAG: In ARMul_Abort: Taking undefined instruction trap R[14] being set to: 0x%08x\n",
                (unsigned int)(state->Reg[14])); */
        break;
- 
+
 #define ARCEM_SWI_CHUNK 0x56ac0
-#define ARCEM_SWI_MISC (ARCEM_SWI_CHUNK + 0)
+#define ARCEM_SWI_SHUTDOWN (ARCEM_SWI_CHUNK + 0)
+#ifdef HOSTFS_SUPPORT
+# define ARCEM_SWI_HOSTFS   (ARCEM_SWI_CHUNK + 1)
+# define ARCEM_SWI_DEBUG    (ARCEM_SWI_CHUNK + 2)
+#endif
     case ARMul_SWIV: /* Software Interrupt */
-        if ((GetWord(ARMul_GetPC(state) - 8) & 0xffffff) == ARCEM_SWI_MISC) {
-            exit(statestr.Reg[0] & 0xff);
+      if ((GetWord(ARMul_GetPC(state) - 8) & 0xfdffc0) == ARCEM_SWI_CHUNK) {
+        switch (GetWord(ARMul_GetPC(state) - 8) & 0xfdffff) {
+        case ARCEM_SWI_SHUTDOWN:
+          exit(statestr.Reg[0] & 0xff);
+          break;
+#ifdef HOSTFS_SUPPORT
+        case ARCEM_SWI_HOSTFS:
+          hostfs(state);
+          break;
+        case ARCEM_SWI_DEBUG:
+          fprintf(stderr, "r0 = %08x  r4 = %08x  r8  = %08x  r12 = %08x\n"
+                          "r1 = %08x  r5 = %08x  r9  = %08x  sp  = %08x\n"
+                          "r2 = %08x  r6 = %08x  r10 = %08x  lr  = %08x\n"
+                          "r3 = %08x  r7 = %08x  r11 = %08x  pc  = %08x\n"
+			  "\n",
+            statestr.Reg[0], statestr.Reg[4], statestr.Reg[8], statestr.Reg[12],
+            statestr.Reg[1], statestr.Reg[4], statestr.Reg[9], statestr.Reg[13],
+            statestr.Reg[2], statestr.Reg[5], statestr.Reg[10], statestr.Reg[14],
+            statestr.Reg[3], statestr.Reg[7], statestr.Reg[11], statestr.Reg[15]);
+          {
+            unsigned p;
+
+            for (p = statestr.Reg[15]; p < statestr.Reg[15] + 16; p += 4) {
+            }
+          }
+          break;
+#endif
         }
-       state->Spsr[SVCBANK] = CPSR;
-       SETABORT(IBIT,SVC26MODE);
-       ARMul_CPSRAltered(state);
-       state->Reg[14] = temp - 4;
-       break;
- 
+      }
+      state->Spsr[SVCBANK] = CPSR;
+      SETABORT(IBIT,SVC26MODE);
+      ARMul_CPSRAltered(state);
+      state->Reg[14] = temp - 4;
+      break;
+
     case ARMul_PrefetchAbortV : /* Prefetch Abort */
        state->AbortAddr = 1;
        state->Spsr[SVCBANK] = CPSR;
@@ -202,28 +235,28 @@ void ARMul_Abort(ARMul_State *state, ARMword vector) {
        ARMul_CPSRAltered(state);
        state->Reg[14] = temp - 4;
        break;
- 
+
     case ARMul_DataAbortV : /* Data Abort */
        state->Spsr[SVCBANK] = CPSR;
        SETABORT(IBIT,SVC26MODE);
        ARMul_CPSRAltered(state);
        state->Reg[14] = temp - 4; /* the PC must have been incremented */
        break;
- 
+
     case ARMul_AddrExceptnV : /* Address Exception */
        state->Spsr[SVCBANK] = CPSR;
        SETABORT(IBIT,SVC26MODE);
        ARMul_CPSRAltered(state);
        state->Reg[14] = temp - 4;
        break;
- 
+
     case ARMul_IRQV : /* IRQ */
        state->Spsr[IRQBANK] = CPSR;
        SETABORT(IBIT,IRQ26MODE);
        ARMul_CPSRAltered(state);
        state->Reg[14] = temp - 4;
        break;
- 
+
     case ARMul_FIQV : /* FIQ */
        state->Spsr[FIQBANK] = CPSR;
        SETABORT(INTBITS,FIQ26MODE);
