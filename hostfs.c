@@ -13,6 +13,7 @@
 #include <dirent.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <sys/syslimits.h>
 
 #include "arch/armarc.h"
 #include "hostfs.h"

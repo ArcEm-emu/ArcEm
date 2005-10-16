@@ -52,7 +52,7 @@
 ARMul_State *emu_state = NULL;
 static unsigned BreaksSet; /* The number of breakpoints set */
 
-static int rdi_log = 0; /* debugging  ? */
+int rdi_log = 0; /* debugging  ? */
 
 #define LOWEST_RDI_LEVEL 0
 #define HIGHEST_RDI_LEVEL 1

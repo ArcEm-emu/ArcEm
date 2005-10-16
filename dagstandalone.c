@@ -113,7 +113,7 @@ void dagstandalone(void) {
 #endif
 
   config.processor = ARM2;
-  config.memorysize = 4096 * 1024; /* 1M doesn't work */
+  config.memorysize = 8192 * 1024; //4096 * 1024; /* 1M doesn't work */
   config.bytesex = RDISex_Little;
 
   hostif.dbgprint = myprint;
