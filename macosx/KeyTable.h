@@ -145,7 +145,7 @@
 #define VK_LSHIFT	(56)
 #define VK_LCONTROL	(59)
 #define VK_LMENU	(-1)
-#define VK_RSHIFT	(-1) // L and R map to the same key in macosx
+#define VK_RSHIFT	(60) 
 #define VK_RCONTROL	(-1)
 #define VK_RMENU	(-1)
 

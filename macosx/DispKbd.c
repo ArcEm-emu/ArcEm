@@ -593,6 +593,15 @@ static void RefreshDisplay_TrueColor_8bpp(ARMul_State *state) {
   MarkAsUpdated(state,memoffset);
 } /* RefreshDisplay_TrueColor_8bpp */
 
+/*----------------------------------------------------------------------------*/
+/* Also borrowed from GDK (with a little rework).  Get the XPixel value (as
+   passed to XPutPixel) based on 16 bit colour values                         */
+unsigned long get_pixelval(unsigned int red, unsigned int green, unsigned int blue) {
+    return (((red   >> (16 - HD.red_prec))   << HD.red_shift)   +
+            ((green >> (16 - HD.green_prec)) << HD.green_shift) +
+            ((blue  >> (16 - HD.blue_prec))  << HD.blue_shift));
+	
+} /* get_pixval */
 
 /*-----------------------------------------------------------------------------*/
 /* Refresh the mouse's image                                                    */
@@ -623,6 +632,8 @@ static void RefreshMouse(ARMul_State *state) {
   if (height > 32)
       height = 32;
 
+  memset(cursorbmp, 0, 32 * 32 * 4);
+  
   for(y=0;y<height;y++,memptr+=8,offset+=8) {
     if (offset<512*1024) {
       ARMword tmp[2];
@@ -643,13 +654,13 @@ static void RefreshMouse(ARMul_State *state) {
                 cursorbmp[loc] = GETRED(pic);
                 cursorbmp[loc + 1] = GETGREEN(pic);
                 cursorbmp[loc + 2] = GETBLUE(pic);
-                cursorbmp[loc + 3] = 0xff;
+                cursorbmp[loc + 3] = 0xFF;
             }
-            else
+            /*else
             {
                 int locc = (x + (y * 32)) * 4;
                 cursorbmp[locc + 3] = 0x00;
-            }
+            }*/
 #endif
 //curbmp[x+(MonitorHeight-y)*32] = HD.cursorPixelMap[((tmp[x/16]>>((x & 15)*2)) & 3)];
         }; /* x */
