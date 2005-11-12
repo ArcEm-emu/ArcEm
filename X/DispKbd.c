@@ -1587,6 +1587,8 @@ void VIDC_PutVal(ARMul_State *state,ARMword address, ARMword data,int bNw) {
   addr=(data>>24) & 255;
   val=data & 0xffffff;
 
+  int must_resize;
+
   if (!(addr & 0xc0)) {
     int Log;
 
@@ -1605,6 +1607,7 @@ void VIDC_PutVal(ARMul_State *state,ARMword address, ARMword data,int bNw) {
 #endif
     IF_DIFF_THEN_ASSIGN_AND_SET_FLAG(VIDC.Palette[Log],
             val & 0x1fff, DC.video_palette_dirty);
+    DC.MustRedraw = 1;
     return;
   };
 
@@ -1684,16 +1687,24 @@ void VIDC_PutVal(ARMul_State *state,ARMword address, ARMword data,int bNw) {
 #ifdef DEBUG_VIDCREGS
       fprintf(stderr,"VIDC Horiz display start register val=%d\n",val>>14);
 #endif
+      must_resize = ((VIDC.Horiz_DisplayEnd - VIDC.Horiz_DisplayStart) == ((val>>14) & 0x3ff));
       VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Horiz_DisplayStart,((val>>14) & 0x3ff));
-      Resize_Window();
+      if (must_resize) {
+        /* Only resize the window if the screen size has actually changed */
+        Resize_Window();
+      }
       break;
 
     case 0x90:
 #ifdef DEBUG_VIDCREGS
       fprintf(stderr,"VIDC Horiz display end register val=%d\n",val>>14);
 #endif
+      must_resize = ((VIDC.Horiz_DisplayEnd - VIDC.Horiz_DisplayStart) == ((val>>14) & 0x3ff));
       VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Horiz_DisplayEnd,(val>>14) & 0x3ff);
-      Resize_Window();
+      if (must_resize) {
+        /* Only resize the window if the screen size has actually changed */
+        Resize_Window();
+      }
       break;
 
     case 0x94:
