@@ -13,7 +13,7 @@
 #include <dirent.h>
 #include <unistd.h>
 #include <sys/stat.h>
-#include <sys/syslimits.h>
+#include <limits.h>
 
 #include "arch/armarc.h"
 #include "hostfs.h"
@@ -190,8 +190,13 @@ path_construct(const char *old_path, char *new_path, size_t len,
   }
 
   if ((load & 0xfff00000u) == 0xfff00000u) {
+    unsigned int filetype = (load >> 8) & 0xfff;
+
     /* File has filetype and timestamp */
-    sprintf(new_suffix, ",%03x", (load >> 8) & 0xfff);
+
+    /* Don't set for text filetype, since that is the default */
+    if (filetype != 0xfff)
+      sprintf(new_suffix, ",%03x", (load >> 8) & 0xfff);
   } else {
     /* File has load and exec addresses */
     sprintf(new_suffix, ",%x-%x", load, exec);
