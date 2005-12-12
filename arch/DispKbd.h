@@ -152,7 +152,6 @@ void hostdisplay_change_focus(int focus);
 #endif
 
 /* Functions defined in DispKbdShared.c */
-unsigned long get_pixelval(unsigned int red, unsigned int green, unsigned int blue);
 void MarkAsUpdated(ARMul_State *state, int end);
 int QueryRamChange(ARMul_State *state, unsigned int offset, int len);
 void CopyScreenRAM(ARMul_State *state, unsigned int offset, int len, char *Buffer);

@@ -240,6 +240,17 @@ unsigned int DisplayKbd_XPoll(void *data)
   return 0;
 }
 
+
+/*----------------------------------------------------------------------------*/
+/* Also borrowed from GDK (with a little rework).  Get the XPixel value (as
+   passed to XPutPixel) based on 16 bit colour values                         */
+static unsigned long get_pixelval(unsigned int red, unsigned int green, unsigned int blue) {
+    return (((red   >> (16 - HD.red_prec))   << HD.red_shift)   +
+            ((green >> (16 - HD.green_prec)) << HD.green_shift) +
+            ((blue  >> (16 - HD.blue_prec))  << HD.blue_shift));
+	
+} /* get_pixval */
+
 /*-----------------------------------------------------------------------------*/
 /* Configure the TrueColor pixelmap for the standard 1,2,4 bpp modes           */
 static void DoPixelMap_Standard(ARMul_State *state) {
@@ -592,16 +603,6 @@ static void RefreshDisplay_TrueColor_8bpp(ARMul_State *state) {
   DC.MustRedraw=0;
   MarkAsUpdated(state,memoffset);
 } /* RefreshDisplay_TrueColor_8bpp */
-
-/*----------------------------------------------------------------------------*/
-/* Also borrowed from GDK (with a little rework).  Get the XPixel value (as
-   passed to XPutPixel) based on 16 bit colour values                         */
-unsigned long get_pixelval(unsigned int red, unsigned int green, unsigned int blue) {
-    return (((red   >> (16 - HD.red_prec))   << HD.red_shift)   +
-            ((green >> (16 - HD.green_prec)) << HD.green_shift) +
-            ((blue  >> (16 - HD.blue_prec))  << HD.blue_shift));
-	
-} /* get_pixval */
 
 /*-----------------------------------------------------------------------------*/
 /* Refresh the mouse's image                                                    */
