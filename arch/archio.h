@@ -6,7 +6,7 @@
 #include "../armopts.h"
 #include "../armdefs.h"
 
-#include "i2c.h"  
+#include "i2c.h"
 
 struct IOCStruct {
   unsigned char ControlReg;
@@ -24,8 +24,6 @@ struct IOCStruct {
     unsigned int bitinbytecount;
     unsigned char CurrentKeyVal;
   } kbd;
-
-  struct I2CStruct i2c;
 
   unsigned int LatchA;     /* NOTE: int's to allow -1 at startup */
   unsigned int LatchAold;

@@ -31,7 +31,33 @@ static const char *I2CStateNameTrans[] = {"Idle",
 #define I2CDATAREAD ((ioc.ControlReg & (ioc.ControlRegInputData)) & 1)
 #define I2CCLOCKREAD ((ioc.ControlReg & 2)!=0)
 #define I2CDATAWRITE(v) { /*fprintf(stderr,"I2C data write (%d)\n",v); */ ioc.ControlRegInputData &= ~1; ioc.ControlRegInputData |=v; };
-#define I2C (ioc.i2c)
+
+typedef enum {
+  I2CChipState_Idle=0,
+  I2CChipState_GotStart, /* Got a special condition */
+  I2CChipState_WaitingForSlaveAddr,
+  I2CChipState_AckAfterSlaveAddr,
+  I2CChipState_GettingWordAddr,
+  I2CChipState_AckAfterWordAddr,
+  I2CChipState_TransmittingToMaster,
+  I2CChipState_AckAfterTransmitData,
+  I2CChipState_GettingData,
+  I2CChipState_AckAfterReceiveData
+} I2CState;
+
+struct I2CStruct {
+  unsigned char Data[256];
+  int IAmTransmitter;
+  int OldDataState;
+  int OldClockState;
+  I2CState state;
+  int DataBuffer;
+  int NumberOfBitsSoFar;
+  int LastrNw;
+  unsigned char WordAddress; /* Note unsigned char - can never be outside Data bounds */
+};
+
+static struct I2CStruct I2C;
 
 /*------------------------------------------------------------------------------*/
 static void I2C_SetupTransmit(ARMul_State *state) {
@@ -45,12 +71,12 @@ static void I2C_SetupTransmit(ARMul_State *state) {
   if (I2C.WordAddress==1) {
     I2C.Data[1]++; /* OK - should do BCD! */
   };
-  
+
   /* Now put the first byte onto the data line */
   I2CDATAWRITE(((I2C.DataBuffer & 128)!=0));
   I2C.DataBuffer<<=1;
   I2C.NumberOfBitsSoFar=1;
-}; /* I2C_SetupTransmit */
+} /* I2C_SetupTransmit */
 
 
 /*----------------------------------------------------------------------------*/
@@ -83,12 +109,12 @@ static void SaveCMOS(ARMul_State *state) {
   for (loop = 0; loop < 240; loop++) {
     dest = loop + 64;
     if (dest > 255) dest -= 240;
-    val = ioc.i2c.Data[dest];
+    val = I2C.Data[dest];
     fprintf(OutFile,"%x\n",val);
   };
 
   fclose(OutFile);
-}; /* SaveCMOS */
+} /* SaveCMOS */
 
 /*------------------------------------------------------------------------------*/
 /* Called when the I2C clock changes state                                      */
@@ -306,14 +332,14 @@ void I2C_Update(ARMul_State *state) {
             I2CDATAWRITE(1);
           };
           break;
-     
+
         default:
           /* Complain - weren't expecting to be here in this state */
           break;
       }; /* state for our sending */
     }; /* Clock edge */
   }; /* Transmitter */
-}; /* I2C_Update */
+} /* I2C_Update */
 
 /* ------------------------------------------------------------------------- */
 static void SetUpCMOS(ARMul_State *state) {
@@ -344,11 +370,11 @@ static void SetUpCMOS(ARMul_State *state) {
     dest=loop+64;
     if (dest>255) dest-=240;
 
-    ioc.i2c.Data[dest]=val;
+    I2C.Data[dest]=val;
   };
 
   fclose(InFile);
-}; /* SetUpCMOS */
+} /* SetUpCMOS */
 
 /* ------------------------------------------------------------------------- */
 void I2C_Init(ARMul_State *state) {
@@ -362,4 +388,4 @@ void I2C_Init(ARMul_State *state) {
  I2C.WordAddress=0;
 
  SetUpCMOS(state);
-}; /* I2C_Init */
+} /* I2C_Init */
