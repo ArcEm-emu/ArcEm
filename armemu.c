@@ -30,21 +30,22 @@
 
 ARMul_State statestr;
 
-// global used to terminate the emulator
-int kill_emulator;
+/* global used to terminate the emulator */
+static int kill_emulator;
 
 ARMword *armflags = &statestr.NFlag;
 
-ARMEmuFunc* pInstrFunc;  /* These are only used by the writeback of the instruction function pointer */
-ARMEmuFunc* pDecFunc;    /* But they are invalidated by word/byte write to point to a dummy location */
-ARMEmuFunc* pLoadedFunc; /* So that a fetched instruction followed by an overwrite of its location   */
+static ARMEmuFunc* pInstrFunc;  /* These are only used by the writeback of the instruction function pointer */
+static ARMEmuFunc* pDecFunc;    /* But they are invalidated by word/byte write to point to a dummy location */
+static ARMEmuFunc* pLoadedFunc; /* So that a fetched instruction followed by an overwrite of its location   */
                         /* doesn't get its function pointer overwritten by the original instruction */
 
 /***************************************************************************\
 *                   Load Instruction                                        *
 \***************************************************************************/
 
-static ARMword ARMul_LoadInstr(ARMword address, ARMEmuFunc** func)
+static ARMword
+ARMul_LoadInstr(ARMword address, ARMEmuFunc **func)
 {
   static ARMEmuFunc badfunc;
   ARMword PageTabVal;
@@ -58,24 +59,24 @@ static ARMword ARMul_LoadInstr(ARMword address, ARMEmuFunc** func)
     MEMC.ROMMapFlag = 2;
     /* A simple ROM wrap around */
     address %= MEMC.ROMHighSize;
-  
+
     ARMul_CLEARABORT;
     *func = &MEMC.ROMHighFuncs[address / 4];
     return MEMC.ROMHigh[address / 4];
   }
 
-  switch ((address>>24)&3) {
+  switch ((address >> 24) & 3) {
     case 3:
       /* If we are in ROM and trying to read then there is no hassle */
-      if (address>=0x3400000) {
+      if (address >= 0x3400000) {
         /* It's ROM read - no hassle */
         ARMul_CLEARABORT;
 
-        if ((MEMC.ROMMapFlag==2)) {
-          MEMC.OldAddress1=-1;
-          MEMC.OldPage1=-1;
-          MEMC.ROMMapFlag=0;
-        };
+        if (MEMC.ROMMapFlag == 2) {
+          MEMC.OldAddress1 = -1;
+          MEMC.OldPage1 = -1;
+          MEMC.ROMMapFlag = 0;
+        }
 
         if (address >= 0x3800000) {
           address -= 0x3800000;
@@ -97,19 +98,19 @@ static ARMword ARMul_LoadInstr(ARMword address, ARMEmuFunc** func)
       } else {
         if (statestr.NtransSig) {
 
-          if ((MEMC.ROMMapFlag==2)) {
-            MEMC.ROMMapFlag=0;
-            MEMC.OldAddress1=-1;
-            MEMC.OldPage1=-1;
-          };
-          badfunc=ARMul_Emulate_DecodeInstr;
-          *func=&badfunc;
-          return(GetWord_IO(emu_state,address));
+          if (MEMC.ROMMapFlag == 2) {
+            MEMC.ROMMapFlag = 0;
+            MEMC.OldAddress1 = -1;
+            MEMC.OldPage1 = -1;
+          }
+          badfunc = ARMul_Emulate_DecodeInstr;
+          *func = &badfunc;
+          return GetWord_IO(emu_state, address);
         } else {
           ARMul_PREFETCHABORT(address);
-          badfunc=ARMul_Emulate_DecodeInstr;
-          *func=&badfunc;
-          return(ARMul_ABORTWORD);
+          badfunc = ARMul_Emulate_DecodeInstr;
+          *func = &badfunc;
+          return ARMul_ABORTWORD;
         }
       }
       /* NOTE: No break, IOC has same permissions as physical RAM */
@@ -118,129 +119,132 @@ static ARMword ARMul_LoadInstr(ARMword address, ARMEmuFunc** func)
       /* Privileged only */
       if (statestr.NtransSig) {
         ARMul_CLEARABORT;
-        if ((MEMC.ROMMapFlag==2)) {
-          MEMC.ROMMapFlag=0;
-          MEMC.OldAddress1=-1;
-          MEMC.OldPage1=-1;
+        if (MEMC.ROMMapFlag == 2) {
+          MEMC.ROMMapFlag = 0;
+          MEMC.OldAddress1 = -1;
+          MEMC.OldPage1 = -1;
         }
-        address-=0x2000000;
+        address -= 0x2000000;
 
-        /* I used to think memory wrapped after the real RAM - but it doesn't appear
-           to */
-        if (address>=MEMC.RAMSize) {
-          fprintf(stderr,"GetWord returning dead0bad - after PhysRam\n");
-          badfunc=ARMul_Emulate_DecodeInstr;
-          *func=&badfunc;
-          return(0xdead0bad);
-          /*while (address>MEMC.RAMSize)
-            address-=MEMC.RAMSize; */
+        /* I used to think memory wrapped after the real RAM - but it doesn't appear to */
+        if (address >= MEMC.RAMSize) {
+          fprintf(stderr, "GetWord returning dead0bad - after PhysRam\n");
+          badfunc = ARMul_Emulate_DecodeInstr;
+          *func = &badfunc;
+          return 0xdead0bad;
+          /*while (address > MEMC.RAMSize)
+            address -= MEMC.RAMSize; */
         }
 
-        *func=&(MEMC.PhysRamfuncs[address/4]);
-        return(MEMC.PhysRam[address/4]);
+        *func = &MEMC.PhysRamfuncs[address / 4];
+        return MEMC.PhysRam[address / 4];
       } else {
         ARMul_PREFETCHABORT(address);
-        badfunc=ARMul_Emulate_DecodeInstr;
-        *func=&badfunc;
-        return(ARMul_ABORTWORD);
-      };
+        badfunc = ARMul_Emulate_DecodeInstr;
+        *func = &badfunc;
+        return ARMul_ABORTWORD;
+      }
       break;
 
     case 0:
     case 1:
 #ifdef DEBUG
-      printf("ARMul_LoadInstr (logical map) for address=0x%x\n",address);
+      printf("ARMul_LoadInstr (logical map) for address=0x%x\n", address);
 #endif
       /* OK - it's in logically mapped RAM */
-      if (!FindPageTableEntry(address,&PageTabVal)) {
-        badfunc=ARMul_Emulate_DecodeInstr;
-        *func=&badfunc;
+      if (!FindPageTableEntry(address, &PageTabVal)) {
+        badfunc = ARMul_Emulate_DecodeInstr;
+        *func = &badfunc;
         ARMul_PREFETCHABORT(address);
-        return(ARMul_ABORTWORD);
-      };
+        return ARMul_ABORTWORD;
+      }
 
-      MEMC.TmpPage=PageTabVal;
+      MEMC.TmpPage = PageTabVal;
 
       /* If it's not supervisor, and not OS mode, and the page is read protected then prefetch abort */
-      if ((!(statestr.NtransSig)) && (!(MEMC.ControlReg & (1<<12))) && (PageTabVal & 512)) {
+      if ((!(statestr.NtransSig)) && (!(MEMC.ControlReg & (1 << 12))) &&
+          (PageTabVal & 512))
+      {
         ARMul_PREFETCHABORT(address);
-        badfunc=ARMul_Emulate_DecodeInstr;
-        *func=&badfunc;
-        return(ARMul_ABORTWORD);
-      };
-  };
+        badfunc = ARMul_Emulate_DecodeInstr;
+        *func = &badfunc;
+        return ARMul_ABORTWORD;
+      }
+  }
 
- ARMul_CLEARABORT;
- /* Logically mapped RAM */
- address = GetPhysAddress(address);
+  ARMul_CLEARABORT;
+  /* Logically mapped RAM */
+  address = GetPhysAddress(address);
 
- /* I used to think memory wrapped after the real RAM - but it doesn't appear
-    to */
- if (address>=MEMC.RAMSize) {
-   fprintf(stderr,"GetWord returning dead0bad - after PhysRam (from log ram)\n");
-   badfunc=ARMul_Emulate_DecodeInstr;
-   *func=&badfunc;
-   return(0xdead0bad);
-   /*while (address>MEMC.RAMSize)
-     address-=MEMC.RAMSize; */
- };
+  /* I used to think memory wrapped after the real RAM - but it doesn't appear
+     to */
+  if (address >= MEMC.RAMSize) {
+    fprintf(stderr, "GetWord returning dead0bad - after PhysRam (from log ram)\n");
+    badfunc = ARMul_Emulate_DecodeInstr;
+    *func = &badfunc;
+    return 0xdead0bad;
+    /*while (address > MEMC.RAMSize)
+      address -= MEMC.RAMSize; */
+  }
 
- *func = &(MEMC.PhysRamfuncs[address/4]);
- return (MEMC.PhysRam[address / 4]);
+  *func = &MEMC.PhysRamfuncs[address / 4];
+  return MEMC.PhysRam[address / 4];
 }
 
 /* --------------------------------------------------------------------------- */
-static void ARMul_LoadInstrTriplet(ARMword address,ARMword* pw1, ARMword* pw2, ARMword* pw3, ARMEmuFunc** func1, ARMEmuFunc** func2, ARMEmuFunc** func3)
+static void
+ARMul_LoadInstrTriplet(ARMword address,
+                       ARMword *pw1, ARMword *pw2, ARMword *pw3,
+                       ARMEmuFunc **func1, ARMEmuFunc **func2,
+                       ARMEmuFunc **func3)
 {
   static ARMEmuFunc badfunc;
   ARMword PageTabVal;
 
-  if ( (MEMC.ROMMapFlag) || ((address & 0xfff)>0xff0)) {
-    *pw1=ARMul_LoadInstr(address,func1);
-    *pw2=ARMul_LoadInstr(address+4,func2);
-    *pw3=ARMul_LoadInstr(address+8,func3);
+  if ((MEMC.ROMMapFlag) || ((address & 0xfff) > 0xff0)) {
+    *pw1 = ARMul_LoadInstr(address, func1);
+    *pw2 = ARMul_LoadInstr(address + 4, func2);
+    *pw3 = ARMul_LoadInstr(address + 8, func3);
     return;
-  };
+  }
 
-  statestr.NumCycles+=3;
-  address&=0x3ffffff;
+  statestr.NumCycles += 3;
+  address &= 0x3ffffff;
 
-  switch ((address>>24)&3) {
+  switch ((address >> 24) & 3) {
     case 3:
       /* If we are in ROM and trying to read then there is no hassle */
-      if (address>=0x3400000) {
+      if (address >= 0x3400000) {
         /* It's ROM read - no hassle */
         ARMul_CLEARABORT;
 
-        if ((MEMC.ROMMapFlag==2)) {
-          MEMC.OldAddress1=-1;
-          MEMC.OldPage1=-1;
-          MEMC.ROMMapFlag=0;
-        };
+        if (MEMC.ROMMapFlag == 2) {
+          MEMC.OldAddress1 = -1;
+          MEMC.OldPage1 = -1;
+          MEMC.ROMMapFlag = 0;
+        }
 
         if (address >= 0x3800000) {
           address -= 0x3800000;
           address %= MEMC.ROMHighSize;
-
           address /= 4;
           *pw1 = MEMC.ROMHigh[address];
-          *func1 = &(MEMC.ROMHighFuncs[address]);
-          *pw2 = MEMC.ROMHigh[address+1];
-          *func2 = &(MEMC.ROMHighFuncs[address+1]);
-          *pw3 = MEMC.ROMHigh[address+2];
-          *func3 = &(MEMC.ROMHighFuncs[address+2]);
+          *pw2 = MEMC.ROMHigh[address + 1];
+          *pw3 = MEMC.ROMHigh[address + 2];
+          *func1 = &MEMC.ROMHighFuncs[address];
+          *func2 = &MEMC.ROMHighFuncs[address + 1];
+          *func3 = &MEMC.ROMHighFuncs[address + 2];
         } else {
           if (MEMC.ROMLow) {
             address -= 0x3400000;
             address %= MEMC.ROMLowSize;
-
             address /= 4;
             *pw1 = MEMC.ROMLow[address];
-            *func1 = &(MEMC.ROMLowFuncs[address]);
-            *pw2 = MEMC.ROMLow[address+1];
-            *func2 = &(MEMC.ROMLowFuncs[address+1]);
-            *pw3 = MEMC.ROMLow[address+2];
-            *func3 = &(MEMC.ROMLowFuncs[address+2]);
+            *pw2 = MEMC.ROMLow[address + 1];
+            *pw3 = MEMC.ROMLow[address + 2];
+            *func1 = &MEMC.ROMLowFuncs[address];
+            *func2 = &MEMC.ROMLowFuncs[address + 1];
+            *func3 = &MEMC.ROMLowFuncs[address + 2];
           } else {
             /* We should never reach here:
              * Because no ROM is mapped in the ROM Low address space,
@@ -253,153 +257,155 @@ static void ARMul_LoadInstrTriplet(ARMword address,ARMword* pw1, ARMword* pw2, A
       } else {
         if (statestr.NtransSig) {
 
-          if ((MEMC.ROMMapFlag==2)) {
-            MEMC.ROMMapFlag=0;
-            MEMC.OldAddress1=-1;
-            MEMC.OldPage1=-1;
-          };
+          if (MEMC.ROMMapFlag == 2) {
+            MEMC.ROMMapFlag = 0;
+            MEMC.OldAddress1 = -1;
+            MEMC.OldPage1 = -1;
+          }
           *pw1 = GetWord_IO(emu_state, address);
           *pw2 = GetWord_IO(emu_state, address + 4);
           *pw3 = GetWord_IO(emu_state, address + 8);
         } else {
           ARMul_PREFETCHABORT(address);
-          ARMul_PREFETCHABORT((address + 4));
-          ARMul_PREFETCHABORT((address + 8));
+          ARMul_PREFETCHABORT(address + 4);
+          ARMul_PREFETCHABORT(address + 8);
           *pw1 = ARMul_ABORTWORD;
           *pw2 = ARMul_ABORTWORD;
           *pw3 = ARMul_ABORTWORD;
-        };
+        }
         badfunc = ARMul_Emulate_DecodeInstr;
         *func1 = &badfunc;
         *func2 = &badfunc;
         *func3 = &badfunc;
         return;
-      };
+      }
       /* NOTE: No break, IOC has same permissions as physical RAM */
 
     case 2:
       /* Privileged only */
       if (statestr.NtransSig) {
         ARMul_CLEARABORT;
-        if ((MEMC.ROMMapFlag==2)) {
-          MEMC.ROMMapFlag=0;
-          MEMC.OldAddress1=-1;
-          MEMC.OldPage1=-1;
-        };
-        address-=0x2000000;
+        if (MEMC.ROMMapFlag == 2) {
+          MEMC.ROMMapFlag = 0;
+          MEMC.OldAddress1 = -1;
+          MEMC.OldPage1 = -1;
+        }
+        address -= 0x2000000;
 
         /* I used to think memory wrapped after the real RAM - but it doesn't appear to */
         if (address >= MEMC.RAMSize) {
-          fprintf(stderr,"LoadInstrTriplet returning dead0bad - after PhysRam address=%x+0x2000000\n",address);
-          *pw1=0xdead0bad;
-          *pw2=0xdead0bad;
-          *pw3=0xdead0bad;
-          badfunc=ARMul_Emulate_DecodeInstr;
-          *func1=&badfunc;
-          *func2=&badfunc;
-          *func3=&badfunc;
+          fprintf(stderr, "LoadInstrTriplet returning dead0bad - after PhysRam address=%x+0x2000000\n", address);
+          *pw1 = 0xdead0bad;
+          *pw2 = 0xdead0bad;
+          *pw3 = 0xdead0bad;
+          badfunc = ARMul_Emulate_DecodeInstr;
+          *func1 = &badfunc;
+          *func2 = &badfunc;
+          *func3 = &badfunc;
           return;
           /*while (address>MEMC.RAMSize)
             address-=MEMC.RAMSize; */
-        };
+        }
 
-        address=address/4;
-        *pw1=MEMC.PhysRam[address];
-        *func1=&(MEMC.PhysRamfuncs[address]);
-        *pw2=MEMC.PhysRam[address+1];
-        *func2=&(MEMC.PhysRamfuncs[address+1]);
-        *pw3=MEMC.PhysRam[address+2];
-        *func3=&(MEMC.PhysRamfuncs[address+2]);
-        return;
-
+        address /= 4;
+        *pw1 = MEMC.PhysRam[address];
+        *pw2 = MEMC.PhysRam[address + 1];
+        *pw3 = MEMC.PhysRam[address + 2];
+        *func1 = &MEMC.PhysRamfuncs[address];
+        *func2 = &MEMC.PhysRamfuncs[address + 1];
+        *func3 = &MEMC.PhysRamfuncs[address + 2];
       } else {
-
         ARMul_PREFETCHABORT(address);
-        ARMul_PREFETCHABORT((address+4));
-        ARMul_PREFETCHABORT((address+8));
-        *pw1=ARMul_ABORTWORD;
-        *pw2=ARMul_ABORTWORD;
-        *pw3=ARMul_ABORTWORD;
-        badfunc=ARMul_Emulate_DecodeInstr;
-        *func1=&badfunc;
-        *func2=&badfunc;
-        *func3=&badfunc;
-        return;
-      };
+        ARMul_PREFETCHABORT(address + 4);
+        ARMul_PREFETCHABORT(address + 8);
+        *pw1 = ARMul_ABORTWORD;
+        *pw2 = ARMul_ABORTWORD;
+        *pw3 = ARMul_ABORTWORD;
+        badfunc = ARMul_Emulate_DecodeInstr;
+        *func1 = &badfunc;
+        *func2 = &badfunc;
+        *func3 = &badfunc;
+      }
+      return;
       break;
 
     case 0:
     case 1:
 #ifdef DEBUG
-      printf("LITrip (lmap) add=0x%x\n",address);
+      printf("LITrip (lmap) add=0x%x\n", address);
 #endif
       /* OK - it's in logically mapped RAM */
-      if (!FindPageTableEntry(address,&PageTabVal)) {
+      if (!FindPageTableEntry(address, &PageTabVal)) {
         ARMul_PREFETCHABORT(address);
-        ARMul_PREFETCHABORT((address+4));
-        ARMul_PREFETCHABORT((address+8));
-        *pw1=ARMul_ABORTWORD;
-        *pw2=ARMul_ABORTWORD;
-        *pw3=ARMul_ABORTWORD;
-        badfunc=ARMul_Emulate_DecodeInstr;
-        *func1=&badfunc;
-        *func2=&badfunc;
-        *func3=&badfunc;
+        ARMul_PREFETCHABORT(address + 4);
+        ARMul_PREFETCHABORT(address + 8);
+        *pw1 = ARMul_ABORTWORD;
+        *pw2 = ARMul_ABORTWORD;
+        *pw3 = ARMul_ABORTWORD;
+        badfunc = ARMul_Emulate_DecodeInstr;
+        *func1 = &badfunc;
+        *func2 = &badfunc;
+        *func3 = &badfunc;
         return;
-      };
+      }
 
-      MEMC.TmpPage=PageTabVal;
+      MEMC.TmpPage = PageTabVal;
 
 #ifdef DEBUG
-      printf("LITrip(lmap) add=0x%x PTab=0x%x NT=%d MEMC.Ctrl b 12=%d\n",address,PageTabVal,statestr.NtransSig,MEMC.ControlReg & (1<<12));
+      printf("LITrip(lmap) add=0x%x PTab=0x%x NT=%d MEMC.Ctrl b 12=%d\n",
+             address, PageTabVal, statestr.NtransSig,
+             MEMC.ControlReg & (1 << 12));
 #endif
 
       /* The page exists - so if itis supervisor then it's OK */
-      if ((!(statestr.NtransSig)) && (!(MEMC.ControlReg & (1<<12))) && (PageTabVal & 512)) {
+      if ((!(statestr.NtransSig)) && (!(MEMC.ControlReg & (1 << 12))) &&
+          (PageTabVal & 512))
+      {
         ARMul_PREFETCHABORT(address);
-        ARMul_PREFETCHABORT((address+4));
-        ARMul_PREFETCHABORT((address+8));
-        *pw1=ARMul_ABORTWORD;
-        *pw2=ARMul_ABORTWORD;
-        *pw3=ARMul_ABORTWORD;
-        badfunc=ARMul_Emulate_DecodeInstr;
-        *func1=&badfunc;
-        *func2=&badfunc;
-        *func3=&badfunc;
+        ARMul_PREFETCHABORT(address + 4);
+        ARMul_PREFETCHABORT(address + 8);
+        *pw1 = ARMul_ABORTWORD;
+        *pw2 = ARMul_ABORTWORD;
+        *pw3 = ARMul_ABORTWORD;
+        badfunc = ARMul_Emulate_DecodeInstr;
+        *func1 = &badfunc;
+        *func2 = &badfunc;
+        *func3 = &badfunc;
 #ifdef DEBUG
-          printf("LITrip(lmap) prefetchabort - no access to usermode address=0x%x\n",address);
+        printf("LITrip(lmap) prefetchabort - no access to usermode address=0x%x\n",
+               address);
 #endif
         return;
-      };
-  };
+      }
+  }
   ARMul_CLEARABORT;
 
- /* Logically mapped RAM */
- address=GetPhysAddress(address);
+  /* Logically mapped RAM */
+  address = GetPhysAddress(address);
 
- /* I used to think memory wrapped after the real RAM - but it doesn't appear
-    to */
- if (address>=MEMC.RAMSize) {
-   fprintf(stderr,"LoadInstrTriplet returning dead0bad - after PhysRam (from log ram)\n");
-   *pw1=0xdead0bad;
-   *pw2=0xdead0bad;
-   *pw3=0xdead0bad;
-   badfunc=ARMul_Emulate_DecodeInstr;
-   *func1=&badfunc;
-   *func2=&badfunc;
-   *func3=&badfunc;
-   return;
-   /*while (address>MEMC.RAMSize)
-     address-=MEMC.RAMSize; */
- };
+  /* I used to think memory wrapped after the real RAM - but it doesn't appear
+     to */
+  if (address >= MEMC.RAMSize) {
+    fprintf(stderr, "LoadInstrTriplet returning dead0bad - after PhysRam (from log ram)\n");
+    *pw1 = 0xdead0bad;
+    *pw2 = 0xdead0bad;
+    *pw3 = 0xdead0bad;
+    badfunc = ARMul_Emulate_DecodeInstr;
+    *func1 = &badfunc;
+    *func2 = &badfunc;
+    *func3 = &badfunc;
+    return;
+    /*while (address > MEMC.RAMSize)
+      address -= MEMC.RAMSize; */
+  }
 
- address=address/4;
- *pw1=MEMC.PhysRam[address];
- *pw2=MEMC.PhysRam[address+1];
- *pw3=MEMC.PhysRam[address+2];
- *func1=&(MEMC.PhysRamfuncs[address]);
- *func2=&(MEMC.PhysRamfuncs[address+1]);
- *func3=&(MEMC.PhysRamfuncs[address+2]);
+  address /= 4;
+  *pw1 = MEMC.PhysRam[address];
+  *pw2 = MEMC.PhysRam[address + 1];
+  *pw3 = MEMC.PhysRam[address + 2];
+  *func1 = &MEMC.PhysRamfuncs[address];
+  *func2 = &MEMC.PhysRamfuncs[address + 1];
+  *func3 = &MEMC.PhysRamfuncs[address + 2];
 }
 
 /***************************************************************************\
@@ -426,10 +432,11 @@ void ARMul_Icycles(unsigned number)
 * Assigns the N and Z flags depending on the value of result                *
 \***************************************************************************/
 
-void ARMul_NegZero(ARMul_State *state, ARMword result)
+static void
+ARMul_NegZero(ARMul_State *state, ARMword result)
 {
-    ASSIGNN(NEG(result));
-    ASSIGNZ(result == 0);
+  ASSIGNN(NEG(result));
+  ASSIGNZ(result == 0);
 }
 
 
@@ -437,17 +444,19 @@ void ARMul_NegZero(ARMul_State *state, ARMword result)
 * Assigns the C flag after an addition of a and b to give result            *
 \***************************************************************************/
 
-void ARMul_AddCarry(ARMul_State *state, ARMword a,ARMword b,ARMword result)
+static void
+ARMul_AddCarry(ARMul_State *state, ARMword a, ARMword b, ARMword result)
 {
-    ASSIGNC((NEG(a) && (NEG(b) || POS(result))) ||
-        (NEG(b) && POS(result)));
+  ASSIGNC( (NEG(a) && (NEG(b) || POS(result))) ||
+           (NEG(b) && POS(result)) );
 }
 
 /***************************************************************************\
 * Assigns the V flag after an addition of a and b to give result            *
 \***************************************************************************/
 
-void ARMul_AddOverflow(ARMul_State *state, ARMword a,ARMword b,ARMword result)
+static void
+ARMul_AddOverflow(ARMul_State *state, ARMword a, ARMword b, ARMword result)
 {
   ASSIGNV( (NEG(a) && NEG(b) && POS(result)) ||
            (POS(a) && POS(b) && NEG(result)) );
@@ -458,21 +467,23 @@ void ARMul_AddOverflow(ARMul_State *state, ARMword a,ARMword b,ARMword result)
 * Assigns the C flag after an subtraction of a and b to give result         *
 \***************************************************************************/
 
-void ARMul_SubCarry(ARMul_State *state, ARMword a,ARMword b,ARMword result)
+static void
+ARMul_SubCarry(ARMul_State *state, ARMword a, ARMword b, ARMword result)
 {
-ASSIGNC( (NEG(a) && POS(b)) ||
-         (NEG(a) && POS(result)) ||
-         (POS(b) && POS(result)) );
+  ASSIGNC( (NEG(a) && POS(b)) ||
+           (NEG(a) && POS(result)) ||
+           (POS(b) && POS(result)) );
 }
 
 /***************************************************************************\
 * Assigns the V flag after an subtraction of a and b to give result         *
 \***************************************************************************/
 
-void ARMul_SubOverflow(ARMul_State *state,ARMword a,ARMword b,ARMword result)
+static void
+ARMul_SubOverflow(ARMul_State *state, ARMword a, ARMword b, ARMword result)
 {
-ASSIGNV( (NEG(a) && POS(b) && POS(result)) ||
-         (POS(a) && NEG(b) && NEG(result)) );
+  ASSIGNV( (NEG(a) && POS(b) && POS(result)) ||
+           (POS(a) && NEG(b) && NEG(result)) );
 }
 
 /***************************************************************************\
@@ -482,7 +493,8 @@ ASSIGNV( (NEG(a) && POS(b) && POS(result)) ||
 \***************************************************************************/
 
 #ifndef __riscos__
-ARMword GetDPRegRHS(ARMul_State *state, ARMword instr)
+static ARMword
+GetDPRegRHS(ARMul_State *state, ARMword instr)
 {
   ARMword shamt , base;
 
@@ -562,7 +574,8 @@ ARMword GetDPRegRHS(ARMul_State *state, ARMword instr)
 \***************************************************************************/
 
 #ifndef __riscos__
-ARMword GetDPSRegRHS(ARMul_State *state, ARMword instr)
+static ARMword
+GetDPSRegRHS(ARMul_State *state, ARMword instr)
 {
   ARMword shamt , base;
 
@@ -1346,113 +1359,112 @@ void ARMul_Emulate_DecodeInstr(ARMword instr, ARMword pc) {
   f(instr,pc);
 } /* ARMul_Emulate_DecodeInstr */
 
-void ARMul_Emulate26(void)
+void
+ARMul_Emulate26(void)
 {
-  ARMword instr,                            /* The current instruction                   */
-             pc = 0;                        /* The address of the current instruction    */
-  ARMword decoded, loaded;                  /* Instruction pipeline                      */
+  ARMword instr,           /* The current instruction */
+          pc = 0;          /* The address of the current instruction */
+  ARMword decoded, loaded; /* Instruction pipeline */
   /* Function of decoded instruction functions */
   ARMEmuFunc instrfunc, decfunc = NULL, loadedfunc = NULL;
   static ARMEmuFunc dummyfunc = ARMul_Emulate_DecodeInstr;
 
-/***************************************************************************\
-*                        Execute the next instruction                       *
-\***************************************************************************/
+  /**************************************************************************\
+   *                        Execute the next instruction                    *
+  \**************************************************************************/
   kill_emulator = 0;
- while (kill_emulator == 0) {
+  while (kill_emulator == 0) {
+    if (statestr.NextInstr < PRIMEPIPE) {
+      decoded = statestr.decoded;
+      loaded  = statestr.loaded;
+      pc      = statestr.pc;
 
-   if (statestr.NextInstr < PRIMEPIPE) {
-     decoded = statestr.decoded;
-     loaded  = statestr.loaded;
-     pc      = statestr.pc;
+      decfunc = loadedfunc =
+                instrfunc =
+                ARMul_Emulate_DecodeInstr; /* Could do better here! */
 
-     decfunc = loadedfunc =
-               instrfunc =
-               ARMul_Emulate_DecodeInstr; /* Could do better here! */
+      pInstrFunc = pDecFunc
+                 = pLoadedFunc
+                 = &dummyfunc;
+    }
 
-     pInstrFunc = pDecFunc
-                = pLoadedFunc
-                = &dummyfunc;
-   }
-
-   do { /* just keep going */
-     switch (statestr.NextInstr) {
+    for (;;) { /* just keep going */
+      switch (statestr.NextInstr) {
         case NONSEQ:
         case SEQ:
-           statestr.Reg[15] += 4; /* Advance the pipeline, and an S cycle */
-           pc += 4;
-           instr     = decoded;
-           instrfunc = decfunc;
-           pInstrFunc = pDecFunc;
+          statestr.Reg[15] += 4; /* Advance the pipeline, and an S cycle */
+          pc += 4;
+          instr     = decoded;
+          instrfunc = decfunc;
+          pInstrFunc = pDecFunc;
 
-           decoded  = loaded;
-           decfunc  = loadedfunc;
-           pDecFunc = pLoadedFunc;
+          decoded  = loaded;
+          decfunc  = loadedfunc;
+          pDecFunc = pLoadedFunc;
 
-           loaded = ARMul_LoadInstr(pc + 8, &pLoadedFunc);
-           loadedfunc = *pLoadedFunc;
-           break;
+          loaded = ARMul_LoadInstr(pc + 8, &pLoadedFunc);
+          loadedfunc = *pLoadedFunc;
+          break;
 
         case PCINCEDSEQ:
         case PCINCEDNONSEQ:
-           /* DAG: R15 already advanced? */
-           pc += 4; /* Program counter advanced, and an S cycle */
-           instr      = decoded;
-           instrfunc  = decfunc;
-           pInstrFunc = pDecFunc;
+          /* DAG: R15 already advanced? */
+          pc += 4; /* Program counter advanced, and an S cycle */
+          instr      = decoded;
+          instrfunc  = decfunc;
+          pInstrFunc = pDecFunc;
 
-           decoded  = loaded;
-           decfunc  = loadedfunc;
-           pDecFunc = pLoadedFunc;
+          decoded  = loaded;
+          decfunc  = loadedfunc;
+          pDecFunc = pLoadedFunc;
 
-           loaded = ARMul_LoadInstr(pc + 8, &pLoadedFunc);
-           loadedfunc = *pLoadedFunc;
-           NORMALCYCLE;
-           break;
+          loaded = ARMul_LoadInstr(pc + 8, &pLoadedFunc);
+          loadedfunc = *pLoadedFunc;
+          NORMALCYCLE;
+          break;
 
         /* DAG - resume was here! */
 
         default: /* The program counter has been changed */
 #ifdef DEBUG
-           printf("PC ch pc=0x%x (O 0x%x\n",statestr.Reg[15],pc);
+          printf("PC ch pc=0x%x (O 0x%x\n", statestr.Reg[15], pc);
 #endif
-           pc = statestr.Reg[15];
+          pc = statestr.Reg[15];
 #ifndef MODE32
-           pc = pc & R15PCBITS;
+          pc &= R15PCBITS;
 #endif
-           statestr.Reg[15] = pc + 8;
-           statestr.Aborted = 0;
-           ARMul_LoadInstrTriplet(pc,&instr,&decoded,&loaded,&pInstrFunc,&pDecFunc,&pLoadedFunc);
-           instrfunc  = *pInstrFunc;
-           decfunc    = *pDecFunc;
-           loadedfunc = *pLoadedFunc;
-           NORMALCYCLE;
-           break;
-     }
-     ARMul_InvokeEvent();
+          statestr.Reg[15] = pc + 8;
+          statestr.Aborted = 0;
+          ARMul_LoadInstrTriplet(pc, &instr, &decoded, &loaded,
+                                 &pInstrFunc, &pDecFunc, &pLoadedFunc);
+          instrfunc  = *pInstrFunc;
+          decfunc    = *pDecFunc;
+          loadedfunc = *pLoadedFunc;
+          NORMALCYCLE;
+          break;
+      }
+      ARMul_InvokeEvent();
 
-     if (ARMul_Time >= ioc.NextTimerTrigger) UpdateTimerRegisters();
+      if (ARMul_Time >= ioc.NextTimerTrigger)
+        UpdateTimerRegisters();
 
-     if (statestr.Exception) { /* Any exceptions */
-       if ((statestr.Exception & 2) && !FFLAG) {
-          ARMul_Abort(&statestr,ARMul_FIQV);
+      if (statestr.Exception) { /* Any exceptions */
+        if ((statestr.Exception & 2) && !FFLAG) {
+          ARMul_Abort(&statestr, ARMul_FIQV);
           break;
 
-       } else if ((statestr.Exception & 1) && !IFLAG) {
-         ARMul_Abort(&statestr,ARMul_IRQV);
-         break;
-       }
-     }
+        } else if ((statestr.Exception & 1) && !IFLAG) {
+          ARMul_Abort(&statestr, ARMul_IRQV);
+          break;
+        }
+      }
 
-     /*fprintf(stderr,"exec: pc=0x%08x instr=0x%08x\n",pc,instr);*/
-     instrfunc(instr, pc);
-   } while (1); /* do loop */
+      /*fprintf(stderr, "exec: pc=0x%08x instr=0x%08x\n", pc, instr);*/
+      instrfunc(instr, pc);
+    } /* for loop */
 
-   statestr.decoded = decoded;
-   statestr.loaded = loaded;
-   statestr.pc = pc;
-
+    statestr.decoded = decoded;
+    statestr.loaded = loaded;
+    statestr.pc = pc;
   }
-
 } /* Emulate 26 in instruction based mode */
-

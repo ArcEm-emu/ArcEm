@@ -359,8 +359,10 @@ void ARMul_FixCPSR(ARMul_State *state, ARMword instr, ARMword rhs);
 void ARMul_FixSPSR(ARMul_State *state, ARMword instr, ARMword rhs);
 void ARMul_UndefInstr(ARMul_State *state,ARMword instr);
 
+#ifdef __riscos__
 ARMword GetDPRegRHS(ARMul_State *state, ARMword instr);
 ARMword GetDPSRegRHS(ARMul_State *state, ARMword instr);
+#endif
 
 
 #define EVENTLISTSIZE 1024UL
