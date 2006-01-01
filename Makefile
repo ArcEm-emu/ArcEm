@@ -34,6 +34,10 @@ ifeq ($(SYSTEM),)
 SYSTEM=X
 endif
 
+CC=gcc
+LD=gcc
+LDFLAGS=
+
 
 WARN = -Wall -Wno-return-type -Wno-unknown-pragmas -Wshadow -Wundef \
    -Wpointer-arith -Wcast-align -Wstrict-prototypes \
@@ -138,7 +142,7 @@ install: all
 	$(INSTALL) armul $(INSTALL_DIR)
 
 $(TARGET): $(OBJS) $(MODEL).o
-	$(CC) $(OBJS) $(LIBS) $(MODEL).o -o $@
+	$(LD) $(LDFLAGS) $(OBJS) $(LIBS) $(MODEL).o -o $@
 
 clean:
 	rm -f *.o arch/*.o $(SYSTEM)/*.o arcem core *.bb *.bbg *.da
