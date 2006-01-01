@@ -2,6 +2,7 @@
 /* SaveCMOS contributed by Richard York */
 #include <signal.h>
 #include <stdio.h>
+#include <time.h>
 #include "../armopts.h"
 #include "../armdefs.h"
 
@@ -32,6 +33,11 @@ static const char *I2CStateNameTrans[] = {"Idle",
 #define I2CCLOCKREAD ((ioc.ControlReg & 2)!=0)
 #define I2CDATAWRITE(v) { /*fprintf(stderr,"I2C data write (%d)\n",v); */ ioc.ControlRegInputData &= ~1; ioc.ControlRegInputData |=v; };
 
+/* Macros taken from bcd.h in the Linux kernel - licensed under GPL2+ */
+#define BCD2BIN(val)    (((val) & 0x0f) + ((val)>>4)*10)
+#define BIN2BCD(val)    ((((val)/10)<<4) + (val)%10)
+
+
 typedef enum {
   I2CChipState_Idle=0,
   I2CChipState_GotStart, /* Got a special condition */
@@ -60,22 +66,63 @@ struct I2CStruct {
 static struct I2CStruct I2C;
 
 /*------------------------------------------------------------------------------*/
-static void I2C_SetupTransmit(ARMul_State *state) {
+static void
+I2C_SetupTransmit(ARMul_State *state)
+{
   /*fprintf(stderr,"I2C_SetupTransmit (address=%d)\n",I2C.WordAddress); */
-  I2C.IAmTransmitter=1;
-  I2C.state=I2CChipState_TransmittingToMaster;
+  I2C.IAmTransmitter = 1;
+  I2C.state = I2CChipState_TransmittingToMaster;
 
   /* Get the value that we are about to send */
-  I2C.DataBuffer=I2C.Data[I2C.WordAddress]; /* Must do specials for clock/control regs */
+  if (I2C.WordAddress < 16) {
+    /* I2C Addresses in the range 0..15 are Clock/Control Registers.
+       Generate these values dynamically rather than referring to the
+       I2C.Data array
+    */
+    time_t t1 = time(NULL);
+    const struct tm *t2 = gmtime(&t1);
 
-  if (I2C.WordAddress==1) {
+    switch (I2C.WordAddress) {
+    case 2: /* Seconds */
+      I2C.DataBuffer = BIN2BCD(t2->tm_sec);
+      break;
+    case 3: /* Minutes */
+      I2C.DataBuffer = BIN2BCD(t2->tm_min);
+      break;
+    case 4: /* Hours */
+      I2C.DataBuffer = BIN2BCD(t2->tm_hour);
+      break;
+    case 5: /* Year/Date */
+      I2C.DataBuffer = (((t2->tm_year + 1900) & 3) << 6) |
+                       BIN2BCD(t2->tm_mday);
+      break;
+    case 6: /* Weekday/Month */
+      I2C.DataBuffer = (t2->tm_wday << 5) |
+                       BIN2BCD(t2->tm_mon + 1);
+      break;
+    default:
+      I2C.DataBuffer = 0; /* Just to avoid being undefined */
+      break;
+    }
+  } else {
+    /* I2C Addreses in the range 16..255 are NVRAM */
+    I2C.DataBuffer = I2C.Data[I2C.WordAddress];
+  }
+
+  /* I have no idea why these next three lines are here:
+     When WordAddress==1 this refers to the centisecond counter of the RTC.
+     This code increments the data location after it is read.
+     However it is not called every centisecond - and therefore provides
+     no useful timing.
+  */
+  if (I2C.WordAddress == 1) {
     I2C.Data[1]++; /* OK - should do BCD! */
-  };
+  }
 
   /* Now put the first byte onto the data line */
-  I2CDATAWRITE(((I2C.DataBuffer & 128)!=0));
-  I2C.DataBuffer<<=1;
-  I2C.NumberOfBitsSoFar=1;
+  I2CDATAWRITE(((I2C.DataBuffer & 128) != 0));
+  I2C.DataBuffer <<= 1;
+  I2C.NumberOfBitsSoFar = 1;
 } /* I2C_SetupTransmit */
 
 
@@ -377,15 +424,17 @@ static void SetUpCMOS(ARMul_State *state) {
 } /* SetUpCMOS */
 
 /* ------------------------------------------------------------------------- */
-void I2C_Init(ARMul_State *state) {
- I2C.OldDataState=0;
- I2C.OldClockState=0;
- I2C.IAmTransmitter=0;
- I2CDATAWRITE(1);
- I2C.state=I2CChipState_Idle;
- I2C.NumberOfBitsSoFar=0;
- I2C.LastrNw=0;
- I2C.WordAddress=0;
+void
+I2C_Init(ARMul_State *state)
+{
+  I2C.OldDataState = 0;
+  I2C.OldClockState = 0;
+  I2C.IAmTransmitter = 0;
+  I2CDATAWRITE(1);
+  I2C.state = I2CChipState_Idle;
+  I2C.NumberOfBitsSoFar = 0;
+  I2C.LastrNw = 0;
+  I2C.WordAddress = 0;
 
- SetUpCMOS(state);
+  SetUpCMOS(state);
 } /* I2C_Init */
