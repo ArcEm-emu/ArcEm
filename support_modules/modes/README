@@ -1,0 +1,71 @@
+Arcem Modes
+-----------
+
+ArcemModes is an extension module written for the Arcem Archimdes emulator it
+provides a range of wimpmodes (screen resolutions) in addition to those built
+into RISC OS. Sources of inspiration for modes come from the Virtual A5000
+emulator and my own imagination.
+
+YOU SHOULD NOT USE THIS MODULE WITH ANY REAL ACORN MACHINE
+only eumlators, this is due to some of the modes being beyond the capabilities
+of the real VIDC hardware.
+
+Here are the modes it provides
+------------------------------
+
+Virtual A5000 compatibilty modes
+Mode     XRes YRes BPP Colours
+ 32       800  600   8     256
+
+100      1024  768   1       2
+101      1024  768   2       4
+102      1024  768   4      16
+
+104      1280 1016   1       2  (In VA5000 this is a clone of 105, but I
+                                 thought that was probably a mistake and
+                                 made it 1bpp)
+105      1280 1016   2       4
+
+108      1152  864   1       2
+109      1152  864   2       4
+
+112      1400  520   4      16  (Interlaced will be 1400 x 1040)
+
+120      1600  600   4      16  (Interlaced will be 1600 x 1200)
+
+PDA style modes (I wanted to see what RISC OS would look like on an iPaq)
+122       240  320   1       2  (Slightly buggy)
+123       240  320   2       4
+124       240  320   4      16
+125       240  320   8     256
+
+Developing and assembling
+-------------------------
+
+The ArcemModes module in assembled from the BBC Basic file MakeModes
+and can be assembled using any RISC OS Computer (though has only been tested
+on RISC OS 3 and higher) or emulated RISC OS computer, including Arcem itself.
+It is hoped in future that we can write a module can be written to generate
+modes on the fly allowing arbitrary sizes and colour depths (within the 480k
+screen memory limit).
+
+Technical Details
+-----------------
+
+The extension mode service call, called when RISC OS does not recognise
+the mode number a user has requested, expects 2 tables of data too be returned
+(if the requested mode is one your module supports). One table is a list
+VIDC parameters that corespond to the control registers on the VIDC chip, and
+program such things as border width, and various other low level details. More
+information can be found in the VIDC1 datasheet as to the exact meanings of
+each register. The other table of data contains higher level information on
+many things such as resolution, bpp, text resolution, max colours etc.
+
+The data for both of these tables can be automatically generated from just
+a X, Y and BPP value by the BBC BASIC program ModeGen. ModeGen contains all
+the formulas we derived for calculating the tables of data.
+
+ModeGen cannot yet create modes with rectangular pixels (or any mode whose
+eigen values are not 1:1) and has some limitations with regards to directly
+cut and pasting the results into MakeArcemModes. Please see the comments
+at the top of ModeGen for more details.
