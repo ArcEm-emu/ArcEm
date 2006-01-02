@@ -1,16 +1,16 @@
 /*  armemu.h -- ARMulator emulation macros:  ARM6 Instruction Emulator.
     Copyright (C) 1994 Advanced RISC Machines Ltd.
- 
+
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation; either version 2 of the License, or
     (at your option) any later version.
- 
+
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
- 
+
     You should have received a copy of the GNU General Public License
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. */
@@ -296,7 +296,7 @@
 #define WRITESDESTNORM(d) {DEST = d; \
                          ARMul_NegZero(emu_state, d); }
 
-#define WRITESDESTPC(d) WriteSR15(emu_state, d) 
+#define WRITESDESTPC(d) WriteSR15(emu_state, d)
 
 #define BYTETOBUS(data) ((data & 0xff) | \
                         ((data & 0xff) << 8) | \
@@ -333,11 +333,6 @@ void ARMul_Abort26(ARMul_State *state, ARMword);
 void ARMul_Abort32(ARMul_State *state, ARMword);
 unsigned ARMul_NthReg(ARMword instr,unsigned number);
 void ARMul_MSRCpsr(ARMul_State *state, ARMword instr, ARMword rhs);
-void ARMul_NegZero(ARMul_State *state, ARMword result);
-void ARMul_AddCarry(ARMul_State *state, ARMword a, ARMword b, ARMword result);
-void ARMul_AddOverflow(ARMul_State *state, ARMword a, ARMword b, ARMword result);
-void ARMul_SubCarry(ARMul_State *state, ARMword a, ARMword b, ARMword result);
-void ARMul_SubOverflow(ARMul_State *state, ARMword a, ARMword b, ARMword result);
 void ARMul_CPSRAltered(ARMul_State *state);
 void ARMul_R15Altered(ARMul_State *state);
 ARMword ARMul_SwitchMode(ARMul_State *state,ARMword oldmode, ARMword newmode);
