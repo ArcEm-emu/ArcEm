@@ -68,7 +68,7 @@ ARMul_LoadInstr(ARMword address, ARMEmuFunc **func)
   switch ((address >> 24) & 3) {
     case 3:
       /* If we are in ROM and trying to read then there is no hassle */
-      if (address >= 0x3400000) {
+      if (address >= MEMORY_0x3400000_R_ROM_LOW) {
         /* It's ROM read - no hassle */
         ARMul_CLEARABORT;
 
@@ -78,15 +78,15 @@ ARMul_LoadInstr(ARMword address, ARMEmuFunc **func)
           MEMC.ROMMapFlag = 0;
         }
 
-        if (address >= 0x3800000) {
-          address -= 0x3800000;
+        if (address >= MEMORY_0x3800000_R_ROM_HIGH) {
+          address -= MEMORY_0x3800000_R_ROM_HIGH;
           address %= MEMC.ROMHighSize;
 
           *func = &MEMC.ROMHighFuncs[address / 4];
           return MEMC.ROMHigh[address / 4];
         } else {
           if (MEMC.ROMLow) {
-            address -= 0x3400000;
+            address -= MEMORY_0x3400000_R_ROM_LOW;
             address %= MEMC.ROMLowSize;
 
             *func = &MEMC.ROMLowFuncs[address / 4];
@@ -124,7 +124,7 @@ ARMul_LoadInstr(ARMword address, ARMEmuFunc **func)
           MEMC.OldAddress1 = -1;
           MEMC.OldPage1 = -1;
         }
-        address -= 0x2000000;
+        address -= MEMORY_0x2000000_RAM_PHYS;
 
         /* I used to think memory wrapped after the real RAM - but it doesn't appear to */
         if (address >= MEMC.RAMSize) {
@@ -214,7 +214,7 @@ ARMul_LoadInstrTriplet(ARMword address,
   switch ((address >> 24) & 3) {
     case 3:
       /* If we are in ROM and trying to read then there is no hassle */
-      if (address >= 0x3400000) {
+      if (address >= MEMORY_0x3400000_R_ROM_LOW) {
         /* It's ROM read - no hassle */
         ARMul_CLEARABORT;
 
@@ -224,8 +224,8 @@ ARMul_LoadInstrTriplet(ARMword address,
           MEMC.ROMMapFlag = 0;
         }
 
-        if (address >= 0x3800000) {
-          address -= 0x3800000;
+        if (address >= MEMORY_0x3800000_R_ROM_HIGH) {
+          address -= MEMORY_0x3800000_R_ROM_HIGH;
           address %= MEMC.ROMHighSize;
           address /= 4;
           *pw1 = MEMC.ROMHigh[address];
@@ -236,7 +236,7 @@ ARMul_LoadInstrTriplet(ARMword address,
           *func3 = &MEMC.ROMHighFuncs[address + 2];
         } else {
           if (MEMC.ROMLow) {
-            address -= 0x3400000;
+            address -= MEMORY_0x3400000_R_ROM_LOW;
             address %= MEMC.ROMLowSize;
             address /= 4;
             *pw1 = MEMC.ROMLow[address];
@@ -290,7 +290,7 @@ ARMul_LoadInstrTriplet(ARMword address,
           MEMC.OldAddress1 = -1;
           MEMC.OldPage1 = -1;
         }
-        address -= 0x2000000;
+        address -= MEMORY_0x2000000_RAM_PHYS;
 
         /* I used to think memory wrapped after the real RAM - but it doesn't appear to */
         if (address >= MEMC.RAMSize) {

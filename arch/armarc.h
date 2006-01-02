@@ -12,6 +12,18 @@
 #include "sound.h"
 #endif
 
+/* Memory map locations */
+#define MEMORY_0x3800000_R_ROM_HIGH   0x3800000  /* Some sections of the memory map    */
+#define MEMORY_0x3800000_W_LOG2PHYS   0x3800000  /* have different functions when read */
+#define MEMORY_0x3400000_R_ROM_LOW    0x3400000  /* or written to.                     */
+#define MEMORY_0x3600000_W_DMA_GEN    0x3600000
+#define MEMORY_0x3400000_W_VIDEOCON   0x3400000
+
+#define MEMORY_0x3000000_CON_IO       0x3000000
+
+#define MEMORY_0x2000000_RAM_PHYS     0x2000000
+
+
 /* Erm - this has to be 256....*/
 #define UPDATEBLOCKSIZE 256
 

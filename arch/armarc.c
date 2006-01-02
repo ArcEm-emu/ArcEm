@@ -53,17 +53,6 @@ int Vendold;
 
 #endif
 
-/* Memory map locations */
-#define MEMORY_R_ROM_HIGH   0x3800000  /* Some sections of the memory map    */
-#define MEMORY_W_LOG2PHYS   0x3800000  /* have different functions when read */
-#define MEMORY_R_ROM_LOW    0x3400000  /* or written to.                     */
-#define MEMORY_W_DMA_GEN    0x3600000
-#define MEMORY_W_VIDEOCON   0x3400000
-
-#define MEMORY_CON_IO     0x3000000
-
-#define MEMORY_RAM_PHYS   0x2000000
-
 /* Page size flags */
 #define MEMC_PAGESIZE_O_4K     0
 #define MEMC_PAGESIZE_1_8K     1
@@ -259,12 +248,12 @@ static int CheckAbortR(int address) {
   /* First check if we are doing ROM remapping and are accessing a remapped location */
   /* If it is then map it into the ROM space */
   if ((MEMC.ROMMapFlag) && (address <0xc00000))
-    address = MEMORY_R_ROM_LOW + address;
+    address = MEMORY_0x3400000_R_ROM_LOW + address;
 
   switch ((address >> 24) & 3) {
     case 3: /* 0x03000000 - 0x03FFFFFF - 16MB - IO Controllers (8MB) and ROM space 2 x 4MB */
       /* If we are in ROM and trying to read then there is no hassle */
-      if (address >= MEMORY_R_ROM_LOW) {
+      if (address >= MEMORY_0x3400000_R_ROM_LOW) {
         /* It's ROM read - no hassle */
         return(1);
       }
@@ -325,7 +314,7 @@ static int CheckAbortW(int address) {
      DMA Address Generator, MEMC control register, and to the Logical to
      physical address translator all are only allowed in Supervisor mode
      (PRIVELEGED) */
-  if (address >= MEMORY_RAM_PHYS) {
+  if (address >= MEMORY_0x2000000_RAM_PHYS) {
     /*fprintf(stderr,"Ntrans=%d\n",statestr.NtransSig); */
     return PRIVILEGED;
   }
@@ -827,7 +816,7 @@ ARMword GetWord(ARMword address) {
 
   switch ((address >> 24) & 3) {
     case 3: /* 0x03000000 - 0x03FFFFFF - 16MB - IO Controllers (4MB) and ROM space 4 + 8MB */
-      if (address >= MEMORY_R_ROM_LOW) {
+      if (address >= MEMORY_0x3400000_R_ROM_LOW) {
 
         if ((MEMC.ROMMapFlag == 2)) {
           MEMC.OldAddress1 = -1;
@@ -836,12 +825,12 @@ ARMword GetWord(ARMword address) {
         }
 
         /* Both ROM areas wrap around */
-        if (address >= MEMORY_R_ROM_HIGH) {
-          address -= MEMORY_R_ROM_HIGH;
+        if (address >= MEMORY_0x3800000_R_ROM_HIGH) {
+          address -= MEMORY_0x3800000_R_ROM_HIGH;
           return MEMC.ROMHigh[(address % MEMC.ROMHighSize) / 4];
         } else {
           if (MEMC.ROMLow) {
-            address -= MEMORY_R_ROM_LOW;
+            address -= MEMORY_0x3400000_R_ROM_LOW;
             return MEMC.ROMLow[(address % MEMC.ROMLowSize) / 4];
           } else {
             return 0;
@@ -863,7 +852,7 @@ ARMword GetWord(ARMword address) {
         MEMC.OldAddress1 =- 1;
         MEMC.OldPage1 =- 1;
       }
-      address -= MEMORY_RAM_PHYS;
+      address -= MEMORY_0x2000000_RAM_PHYS;
 
       /* I used to think memory wrapped after the real RAM - but it doesn't */
       /* appear to */
@@ -908,7 +897,7 @@ void
 PutVal(ARMul_State *state, ARMword address, ARMword data, int byteNotword,
        int Statechange, ARMEmuFunc newfunc)
 {
-  if (address >= MEMORY_W_LOG2PHYS) {
+  if (address >= MEMORY_0x3800000_W_LOG2PHYS) {
     /* Logical-to-physical address translation */
     unsigned tmp;
 
@@ -921,7 +910,7 @@ PutVal(ARMul_State *state, ARMword address, ARMword data, int byteNotword,
     if (MEMC.ROMMapFlag == 2)
       MEMC.ROMMapFlag = 0;
 
-    tmp = address - MEMORY_W_LOG2PHYS;
+    tmp = address - MEMORY_0x3800000_W_LOG2PHYS;
 #ifdef DEBUG_MEMC
     {
       unsigned logbaseaddr;
@@ -948,7 +937,7 @@ PutVal(ARMul_State *state, ARMword address, ARMword data, int byteNotword,
     return;
   }
 
-  if (address >= MEMORY_W_DMA_GEN) {
+  if (address >= MEMORY_0x3600000_W_DMA_GEN) {
     /* DMA address generation - MEMC Control reg */
     ARMword RegNum,RegVal;
 
@@ -1026,7 +1015,7 @@ PutVal(ARMul_State *state, ARMword address, ARMword data, int byteNotword,
   } /* DMA address gen/MEMC control */
 
   /* VIDC Space */
-  if (address >= MEMORY_W_VIDEOCON) {
+  if (address >= MEMORY_0x3400000_W_VIDEOCON) {
     if (!Statechange)
       return;
 
@@ -1037,7 +1026,7 @@ PutVal(ARMul_State *state, ARMword address, ARMword data, int byteNotword,
     return;
   }
 
-  if (address >= MEMORY_CON_IO) {
+  if (address >= MEMORY_0x3000000_CON_IO) {
     if (!Statechange)
       return;
 
@@ -1048,14 +1037,14 @@ PutVal(ARMul_State *state, ARMword address, ARMword data, int byteNotword,
     return;
   }
 
-  if (address < MEMORY_RAM_PHYS) {
+  if (address < MEMORY_0x2000000_RAM_PHYS) {
     /* Logically mapped RAM - shift the address so that the physical ram code will do it */
     address = GetPhysAddress(address);
   } else {
     /* Physical ram */
     if (MEMC.ROMMapFlag == 2)
       MEMC.ROMMapFlag = 0;
-    address -= MEMORY_RAM_PHYS;
+    address -= MEMORY_0x2000000_RAM_PHYS;
   }
 
   if (address >= MEMC.RAMSize)
