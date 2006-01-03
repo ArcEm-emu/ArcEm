@@ -113,30 +113,26 @@ hostfs_ensure_buffer_size(size_t buffer_size_needed)
 /**
  * @param state   Emulator state
  * @param address Address in emulated memory
- * @return Pointer to newly-allocated string
+ * @param buf     Returned string (filled-in)
+ * @param bufsize Size of passed-in buffer
  */
-static char *
-get_string(ARMul_State *state, ARMword address)
+static void
+get_string(ARMul_State *state, ARMword address, char *buf, size_t bufsize)
 {
-  char *buf = malloc(1024);
   char *cptr = buf;
   ARMword *wptr = (ARMword *) buf;
 
   assert(state);
+  assert(buf);
 
-  if (!buf) {
-    fprintf(stderr, "Failure to malloc() in hostfs/get_string(): %s",
-            strerror(errno));
-    exit(EXIT_FAILURE);
-  }
-
-  /* TODO Ensure we do not overrun the end of the malloc'ed space */
+  /* TODO Ensure we do not overrun the end of the passed-in space,
+     using the bufsize parameter */
   for (;;) {
     *wptr = ARMul_LoadWordS(state, address);
     if (cptr[0] == '\0' || cptr[1] == '\0' ||
         cptr[2] == '\0' || cptr[3] == '\0')
     {
-      return buf;
+      return;
     }
     wptr++;
     cptr += 4;
@@ -663,7 +659,8 @@ hostfs_open_allocate_index(void)
 static void
 hostfs_open(ARMul_State *state)
 {
-  char *ro_path, *host_pathname, *ro_leaf;
+  char ro_path[PATH_MAX];
+  char *host_pathname, *ro_leaf;
   risc_os_object_info object_info;
   unsigned idx;
 
@@ -675,7 +672,7 @@ hostfs_open(ARMul_State *state)
   dbug_hostfs("\tr6 = 0x%08x (pointer to special field if present)\n",
           state->Reg[6]);
 
-  ro_path = get_string(state, state->Reg[1]);
+  get_string(state, state->Reg[1], ro_path, sizeof(ro_path));
   dbug_hostfs("\tPATH = %s\n", ro_path);
 
   hostfs_path_process(ro_path, &host_pathname, &ro_leaf, &object_info);
@@ -749,7 +746,7 @@ hostfs_open(ARMul_State *state)
   state->Reg[4] = 0; /* Space allocated to file */
 
 err_exit:
-  free(ro_path);
+  ;
 }
 
 static void
@@ -924,7 +921,8 @@ static void
 hostfs_file_0_save_file(ARMul_State *state)
 {
   const unsigned BUFSIZE = MINIMUM_BUFFER_SIZE;
-  char *ro_path, *host_pathname, *ro_leaf;
+  char ro_path[PATH_MAX];
+  char *host_pathname, *ro_leaf;
   risc_os_object_info object_info;
   char *host_path;
   FILE *f;
@@ -945,7 +943,7 @@ hostfs_file_0_save_file(ARMul_State *state)
   dbug_hostfs("\tr6 = 0x%08x (pointer to special field if present)\n",
               state->Reg[6]);
 
-  ro_path = get_string(state, state->Reg[1]);
+  get_string(state, state->Reg[1], ro_path, sizeof(ro_path));
   dbug_hostfs("\tPATH = %s\n", ro_path);
 
 #if 1
@@ -1009,13 +1007,13 @@ hostfs_file_0_save_file(ARMul_State *state)
 
 err_exit:
   free(host_path);
-  free(ro_path);
 }
 
 static void
 hostfs_file_1_write_cat_info(ARMul_State *state)
 {
-  char *ro_path, *host_pathname, *ro_leaf;
+  char ro_path[PATH_MAX];
+  char *host_pathname, *ro_leaf;
   risc_os_object_info object_info;
 
   assert(state);
@@ -1029,14 +1027,12 @@ hostfs_file_1_write_cat_info(ARMul_State *state)
   dbug_hostfs("\tr6 = 0x%08x (pointer to special field if present)\n",
               state->Reg[6]);
 
-  ro_path = get_string(state, state->Reg[1]);
+  get_string(state, state->Reg[1], ro_path, sizeof(ro_path));
   dbug_hostfs("\tPATH = %s\n", ro_path);
 
   /* TODO Ensure we do not try to modify the root object: i.e. $ */
 
   hostfs_path_process(ro_path, &host_pathname, &ro_leaf, &object_info);
-
-  free(ro_path);
 
   switch (object_info.type) {
   case OBJECT_TYPE_NOT_FOUND:
@@ -1075,7 +1071,8 @@ hostfs_file_1_write_cat_info(ARMul_State *state)
 static void
 hostfs_file_5_read_cat_info(ARMul_State *state)
 {
-  char *ro_path, *host_pathname, *ro_leaf;
+  char ro_path[PATH_MAX];
+  char *host_pathname, *ro_leaf;
   risc_os_object_info object_info;
 
   assert(state);
@@ -1085,7 +1082,7 @@ hostfs_file_5_read_cat_info(ARMul_State *state)
   dbug_hostfs("\tr6 = 0x%08x (pointer to special field if present)\n",
               state->Reg[6]);
 
-  ro_path = get_string(state, state->Reg[1]);
+  get_string(state, state->Reg[1], ro_path, sizeof(ro_path));
   dbug_hostfs("\tPATH = %s\n", ro_path);
 
   hostfs_path_process(ro_path, &host_pathname, &ro_leaf, &object_info);
@@ -1100,14 +1097,13 @@ hostfs_file_5_read_cat_info(ARMul_State *state)
     free(host_pathname);
     free(ro_leaf);
   }
-
-  free(ro_path);
 }
 
 static void
 hostfs_file_6_delete(ARMul_State *state)
 {
-  char *ro_path, *host_pathname, *ro_leaf;
+  char ro_path[PATH_MAX];
+  char *host_pathname, *ro_leaf;
   risc_os_object_info object_info;
 
   assert(state);
@@ -1117,7 +1113,7 @@ hostfs_file_6_delete(ARMul_State *state)
   dbug_hostfs("\tr6 = 0x%08x (pointer to special field if present)\n",
               state->Reg[6]);
 
-  ro_path = get_string(state, state->Reg[1]);
+  get_string(state, state->Reg[1], ro_path, sizeof(ro_path));
   dbug_hostfs("\tPATH = %s\n", ro_path);
 
   /* TODO Ensure we do not try to delete the root object: i.e. $ */
@@ -1160,14 +1156,15 @@ hostfs_file_6_delete(ARMul_State *state)
   free(ro_leaf);
 
 err_exit:
-  free(ro_path);
+  ;
 }
 
 static void
 hostfs_file_7_create_file(ARMul_State *state)
 {
   const unsigned BUFSIZE = MINIMUM_BUFFER_SIZE;
-  char *path, *host_path;
+  char ro_path[PATH_MAX];
+  char *host_path;
   FILE *f;
   ARMword length;
 
@@ -1184,9 +1181,9 @@ hostfs_file_7_create_file(ARMul_State *state)
   dbug_hostfs("\tr6 = 0x%08x (pointer to special field if present)\n",
               state->Reg[6]);
 
-  path = get_string(state, state->Reg[1]);
-  host_path = riscos_path_to_host(path);
-  dbug_hostfs("\tPATH = %s\n", path);
+  get_string(state, state->Reg[1], ro_path, sizeof(ro_path));
+  host_path = riscos_path_to_host(ro_path);
+  dbug_hostfs("\tPATH = %s\n", ro_path);
   dbug_hostfs("\tPATH2 = %s\n", host_path);
 
   hostfs_ensure_buffer_size(BUFSIZE);
@@ -1215,13 +1212,13 @@ hostfs_file_7_create_file(ARMul_State *state)
 
 err_exit:
   free(host_path);
-  free(path);
 }
 
 static void
 hostfs_file_8_create_dir(ARMul_State *state)
 {
-  char *path, *host_path;
+  char ro_path[PATH_MAX];
+  char *host_path;
 
   assert(state);
 
@@ -1233,9 +1230,9 @@ hostfs_file_8_create_dir(ARMul_State *state)
   dbug_hostfs("\tr6 = 0x%08x (pointer to special field if present)\n",
               state->Reg[6]);
 
-  path = get_string(state, state->Reg[1]);
-  host_path = riscos_path_to_host(path);
-  dbug_hostfs("\tPATH = %s\n", path);
+  get_string(state, state->Reg[1], ro_path, sizeof(ro_path));
+  host_path = riscos_path_to_host(ro_path);
+  dbug_hostfs("\tPATH = %s\n", ro_path);
   dbug_hostfs("\tPATH2 = %s\n", host_path);
 
   if (mkdir(host_path, 0777)) {
@@ -1259,14 +1256,14 @@ hostfs_file_8_create_dir(ARMul_State *state)
 
 err_exit:
   free(host_path);
-  free(path);
 }
 
 static void
 hostfs_file_255_load_file(ARMul_State *state)
 {
   const unsigned BUFSIZE = MINIMUM_BUFFER_SIZE;
-  char *ro_path, *host_pathname, *ro_leaf;
+  char ro_path[PATH_MAX];
+  char *host_pathname, *ro_leaf;
   risc_os_object_info object_info;
   FILE *f;
   size_t bytes_read;
@@ -1282,7 +1279,7 @@ hostfs_file_255_load_file(ARMul_State *state)
   dbug_hostfs("\tr6 = 0x%08x (pointer to special field if present)\n",
               state->Reg[6]);
 
-  ro_path = get_string(state, state->Reg[1]);
+  get_string(state, state->Reg[1], ro_path, sizeof(ro_path));
   dbug_hostfs("\tPATH = %s\n", ro_path);
 
   hostfs_path_process(ro_path, &host_pathname, &ro_leaf, &object_info);
@@ -1315,7 +1312,7 @@ hostfs_file_255_load_file(ARMul_State *state)
   fclose(f);
 
 err_exit:
-  free(ro_path);
+  ;
 }
 
 static void
@@ -1352,27 +1349,27 @@ hostfs_file(ARMul_State *state)
 static void
 hostfs_func_0_chdir(ARMul_State *state)
 {
-  char *path, *host_path;
+  char ro_path[PATH_MAX];
+  char *host_path;
 
   assert(state);
 
   dbug_hostfs("\tSet current directory\n");
   dbug_hostfs("\tr1 = 0x%08x (ptr to wildcarded dir. name)\n", state->Reg[1]);
 
-  path = get_string(state, state->Reg[1]);
-  host_path = riscos_path_to_host(path);
-  dbug_hostfs("\tPATH = %s\n", path);
+  get_string(state, state->Reg[1], ro_path, sizeof(ro_path));
+  host_path = riscos_path_to_host(ro_path);
+  dbug_hostfs("\tPATH = %s\n", ro_path);
   dbug_hostfs("\tPATH2 = %s\n", host_path);
 
   free(host_path);
-  free(path);
 }
 
 static void
 hostfs_func_8_rename(ARMul_State *state)
 {
-  char *ro_path1, *host_pathname1, *ro_leaf1;
-  char *ro_path2, *host_pathname2, *ro_leaf2;
+  char ro_path1[PATH_MAX], *host_pathname1, *ro_leaf1;
+  char ro_path2[PATH_MAX], *host_pathname2, *ro_leaf2;
   risc_os_object_info object_info1, object_info2;
   char new_pathname[PATH_MAX];
 
@@ -1390,13 +1387,13 @@ hostfs_func_8_rename(ARMul_State *state)
      'simple' */
 
   /* Process old path */
-  ro_path1 = get_string(state, state->Reg[1]);
+  get_string(state, state->Reg[1], ro_path1, sizeof(ro_path1));
   dbug_hostfs("\tPATH_OLD = %s\n", ro_path1);
 
   hostfs_path_process(ro_path1, &host_pathname1, &ro_leaf1, &object_info1);
 
   /* Process new path */
-  ro_path2 = get_string(state, state->Reg[2]);
+  get_string(state, state->Reg[2], ro_path2, sizeof(ro_path2));
   dbug_hostfs("\tPATH_NEW = %s\n", ro_path2);
 
   hostfs_path_process(ro_path2, &host_pathname2, &ro_leaf2, &object_info2);
@@ -1436,8 +1433,7 @@ hostfs_func_8_rename(ARMul_State *state)
   state->Reg[1] = 0; /* zero indicates successful rename */
 
 err_exit:
-  free(ro_path1);
-  free(ro_path2);
+  ;
 }
 
 static void
@@ -1453,7 +1449,8 @@ hostfs_func_14_read_dir(ARMul_State *state)
 static void
 hostfs_func_15_read_dir_info(ARMul_State *state)
 {
-  char *ro_path, *host_pathname, *ro_leaf;
+  char ro_path[PATH_MAX];
+  char *host_pathname, *ro_leaf;
   risc_os_object_info object_info;
 
   assert(state);
@@ -1469,7 +1466,7 @@ hostfs_func_15_read_dir_info(ARMul_State *state)
   dbug_hostfs("\tr6 = 0x%08x (pointer to special field if present)\n",
               state->Reg[6]);
 
-  ro_path = get_string(state, state->Reg[1]);
+  get_string(state, state->Reg[1], ro_path, sizeof(ro_path));
   dbug_hostfs("\tPATH = %s\n", ro_path);
 
   hostfs_path_process(ro_path, &host_pathname, &ro_leaf, &object_info);
@@ -1604,7 +1601,7 @@ hostfs_func_15_read_dir_info(ARMul_State *state)
   }
 
 err_exit:
-  free(ro_path);
+  ;
 }
 
 static void
