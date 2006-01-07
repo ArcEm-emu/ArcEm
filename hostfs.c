@@ -279,7 +279,7 @@ name_host_to_riscos(const char *object_name, size_t len)
 /**
  * @param host_pathname Full Host path to object
  * @param ro_leaf       Return RISC OS leaf (allocated if object found)
- * @param object_info   Return object info
+ * @param object_info   Return object info (filled-in)
  */
 static void
 hostfs_read_object_info(const char *host_pathname,
@@ -412,7 +412,7 @@ hostfs_read_object_info(const char *host_pathname,
  * @param object        Object name to search for
  * @param host_name     Return Host name of object (allocated if object found)
  * @param ro_leaf       Return RISC OS leaf (allocated if object found)
- * @param object_info   Return object info
+ * @param object_info   Return object info (filled-in)
  */
 static void
 hostfs_path_scan(const char *host_dir_path,
@@ -488,17 +488,16 @@ hostfs_path_scan(const char *host_dir_path,
 
 /**
  * @param ro_path       Full RISC OS path to object
- * @param host_pathname Return full Host path to object (allocated)
+ * @param host_pathname Return full Host path to object (filled-in)
  * @param ro_leaf       Return RISC OS leaf (allocated)
- * @param object_info   Return object info
+ * @param object_info   Return object info (filled-in)
  */
 static void
 hostfs_path_process(const char *ro_path,
-                    char **host_pathname,
+                    char *host_pathname,
                     char **ro_leaf,
                     risc_os_object_info *object_info)
 {
-  char pathname[PATH_MAX];       /* working Host pathname */
   char component_name[PATH_MAX]; /* working Host component */
   char *component;
   const char *ro_path_orig = ro_path;
@@ -509,8 +508,8 @@ hostfs_path_process(const char *ro_path,
 
   assert(ro_path[0] == '$');
 
-  /* Initialise working Host pathname */
-  pathname[0] = '\0';
+  /* Initialise Host pathname */
+  host_pathname[0] = '\0';
 
   /* Initialise working Host component */
   component = &component_name[0];
@@ -519,9 +518,9 @@ hostfs_path_process(const char *ro_path,
   while (*ro_path) {
     switch (*ro_path) {
     case '$':
-      strcat(pathname, HOSTFS_ROOT);
+      strcat(host_pathname, HOSTFS_ROOT);
 
-      hostfs_read_object_info(pathname, ro_leaf, object_info);
+      hostfs_read_object_info(host_pathname, ro_leaf, object_info);
       if (object_info->type == OBJECT_TYPE_NOT_FOUND) {
         return;
       }
@@ -538,18 +537,16 @@ hostfs_path_process(const char *ro_path,
 
         free(*ro_leaf); /* Free up previous leaf before new one allocated */
 
-        hostfs_path_scan(pathname, component_name,
+        hostfs_path_scan(host_pathname, component_name,
                          &host_name, ro_leaf, object_info);
         if (object_info->type == OBJECT_TYPE_NOT_FOUND) {
           /* This component of the path is invalid */
           /* Return what we have of the host_pathname */
-          /* FIXME Fix the memory leak that this creates */
-          *host_pathname = strdup(pathname);
 
           /* Return the leaf of the original passed in RISC OS path */
           *ro_leaf = strdup(strrchr(ro_path_orig, '.') + 1);
 
-          if (!(*host_pathname) || !(*ro_leaf)) {
+          if (!(*ro_leaf)) {
             fprintf(stderr, "Out of memory in hostfs_path_process()\n");
             exit(EXIT_FAILURE);
           }
@@ -558,8 +555,8 @@ hostfs_path_process(const char *ro_path,
         }
 
         /* Append Host's name for this component to the working Host path */
-        strcat(pathname, "/");
-        strcat(pathname, host_name);
+        strcat(host_pathname, "/");
+        strcat(host_pathname, host_name);
 
         free(host_name);
         /* TODO Free up ro_leaf if this is not the last component part */
@@ -591,13 +588,11 @@ hostfs_path_process(const char *ro_path,
 
     free(*ro_leaf); /* Free up previous leaf before new one allocated */
 
-    hostfs_path_scan(pathname, component_name,
+    hostfs_path_scan(host_pathname, component_name,
                      &host_name, ro_leaf, object_info);
     if (object_info->type == OBJECT_TYPE_NOT_FOUND) {
       /* This component of the path is invalid */
       /* Return what we have of the host_pathname */
-      /* FIXME Fix the memory leak that this creates */
-      *host_pathname = strdup(pathname);
 
       /* Return the leaf of the original passed in RISC OS path.
          If there is not one (because original path is "$", then
@@ -612,7 +607,7 @@ hostfs_path_process(const char *ro_path,
         }
       }
 
-      if (!(*host_pathname) || !(*ro_leaf)) {
+      if (!(*ro_leaf)) {
         fprintf(stderr, "Out of memory in hostfs_path_process()\n");
         exit(EXIT_FAILURE);
       }
@@ -621,17 +616,11 @@ hostfs_path_process(const char *ro_path,
     }
 
     /* Append Host's name for this component to the working Host path */
-    strcat(pathname, "/");
-    strcat(pathname, host_name);
+    strcat(host_pathname, "/");
+    strcat(host_pathname, host_name);
 
     free(host_name);
     /* TODO Free up ro_leaf if this is not the last component part */
-  }
-
-  *host_pathname = strdup(pathname);
-  if (!(*host_pathname)) {
-    fprintf(stderr, "Out of memory in hostfs_path_process()\n");
-    exit(EXIT_FAILURE);
   }
 }
 
@@ -659,8 +648,8 @@ hostfs_open_allocate_index(void)
 static void
 hostfs_open(ARMul_State *state)
 {
-  char ro_path[PATH_MAX];
-  char *host_pathname, *ro_leaf;
+  char ro_path[PATH_MAX], host_pathname[PATH_MAX];
+  char *ro_leaf;
   risc_os_object_info object_info;
   unsigned idx;
 
@@ -675,12 +664,12 @@ hostfs_open(ARMul_State *state)
   get_string(state, state->Reg[1], ro_path, sizeof(ro_path));
   dbug_hostfs("\tPATH = %s\n", ro_path);
 
-  hostfs_path_process(ro_path, &host_pathname, &ro_leaf, &object_info);
+  hostfs_path_process(ro_path, host_pathname, &ro_leaf, &object_info);
 
   if (object_info.type == OBJECT_TYPE_NOT_FOUND) {
     /* FIXME RISC OS uses this to create files - not therefore an error if not found */
     state->Reg[1] = 0; /* Signal to RISC OS file not found */
-    goto err_exit;
+    return;
   }
 
   /* TODO Handle the case that a file exists to be replaced, (and the filetype is
@@ -704,8 +693,7 @@ hostfs_open(ARMul_State *state)
 
   case OPEN_MODE_CREATE_OPEN_UPDATE:
     dbug_hostfs("\tCreate and open for update (only RISC OS 2)\n");
-    goto err_exit;
-    break;
+    return;
 
   case OPEN_MODE_UPDATE:
     dbug_hostfs("\tOpen for update\n");
@@ -725,13 +713,13 @@ hostfs_open(ARMul_State *state)
 
     case ENOENT: /* File not found */
       state->Reg[1] = 0; /* Signal to RISC OS file not found */
-      goto err_exit;
+      return;
 
     default:
       dbug_hostfs("HostFS could not open file \'%s\': %s %d\n",
                   host_pathname, strerror(errno), errno);
       state->Reg[1] = 0; /* Signal to RISC OS file not found */
-      goto err_exit;
+      return;
     }
   }
 
@@ -744,9 +732,6 @@ hostfs_open(ARMul_State *state)
   state->Reg[2] = 1024; /* Buffer size to use in range 64-1024.
                            Must be power of 2 */
   state->Reg[4] = 0; /* Space allocated to file */
-
-err_exit:
-  ;
 }
 
 static void
@@ -921,8 +906,8 @@ static void
 hostfs_file_0_save_file(ARMul_State *state)
 {
   const unsigned BUFSIZE = MINIMUM_BUFFER_SIZE;
-  char ro_path[PATH_MAX];
-  char *host_pathname, *ro_leaf;
+  char ro_path[PATH_MAX], host_pathname[PATH_MAX];
+  char *ro_leaf;
   risc_os_object_info object_info;
   char *host_path;
   FILE *f;
@@ -951,7 +936,7 @@ hostfs_file_0_save_file(ARMul_State *state)
   dbug_hostfs("\tPATH2 = %s\n", host_path);
 #endif
 
-  hostfs_path_process(ro_path, &host_pathname, &ro_leaf, &object_info);
+  hostfs_path_process(ro_path, host_pathname, &ro_leaf, &object_info);
   dbug_hostfs("\tro_path = \"%s\"\n", ro_path);
   if (object_info.type != OBJECT_TYPE_NOT_FOUND) {
     dbug_hostfs("\thost_pathname = \"%s\"\n\tro_leaf = \"%s\"\n",
@@ -1012,8 +997,8 @@ err_exit:
 static void
 hostfs_file_1_write_cat_info(ARMul_State *state)
 {
-  char ro_path[PATH_MAX];
-  char *host_pathname, *ro_leaf;
+  char ro_path[PATH_MAX], host_pathname[PATH_MAX];
+  char *ro_leaf;
   risc_os_object_info object_info;
 
   assert(state);
@@ -1032,7 +1017,7 @@ hostfs_file_1_write_cat_info(ARMul_State *state)
 
   /* TODO Ensure we do not try to modify the root object: i.e. $ */
 
-  hostfs_path_process(ro_path, &host_pathname, &ro_leaf, &object_info);
+  hostfs_path_process(ro_path, host_pathname, &ro_leaf, &object_info);
 
   switch (object_info.type) {
   case OBJECT_TYPE_NOT_FOUND:
@@ -1071,8 +1056,8 @@ hostfs_file_1_write_cat_info(ARMul_State *state)
 static void
 hostfs_file_5_read_cat_info(ARMul_State *state)
 {
-  char ro_path[PATH_MAX];
-  char *host_pathname, *ro_leaf;
+  char ro_path[PATH_MAX], host_pathname[PATH_MAX];
+  char *ro_leaf;
   risc_os_object_info object_info;
 
   assert(state);
@@ -1085,7 +1070,7 @@ hostfs_file_5_read_cat_info(ARMul_State *state)
   get_string(state, state->Reg[1], ro_path, sizeof(ro_path));
   dbug_hostfs("\tPATH = %s\n", ro_path);
 
-  hostfs_path_process(ro_path, &host_pathname, &ro_leaf, &object_info);
+  hostfs_path_process(ro_path, host_pathname, &ro_leaf, &object_info);
 
   state->Reg[0] = object_info.type;
 
@@ -1094,7 +1079,6 @@ hostfs_file_5_read_cat_info(ARMul_State *state)
     state->Reg[3] = object_info.exec;
     state->Reg[4] = object_info.length;
     state->Reg[5] = object_info.attribs;
-    free(host_pathname);
     free(ro_leaf);
   }
 }
@@ -1102,8 +1086,8 @@ hostfs_file_5_read_cat_info(ARMul_State *state)
 static void
 hostfs_file_6_delete(ARMul_State *state)
 {
-  char ro_path[PATH_MAX];
-  char *host_pathname, *ro_leaf;
+  char ro_path[PATH_MAX], host_pathname[PATH_MAX];
+  char *ro_leaf;
   risc_os_object_info object_info;
 
   assert(state);
@@ -1118,12 +1102,12 @@ hostfs_file_6_delete(ARMul_State *state)
 
   /* TODO Ensure we do not try to delete the root object: i.e. $ */
 
-  hostfs_path_process(ro_path, &host_pathname, &ro_leaf, &object_info);
+  hostfs_path_process(ro_path, host_pathname, &ro_leaf, &object_info);
 
   state->Reg[0] = object_info.type;
 
   if (object_info.type == OBJECT_TYPE_NOT_FOUND) {
-    goto err_exit;
+    return;
   }
 
   state->Reg[2] = object_info.load;
@@ -1152,11 +1136,7 @@ hostfs_file_6_delete(ARMul_State *state)
     abort();
   }
 
-  free(host_pathname);
   free(ro_leaf);
-
-err_exit:
-  ;
 }
 
 static void
@@ -1262,8 +1242,8 @@ static void
 hostfs_file_255_load_file(ARMul_State *state)
 {
   const unsigned BUFSIZE = MINIMUM_BUFFER_SIZE;
-  char ro_path[PATH_MAX];
-  char *host_pathname, *ro_leaf;
+  char ro_path[PATH_MAX], host_pathname[PATH_MAX];
+  char *ro_leaf;
   risc_os_object_info object_info;
   FILE *f;
   size_t bytes_read;
@@ -1282,7 +1262,7 @@ hostfs_file_255_load_file(ARMul_State *state)
   get_string(state, state->Reg[1], ro_path, sizeof(ro_path));
   dbug_hostfs("\tPATH = %s\n", ro_path);
 
-  hostfs_path_process(ro_path, &host_pathname, &ro_leaf, &object_info);
+  hostfs_path_process(ro_path, host_pathname, &ro_leaf, &object_info);
 
   state->Reg[2] = object_info.load;
   state->Reg[3] = object_info.exec;
@@ -1294,7 +1274,7 @@ hostfs_file_255_load_file(ARMul_State *state)
   if (!f) {
     fprintf(stderr, "HostFS could not open file (File_255) \'%s\': %s %d\n",
             host_pathname, strerror(errno), errno);
-    goto err_exit;
+    return;
   }
 
   hostfs_ensure_buffer_size(BUFSIZE);
@@ -1310,9 +1290,6 @@ hostfs_file_255_load_file(ARMul_State *state)
   } while (bytes_read == BUFSIZE);
 
   fclose(f);
-
-err_exit:
-  ;
 }
 
 static void
@@ -1368,8 +1345,8 @@ hostfs_func_0_chdir(ARMul_State *state)
 static void
 hostfs_func_8_rename(ARMul_State *state)
 {
-  char ro_path1[PATH_MAX], *host_pathname1, *ro_leaf1;
-  char ro_path2[PATH_MAX], *host_pathname2, *ro_leaf2;
+  char ro_path1[PATH_MAX], host_pathname1[PATH_MAX], *ro_leaf1;
+  char ro_path2[PATH_MAX], host_pathname2[PATH_MAX], *ro_leaf2;
   risc_os_object_info object_info1, object_info2;
   char new_pathname[PATH_MAX];
 
@@ -1390,19 +1367,19 @@ hostfs_func_8_rename(ARMul_State *state)
   get_string(state, state->Reg[1], ro_path1, sizeof(ro_path1));
   dbug_hostfs("\tPATH_OLD = %s\n", ro_path1);
 
-  hostfs_path_process(ro_path1, &host_pathname1, &ro_leaf1, &object_info1);
+  hostfs_path_process(ro_path1, host_pathname1, &ro_leaf1, &object_info1);
 
   /* Process new path */
   get_string(state, state->Reg[2], ro_path2, sizeof(ro_path2));
   dbug_hostfs("\tPATH_NEW = %s\n", ro_path2);
 
-  hostfs_path_process(ro_path2, &host_pathname2, &ro_leaf2, &object_info2);
+  hostfs_path_process(ro_path2, host_pathname2, &ro_leaf2, &object_info2);
 
 
   if (object_info1.type == OBJECT_TYPE_NOT_FOUND) {
     /* TODO Check if we need to handle this better */
     state->Reg[1] = 1; /* non-zero indicates could not rename */
-    goto err_exit;
+    return;
   }
 
   if (object_info2.type != OBJECT_TYPE_NOT_FOUND) {
@@ -1410,7 +1387,7 @@ hostfs_func_8_rename(ARMul_State *state)
        name */
     if (strcasecmp(ro_path1, ro_path2) != 0) {
       state->Reg[1] = 1; /* non-zero indicates could not rename */
-      goto err_exit;
+      return;
     }
   }
 
@@ -1426,14 +1403,11 @@ hostfs_func_8_rename(ARMul_State *state)
     fprintf(stderr, "HostFS could not rename \'%s\' to \'%s\': %s %d\n",
             host_pathname1, new_pathname, strerror(errno), errno);
     state->Reg[1] = 1; /* non-zero indicates could not rename */
-    goto err_exit;
+    return;
   }
 
 
   state->Reg[1] = 0; /* zero indicates successful rename */
-
-err_exit:
-  ;
 }
 
 static void
@@ -1449,8 +1423,8 @@ hostfs_func_14_read_dir(ARMul_State *state)
 static void
 hostfs_func_15_read_dir_info(ARMul_State *state)
 {
-  char ro_path[PATH_MAX];
-  char *host_pathname, *ro_leaf;
+  char ro_path[PATH_MAX], host_pathname[PATH_MAX];
+  char *ro_leaf;
   risc_os_object_info object_info;
 
   assert(state);
@@ -1469,13 +1443,13 @@ hostfs_func_15_read_dir_info(ARMul_State *state)
   get_string(state, state->Reg[1], ro_path, sizeof(ro_path));
   dbug_hostfs("\tPATH = %s\n", ro_path);
 
-  hostfs_path_process(ro_path, &host_pathname, &ro_leaf, &object_info);
+  hostfs_path_process(ro_path, host_pathname, &ro_leaf, &object_info);
 
   if (object_info.type != OBJECT_TYPE_DIRECTORY) {
     /* TODO Improve error return */
     state->Reg[3] = 0;
     state->Reg[4] = -1;
-    goto err_exit;
+    return;
   }
 
   free(ro_leaf);
@@ -1495,7 +1469,7 @@ hostfs_func_15_read_dir_info(ARMul_State *state)
               host_pathname, strerror(errno));
       state->Reg[3] = 0;
       state->Reg[4] = -1;
-      goto err_exit;
+      return;
     }
 
     /* Skip a number of directory entries according to the offset */
@@ -1531,7 +1505,7 @@ hostfs_func_15_read_dir_info(ARMul_State *state)
       dbug_hostfs("HostFS not enough entries to skip - returning no more\n");
       state->Reg[3] = 0;
       state->Reg[4] = -1;
-      goto err_exit;
+      return;
     }
 
     /* So far we have skipped a number of directory entries according to the
@@ -1599,9 +1573,6 @@ hostfs_func_15_read_dir_info(ARMul_State *state)
 
     state->Reg[3] = count;	/* Number of objects returned at this point */
   }
-
-err_exit:
-  ;
 }
 
 static void
