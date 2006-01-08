@@ -95,7 +95,7 @@ static void Resize_Window(void);
 static int (*prev_x_error_handler)(Display *, XErrorEvent *);
 
 static struct {
-    char *name;
+    const char *name;
     KeySym keysym;
 } mouse_key = {
     "KP_Add",
@@ -928,7 +928,7 @@ static int DisplayKbd_XError(Display* disp, XErrorEvent *err)
 
 /*----------------------------------------------------------------------------*/
 void DisplayKbd_Init(ARMul_State *state) {
-  char *s;
+  const char *s;
   KeySym ks;
   XSetWindowAttributes attr;
   unsigned long attrmask;

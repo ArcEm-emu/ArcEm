@@ -11,7 +11,7 @@
 
 /* Information on an arch_key_id. */
 typedef struct {
-    char *name;
+    const char *name;
     unsigned char row;
     unsigned char col;
 } key_info;

@@ -8,7 +8,7 @@
 
 typedef struct {
     /* User-visible name. */
-    char *name;
+    const char *name;
     int bytes_per_sector;
     int sectors_per_track;
     int sector_base;
@@ -63,11 +63,11 @@ unsigned FDC_Regular(ARMul_State *state);
 
 /* Associate disc image with drive.  Drive must be empty.  Return static
  * error message, if not NULL. */
-char *fdc_insert_floppy(int drive, char *image);
+const char *fdc_insert_floppy(int drive, const char *image);
 
 /* Close and forget about the disc image associated with drive.  Disc
  * must be inserted.  Return static error message, if not NULL. */
-char *fdc_eject_floppy(int drive);
+const char *fdc_eject_floppy(int drive);
 
 #define FDC (PRIVD->FDCData)
 

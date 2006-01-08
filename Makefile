@@ -42,7 +42,7 @@ LDFLAGS=
 WARN = -Wall -Wno-return-type -Wno-unknown-pragmas -Wshadow -Wundef \
    -Wpointer-arith -Wcast-align -Wstrict-prototypes \
    -Wmissing-prototypes -Wmissing-declarations -Wnested-externs \
-   -Wcast-qual
+   -Wcast-qual -Wwrite-strings
 
 
 # add -DHOST_BIGENDIAN for big endian hosts, e.g. Sun, SGI, HP

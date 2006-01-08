@@ -215,7 +215,7 @@ void FDC_LatchAChange(ARMul_State *state) {
                     DBG((stderr, "setting FDC.Sector = "
                         "FDC.Sector_ReadAddr = %d\n",
                         FDC.drive[FDC.CurrentDisc].form->sector_base));
-                    FDC.Sector = FDC.Sector_ReadAddr = 
+                    FDC.Sector = FDC.Sector_ReadAddr =
                         FDC.drive[FDC.CurrentDisc].form->sector_base;
                 }
           break;
@@ -759,7 +759,7 @@ void FDC_ReOpen(ARMul_State *state, int drive) {
 #else
   char tmp[256];
 #endif
-  
+
   if (drive>3) return;
 
     if (FDC.LastCommand != CMD_FORCE_INTR) {
@@ -772,7 +772,7 @@ void FDC_ReOpen(ARMul_State *state, int drive) {
 #if defined(__riscos__)
     sprintf(tmp, "<ArcEm$Dir>.^.FloppyImage%d", drive);
 #elif defined(MACOSX)
-    tmp = FDC.driveFiles[drive]; 
+    tmp = FDC.driveFiles[drive];
 #else
     sprintf(tmp, "FloppyImage%d", drive);
 #endif
@@ -826,7 +826,8 @@ void FDC_Init(ARMul_State *state) {
 
 /* ------------------------------------------------------------------ */
 
-char *fdc_insert_floppy(int drive, char *image)
+const char *
+fdc_insert_floppy(int drive, const char *image)
 {
     floppy_drive *dr;
     FILE *fp;
@@ -883,7 +884,8 @@ char *fdc_insert_floppy(int drive, char *image)
 
 /* ------------------------------------------------------------------ */
 
-char *fdc_eject_floppy(int drive)
+const char *
+fdc_eject_floppy(int drive)
 {
     floppy_drive *dr;
 

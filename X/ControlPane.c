@@ -29,7 +29,7 @@
 /*-----------------------------------------------------------------------------*/
 
 static void TextAt(ARMul_State *state, const char *Text, int x, int y) {
-  XDrawImageString(HD.disp, HD.ControlPane, HD.ControlPaneGC, x, y, 
+  XDrawImageString(HD.disp, HD.ControlPane, HD.ControlPaneGC, x, y,
                    Text, strlen(Text));
 }; /* TextAt */
 
@@ -46,11 +46,11 @@ static void DoLED(const char *Text, int On, int ty, int lx)
   XSetForeground(HD.disp, HD.ControlPaneGC, HD.Black.pixel);
   XSetFillStyle(HD.disp, HD.ControlPaneGC, FillSolid);
 
-  XDrawArc(HD.disp, HD.ControlPane, HD.ControlPaneGC, lx, ty-LEDHEIGHT, LEDWIDTH, LEDHEIGHT, 
+  XDrawArc(HD.disp, HD.ControlPane, HD.ControlPaneGC, lx, ty-LEDHEIGHT, LEDWIDTH, LEDHEIGHT,
            0, 360*64);
 
   XSetForeground(HD.disp, HD.ControlPaneGC, (On?HD.Green:HD.GreyDark).pixel);
-  XFillArc(HD.disp, HD.ControlPane, HD.ControlPaneGC, lx+2, ty+6-(LEDHEIGHT+4), LEDWIDTH-4, (LEDHEIGHT-4), 
+  XFillArc(HD.disp, HD.ControlPane, HD.ControlPaneGC, lx+2, ty+6-(LEDHEIGHT+4), LEDWIDTH-4, (LEDHEIGHT-4),
            0, 360*64);
 }; /* DoLED */
 
@@ -85,16 +85,16 @@ static void insert_or_eject_floppy(int drive)
 {
     static char got_disc[4];
     static char image[] = "FloppyImage#";
-    char *err;
+    const char *err;
 
     if (got_disc[drive]) {
         err = fdc_eject_floppy(drive);
-        fprintf(stderr, "ejecting drive %d: %s\n", drive, 
+        fprintf(stderr, "ejecting drive %d: %s\n", drive,
             err ? err : "ok");
     } else {
         image[sizeof image - 2] = '0' + drive;
         err = fdc_insert_floppy(drive, image);
-        fprintf(stderr, "inserting floppy image %s into drive %d: %s\n", 
+        fprintf(stderr, "inserting floppy image %s into drive %d: %s\n",
             image, drive, err ? err : "ok");
     }
 
@@ -113,7 +113,7 @@ static int TextCenteredH(ARMul_State *state, const char *Text, int ty, int lx, i
   XCharStruct overall;
   int x;
 
-  XTextExtents(HD.ButtonFont, Text, strlen(Text), 
+  XTextExtents(HD.ButtonFont, Text, strlen(Text),
      &dirreturn, &ascentret, &descentret, &overall);
 
   /* Move the text down so that its top is where the caller asked */
@@ -140,7 +140,7 @@ static void ControlPane_Redraw(ARMul_State *state, XExposeEvent *e) {
   y = TextCenteredH(state, "http://arcem.sf.net/", y, 0, CTRLPANEWIDTH);
 
   y+=2;
-  XDrawLine(HD.disp, HD.ControlPane, HD.ControlPaneGC, 
+  XDrawLine(HD.disp, HD.ControlPane, HD.ControlPaneGC,
             0, y, CTRLPANEWIDTH-1, y);
 
   y += 2;
@@ -214,7 +214,7 @@ void ControlPane_Init(ARMul_State *state) {
   XFree(name.value);
 
   HD.ControlPaneGC = XCreateGC(HD.disp, HD.ControlPane, 0, NULL);
-  XCopyGC(HD.disp, DefaultGC(HD.disp, HD.ScreenNum), GCPlaneMask|GCSubwindowMode, 
+  XCopyGC(HD.disp, DefaultGC(HD.disp, HD.ScreenNum), GCPlaneMask|GCSubwindowMode,
           HD.ControlPaneGC);
 
   HD.ButtonFont = XLoadQueryFont(HD.disp, "fixed");
