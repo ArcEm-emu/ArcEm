@@ -12,6 +12,7 @@
 
 #include <dirent.h>
 #include <unistd.h>
+#include <utime.h>
 #include <sys/stat.h>
 #include <limits.h>
 
@@ -163,6 +164,35 @@ put_string(ARMul_State *state, ARMword address, const char *str)
   ARMul_StoreByte(state, address, '\0');
 
   return ROUND_UP_TO_4(len + 1);
+}
+
+/**
+  * @param load RISC OS load address (assumed to be time-stamped)
+  * @param exec RISC OS exec address (assumed to be time-stamped)
+  * @return Time converted to time_t format
+  *
+  * Code adapted from fs/adfs/inode.c from Linux licensed under GPL2.
+  * Copyright (C) 1997-1999 Russell King
+  */
+static time_t
+hostfs_adfs2host_time(ARMword load, ARMword exec)
+{
+  ARMword high = load << 24;
+  ARMword low  = exec;
+
+  high |= low >> 8;
+  low &= 0xff;
+
+  if (high < 0x3363996a) {
+    /* Too early */
+    return 0;
+  } else if (high >= 0x656e9969) {
+    /* Too late */
+    return 0x7ffffffd;
+  }
+
+  high -= 0x336e996a;
+  return (((high % 100) << 8) + low) / 100 + (high / 100 << 8);
 }
 
 static void
@@ -968,10 +998,18 @@ hostfs_file_1_write_cat_info(ARMul_State *state)
       path_construct(host_pathname, new_pathname, sizeof(new_pathname),
                      state->Reg[2], state->Reg[3]);
 
-      /* TODO - update timestamp if necessary */
-
       if (rename(host_pathname, new_pathname)) {
         /* TODO handle error in renaming */
+      }
+
+      /* Update timestamp if necessary */
+      if ((state->Reg[2] & 0xfff00000u) == 0xfff00000u) {
+        struct utimbuf t;
+
+        t.modtime = hostfs_adfs2host_time(state->Reg[2], state->Reg[3]);
+        t.actime = t.modtime;
+        utime(new_pathname, &t);
+        /* TODO handle error in utime() */
       }
     }
 
