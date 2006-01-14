@@ -19,6 +19,11 @@
 #include "arch/armarc.h"
 #include "hostfs.h"
 
+typedef int bool;
+
+#define true  ((bool) 1)
+#define false ((bool) 0)
+
 enum OBJECT_TYPE {
   OBJECT_TYPE_NOT_FOUND = 0,
   OBJECT_TYPE_FILE      = 1,
@@ -298,9 +303,9 @@ hostfs_read_object_info(const char *host_pathname,
 {
   struct stat info;
   ARMword file_type;
-  int is_timestamped = 1; /* Assume initially it has timestamp/filetype */
-  int truncate_name = 0; /* Whether to truncate for leaf
-                            (because filetype or load-exec found) */
+  bool is_timestamped = true; /* Assume initially it has timestamp/filetype */
+  bool truncate_name = false; /* Whether to truncate for leaf
+                                 (because filetype or load-exec found) */
   const char *slash, *comma;
   size_t ro_leaf_len;
 
@@ -367,15 +372,15 @@ hostfs_read_object_info(const char *host_pathname,
           if (sscanf(comma + 1, "%8x-%8x", &load, &exec) == 2) {
             object_info->load = load;
             object_info->exec = exec;
-            is_timestamped = 0;
-            truncate_name = 1;
+            is_timestamped = false;
+            truncate_name = true;
           }
         }
       }
     } else if (strlen(comma + 1) == 3) {
       if (isxdigit(comma[1]) && isxdigit(comma[2]) && isxdigit(comma[3])) {
         file_type = (ARMword) strtoul(comma + 1, NULL, 16);
-        truncate_name = 1;
+        truncate_name = true;
       }
     }
   }
@@ -1370,24 +1375,13 @@ hostfs_func_8_rename(ARMul_State *state)
 }
 
 static void
-hostfs_func_14_read_dir(ARMul_State *state)
-{
-  assert(state);
-
-  dbug_hostfs("\tRead directory entries\n");
-  state->Reg[3] = 0;
-  state->Reg[4] = -1;
-}
-
-static void
-hostfs_func_15_read_dir_info(ARMul_State *state)
+hostfs_read_dir(ARMul_State *state, bool with_info)
 {
   char ro_path[PATH_MAX], host_pathname[PATH_MAX], ro_leaf[PATH_MAX];
   risc_os_object_info object_info;
 
   assert(state);
 
-  dbug_hostfs("\tRead directory entries and information\n");
   dbug_hostfs("\tr1 = 0x%08x (ptr to wildcarded dir. name)\n", state->Reg[1]);
   dbug_hostfs("\tr2 = 0x%08x (ptr to buffer for returned data)\n",
               state->Reg[2]);
@@ -1470,7 +1464,7 @@ hostfs_func_15_read_dir_info(ARMul_State *state)
 
     while ((count < num_objects_to_read) && ((entry = readdir(d)) != NULL)) {
       char entry_path[PATH_MAX];
-      unsigned string_space;
+      unsigned string_space, entry_space;
 
       /* Hidden files are completely ignored */
       if (entry->d_name[0] == '.') {
@@ -1489,22 +1483,34 @@ hostfs_func_15_read_dir_info(ARMul_State *state)
         continue;
       }
 
+      /* Calculate space required to return name and (optionally) info */
+      string_space = strlen(ro_leaf) + 1;
+      if (with_info) {
+        /* Space required for info, everything word-aligned */
+        string_space = ROUND_UP_TO_4(string_space);
+        entry_space = (5 * sizeof(ARMword)) + string_space;
+      } else {
+        entry_space = string_space;
+      }
+
       /* See whether there is space left in the buffer to return this entry */
-      string_space = ROUND_UP_TO_4(strlen(ro_leaf) + 1);
-      if (((5 * sizeof(ARMword)) + string_space) > buffer_remaining) {
+      if (entry_space > buffer_remaining) {
         break;
       }
 
       /* Fill in this entry */
-      ARMul_StoreWordS(state, ptr + 0,  object_info.load);
-      ARMul_StoreWordS(state, ptr + 4,  object_info.exec);
-      ARMul_StoreWordS(state, ptr + 8,  object_info.length);
-      ARMul_StoreWordS(state, ptr + 12, object_info.attribs);
-      ARMul_StoreWordS(state, ptr + 16, object_info.type);
+      if (with_info) {
+        ARMul_StoreWordS(state, ptr + 0,  object_info.load);
+        ARMul_StoreWordS(state, ptr + 4,  object_info.exec);
+        ARMul_StoreWordS(state, ptr + 8,  object_info.length);
+        ARMul_StoreWordS(state, ptr + 12, object_info.attribs);
+        ARMul_StoreWordS(state, ptr + 16, object_info.type);
+        ptr += 20;
+      }
+      put_string(state, ptr, ro_leaf);
 
-      string_space = put_string(state, ptr + 20, ro_leaf);
-      ptr += ((5 * sizeof(ARMword)) + string_space);
-      buffer_remaining -= ((5 * sizeof(ARMword)) + string_space);
+      ptr += string_space;
+      buffer_remaining -= entry_space;
       count ++;
     }
 
@@ -1525,6 +1531,26 @@ hostfs_func_15_read_dir_info(ARMul_State *state)
 
     state->Reg[3] = count;	/* Number of objects returned at this point */
   }
+}
+
+static void
+hostfs_func_14_read_dir(ARMul_State *state)
+{
+  assert(state);
+
+  dbug_hostfs("\tRead directory entries\n");
+
+  hostfs_read_dir(state, false);
+}
+
+static void
+hostfs_func_15_read_dir_info(ARMul_State *state)
+{
+  assert(state);
+
+  dbug_hostfs("\tRead directory entries and information\n");
+
+  hostfs_read_dir(state, true);
 }
 
 static void
