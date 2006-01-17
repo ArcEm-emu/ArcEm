@@ -20,9 +20,7 @@
 	@ ArcEm SWI chunk
 	ARCEM_SWI_CHUNK  = 0x56ac0
 	ARCEM_SWI_CHUNKX = ARCEM_SWI_CHUNK | 0x20000
-	ArcEm_Shutdown  = ARCEM_SWI_CHUNKX + 0
 	ArcEm_HostFS    = ARCEM_SWI_CHUNKX + 1
-	ArcEm_Debug     = ARCEM_SWI_CHUNKX + 2
 
 	@ Filing system error codes
 	FILECORE_ERROR_DISCFULL = 0xc6
@@ -47,9 +45,9 @@ module_start:
 	.int	title		@ Title String
 	.int	help		@ Help String
 	.int	table		@ Help and Command keyword table
-	.int	ARCEM_SWI_CHUNK	@ SWI Chunk base
-	.int	swi_entry	@ SWI handler code
-	.int	swi_table	@ SWI decoding table
+	.int	0		@ SWI Chunk base
+	.int	0		@ SWI handler code
+	.int	0		@ SWI decoding table
 	.int	0		@ SWI decoding code
 
 
@@ -57,9 +55,11 @@ title:
 	.string	"ArcEmHostFS"
 
 help:
-	.string	"ArcEm HostFS\t0.00 (21 Dec 2004)"
+	.string	"ArcEm HostFS\t0.01 (17 Jan 2006)"
 
 	.align
+
+
 	@ Help and Command keyword table
 table:
 	.string	"HostFS"
@@ -73,56 +73,7 @@ table:
 
 command_hostfs_help:
 	.string	"*HostFS selects the HostFS filing system\rSyntax: *HostFS"
-
-swi_table:
-	.string	"ArcEm"		@ group prefix
-	.string	"Shutdown"
-	.string	"HostFS"
-	.string	"Debug"
-	.byte	0		@ terminator
 	.align
-
-
-
-swi_dummy:
-	movs	pc, lr
-	/* Entry:
-	 *   r0-r9 passed from the SWI caller
-	 *   r11 = SWI number modulo Chunk size (ie 0-63)
-	 *   r12 = private word pointer
-	 *   r13 = stack pointer (supervisor)
-	 *   r14 = flags of the SWI caller
-	 * Exit:
-	 *   r0-r9 returned to SWI caller
-	 *   r10-r12 may be corrupted
-	 */
-swi_entry:
-	cmp	r11, #(end_of_jump_table - jump_table) / 4
-	addlo	pc, pc, r11, lsl#2
-	b	unknown_swi_error
-jump_table:
-	b	swi_dummy
-	b	swi_dummy
-	b	swi_dummy
-end_of_jump_table:
-
-
-unknown_swi_error:
-	stmfd	sp!, {lr}
-	adr	r0, err_token
-	mov	r1, #0
-	mov	r2, #0
-	adr	r4, title
-	swi	XMessageTrans_ErrorLookup
-	ldmfd	sp, {lr}
-	orrs	pc, lr, #VBIT
-
-err_token:
-	.int	0x1e6		@ Unknown SWI ?
-	.string	"BadSWI"
-	.align
-
-
 
 
 	@ Filing System Information Block
@@ -168,8 +119,6 @@ init:
 	mov	r3, r12
 	swi	XOS_FSControl
 
-	@swi	ArcEm_Debug
-
 	ldmfd	sp!, {pc}^
 
 
@@ -181,8 +130,6 @@ final:
 	adr	r1, fs_name
 	swi	XOS_FSControl
 	cmp	pc, #0		@ Clears V (also clears N, Z, and sets C)
-
-	@swi	ArcEm_Debug
 
 	ldmfd	sp!, {pc}
 
@@ -217,8 +164,6 @@ service_fsredeclare:
 	mov	r3, r12
 	swi	XOS_FSControl
 
-	@swi	ArcEm_Debug
-
 	ldmfd	sp!, {r0-r3, pc}^
 
 
@@ -241,8 +186,6 @@ command_hostfs:
 	mov	r0, #FSControl_SelectFS
 	adr	r1, fs_name
 	swi	XOS_FSControl
-
-	@swi	ArcEm_Debug
 
 	ldmfd	sp!, {pc}^
 
