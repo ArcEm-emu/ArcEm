@@ -1,5 +1,8 @@
 /* archio.c - IO and IOC emulation.  (c) David Alan Gilbert 1995 */
 /* (c) David Alan Gilbert 1995 - see Readme file for copying info */
+/*
+ * $Id$
+ */
 
 #include <ctype.h>
 #include <signal.h>
@@ -194,9 +197,8 @@ IOC_ControlLinesUpdate(ARMul_State *state)
  * \param bank    Return IOC bank
  * \param speed   Return IOC speed
  * \param offset  Return IOC offset
- * \return Returns non-zero if IOC Chip-Select (CS), zero otherwise
  */
-static ARMword
+static void
 ParseIOCAddr(ARMword address, ARMword *bank, ARMword *speed, ARMword *offset)
 {
   *bank   = (address >> 16) & 7;
@@ -206,8 +208,6 @@ ParseIOCAddr(ARMword address, ARMword *bank, ARMword *speed, ARMword *offset)
 
   /*fprintf(stderr, "ParseIOCAddr: address=0x%x bank=%u speed=%u offset=0x%x\n",
           address, *bank, *speed, *offset); */
-
-  return (address & (1 << 21)); /* Return Chip-Select (CS) ? */
 } /* ParseIOCAddr */
 
 /*-----------------------------------------------------------------------------*/
@@ -423,13 +423,17 @@ PutVal_IOCReg(ARMul_State *state, int Register, ARMword data, int bNw)
 ARMword
 GetWord_IO(ARMul_State *state, ARMword address)
 {
-  ARMword bank, speed, offset;
+  /* Test CS (Chip-Select) bit */
+  if (address & (1 << 21)) {
+    /* IOC address-space */
 
-  /* Sanitise the address a bit */
-  address -= 0x3000000;
+    ARMword bank, speed, offset;
 
-  if (ParseIOCAddr(address, &bank, &speed, &offset)) {
-    /* OK - it's IOC space */
+    /* Sanitise the address a bit */
+    address -= MEMORY_0x3000000_CON_IO;
+
+    ParseIOCAddr(address, &bank, &speed, &offset);
+
     switch (bank) {
       case 0:
         offset /= 4;
@@ -469,9 +473,10 @@ GetWord_IO(ARMul_State *state, ARMword address)
         break;
     } /* Bank switch */
   } else {
+    /* IO-address space unused on Arc hardware */
     /*EnableTrace();*/
-    fprintf(stderr, "Read from non-IOC IO space (addr=0x%x bank=0x%x speed=0x%x offset=0x%x pc=0x%x\n\n",
-            address + 0x3000000, bank, speed, offset, statestr.pc);
+    fprintf(stderr, "Read from non-IOC IO space (addr=0x%08x pc=0x%08x\n",
+            address, statestr.pc);
 
     return 0;
   }
@@ -489,13 +494,17 @@ GetWord_IO(ARMul_State *state, ARMword address)
 void
 PutValIO(ARMul_State *state, ARMword address, ARMword data, int byteNotword)
 {
-  ARMword bank, speed, offset;
+  /* Test CS (Chip-Select) bit */
+  if (address & (1 << 21)) {
+    /* IOC address-space */
 
-  /* Sanitise the address a bit */
-  address -= 0x3000000;
+    ARMword bank, speed, offset;
 
-  if (ParseIOCAddr(address, &bank, &speed, &offset)) {
-    /* OK - it's IOC space */
+    /* Sanitise the address a bit */
+    address -= MEMORY_0x3000000_CON_IO;
+
+    ParseIOCAddr(address, &bank, &speed, &offset);
+
     if (!byteNotword) {
       /* The data bus is wierdly connected to the IOC - in the case of word
       writes, bits 16-23 of the data bus end up on the IOC data bus */
@@ -584,8 +593,12 @@ PutValIO(ARMul_State *state, ARMword address, ARMword data, int byteNotword)
         break;
     } /* Bank switch */
   } else {
-    fprintf(stderr, "Write to non-IOC IO space (addr=0x%x bank=0x%x speed=0x%x offset=0x%x data=0x%x\n",
-            address, bank, speed, offset, data);
+    /* IO-address space unused on Arc hardware */
+    /* Use it as general-purpose memory-mapped IO space */
+    ARMword application = (address >> 12) & 0x1ff;
+    ARMword operation   = (address & 0xfff);
+    fprintf(stderr, "Write to non-IOC IO space (addr=0x%x app=0x%03x op=0x%03x data=0x%08x\n",
+            address, application, operation, data);
   }
 } /* PutValIO */
 
