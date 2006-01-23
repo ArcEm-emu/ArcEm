@@ -1,0 +1,19 @@
+5thColumn.txt		"RISC OS Support for extension ROMs"
+
+arm_binutils.txt	How to setup GNU Binutils to cross assemble RISC OS
+                        compatible code.
+
+COPYING			A Copy of the GNU General Public License V2, under
+			which the source code to ArcEm (and it's ancestor
+			ARMulator) is licensed.
+
+expspec.pdf		"Acorn Enhanced Expansion Card Specification"
+
+index.txt		This File.
+
+README.Old		Obsolete, README for the 0.60 release of ArcEm.
+
+README.Original		Obsolete, or rather inapropriate, README for the
+			ARMulator ARM Emulator, upon which ArcEm is based.
+
+SWIChunkAllocation.txt	SWI chunk allocation for ArcEm.
