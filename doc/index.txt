@@ -1,3 +1,0 @@
-5thColumn.txt		"RISC OS Support for extension ROMs"
-allocations.mbox	SWI chunk allocation for ArcEm
-expspec.pdf		"Acorn Enhanced Expansion Card Specification"
