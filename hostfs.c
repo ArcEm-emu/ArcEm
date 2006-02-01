@@ -200,6 +200,27 @@ hostfs_adfs2host_time(ARMword load, ARMword exec)
   return (((high % 100) << 8) + low) / 100 + (high / 100 << 8);
 }
 
+/**
+ * If the supplied Load and Exec addreses are time-stamped,
+ * apply the timestamp to the supplied host object
+ *
+ * @param host_path Full path to object (file or dir) in host format
+ * @param load      RISC OS load address (may contain time-stamp)
+ * @param exec      RISC OS exec address (may contain time-stamp)
+ */
+static void
+hostfs_object_set_timestamp(const char *host_path, ARMword load, ARMword exec)
+{
+  /* Test if Load and Exec contain time-stamp */
+  if ((load & 0xfff00000u) == 0xfff00000u) {
+    struct utimbuf t;
+
+    t.actime = t.modtime = hostfs_adfs2host_time(load, exec);
+    utime(host_path, &t);
+    /* TODO handle error in utime() */
+  }
+}
+
 static void
 path_construct(const char *old_path, char *new_path, size_t len,
                ARMword load, ARMword exec)
@@ -889,6 +910,7 @@ hostfs_file_0_save_file(ARMul_State *state)
   FILE *f;
   ARMword ptr, length;
   unsigned i;
+  char new_pathname[PATH_MAX];
 
   assert(state);
 
@@ -925,23 +947,19 @@ hostfs_file_0_save_file(ARMul_State *state)
 
   /* TODO Handle case where file already exists, and needs renaming */
 
-  {
-    char new_pathname[PATH_MAX];
+  path_construct(host_path, new_pathname, sizeof(new_pathname),
+                 state->Reg[2], state->Reg[3]);
 
-    path_construct(host_path, new_pathname, sizeof(new_pathname),
-                   state->Reg[2], state->Reg[3]);
+  dbug_hostfs("\tnew_pathname = \"%s\"\n", new_pathname);
 
-    dbug_hostfs("\tnew_pathname = \"%s\"\n", new_pathname);
+  hostfs_ensure_buffer_size(BUFSIZE);
 
-    hostfs_ensure_buffer_size(BUFSIZE);
-
-    f = fopen(new_pathname, "wb");
-    if (!f) {
-      /* TODO handle errors */
-      fprintf(stderr, "HostFS could not create file \'%s\': %s %d\n",
-              new_pathname, strerror(errno), errno);
-      return;
-    }
+  f = fopen(new_pathname, "wb");
+  if (!f) {
+    /* TODO handle errors */
+    fprintf(stderr, "HostFS could not create file \'%s\': %s %d\n",
+            new_pathname, strerror(errno), errno);
+    return;
   }
 
   while (length >= BUFSIZE) {
@@ -963,6 +981,8 @@ hostfs_file_0_save_file(ARMul_State *state)
   state->Reg[6] = 0; /* TODO */
 
   /* TODO set load and exec address */
+
+  hostfs_object_set_timestamp(new_pathname, state->Reg[2], state->Reg[3]);
 }
 
 static void
@@ -1008,14 +1028,7 @@ hostfs_file_1_write_cat_info(ARMul_State *state)
       }
 
       /* Update timestamp if necessary */
-      if ((state->Reg[2] & 0xfff00000u) == 0xfff00000u) {
-        struct utimbuf t;
-
-        t.modtime = hostfs_adfs2host_time(state->Reg[2], state->Reg[3]);
-        t.actime = t.modtime;
-        utime(new_pathname, &t);
-        /* TODO handle error in utime() */
-      }
+      hostfs_object_set_timestamp(new_pathname, state->Reg[2], state->Reg[3]);
     }
 
     /* TODO handle new attribs */
@@ -1162,6 +1175,8 @@ hostfs_file_7_create_file(ARMul_State *state)
   state->Reg[6] = 0; /* TODO */
 
   /* TODO set load and exec address */
+
+  hostfs_object_set_timestamp(host_path, state->Reg[2], state->Reg[3]);
 }
 
 static void
