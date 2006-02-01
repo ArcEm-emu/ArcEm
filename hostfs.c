@@ -1607,14 +1607,14 @@ hostfs_gbpb(ARMul_State *state)
 }
 
 void
-hostfs(ARMul_State *state)
+hostfs(ARMul_State *state, ARMword fs_op)
 {
   assert(state);
-  assert(state->Reg[9] <= 7);
+  assert(fs_op <= 7);
 
   dbug_hostfs("*** HostFS Call ***\n");
 
-  switch (state->Reg[9]) {
+  switch (fs_op) {
   case 0: hostfs_open(state);     break;
   case 1: hostfs_getbytes(state); break;
   case 2: hostfs_putbytes(state); break;
@@ -1623,8 +1623,5 @@ hostfs(ARMul_State *state)
   case 5: hostfs_file(state);     break;
   case 6: hostfs_func(state);     break;
   case 7: hostfs_gbpb(state);     break;
-  default:
-    fprintf(stderr, "!!! ERROR !!! - unknown op in R9\n");
-    break;
   }
 }

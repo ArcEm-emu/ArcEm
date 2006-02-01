@@ -18,10 +18,18 @@
 
 	Service_FSRedeclare = 0x40
 
-	@ ArcEm SWI chunk
-	ARCEM_SWI_CHUNK  = 0x56ac0
-	ARCEM_SWI_CHUNKX = ARCEM_SWI_CHUNK | 0x20000
-	ArcEm_HostFS    = ARCEM_SWI_CHUNKX + 1
+	@ Constants for ArcEm memory-mapped IO
+	AIO_BASE   = 0x03000000
+	AIO_HOSTFS = AIO_BASE | (0x001 << 12)
+
+	AIO_HOSTFS_OPEN     = 0x000
+	AIO_HOSTFS_GETBYTES = 0x001
+	AIO_HOSTFS_PUTBYTES = 0x002
+	AIO_HOSTFS_ARGS     = 0x003
+	AIO_HOSTFS_CLOSE    = 0x004
+	AIO_HOSTFS_FILE     = 0x005
+	AIO_HOSTFS_FUNC     = 0x006
+	AIO_HOSTFS_GBPB     = 0x007
 
 	@ Filing system error codes
 	FILECORE_ERROR_DISCFULL = 0xc6
@@ -56,7 +64,7 @@ title:
 	.string	"ArcEmHostFS"
 
 help:
-	.string	"ArcEm HostFS\t0.02 (01 Feb 2006)"
+	.string	"ArcEm HostFS\t0.03 (01 Feb 2006)"
 
 	.align
 
@@ -195,85 +203,71 @@ command_hostfs:
 	/* FSEntry_Open (Open a file)
 	 */
 fs_open:
-	stmfd	sp!, {lr}
+	ldr	r9, = AIO_HOSTFS
+	str	r9, [r9, #AIO_HOSTFS_OPEN]
 
-	mov	r9, #0
-	swi	ArcEm_HostFS
-
-	ldmfd	sp!, {pc}^
+	movs	pc, lr
 
 
 	/* FSEntry_GetBytes (Get bytes from a file)
 	 */
 fs_getbytes:
-	stmfd	sp!, {lr}
+	ldr	r9, = AIO_HOSTFS
+	str	r9, [r9, #AIO_HOSTFS_GETBYTES]
 
-	mov	r9, #1
-	swi	ArcEm_HostFS
-
-	ldmfd	sp!, {pc}^
+	movs	pc, lr
 
 
 	/* FSEntry_PutBytes (Put bytes to a file)
 	 */
 fs_putbytes:
-	stmfd	sp!, {lr}
+	ldr	r9, = AIO_HOSTFS
+	str	r9, [r9, #AIO_HOSTFS_PUTBYTES]
 
-	mov	r9, #2
-	swi	ArcEm_HostFS
-
-	ldmfd	sp!, {pc}^
+	movs	pc, lr
 
 
 	/* FSEntry_Args (Control open files)
 	 */
 fs_args:
-	stmfd	sp!, {lr}
+	ldr	r9, = AIO_HOSTFS
+	str	r9, [r9, #AIO_HOSTFS_ARGS]
 
-	mov	r9, #3
-	swi	ArcEm_HostFS
-
-	ldmfd	sp!, {pc}^
+	movs	pc, lr
 
 
 	/* FSEntry_Close (Close an open file)
 	 */
 fs_close:
-	stmfd	sp!, {lr}
+	ldr	r9, = AIO_HOSTFS
+	str	r9, [r9, #AIO_HOSTFS_CLOSE]
 
-	mov	r9, #4
-	swi	ArcEm_HostFS
-
-	ldmfd	sp!, {pc}^
+	movs	pc, lr
 
 
 	/* FSEntry_File (Whole-file operations)
 	 */
 fs_file:
-	stmfd	sp!, {lr}
-
-	mov	r9, #5
-	swi	ArcEm_HostFS
+	ldr	r9, = AIO_HOSTFS
+	str	r9, [r9, #AIO_HOSTFS_FILE]
 
 	teq	r9, #FILECORE_ERROR_DISCFULL
 	beq	disc_is_full
 
-	ldmfd	sp!, {pc}^
+	movs	pc, lr
 
 
 	/* FSEntry_Func (Various operations)
 	 */
 fs_func:
-	stmfd	sp!, {lr}
-
 	@ Test if operation is FSEntry_Func 10 (Boot filing system)...
 	teq	r0, #10
 	adreq	r0, 1f
 	swieq	XOS_CLI
 	ldmeqfd	sp!, {pc}	@ Don't preserve flags - return XOS_CLI's error (if any)
 
-	mov	r9, #6
-	swi	ArcEm_HostFS
+	ldr	r9, = AIO_HOSTFS
+	str	r9, [r9, #AIO_HOSTFS_FUNC]
 
 	teq	r9, #255
 	beq	not_implemented
@@ -281,13 +275,14 @@ fs_func:
 	teq	r9, #FILECORE_ERROR_DISCFULL
 	beq	disc_is_full
 
-	ldmfd	sp!, {pc}^
+	movs	pc, lr
 
 1:
 	.string	"Run @.!Boot"
 	.align
 
 not_implemented:
+	stmfd	sp!, {lr}
 	adr	r0, err_badfsop
 	mov	r1, #0
 	mov	r2, #0
@@ -298,7 +293,6 @@ not_implemented:
 
 disc_is_full:
 	adr	r0, err_discfull
-	ldmfd	sp!, {lr}
 	orrs	pc, lr, #VBIT
 
 err_badfsop:
@@ -311,12 +305,11 @@ err_discfull:
 	.string	"Disc full"
 	.align
 
+
 	/* FSEntry_GBPB (Multi-byte operations)
 	 */
 fs_gbpb:
-	stmfd	sp!, {lr}
+	ldr	r9, = AIO_HOSTFS
+	str	r9, [r9, #AIO_HOSTFS_GBPB]
 
-	mov	r9, #7
-	swi	ArcEm_HostFS
-
-	ldmfd	sp!, {pc}^
+	movs	pc, lr

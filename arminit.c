@@ -19,9 +19,6 @@
 #include "armdefs.h"
 #include "armemu.h"
 #include "armarc.h"
-#ifdef HOSTFS_SUPPORT
-# include "hostfs.h"
-#endif
 
 extern ARMword *armflags;
 
@@ -188,19 +185,12 @@ void ARMul_Abort(ARMul_State *state, ARMword vector) {
 
 #define ARCEM_SWI_CHUNK 0x56ac0
 #define ARCEM_SWI_SHUTDOWN (ARCEM_SWI_CHUNK + 0)
-#ifdef HOSTFS_SUPPORT
-# define ARCEM_SWI_HOSTFS   (ARCEM_SWI_CHUNK + 1)
-# define ARCEM_SWI_DEBUG    (ARCEM_SWI_CHUNK + 2)
-#endif
+#define ARCEM_SWI_DEBUG    (ARCEM_SWI_CHUNK + 2)
     case ARMul_SWIV: /* Software Interrupt */
       if ((GetWord(ARMul_GetPC(state) - 8) & 0xfdffc0) == ARCEM_SWI_CHUNK) {
         switch (GetWord(ARMul_GetPC(state) - 8) & 0xfdffff) {
         case ARCEM_SWI_SHUTDOWN:
           exit(statestr.Reg[0] & 0xff);
-          break;
-#ifdef HOSTFS_SUPPORT
-        case ARCEM_SWI_HOSTFS:
-          hostfs(state);
           break;
         case ARCEM_SWI_DEBUG:
           fprintf(stderr, "r0 = %08x  r4 = %08x  r8  = %08x  r12 = %08x\n"
@@ -209,8 +199,8 @@ void ARMul_Abort(ARMul_State *state, ARMword vector) {
                           "r3 = %08x  r7 = %08x  r11 = %08x  pc  = %08x\n"
 			  "\n",
             statestr.Reg[0], statestr.Reg[4], statestr.Reg[8], statestr.Reg[12],
-            statestr.Reg[1], statestr.Reg[4], statestr.Reg[9], statestr.Reg[13],
-            statestr.Reg[2], statestr.Reg[5], statestr.Reg[10], statestr.Reg[14],
+            statestr.Reg[1], statestr.Reg[5], statestr.Reg[9], statestr.Reg[13],
+            statestr.Reg[2], statestr.Reg[6], statestr.Reg[10], statestr.Reg[14],
             statestr.Reg[3], statestr.Reg[7], statestr.Reg[11], statestr.Reg[15]);
           {
             unsigned p;
@@ -219,7 +209,6 @@ void ARMul_Abort(ARMul_State *state, ARMword vector) {
             }
           }
           break;
-#endif
         }
       }
       state->Spsr[SVCBANK] = CPSR;

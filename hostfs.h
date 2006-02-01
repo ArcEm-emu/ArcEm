@@ -7,6 +7,6 @@
 
 #include "armdefs.h"
 
-void hostfs(ARMul_State *state);
+void hostfs(ARMul_State *state, ARMword fs_op);
 
 #endif

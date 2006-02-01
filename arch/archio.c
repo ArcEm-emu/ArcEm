@@ -16,6 +16,9 @@
 #include "fdc1772.h"
 #include "hdc63463.h"
 #include "i2c.h"
+#ifdef HOSTFS_SUPPORT
+# include "hostfs.h"
+#endif
 
 /*#define IOC_TRACE*/
 
@@ -597,8 +600,19 @@ PutValIO(ARMul_State *state, ARMword address, ARMword data, int byteNotword)
     /* Use it as general-purpose memory-mapped IO space */
     ARMword application = (address >> 12) & 0x1ff;
     ARMword operation   = (address & 0xfff);
-    fprintf(stderr, "Write to non-IOC IO space (addr=0x%x app=0x%03x op=0x%03x data=0x%08x\n",
-            address, application, operation, data);
+
+    switch (application) {
+    case 0x000: /* ArcEm internal */
+      break;
+#ifdef HOSTFS_SUPPORT
+    case 0x001: /* HostFS */
+      hostfs(state, operation);
+      break;
+#endif
+    default:
+      fprintf(stderr, "Write to non-IOC IO space (addr=0x%x app=0x%03x op=0x%03x data=0x%08x\n",
+              address, application, operation, data);
+    }
   }
 } /* PutValIO */
 
