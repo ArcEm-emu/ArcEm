@@ -7,6 +7,7 @@
 
 	@ RISC OS constants
 	XOS_Write0          = 0x20002
+	XOS_CLI             = 0x20005
 	XOS_FSControl       = 0x20029
 	XOS_ValidateAddress = 0x2003a
 	XMessageTrans_ErrorLookup = 0x61506
@@ -55,7 +56,7 @@ title:
 	.string	"ArcEmHostFS"
 
 help:
-	.string	"ArcEm HostFS\t0.01 (17 Jan 2006)"
+	.string	"ArcEm HostFS\t0.02 (01 Feb 2006)"
 
 	.align
 
@@ -265,6 +266,12 @@ fs_file:
 fs_func:
 	stmfd	sp!, {lr}
 
+	@ Test if operation is FSEntry_Func 10 (Boot filing system)...
+	teq	r0, #10
+	adreq	r0, 1f
+	swieq	XOS_CLI
+	ldmeqfd	sp!, {pc}	@ Don't preserve flags - return XOS_CLI's error (if any)
+
 	mov	r9, #6
 	swi	ArcEm_HostFS
 
@@ -275,6 +282,10 @@ fs_func:
 	beq	disc_is_full
 
 	ldmfd	sp!, {pc}^
+
+1:
+	.string	"Run @.!Boot"
+	.align
 
 not_implemented:
 	adr	r0, err_badfsop
