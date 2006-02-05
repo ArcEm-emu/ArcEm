@@ -139,6 +139,14 @@ SOURCE=..\win\win.h
 # PROP Default_Filter ""
 # Begin Source File
 
+SOURCE=..\arch\ArcemConfig.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\arch\ArcemConfig.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\arch\archio.c
 # End Source File
 # Begin Source File
