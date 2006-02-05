@@ -34,6 +34,8 @@
 #include "dbg_hif.h"
 #include "dbg_rdi.h"
 
+#include "ArcemConfig.h"
+
 /* RDI interface */
 
 static int rdi_state = 0;
@@ -90,8 +92,15 @@ static char *mygets(void *arg, char *buffer, int len) {
   return buffer;
 };
 
-
-void dagstandalone(void) {
+/**
+ * dagstandalone
+ *
+ * Called directly from main() and WinMain() this
+ * is in effect the main function of the program.
+ *
+ *
+ */
+ void dagstandalone(void) {
   int i;
 #ifndef WIN32
   struct sigaction action;
@@ -113,7 +122,40 @@ void dagstandalone(void) {
 #endif
 
   config.processor = ARM2;
-  config.memorysize = 8192 * 1024; //4096 * 1024; /* 1M doesn't work */
+  
+  switch(hArcemConfig.eMemSize) {
+    case MemSize_256K:
+    case MemSize_512K:
+    case MemSize_1M:
+      fprintf(stderr, "256K, 512K and 1M memory size not yet supported, rounding up to 2M\n");
+      config.memorysize = 2 * 1024 * 1024;
+      break;
+
+    case MemSize_2M:
+      config.memorysize = 2 * 1024 * 1024;
+      break;
+
+    case MemSize_4M:
+      config.memorysize = 4 * 1024 * 1024;
+      break;
+
+    case MemSize_8M:
+      config.memorysize = 8 * 1024 * 1024;
+      break;
+
+    case MemSize_12M:
+      config.memorysize = 12 * 1024 * 1024;
+      break;
+
+    case MemSize_16M:
+      config.memorysize = 16 * 1024 * 1024;
+      break;
+
+    default:
+      fprintf(stderr, "Unsupported memory size");
+      exit(EXIT_FAILURE);
+  }
+
   config.bytesex = RDISex_Little;
 
   hostif.dbgprint = myprint;
