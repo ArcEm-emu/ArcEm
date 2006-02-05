@@ -15,15 +15,18 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. */
 
+#include <stdlib.h>
+
 #include "dagstandalone.h"
+#include "ArcemConfig.h"
 
 #ifdef WIN32
 
 #include <windows.h>
 #include <stdio.h>
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd) {
-  
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
+{
 #ifdef DEBUG
   AllocConsole( );  
 
@@ -31,18 +34,35 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
   freopen("CONOUT$","wb",stdout); 
   freopen("CONOUT$","wb",stderr); 
 #endif
-	
+
+  // Setup the default values for the config system
+  ArcemConfig_SetupDefaults();
+
   dagstandalone();
-  return 0;
+
+  return EXIT_SUCCESS;
 }
 
 #else
 
-int main(int argc, char *argv[]) {
+// Main function for X, RISC OS and MacOS X versions
+
+
+int main(int argc, char *argv[])
+{
+  // Setup the default values for the config system
+  ArcemConfig_SetupDefaults();
+
+  // Parse any commandline arguments given to the program
+  // to overrule the defautls
+//  ArcemConfig_ParseCommandLine(argc, argv);
+
   dagstandalone();
-  return 0;
+
+  return EXIT_SUCCESS;
 }
 
 #endif
+
 
 
