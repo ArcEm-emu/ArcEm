@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
 
   // Parse any commandline arguments given to the program
   // to overrule the defautls
-//  ArcemConfig_ParseCommandLine(argc, argv);
+  ArcemConfig_ParseCommandLine(argc, argv);
 
   dagstandalone();
 
