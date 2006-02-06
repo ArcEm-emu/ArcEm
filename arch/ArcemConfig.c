@@ -83,7 +83,7 @@ void ArcemConfig_ParseCommandLine(int argc, char *argv[])
       
       exit(EXIT_SUCCESS);
     }
-    else if(0 == strcmp("--version", argv[iArgument])) {
+    else if(0 == strcmp("--help", argv[iArgument])) {
       printf("%s", sHelpString);
       
       exit(EXIT_SUCCESS);
