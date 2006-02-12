@@ -19,15 +19,20 @@
 # Modified for different systems by Peter Naulls <peter@chocky.org>
 
 # These variables can be overridden
-# Default endianness of the *emulated* processor (LITTLEEND or BIGEND)
-# Should stay as LITTLEEND in most cases
-ENDIAN=LITTLEEND
+
+# Extension ROM support - currently stable on X, Windows and Mac OS X
+EXTNROM_SUPPORT=yes
 
 # Sound support - currently experimental - to enable set to 'yes'
 SOUND_SUPPORT=no
 
 # HostFS support - currently experimental - to enable set to 'yes'
 HOSTFS_SUPPORT=yes
+
+# Endianess of the Host system, the default is little endian (x86 and
+# ARM. If you run on a big endian system such as Sparc and some versions
+# of MIPS set this flag
+HOST_BIGENDIAN=no
 
 # Windowing System
 ifeq ($(SYSTEM),)
@@ -38,14 +43,14 @@ CC=gcc
 LD=gcc
 LDFLAGS=
 
+# Armulator core endianess of the *emulated* processor (LITTLEEND or BIGEND)
+# Should stay as LITTLEEND when used in ArcEm
+ENDIAN=LITTLEEND
 
 WARN = -Wall -Wno-return-type -Wno-unknown-pragmas -Wshadow -Wundef \
    -Wpointer-arith -Wcast-align -Wstrict-prototypes \
    -Wmissing-prototypes -Wmissing-declarations -Wnested-externs \
    -Wcast-qual -Wwrite-strings
-
-
-# add -DHOST_BIGENDIAN for big endian hosts, e.g. Sun, SGI, HP
 
 ifeq ($(PROFILE),yes)
 CFLAGS = -O -g -pg -ftest-coverage -fprofile-arcs
@@ -127,6 +132,14 @@ endif
 ifeq (${HOSTFS_SUPPORT},yes)
 CFLAGS += -DHOSTFS_SUPPORT
 OBJS += hostfs.o
+endif
+
+ifeq (${EXTNROM_SUPPORT},yes)
+CFLAGS += -DEXTNROM_SUPPORT
+endif
+
+ifeq (${HOST_BIGENDIAN},yes)
+CFLAGS += -DHOST_BIGENDIAN
 endif
 
 
