@@ -11,12 +11,17 @@
  
   See usage instructions in the ArcemConfig.h header file.
 */
+#include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
 #include "ArcemConfig.h"
 #include "Version.h"
+
+// Local functions
+static char *arcemconfig_StringDuplicate(const char *sInput);
+
 
 
 // Global Variable holding the configuration runtime options of
@@ -36,6 +41,23 @@ void ArcemConfig_SetupDefaults(void)
 
   // We default to an ARM 2AS architecture (includes SWP) without a cache
   hArcemConfig.eProcessor = Processor_ARM250;
+
+  hArcemConfig.sRomImageName = arcemconfig_StringDuplicate("ROM");
+  // If we've run out of memory this early, something is very wrong
+  if(NULL == hArcemConfig.sRomImageName) {
+    fprintf(stderr, "Failed to allocate memory for initial configuration. Please free up more memory.\n");
+    exit(EXIT_FAILURE);
+  }
+
+#if defined(EXTNROM_SUPPORT)
+  // The default directory is extnrom in the current working directory
+  hArcemConfig.sEXTNDirectory = arcemconfig_StringDuplicate("extnrom");
+  // If we've run out of memory this early, something is very wrong
+  if(NULL == hArcemConfig.sEXTNDirectory) {
+    fprintf(stderr, "Failed to allocate memory for initial configuration. Please free up more memory.\n");
+    exit(EXIT_FAILURE);
+  }
+#endif /* EXTNROM_SUPPORT */
 }
 
 /**
@@ -53,14 +75,18 @@ void ArcemConfig_ParseCommandLine(int argc, char *argv[])
 {
   int iArgument = 0;
   char sHelpString[] =
-    "Arcem <Options>\n" \
-    " Where options are one or more of the following\n" \
-    "  --help - Display this message and exit\n" \
-    "  --version - Display the version number and exit\n" \
-    "  --memory <value> - Set the memory size of the emulator\n" \
-    "     Where value is one of '256K', '512K', '1M', '2M', '4M',\n" \
-    "     '8M', '12M' or '16M'\n" \
-    "  --processor <value> - Set the emulated CPU\n" \
+    "Arcem <Options>\n"
+    " Where options are one or more of the following\n"
+    "  --help - Display this message and exit\n"
+    "  --version - Display the version number and exit\n"
+    "  --rom <value> - String of the location of the rom image\n"
+#if defined(EXTNROM_SUPPORT)
+    "  --extnromdir <value> - String of the location of the extension rom directory\n"
+#endif /* EXTNROM_SUPPORT */
+    "  --memory <value> - Set the memory size of the emulator\n"
+    "     Where value is one of '256K', '512K', '1M', '2M', '4M',\n"
+    "     '8M', '12M' or '16M'\n"
+    "  --processor <value> - Set the emulated CPU\n"
     "     Where value is one of 'ARM2', 'ARM250', 'ARM3'\n";
 
   // No commandline arguments?
@@ -88,6 +114,48 @@ void ArcemConfig_ParseCommandLine(int argc, char *argv[])
       
       exit(EXIT_SUCCESS);
     }
+    else if(0 == strcmp("--rom", argv[iArgument])) {
+      if(iArgument+1 < argc) { // Is there a following argument?
+        const char *sNewRomName = arcemconfig_StringDuplicate(argv[iArgument + 1]);
+        
+        // Only replace the romname if we successfully allocated a new string
+        if(sNewRomName) {
+          // Free up the old one
+          free((char *) hArcemConfig.sRomImageName);
+
+          hArcemConfig.sRomImageName = sNewRomName;
+        }
+
+        iArgument += 2;
+      } else {
+        // No argument following the --rom option
+        fprintf(stderr, "No argument following the --rom option\n");
+
+        exit(EXIT_FAILURE);
+      }
+    }
+#if defined(EXTNROM_SUPPORT)
+    else if(0 == strcmp("--extnromdir", argv[iArgument])) {
+      if(iArgument+1 < argc) { // Is there a following argument?
+        const char *sNewExtnRomDir = arcemconfig_StringDuplicate(argv[iArgument + 1]);
+        
+        // Only replace the directory if we successfully allocated a new string
+        if(sNewExtnRomDir) {
+          // Free up the old one
+          free((char *) hArcemConfig.sEXTNDirectory);
+
+          hArcemConfig.sEXTNDirectory = sNewExtnRomDir;
+        }
+
+        iArgument += 2;
+      } else {
+        // No argument following the --extnromdir option
+        fprintf(stderr, "No argument following the --extnromdir option\n");
+
+        exit(EXIT_FAILURE);
+      }
+    }
+#endif /* EXTNROM_SUPPORT */
     else if(0 == strcmp("--memory", argv[iArgument])) {
       if(iArgument+1 < argc) { // Is there a following argument?
         if(0 == strcmp("256K", argv[iArgument + 1])) {
@@ -178,4 +246,26 @@ void ArcemConfig_ParseCommandLine(int argc, char *argv[])
       exit(EXIT_FAILURE);
     }
   }
+}
+
+/**
+ * arcemconfig_StringDuplicate
+ *
+ * Equivalent of the POSIX function strdup. All because it
+ * isn't in ANSI/ISO C.
+ *
+ * @param sInput String to copy
+ * @returns Copy of string or NULL on error (memory failure)
+ */
+static char *arcemconfig_StringDuplicate(const char *sInput)
+{
+  char *sNew;
+  assert(sInput);
+
+  sNew = calloc(strlen(sInput) + 1, 1); /* +1 is the string null terminator */
+  if(sNew) {
+    strcpy(sNew, sInput);
+  }
+
+  return sNew;
 }
