@@ -29,7 +29,7 @@
 #include "ReadConfig.h"
 #include "Version.h"
 #include "extnrom.h"
-
+#include "ArcemConfig.h"
 
 
 #ifdef MACOSX
@@ -442,7 +442,7 @@ ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
 
 
 #ifdef __riscos__
-  if (ROMFile = fopen("<ArcEm$Dir>.^.ROM", "rb"), ROMFile == NULL) {
+  if (ROMFile = fopen("<ArcEm$Dir>.^." hArcemConfig.sRomImageName, "rb"), ROMFile == NULL) {
     exit(2);
   }
 #else
@@ -450,13 +450,13 @@ ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
   {
     chdir(arcemDir);
   }
-  if (ROMFile = fopen("ROM", "rb"), ROMFile == NULL) {
+  if (ROMFile = fopen(hArcemConfig.sRomImageName, "rb"), ROMFile == NULL) {
     arcem_exit("Couldn't open ROM file");
   }
 #else
-  if (ROMFile = fopen("ROM", "rb"), ROMFile == NULL) {
+  if (ROMFile = fopen(hArcemConfig.sRomImageName, "rb"), ROMFile == NULL) {
     fprintf(stderr, "Couldn't open ROM file\n");
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 #endif
 #endif
@@ -468,12 +468,12 @@ ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
 
   fseek(ROMFile, 0l, SEEK_SET);
 
-#if defined(SYSTEM_X) || defined(MACOSX) || defined(SYSTEM_win)
+#if defined(EXTNROM_SUPPORT)
   /* Add the space required by an Extension Rom */
   extnrom_size = extnrom_calculate_size(&extnrom_entry_count);
   fprintf(stderr, "extnrom_size = %u, extnrom_entry_count= %u\n",
           extnrom_size, extnrom_entry_count);
-#endif /* SYSTEM_X */
+#endif /* EXTNROM_SUPPORT */
   dbug("Total ROM size required = %u KB\n",
        (MEMC.ROMHighSize + extnrom_size) / 1024);
 
@@ -518,12 +518,12 @@ ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
       fprintf(stderr,"Couldn't allocate space for ROM Low\n");
       exit(3);
     }
-#if defined(SYSTEM_X) || defined(MACOSX) || defined(SYSTEM_win)
+#if defined(EXTNROM_SUPPORT)
     /* Load extension ROM */
     dbug("Loading Extension ROM...\n");
     extnrom_load(extnrom_size, extnrom_entry_count,
                  (unsigned char *) MEMC.ROMLow);
-#endif
+#endif /* EXTNROM_SUPPORT */
 
     for (ROMWordNum = 0; ROMWordNum < MEMC.ROMLowSize / 4; ROMWordNum++) {
       MEMC.ROMLowFuncs[ROMWordNum] = ARMul_Emulate_DecodeInstr;
