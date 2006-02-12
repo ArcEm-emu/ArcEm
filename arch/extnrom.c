@@ -12,6 +12,7 @@
    "RISC OS Support for extension ROMs", a text file
 */
 
+#if defined(EXTNROM_SUPPORT)
 #if defined(SYSTEM_X) || defined(MACOSX) || defined(SYSTEM_win)
 
 #include <assert.h>
@@ -23,14 +24,13 @@
 #include "filecalls.h"
 #include "../armdefs.h"
 #include "extnrom.h"
+#include "ArcemConfig.h"
 
 #define PRODUCT_TYPE_EXTENSION_ROM 0x0087 /* Allocated type for Extension Roms */
 #define MANUFACTURER_CODE 0x0000 /* Any 16-bit value suitable, 0 = Acorn */
 #define COUNTRY_CODE 0x00 /* In most recent docs, all countries should be 0 */
 
 #define DESCRIPTION_STRING "ArcEm Support"
-
-#define EXTNROM_DIRECTORY "extnrom"
 
 #define ROUND_UP_TO_4(x) (((x) + 3) & (~3))
 
@@ -138,9 +138,9 @@ extnrom_calculate_size(unsigned *entry_count)
   *entry_count = 0;
 
   /* Read list of files and calculate total size */
-  if(!Directory_Open(EXTNROM_DIRECTORY, &hDir)) {
+  if(!Directory_Open(hArcemConfig.sEXTNDirectory, &hDir)) {
     fprintf(stderr, "Could not open Extension Rom directory \'%s\': %s\n",
-            EXTNROM_DIRECTORY, strerror(errno));
+            hArcemConfig.sEXTNDirectory, strerror(errno));
     return 0;
   }
 
@@ -154,7 +154,7 @@ extnrom_calculate_size(unsigned *entry_count)
     }
 
     /* Construct relative path to the entry */
-    strcpy(path, EXTNROM_DIRECTORY);
+    strcpy(path, hArcemConfig.sEXTNDirectory);
     strcat(path, "/");
     strcat(path, sFilename);
 
@@ -248,9 +248,9 @@ extnrom_load(unsigned size, unsigned entry_count, void *address)
   start_addr[3] = 0;
 
   /* Read list of files, create Chunk Directory and load them in */
-  if(!Directory_Open(EXTNROM_DIRECTORY, &hDir)) {
+  if(!Directory_Open(hArcemConfig.sEXTNDirectory, &hDir)) {
     fprintf(stderr, "Could not open Extension Rom directory \'%s\'\n",
-            EXTNROM_DIRECTORY);
+            hArcemConfig.sEXTNDirectory);
     return;
   }
 
@@ -288,7 +288,7 @@ extnrom_load(unsigned size, unsigned entry_count, void *address)
     }
 
     /* Construct relative path to the entry */
-    strcpy(path, EXTNROM_DIRECTORY);
+    strcpy(path, hArcemConfig.sEXTNDirectory);
     strcat(path, "/");
     strcat(path, sFilename);
 
@@ -365,3 +365,4 @@ extnrom_load(unsigned size, unsigned entry_count, void *address)
 }
 
 #endif /* defined(SYSTEM_X) || defined(MACOSX) || defined(SYSTEM_win) */
+#endif /* defined(EXTNROM_SUPPORT) */
