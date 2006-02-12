@@ -23,11 +23,15 @@
 #include <stdio.h>
 #include <limits.h>
 
-#include "X11/X.h"
-#include "X11/Xlib.h"
-#include "X11/Xutil.h"
-#include "X11/keysym.h"
-#include "X11/extensions/shape.h"
+#include <X11/X.h>
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
+#include <X11/keysym.h>
+#include <X11/extensions/shape.h>
+
+#if defined(sun) && defined(__SVR4)
+# include <X11/Sunkeysym.h>
+#endif
 
 #include "../armdefs.h"
 #include "armarc.h"
@@ -117,8 +121,11 @@ typedef struct {
     arch_key_id kid;
 } keysym_to_arch_key;
 
-static keysym_to_arch_key keysym_to_arch_key_map[] = {
 #define X(sym, kid) { XK_ ## sym, ARCH_KEY_ ## kid },
+#if defined(sun) && defined(__SVR4)
+# define SUNX(sym, kid) { SunXK_ ## sym, ARCH_KEY_ ## kid },
+#endif
+static const keysym_to_arch_key keysym_to_arch_key_map[] = {
     X(0, 0)
     X(1, 1)
     X(2, 2)
@@ -242,9 +249,25 @@ static keysym_to_arch_key keysym_to_arch_key_map[] = {
     X(x, x)
     X(y, y)
     X(z, z)
-#undef X
+
+#if defined(sun) && defined(__SVR4)
+    /* Extra keycodes found on Sun hardware */
+    X(KP_Insert, kp_0)	/* Labelled "0 (Insert)" */
+    X(F33, kp_1)	/* Labelled "1 (End)" */
+    X(F21, break)	/* Labelled "Pause (Break)" */
+    X(F22, print)	/* Labelled "Print Screen (SysRq)" */
+    X(F23, scroll_lock)	/* Labelled "Scroll Lock" */
+    X(F24, kp_minus)	/* Labelled "-" */
+    X(F25, kp_slash)	/* Labelled "/" */
+    X(F26, kp_star)	/* Labelled "*" */
+    SUNX(F36, f11)	/* Labelled "F11" */
+    SUNX(F37, f12)	/* Labelled "F12" */
+#endif
+
     { NoSymbol },
 };
+#undef X
+#undef SUNX
 
 /* ------------------------------------------------------------------ */
 
@@ -1237,7 +1260,7 @@ static void BackingWindow_Event(ARMul_State *state,XEvent *e) {
 static void ProcessKey(ARMul_State *state, XKeyEvent *key)
 {
   KeySym sym;
-  keysym_to_arch_key *ktak;
+  const keysym_to_arch_key *ktak;
 
   XLookupString(key, NULL, 0, &sym, NULL);
 
