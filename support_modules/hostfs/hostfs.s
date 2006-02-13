@@ -262,9 +262,7 @@ fs_file:
 fs_func:
 	@ Test if operation is FSEntry_Func 10 (Boot filing system)...
 	teq	r0, #10
-	adreq	r0, 1f
-	swieq	XOS_CLI
-	ldmeqfd	sp!, {pc}	@ Don't preserve flags - return XOS_CLI's error (if any)
+	beq	boot
 
 	ldr	r9, = AIO_HOSTFS
 	str	r9, [r9, #AIO_HOSTFS_FUNC]
@@ -276,6 +274,12 @@ fs_func:
 	beq	disc_is_full
 
 	movs	pc, lr
+
+boot:
+	stmfd	sp!, {lr}
+	adr	r0, 1f
+	swi	XOS_CLI
+	ldmfd	sp!, {pc}	@ Don't preserve flags - return XOS_CLI's error (if any)
 
 1:
 	.string	"Run @.!Boot"
