@@ -404,10 +404,16 @@ hostfs_read_object_info(const char *host_pathname,
 
   /* Find where the leafname starts */
   slash = strrchr(host_pathname, '/');
-  assert(slash); /* A '/' should always be present */
+
+  /* Find whether there is a comma in the leafname */
+  if (slash) {
+    /* Start search for comma after the slash */
+    comma = strrchr(slash + 1, ',');
+  } else {
+    comma = strrchr(host_pathname, ',');
+  }
 
   /* Search for a filetype or load-exec after a comma */
-  comma = strrchr(slash + 1, ',');
   if (comma) {
     const char *dash = strrchr(comma + 1, '-');
 
