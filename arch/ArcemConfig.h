@@ -59,15 +59,18 @@ typedef struct ArcemConfig_s {
   ArcemConfig_MemSize   eMemSize;
   ArcemConfig_Processor eProcessor; 
 
-  const char *sRomImageName;
+  char *sRomImageName;
 
 #if defined(EXTNROM_SUPPORT)
-  const char *sEXTNDirectory;
+  char *sEXTNDirectory;
 #endif /* EXTNROM_SUPPORT */
+
+#if defined(HOSTFS_SUPPORT)
+  char *sHostFSDirectory;
+#endif /* HOSTFS_SUPPORT */
 
   // TODO
   // MFM Disc details (make sure the ReadConfig stuff fills in these details)
-  // hostfs disc location
 } ArcemConfig;
 
 extern ArcemConfig hArcemConfig;

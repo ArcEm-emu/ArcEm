@@ -58,6 +58,17 @@ void ArcemConfig_SetupDefaults(void)
     exit(EXIT_FAILURE);
   }
 #endif /* EXTNROM_SUPPORT */
+
+#if defined(HOSTFS_SUPPORT)
+  // The default directory is hostfs in the current working directory
+  hArcemConfig.sHostFSDirectory = arcemconfig_StringDuplicate("./hostfs");
+  // If we've run out of memory this early, something is very wrong
+  if(NULL == hArcemConfig.sHostFSDirectory) {
+    fprintf(stderr, "Failed to allocate memory for initial configuration. Please free up more memory.\n");
+    exit(EXIT_FAILURE);
+  }
+
+#endif /* HOSTFS_SUPPORT */
 }
 
 /**
@@ -83,6 +94,9 @@ void ArcemConfig_ParseCommandLine(int argc, char *argv[])
 #if defined(EXTNROM_SUPPORT)
     "  --extnromdir <value> - String of the location of the extension rom directory\n"
 #endif /* EXTNROM_SUPPORT */
+#if defined(HOSTFS_SUPPORT)
+    "  --hostfsdir <value> - String of the location of the hostfs directory\n"
+#endif /* HOSTFS_SUPPORT */
     "  --memory <value> - Set the memory size of the emulator\n"
     "     Where value is one of '256K', '512K', '1M', '2M', '4M',\n"
     "     '8M', '12M' or '16M'\n"
@@ -116,12 +130,12 @@ void ArcemConfig_ParseCommandLine(int argc, char *argv[])
     }
     else if(0 == strcmp("--rom", argv[iArgument])) {
       if(iArgument+1 < argc) { // Is there a following argument?
-        const char *sNewRomName = arcemconfig_StringDuplicate(argv[iArgument + 1]);
+        char *sNewRomName = arcemconfig_StringDuplicate(argv[iArgument + 1]);
         
         // Only replace the romname if we successfully allocated a new string
         if(sNewRomName) {
           // Free up the old one
-          free((char *) hArcemConfig.sRomImageName);
+          free(hArcemConfig.sRomImageName);
 
           hArcemConfig.sRomImageName = sNewRomName;
         }
@@ -137,12 +151,12 @@ void ArcemConfig_ParseCommandLine(int argc, char *argv[])
 #if defined(EXTNROM_SUPPORT)
     else if(0 == strcmp("--extnromdir", argv[iArgument])) {
       if(iArgument+1 < argc) { // Is there a following argument?
-        const char *sNewExtnRomDir = arcemconfig_StringDuplicate(argv[iArgument + 1]);
+        char *sNewExtnRomDir = arcemconfig_StringDuplicate(argv[iArgument + 1]);
         
         // Only replace the directory if we successfully allocated a new string
         if(sNewExtnRomDir) {
           // Free up the old one
-          free((char *) hArcemConfig.sEXTNDirectory);
+          free(hArcemConfig.sEXTNDirectory);
 
           hArcemConfig.sEXTNDirectory = sNewExtnRomDir;
         }
@@ -156,6 +170,28 @@ void ArcemConfig_ParseCommandLine(int argc, char *argv[])
       }
     }
 #endif /* EXTNROM_SUPPORT */
+#if defined(HOSTFS_SUPPORT)
+    else if(0 == strcmp("--hostfsdir", argv[iArgument])) {
+      if(iArgument+1 < argc) { // Is there a following argument?
+        char *sNewHostFSDir = arcemconfig_StringDuplicate(argv[iArgument + 1]);
+        
+        // Only replace the directory if we successfully allocated a new string
+        if(sNewHostFSDir) {
+          // Free up the old one
+          free(hArcemConfig.sHostFSDirectory);
+
+          hArcemConfig.sHostFSDirectory = sNewHostFSDir;
+        }
+
+        iArgument += 2;
+      } else {
+        // No argument following the --hostfsdir option
+        fprintf(stderr, "No argument following the --hostfsdir option\n");
+
+        exit(EXIT_FAILURE);
+      }
+    }
+#endif /* HOSTFS_SUPPORT */
     else if(0 == strcmp("--memory", argv[iArgument])) {
       if(iArgument+1 < argc) { // Is there a following argument?
         if(0 == strcmp("256K", argv[iArgument + 1])) {

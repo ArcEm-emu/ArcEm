@@ -18,6 +18,7 @@
 
 #include "arch/armarc.h"
 #include "hostfs.h"
+#include "arch/ArcemConfig.h"
 
 typedef int bool;
 
@@ -74,8 +75,6 @@ typedef struct {
 #define STRCASEEQ(x,y) (strcasecmp(x,y) == 0)
 
 #define MIN(x,y) (((x) < (y)) ? (x) : (y))
-
-#define HOSTFS_ROOT "./hostfs"
 
 #define MAX_OPEN_FILES 255
 
@@ -223,7 +222,7 @@ riscos_path_to_host(const char *path, char *host_path)
   while (*path) {
     switch (*path) {
     case '$':
-      strcpy(host_path, HOSTFS_ROOT);
+      strcpy(host_path, hArcemConfig.sHostFSDirectory);
       host_path += strlen(host_path);
       break;
     case '.':
@@ -571,7 +570,7 @@ hostfs_path_process(const char *ro_path,
   while (*ro_path) {
     switch (*ro_path) {
     case '$':
-      strcat(host_pathname, HOSTFS_ROOT);
+      strcat(host_pathname, hArcemConfig.sHostFSDirectory);
 
       hostfs_read_object_info(host_pathname, NULL, object_info);
       if (object_info->type == OBJECT_TYPE_NOT_FOUND) {
