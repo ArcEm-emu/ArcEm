@@ -68,6 +68,15 @@ typedef struct {
   ARMword attribs;
 } risc_os_object_info;
 
+/**
+ * Type used to cache information about a directory entry.
+ * Contains name and RISC OS object info
+ */
+typedef struct {
+  unsigned name_offset; /**< Offset within cache_names[] */
+  risc_os_object_info object_info;
+} cache_directory_entry;
+
 /* TODO Avoid duplicate macro with extnrom.c */
 #define ROUND_UP_TO_4(x) (((x) + 3) & (~3))
 
@@ -88,6 +97,10 @@ static FILE *open_file[MAX_OPEN_FILES + 1]; /* array subscript 0 is never used *
 
 static unsigned char *buffer = NULL;
 static size_t buffer_size = 0;
+
+static cache_directory_entry *cache_entries = NULL;
+static unsigned cache_entries_count = 0; /**< Number of valid entries in \a cache_entries */
+static char *cache_names = NULL;
 
 #ifdef NDEBUG
 static inline void dbug_hostfs(const char *format, ...) {}
@@ -1403,9 +1416,142 @@ hostfs_func_8_rename(ARMul_State *state)
   state->Reg[1] = 0; /* zero indicates successful rename */
 }
 
+/**
+ * Compare two elements of type \a cache_directory_entry by comparing their
+ * names in a case-insensitive manner.
+ *
+ * @param e1 Pointer to first \a cache_directory_entry
+ * @param e2 Pointer to second \a cache_directory_entry
+ * @return Returns an integer less than, equal to, or greater than zero if
+ *         e1's name is found, respectively, to be earlier than, to match, or
+ *         be later than e2's name.
+ */
+static int
+hostfs_directory_entry_compare(const void *e1, const void *e2)
+{
+  const cache_directory_entry *entry1 = e1;
+  const cache_directory_entry *entry2 = e2;
+  const char *name1 = cache_names + entry1->name_offset;
+  const char *name2 = cache_names + entry2->name_offset;
+
+  return strcasecmp(name1, name2);
+}
+
+/**
+ * Reads the entries in the directory \a directory_name. Stores them in the
+ * cache, sorted in case-insensitive order of name.
+ *
+ * @param directory_name Full path to host directory to be read and cached
+ */
+static void
+hostfs_cache_dir(const char *directory_name)
+{
+  static unsigned cache_entries_capacity = 128; /* Initial capacity of cache_entries[] */
+  static unsigned cache_names_capacity = 2048; /* Initial capacity of cache_names[] */
+
+  unsigned entry_ptr = 0;
+  unsigned name_ptr = 0;
+  DIR *d;
+  const struct dirent *entry;
+
+  assert(directory_name);
+
+  /* Allocate memory initially */
+  if (!cache_entries) {
+    cache_entries = malloc(cache_entries_capacity * sizeof(cache_directory_entry));
+  }
+  if (!cache_names) {
+    cache_names = malloc(cache_names_capacity);
+  }
+  if ((!cache_entries) || (!cache_names)) {
+    fprintf(stderr, "hostfs_cache_dir(): Out of memory\n");
+    exit(1);
+  }
+
+  /* Read each of the directory entries one at a time.
+   * Fill in the cache_entries[] and cache_names[] arrays,
+   *    resizing these dynamically if required.
+   */
+  d = opendir(directory_name);
+  assert(d); /* FIXME */
+
+  while ((entry = readdir(d)) != NULL) {
+    char entry_path[PATH_MAX], ro_leaf[PATH_MAX];
+    unsigned string_space;
+
+    /* Hidden entries are completely ignored */
+    if (entry->d_name[0] == '.') {
+      continue;
+    }
+
+    strcpy(entry_path, directory_name);
+    strcat(entry_path, "/");
+    strcat(entry_path, entry->d_name);
+
+    hostfs_read_object_info(entry_path, ro_leaf,
+                            &cache_entries[entry_ptr].object_info);
+
+    /* Ignore entries we can not read information about,
+       or which are neither regular files or directories */
+    if (cache_entries[entry_ptr].object_info.type == OBJECT_TYPE_NOT_FOUND) {
+      continue;
+    }
+
+    /* Calculate space required to store name (+ terminator) */
+    string_space = strlen(ro_leaf) + 1;
+
+    /* Check whether cache_names[] is large enough; increase if required */
+    if (string_space > (cache_names_capacity - name_ptr)) {
+      cache_names_capacity *= 2;
+      cache_names = realloc(cache_names, cache_names_capacity);
+      if (!cache_names) {
+        fprintf(stderr, "hostfs_cache_dir(): Out of memory\n");
+        exit(1);
+      }
+    }
+
+    /* Copy string into cache_names[]. Put offset ptr into local_entries[] */
+    strcpy(cache_names + name_ptr, ro_leaf);
+    cache_entries[entry_ptr].name_offset = name_ptr;
+
+    /* Advance name_ptr */
+    name_ptr += string_space;
+
+    /* Advance entry_ptr, increasing space of cache_entries[] if required */
+    entry_ptr++;
+    if (entry_ptr == cache_entries_capacity) {
+      cache_entries_capacity *= 2;
+      cache_entries = realloc(cache_entries, cache_entries_capacity * sizeof(cache_directory_entry));
+      if (!cache_entries) {
+        fprintf(stderr, "hostfs_cache_dir(): Out of memory\n");
+        exit(1);
+      }
+    }
+  }
+
+  closedir(d);
+
+  /* Sort the directory entries, case-insensitive */
+  qsort(cache_entries, entry_ptr, sizeof(cache_directory_entry),
+        hostfs_directory_entry_compare);
+
+  /* Store the number of directory entries found */
+  cache_entries_count = entry_ptr;
+}
+
+/**
+ * Return directory information for FSEntry_Func 14 and 15.
+ * Uses and updates the cached directory information.
+ *
+ * @param state Emulator state
+ * @param with_info Whether the returned data should include information with
+ *                  each entry, or just names.
+ */
+
 static void
 hostfs_read_dir(ARMul_State *state, bool with_info)
 {
+  static char cached_directory[PATH_MAX] = { '\0' }; /* Directory stored in the cache */
   char ro_path[PATH_MAX], host_pathname[PATH_MAX];
   risc_os_object_info object_info;
 
@@ -1433,87 +1579,23 @@ hostfs_read_dir(ARMul_State *state, bool with_info)
     return;
   }
 
+  /* Determine if we should use the cached directory contents or should re-read */
+  if (!STREQ(host_pathname, cached_directory) || (state->Reg[4] == 0)) {
+    hostfs_cache_dir(host_pathname);
+  }
+
   {
     const ARMword num_objects_to_read = state->Reg[3];
     ARMword buffer_remaining = state->Reg[5]; /* buffer size given */
     ARMword count = 0; /* Number of objects returned from this call */
     ARMword offset = state->Reg[4]; /* Offset of item to read */
     ARMword ptr = state->Reg[2]; /* Pointer to return buffer */
-    DIR *d;
-    struct dirent *entry = NULL;
 
-    d = opendir(host_pathname);
-    if (!d) {
-      fprintf(stderr, "HostFS could not open directory \'%s\': %s\n",
-              host_pathname, strerror(errno));
-      state->Reg[3] = 0;
-      state->Reg[4] = -1;
-      return;
-    }
-
-    /* Skip a number of directory entries according to the offset */
-    while ((count < offset) && ((entry = readdir(d)) != NULL)) {
-      char entry_path[PATH_MAX], ro_leaf[PATH_MAX];
-
-      /* Hidden files are completely ignored */
-      if (entry->d_name[0] == '.') {
-        continue;
-      }
-
-      strcpy(entry_path, host_pathname);
-      strcat(entry_path, "/");
-      strcat(entry_path, entry->d_name);
-
-      hostfs_read_object_info(entry_path, ro_leaf, &object_info);
-
-      /* Ignore entries we can not read information about,
-         or which are neither regular files or directories */
-      if (object_info.type == OBJECT_TYPE_NOT_FOUND) {
-        continue;
-      }
-
-      /* Count this entry */
-      count ++;
-    }
-
-    if (count < offset) {
-      /* There were not enough entries to skip on the host OS.
-         Return no further items */
-      dbug_hostfs("HostFS not enough entries to skip - returning no more\n");
-      state->Reg[3] = 0;
-      state->Reg[4] = -1;
-      return;
-    }
-
-    /* So far we have skipped a number of directory entries according to the
-       variable 'offset' */
-
-    /* Reset the counter, so we can keep track of number of objects returned */
-    count = 0;
-
-    while ((count < num_objects_to_read) && ((entry = readdir(d)) != NULL)) {
-      char entry_path[PATH_MAX], ro_leaf[PATH_MAX];
+    while ((count < num_objects_to_read) && (offset < cache_entries_count)) {
       unsigned string_space, entry_space;
 
-      /* Hidden files are completely ignored */
-      if (entry->d_name[0] == '.') {
-        continue;
-      }
-
-      strcpy(entry_path, host_pathname);
-      strcat(entry_path, "/");
-      strcat(entry_path, entry->d_name);
-
-      hostfs_read_object_info(entry_path, ro_leaf, &object_info);
-
-      /* Ignore entries we can not read information about,
-         or which are neither regular files or directories */
-      if (object_info.type == OBJECT_TYPE_NOT_FOUND) {
-        continue;
-      }
-
       /* Calculate space required to return name and (optionally) info */
-      string_space = strlen(ro_leaf) + 1;
+      string_space = strlen(cache_names + cache_entries[offset].name_offset) + 1;
       if (with_info) {
         /* Space required for info, everything word-aligned */
         string_space = ROUND_UP_TO_4(string_space);
@@ -1529,25 +1611,23 @@ hostfs_read_dir(ARMul_State *state, bool with_info)
 
       /* Fill in this entry */
       if (with_info) {
-        ARMul_StoreWordS(state, ptr + 0,  object_info.load);
-        ARMul_StoreWordS(state, ptr + 4,  object_info.exec);
-        ARMul_StoreWordS(state, ptr + 8,  object_info.length);
-        ARMul_StoreWordS(state, ptr + 12, object_info.attribs);
-        ARMul_StoreWordS(state, ptr + 16, object_info.type);
+        ARMul_StoreWordS(state, ptr + 0,  cache_entries[offset].object_info.load);
+        ARMul_StoreWordS(state, ptr + 4,  cache_entries[offset].object_info.exec);
+        ARMul_StoreWordS(state, ptr + 8,  cache_entries[offset].object_info.length);
+        ARMul_StoreWordS(state, ptr + 12, cache_entries[offset].object_info.attribs);
+        ARMul_StoreWordS(state, ptr + 16, cache_entries[offset].object_info.type);
         ptr += 20;
       }
-      put_string(state, ptr, ro_leaf);
+      put_string(state, ptr, cache_names + cache_entries[offset].name_offset);
 
       ptr += string_space;
       buffer_remaining -= entry_space;
       count ++;
+      offset ++;
     }
 
-    /* Increase offset by the number of items read this time */
-    offset += count;
-
     /* Find out whether we have now completed the directory */
-    if (!entry) {
+    if (offset >= cache_entries_count) {
       /* We have completed the directory - return this fact */
       dbug_hostfs("HostFS completed directory\n");
       state->Reg[4] = -1;
@@ -1556,9 +1636,7 @@ hostfs_read_dir(ARMul_State *state, bool with_info)
       state->Reg[4] = offset;
     }
 
-    closedir(d);
-
-    state->Reg[3] = count;	/* Number of objects returned at this point */
+    state->Reg[3] = count; /* Number of objects returned at this point */
   }
 }
 
