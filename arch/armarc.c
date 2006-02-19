@@ -106,7 +106,7 @@ static void DumpHandler(int sig) {
   fwrite(MEMC.PhysRam,1,/*MEMC.RAMSize*/ 512*1024,res);
 
   fclose(res);
-}; /* DumpHandler */
+} /* DumpHandler */
 
 /**
  * GetPhysAddress
@@ -1042,18 +1042,21 @@ PutVal(ARMul_State *state, ARMword address, ARMword data, int byteNotword,
     address = GetPhysAddress(address);
   } else {
     /* Physical ram */
-    if (MEMC.ROMMapFlag == 2)
+    if (MEMC.ROMMapFlag == 2) {
       MEMC.ROMMapFlag = 0;
+    }
     address -= MEMORY_0x2000000_RAM_PHYS;
   }
 
-  if (address >= MEMC.RAMSize)
+  if (address >= MEMC.RAMSize) {
     return;
+  }
 
   /* Do updating for VIDC emulation */
   /* See if it's in DMAble ram */
-  if (address<512*1024)
+  if (address<512*1024) {
     MEMC.UpdateFlags[address/UPDATEBLOCKSIZE]++;
+  }
 
   /* Handle byte stores */
   if (byteNotword) {
