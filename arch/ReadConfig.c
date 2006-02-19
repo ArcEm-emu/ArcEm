@@ -34,12 +34,12 @@ int ReadConfigFile(ARMul_State *state) {
   if (HomeVar==NULL) {
     fprintf(stderr,"Couldn't read $HOME and thus couldn't load config file\n");
     return 0;
-  };
+  }
 
   if (nameConf = malloc(strlen(HomeVar) + 32), nameConf == NULL) {
     fprintf(stderr,"Couldn't allocate memory for name of config file\n");
     return 0;
-  };
+  }
 
 #ifndef MACOSX
   sprintf(nameConf, "%s/.arcemrc", HomeVar);
@@ -51,7 +51,7 @@ int ReadConfigFile(ARMul_State *state) {
   if (fConf = fopen(nameConf, "r"), fConf==NULL) {
     fprintf(stderr,"Couldn't open config file\n");
     return 0;
-  };
+  }
   
   while (!feof(fConf)) {
     char *tptr;
@@ -59,11 +59,12 @@ int ReadConfigFile(ARMul_State *state) {
     if (fgets(tmpbuf, 1023, fConf)==NULL) {
       fprintf(stderr, "Failed to read config file header line\n");
       return 0;
-    };
+    }
 
     /* Remove CR,LF, spaces, etc from the end of line */
-    for(tptr=(tmpbuf+strlen(tmpbuf));(tptr>=tmpbuf) && (*tptr<33);tptr--)
+    for(tptr=(tmpbuf+strlen(tmpbuf));(tptr>=tmpbuf) && (*tptr<33);tptr--) {
       *tptr='\0';
+    }
 
     if (strcmp(tmpbuf,"MFM disc") == 0) {
       /* The format of these lines is 
@@ -78,13 +79,13 @@ int ReadConfigFile(ARMul_State *state) {
       if (fscanf(fConf,"%u %u %u %u %u\n",&drivenum,&numcyl,&numheads,&numsect,&reclength)!=5) {
         fprintf(stderr,"Failed to read MFM disc data line\n");
         return 0;
-      };
+      }
       
       if (drivenum>3) {
         fprintf(stderr,"Invalid drive number in MFM disc data line\n");
         return 0;
-      };
-      
+      }
+
       HDC.configshape[drivenum].NCyls        = numcyl;
       HDC.configshape[drivenum].NHeads       = numheads;
       HDC.configshape[drivenum].NSectors     = numsect;
@@ -93,8 +94,8 @@ int ReadConfigFile(ARMul_State *state) {
       fprintf(stderr,"Unknown configuration file key '%s'\n",tmpbuf);
       return 0;
     }
-  };
+  }
 
   return 1;
 
-}; /* ReadConfigFile */
+} /* ReadConfigFile */
