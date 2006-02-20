@@ -1205,7 +1205,8 @@ static void
 hostfs_file_8_create_dir(ARMul_State *state)
 {
   char ro_path[PATH_MAX];
-  char host_path[PATH_MAX];
+  char host_pathname[PATH_MAX];
+  risc_os_object_info object_info;
 
   assert(state);
 
@@ -1218,11 +1219,46 @@ hostfs_file_8_create_dir(ARMul_State *state)
               state->Reg[6]);
 
   get_string(state, state->Reg[1], ro_path, sizeof(ro_path));
-  riscos_path_to_host(ro_path, host_path);
   dbug_hostfs("\tPATH = %s\n", ro_path);
-  dbug_hostfs("\tPATH2 = %s\n", host_path);
 
-  if (mkdir(host_path, 0777)) {
+  /* Prevent being asked to create root directory */
+  if (STREQ(ro_path, "$")) {
+    return;
+  }
+
+  hostfs_path_process(ro_path, host_pathname, &object_info);
+
+  if (object_info.type != OBJECT_TYPE_NOT_FOUND) {
+    /* The object already exists (not necessarily as a directory).
+       Return with no error */
+    return;
+  }
+
+  /* Construct path to new directory */
+  {
+    const char *dot = strrchr(ro_path, '.');
+    const char *ro_leaf;
+    char *new_leaf;
+
+    /* A '.' must be present in the RISC OS path */
+    if (!dot) {
+      return;
+    }
+
+    /* Location of leaf in supplied RISC OS path */
+    ro_leaf = dot + 1;
+
+    strcat(host_pathname, "/");
+    new_leaf = host_pathname + strlen(host_pathname);
+
+    /* Place new leaf */
+    riscos_path_to_host(ro_leaf, new_leaf);
+  }
+
+  dbug_hostfs("\tHOST_PATHNAME = %s\n", host_pathname);
+
+  /* Create directory */
+  if (mkdir(host_pathname, 0777)) {
     /* An error occurred whilst creating the directory */
 
     switch (errno) {
@@ -1236,7 +1272,7 @@ hostfs_file_8_create_dir(ARMul_State *state)
 
     default:
       fprintf(stderr, "HostFS could not create directory \'%s\': %s\n",
-              host_path, strerror(errno));
+              host_pathname, strerror(errno));
       return;
     }
   }
