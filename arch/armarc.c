@@ -816,13 +816,15 @@ ARMword GetWord(ARMword address) {
 
   switch ((address >> 24) & 3) {
     case 3: /* 0x03000000 - 0x03FFFFFF - 16MB - IO Controllers (4MB) and ROM space 4 + 8MB */
-      if (address >= MEMORY_0x3400000_R_ROM_LOW) {
 
-        if ((MEMC.ROMMapFlag == 2)) {
-          MEMC.OldAddress1 = -1;
-          MEMC.OldPage1 = -1;
-          MEMC.ROMMapFlag = 0;
-        }
+      /* Check if we should cancel ROM mapped to low memory */
+      if (MEMC.ROMMapFlag == 2) {
+        MEMC.ROMMapFlag = 0;
+        MEMC.OldAddress1 = -1;
+        MEMC.OldPage1 = -1;
+      }
+
+      if (address >= MEMORY_0x3400000_R_ROM_LOW) {
 
         /* Both ROM areas wrap around */
         if (address >= MEMORY_0x3800000_R_ROM_HIGH) {
@@ -836,12 +838,6 @@ ARMword GetWord(ARMword address) {
             return 0;
           }
         }
-      }
-
-      if ((MEMC.ROMMapFlag == 2)) {
-        MEMC.ROMMapFlag = 0;
-        MEMC.OldAddress1 = -1;
-        MEMC.OldPage1 = -1;
       }
 
       return GetWord_IO(emu_state,address);
