@@ -6,8 +6,6 @@
 #include "../armopts.h"
 #include "../armdefs.h"
 
-#include "i2c.h"
-
 struct IOCStruct {
   unsigned char ControlReg;
   unsigned char ControlRegInputData;
@@ -37,6 +35,29 @@ struct IOCStruct {
 };
 
 extern struct IOCStruct ioc;
+
+
+#define IRQA_VFLYBK (1U << 3)   /* Start of display vertical flyback */
+#define IRQA_POR    (1U << 4)   /* Power-on reset has occurred */
+#define IRQA_TM0    (1U << 5)   /* Timer 0 event, latched */
+#define IRQA_TM1    (1U << 6)   /* Timer 1 event, latched */
+#define IRQA_FORCE  (1U << 7)   /* Software generated IRQ */
+
+#define IRQB_PFIQ   (1U << 8)   /* Podule FIQ request */
+#define IRQB_SIRQ   (1U << 9)   /* Sound buffer pointer used */
+#define IRQB_SINTR  (1U << 10)  /* Serial line interrupt */
+#define IRQB_HDIRQ  (1U << 11)  /* Hard disc interrupt */
+#define IRQB_FINTR  (1U << 12)  /* Floppy disc interrupt */
+#define IRQB_PIRQ   (1U << 13)  /* Podule IRQ request */
+#define IRQB_STX    (1U << 14)  /* Keyboard transmit register empty */
+#define IRQB_SRX    (1U << 15)  /* Keyboard receive register full */
+
+#define FIQ_FDDRQ   (1U << 0)   /* Floppy Disc Data Request */
+#define FIQ_FDIRQ   (1U << 1)   /* Floppy Disc Interrupt Request */
+#define FIQ_EFIQ    (1U << 2)   /* Econet Interrupt Request */
+#define FIQ_PFIQ    (1U << 6)   /* Podule FIQ request */
+#define FIQ_FORCE   (1U << 7)   /* Software generated FIQ */
+
 
 #define TIMERSCALE 10
 #define IOCTIMERSTEP 1

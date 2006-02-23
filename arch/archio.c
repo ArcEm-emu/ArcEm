@@ -92,10 +92,10 @@ CalcCanTimerInt(void)
 
   /* If its not causing an interrupt at the moment, and its interrupt is
      enabled */
-  ioc.Timer0CanInt = ((ioc.IRQStatus & 0x20) == 0) &&
-                     ((ioc.IRQMask & 0x20) != 0);
-  ioc.Timer1CanInt = ((ioc.IRQStatus & 0x40) == 0) &&
-                     ((ioc.IRQMask & 0x40) != 0);
+  ioc.Timer0CanInt = ((ioc.IRQStatus & IRQA_TM0) == 0) &&
+                     ((ioc.IRQMask & IRQA_TM0) != 0);
+  ioc.Timer1CanInt = ((ioc.IRQStatus & IRQA_TM1) == 0) &&
+                     ((ioc.IRQMask & IRQA_TM1) != 0);
 
   /* If any have just been enabled update the triggers */
   if (((!oldTimer0CanInt) && (ioc.Timer0CanInt)) ||
@@ -138,7 +138,7 @@ UpdateTimerRegisters(void)
   if (tmpL == 0) tmpL = 1;
   if (ioc.TimerCount[0] <= scaledTimeSlip) {
     KBD.TimerIntHasHappened++;
-    ioc.IRQStatus |= 0x20;
+    ioc.IRQStatus |= IRQA_TM0;
     IO_UpdateNirq();
     ioc.Timer0CanInt = 0; /* Because it's just caused one which hasn't cleared yet */
   }
@@ -154,7 +154,7 @@ UpdateTimerRegisters(void)
   tmpL = ioc.TimerInputLatch[1];
   if (tmpL == 0) tmpL = 1;
   if (ioc.TimerCount[1] <= scaledTimeSlip) {
-    ioc.IRQStatus |= 0x40;
+    ioc.IRQStatus |= IRQA_TM1;
     IO_UpdateNirq();
     ioc.Timer1CanInt = 0; /* Because its just caused one which hasn't cleared yet */
   }
@@ -228,7 +228,7 @@ GetWord_IOCReg(ARMul_State *state, int Register)
 
     case 1: /* Serial Rx data */
       Result = ioc.SerialRxData;
-      ioc.IRQStatus &= 0x7fff; /* Clear receive reg full */
+      ioc.IRQStatus &= ~IRQB_SRX; /* Clear receive reg full */
       dbug_ioc("IOCRead: SerialRxData=0x%x\n", Result);
       IO_UpdateNirq();
       break;
@@ -322,7 +322,7 @@ PutVal_IOCReg(ARMul_State *state, int Register, ARMword data, int bNw)
 
     case 1: /* Serial Tx Data */
       ioc.SerialTxData = data; /* Should tell the keyboard about this */
-      ioc.IRQStatus &= 0xbfff; /* Clear KART Tx empty */
+      ioc.IRQStatus &= ~IRQB_STX; /* Clear KART Tx empty */
       dbug_ioc("IOC Write: Serial Tx Reg Val=0x%x\n", data);
       IO_UpdateNirq();
       break;
@@ -624,11 +624,11 @@ PutValIO(ARMul_State *state, ARMword address, ARMword data, int byteNotword)
 int
 IOC_ReadKbdTx(ARMul_State *state)
 {
-  if ((ioc.IRQStatus & 0x4000) == 0) {
+  if ((ioc.IRQStatus & IRQB_STX) == 0) {
     /*fprintf(stderr, "ArmArc_ReadKbdTx: Value=0x%x\n", ioc.SerialTxData); */
     /* There is a byte present (Kart TX not empty) */
     /* Mark as empty and then return the value */
-    ioc.IRQStatus |= 0x4000;
+    ioc.IRQStatus |= IRQB_STX;
     IO_UpdateNirq();
     return ioc.SerialTxData;
   } else return -1;
@@ -641,14 +641,14 @@ int
 IOC_WriteKbdRx(ARMul_State *state, unsigned char value)
 {
   /*fprintf(stderr, "ArmArc_WriteKbdRx: value=0x%x\n", value); */
-  if (ioc.IRQStatus & 0x8000) {
+  if (ioc.IRQStatus & IRQB_SRX) {
     /* Still full */
     return -1;
   } else {
     /* We write only if it was empty */
     ioc.SerialRxData = value;
 
-    ioc.IRQStatus |= 0x8000; /* Now full */
+    ioc.IRQStatus |= IRQB_SRX; /* Now full */
     IO_UpdateNirq();
   }
 

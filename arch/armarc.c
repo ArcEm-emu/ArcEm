@@ -970,7 +970,7 @@ PutVal(ARMul_State *state, ARMword address, ARMword data, int byteNotword,
         MEMC.Sstart = RegVal;
         /* The data sheet does not define what happens if you write start before end. */
         MEMC.NextSoundBufferValid = 1;
-        ioc.IRQStatus &= ~0x200; /* Take sound interrupt off */
+        ioc.IRQStatus &= ~IRQB_SIRQ; /* Take sound interrupt off */
         IO_UpdateNirq();
         dbug_memc("Write to MEMC Sstart register\n");
         break;
@@ -993,7 +993,7 @@ PutVal(ARMul_State *state, ARMword address, ARMword data, int byteNotword,
           MEMC.SendN = swap;
           MEMC.SstartC = MEMC.Sptr;
           MEMC.NextSoundBufferValid = 0;
-          ioc.IRQStatus |= 0x200; /* Take sound interrupt on */
+          ioc.IRQStatus |= IRQB_SIRQ; /* Take sound interrupt on */
           IO_UpdateNirq();
         }
         break;
@@ -1217,7 +1217,7 @@ SoundDMAFetch(SoundData *buffer)
       MEMC.SendC = MEMC.SendN;
       MEMC.SendN = swap;
 
-      ioc.IRQStatus |= 0x200; /* Take sound interrupt on */
+      ioc.IRQStatus |= IRQB_SIRQ; /* Take sound interrupt on */
       IO_UpdateNirq();
 
       MEMC.NextSoundBufferValid = 0;

@@ -186,9 +186,9 @@ static void UpdateInterrupt(ARMul_State *state) {
   dbug_ints("HDC-UpdateInterrupt mask=0x%x StatusReg=0x%x &=0x%x DREQ=%d\n",
                  mask,HDC.StatusReg,HDC.StatusReg & mask,HDC.DREQ);
   if ((HDC.StatusReg & mask) || HDC.DREQ) {
-    ioc.IRQStatus|=(1<<11);
+    ioc.IRQStatus |= IRQB_HDIRQ;
   } else {
-    ioc.IRQStatus&=~(1<<11);
+    ioc.IRQStatus &= ~IRQB_HDIRQ;
   }
   IO_UpdateNirq();
 } /* UpdateInterrupt */
