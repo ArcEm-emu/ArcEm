@@ -41,9 +41,12 @@ void arcem_exit(char* msg);
 #ifdef __riscos__
 #include "kernel.h"
 #include "swis.h"
+#endif
 
-extern int *ROScreenMemory;
-extern int ROScreenExtent;
+#ifdef DIRECT_DISPLAY
+
+extern int *DirectScreenMemory;
+extern int DirectScreenExtent;
 
 extern int MonitorBpp;
 
@@ -385,7 +388,7 @@ ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
   int PresPage;
   unsigned int i;
   unsigned extnrom_size = 0;
-#if defined(SYSTEM_X) || defined(MACOSX) || defined(SYSTEM_win)
+#if defined(EXTNROM_SUPPORT)
   unsigned extnrom_entry_count;
 #endif
 
@@ -454,7 +457,11 @@ ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
     arcem_exit("Couldn't open ROM file");
   }
 #else
+#ifdef SYSTEM_gp2x
+  if (ROMFile = fopen("/mnt/sd/arcem/rom", "rb"), ROMFile == NULL) {
+#else
   if (ROMFile = fopen(hArcemConfig.sRomImageName, "rb"), ROMFile == NULL) {
+#endif
     fprintf(stderr, "Couldn't open ROM file\n");
     exit(EXIT_FAILURE);
   }
@@ -1072,6 +1079,7 @@ PutVal(ARMul_State *state, ARMword address, ARMword data, int byteNotword,
   }
 
 #ifdef DIRECT_DISPLAY
+#ifdef __riscos__
   if (MEMC.Vstart!=Vstartold || MEMC.Vend!=Vendold)
   {
     int size=_swi(OS_ReadDynamicArea, _IN(0)|_RETURN(1), 2);
@@ -1107,48 +1115,59 @@ PutVal(ARMul_State *state, ARMword address, ARMword data, int byteNotword,
 
       _swi(OS_ReadVduVariables, _INR(0,1), &block, &block);
 
-      ROScreenMemory = (int *)block[0];
-      ROScreenExtent = block[1];
+      DirectScreenMemory = (int *)block[0];
+      DirectScreenExtent = block[1];
     }
 
     Vstartold=MEMC.Vstart;
     Vendold=MEMC.Vend;
   }
+#endif
 
   if (MEMC.Vinit!=Vinitold)
   {
-    char block[5];
-    unsigned int pointer=(MEMC.Vinit-MEMC.Vstart)*16;
+    unsigned int offset=(MEMC.Vinit-MEMC.Vstart)*16;
 
     switch (MonitorBpp)
     {
       case 0:
-        pointer/=8;
+        offset/=8;
         break;
       case 1:
-        pointer/=4;
+        offset/=4;
         break;
       case 2:
-        pointer/=2;
+        offset/=2;
         break;
     }
 
-    block[0]=(1<<1)+(1<<0);
-    block[1]=(pointer & 0x000000ff);
-    block[2]=(pointer & 0x0000ff00) >> 8;
-    block[3]=(pointer & 0x00ff0000) >> 16;
-    block[4]=(pointer & 0xff000000) >> 24;
+#ifdef __riscos__
+    {
+        char block[5];
+        block[0]=(1<<1)+(1<<0);
+        block[1]=(offset & 0x000000ff);
+        block[2]=(offset & 0x0000ff00) >> 8;
+        block[3]=(offset & 0x00ff0000) >> 16;
+        block[4]=(offset & 0xff000000) >> 24;
 
-    _swi(OS_Word, _INR(0,1), 22, &block);
+        _swi(OS_Word, _INR(0,1), 22, &block);
+    }
+#endif
+#ifdef SYSTEM_gp2x
+    {
+        extern void gp2xScreenOffset(int);
+        gp2xScreenOffset(offset);
+    }
+#endif
 
     Vinitold=MEMC.Vinit;
   }
 
-  if (address < ROScreenExtent) {
+  if (address < DirectScreenExtent) {
 //    extern void ScreenWrite(int *address, ARMword data);
 
-//    ScreenWrite(ROScreenMemory + address / 4, data);
-    ROScreenMemory[address/4] = data;
+//    ScreenWrite(DirectScreenMemory + address / 4, data);
+    DirectScreenMemory[address/4] = data;
   }
 #endif
 

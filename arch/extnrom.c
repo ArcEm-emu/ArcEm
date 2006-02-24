@@ -13,7 +13,7 @@
 */
 
 #if defined(EXTNROM_SUPPORT)
-#if defined(SYSTEM_X) || defined(MACOSX) || defined(SYSTEM_win)
+#if defined(SYSTEM_X) || defined(MACOSX) || defined(SYSTEM_win) || defined(SYSTEM_gp2x)
 
 #include <assert.h>
 #include <errno.h>

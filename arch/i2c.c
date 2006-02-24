@@ -145,7 +145,11 @@ static void SaveCMOS(ARMul_State *state) {
       OutFile = fopen("hexcmos","w");
   }
 #else
+#ifdef SYSTEM_gp2x
+  OutFile = fopen("/mnt/sd/arcem/hexcmos","w");
+#else
   OutFile = fopen("hexcmos","w");
+#endif
 #endif
   if (OutFile == NULL) {
     fprintf(stderr,"SaveCMOS: Could not open (hexcmos.updated) CMOS settings file\n");
@@ -403,7 +407,11 @@ static void SetUpCMOS(ARMul_State *state) {
       InFile = fopen("hexcmos", "r");
   }
 #else
+#ifdef SYSTEM_gp2x
+  InFile = fopen("/mnt/sd/arcem/hexcmos", "r");
+#else
   InFile = fopen("hexcmos", "r");
+#endif
 #endif
 #endif
   if (InFile == NULL) {

@@ -1364,7 +1364,7 @@ ARMul_Emulate26(void)
 {
   ARMword instr,           /* The current instruction */
           pc = 0;          /* The address of the current instruction */
-  ARMword decoded, loaded; /* Instruction pipeline */
+  ARMword decoded=0, loaded=0; /* Instruction pipeline */
   /* Function of decoded instruction functions */
   ARMEmuFunc instrfunc, decfunc = NULL, loadedfunc = NULL;
   static ARMEmuFunc dummyfunc = ARMul_Emulate_DecodeInstr;

@@ -47,7 +47,7 @@ LDFLAGS=
 # Should stay as LITTLEEND when used in ArcEm
 ENDIAN=LITTLEEND
 
-WARN = -Wall -Wno-return-type -Wno-unknown-pragmas -Wshadow -Wundef \
+WARN = -Wall -Wno-return-type -Wno-unknown-pragmas -Wshadow \
    -Wpointer-arith -Wcast-align -Wstrict-prototypes \
    -Wmissing-prototypes -Wmissing-declarations -Wnested-externs \
    -Wcast-qual -Wwrite-strings
@@ -92,6 +92,17 @@ INCS = armdefs.h armemu.h armfpe.h armopts.h armos.h \
   arch/hdc63463.h arch/keyboard.h arch/ArcemConfig.h
 
 TARGET=arcem
+
+ifeq (${SYSTEM},gp2x)
+CC=arm-linux-gcc
+LD=$(CC)
+DIRECT_DISPLAY=yes
+SYSROOT = D:/gp2x/devkitGP2X/sysroot
+CFLAGS += -DSYSTEM_gp2x -Igp2x -I$(SYSROOT)/usr/include
+LIBS += -L$(SYSROOT)/usr/lib -static
+LD=$(CC)
+TARGET=arcem.gpe
+endif
 
 ifeq (${SYSTEM},riscos)
 CFLAGS += -DSYSTEM_riscos -Iriscos-single
@@ -144,7 +155,7 @@ endif
 
 
 TARED = *.c *.s *.h README COPYING Makefile \
-        X riscos riscos-single arch
+        X riscos riscos-single gp2x arch
 
 MODEL = arch/armarc
 
