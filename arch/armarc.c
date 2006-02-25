@@ -444,11 +444,6 @@ ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
   dbug(" Loading ROM....\n ");
 
 
-#ifdef __riscos__
-  if (ROMFile = fopen("<ArcEm$Dir>.^." hArcemConfig.sRomImageName, "rb"), ROMFile == NULL) {
-    exit(2);
-  }
-#else
 #ifdef MACOSX
   {
     chdir(arcemDir);
@@ -465,7 +460,6 @@ ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
     fprintf(stderr, "Couldn't open ROM file\n");
     exit(EXIT_FAILURE);
   }
-#endif
 #endif
 
   /* Find the rom file size */

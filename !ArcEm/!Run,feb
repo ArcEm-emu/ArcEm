@@ -5,12 +5,12 @@
 
 If "<UnixEnv$HOME>" = "" Then Error !UnixHome application has not been seen
 
-WimpSlot -min 1100k -max 1100k
+WimpSlot -min 1500k -max 1500k
 
 Set ArcEm$Dir <Obey$Dir>
 
 RMLoad <ArcEm$Dir>.ArcEmKey
-<ArcEm$Dir>.arcem 2>null: >null:
+<ArcEm$Dir>.arcem --rom <ArcEm$Dir>.ROM 2>null: >null:
 
 If "<Sys$ReturnCode>" = "2" Then Error Unable to open ROM file for ArcEm
 If "<Sys$ReturnCode>" = "3" Then Error ArcEm was unable to claim enough memory.  Please try and make more memory available.  ArcEm requires around 15MB free.

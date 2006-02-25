@@ -52,12 +52,12 @@ static int MonitorHeight;
 int MonitorBpp;
 
 #ifdef DIRECT_DISPLAY
-int *ROScreenMemory;
-int ROScreenExtent;
+int *DirectScreenMemory;
+int DirectScreenExtent;
 #endif
 
 
-const char *__dynamic_da_name = "ArcEm Heap";
+const char * const __dynamic_da_name = "ArcEm Heap";
 
 
 /*-----------------------------------------------------------------------------*/
@@ -978,8 +978,8 @@ static void SelectROScreenMode(int x, int y, int bpp)
 
   _swi(OS_ReadVduVariables, _INR(0,1), &block, &block);
 
-  ROScreenMemory = (int *)block[0];
-  ROScreenExtent = block[1];
+  DirectScreenMemory = (int *)block[0];
+  DirectScreenExtent = block[1];
 #endif
 }
 

@@ -75,7 +75,7 @@ OBJS = armcopro.o armemu.o arminit.o \
 	armsupp.o main.o dagstandalone.o armos.o \
 		armrdi.o $(SYSTEM)/DispKbd.o arch/i2c.o arch/archio.o \
     arch/fdc1772.o $(SYSTEM)/ControlPane.o arch/hdc63463.o arch/ReadConfig.o \
-    arch/keyboard.o arch/extnrom.o $(SYSTEM)/filecalls.o arch/DispKbdShared.o \
+    arch/keyboard.o $(SYSTEM)/filecalls.o arch/DispKbdShared.o \
     arch/ArcemConfig.o
 
 SRCS = armcopro.c armemu.c arminit.c arch/armarc.c \
@@ -105,11 +105,13 @@ TARGET=arcem.gpe
 endif
 
 ifeq (${SYSTEM},riscos)
+EXTNROM_SUPPORT=notyet
 CFLAGS += -DSYSTEM_riscos -Iriscos-single
 TARGET=!ArcEm/arcem
 endif
 
 ifeq (${SYSTEM},riscos-single)
+EXTNROM_SUPPORT=notyet
 DIRECT_DISPLAY=yes
 CFLAGS += -I@ -DSYSTEM_riscos_single -Iriscos-single -mpoke-function-name
 OBJS += arm-support.o rhs.o
@@ -147,6 +149,7 @@ endif
 
 ifeq (${EXTNROM_SUPPORT},yes)
 CFLAGS += -DEXTNROM_SUPPORT
+OBJS += arch/extnrom.o
 endif
 
 ifeq (${HOST_BIGENDIAN},yes)

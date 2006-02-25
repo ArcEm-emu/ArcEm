@@ -13,7 +13,6 @@
 */
 
 #if defined(EXTNROM_SUPPORT)
-#if defined(SYSTEM_X) || defined(MACOSX) || defined(SYSTEM_win) || defined(SYSTEM_gp2x)
 
 #include <assert.h>
 #include <errno.h>
@@ -364,5 +363,4 @@ extnrom_load(unsigned size, unsigned entry_count, void *address)
   }*/
 }
 
-#endif /* defined(SYSTEM_X) || defined(MACOSX) || defined(SYSTEM_win) */
 #endif /* defined(EXTNROM_SUPPORT) */
