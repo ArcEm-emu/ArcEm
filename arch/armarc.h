@@ -7,7 +7,6 @@
 #include "DispKbd.h"
 #include "archio.h"
 #include "fdc1772.h"
-#include "hdc63463.h"
 #ifdef SOUND_SUPPORT
 #include "sound.h"
 #endif
@@ -102,8 +101,6 @@ extern struct MEMCStruct memc;
 
 typedef struct {
   struct FDCStruct FDCData;
-
-  struct HDCStruct HDCData;
 
   DisplayInfo Display;
 

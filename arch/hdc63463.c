@@ -9,17 +9,74 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
-//#include <unistd.h>
 
-#include "../armopts.h"
 #include "../armdefs.h"
 
-#include "archio.h"   
-#include "armarc.h"   
-#include "ControlPane.h"
 #include "dbugsys.h"
 #include "hdc63463.h"
-#include "fdc1772.h"
+#include "ArcemConfig.h"
+
+struct HDCReadDataStr {
+  unsigned char US,PHA,LCAH,LCAL,LHA,LSA,SCNTH,SCNTL;
+  unsigned int BuffersLeft;
+  unsigned int NextDestBuffer;
+};
+
+struct HDCWriteDataStr {
+  unsigned char US,PHA,SCNTH,SCNTL,LSA,LHA,LCAL,LCAH;
+  unsigned int BuffersLeft;
+  unsigned int CurrentSourceBuffer;
+};
+
+struct HDCWriteFormatStr {
+  unsigned char US,PHA,SCNTH,SCNTL;
+  unsigned int SectorsLeft;
+  unsigned int CurrentSourceBuffer;
+};
+
+union HDCCommandDataStr {
+  struct HDCReadDataStr ReadData;
+  struct HDCWriteFormatStr WriteFormat;
+  struct HDCWriteDataStr WriteData;
+};
+
+struct HDCStruct {
+  FILE *HardFile[4];
+  int LastCommand; /* -1=idle, 0xfff=command execution complete, other=command busy */
+  unsigned char StatusReg;
+  unsigned int Track[4];
+  unsigned int Sector;
+  int DREQ;
+  int CurrentlyOpenDataBuffer;
+  unsigned int DBufPtrs[2];
+  unsigned char DBufs[2][256];
+  unsigned int PBPtr;
+  unsigned char ParamBlock[16];
+  int HaveGotSpecify;    /* True once specify received */
+  unsigned char SSB; /* Seems to hold error reports */
+
+  int DelayCount;
+  int DelayLatch;
+
+  union HDCCommandDataStr CommandData;
+
+  /* Stuff set in specify command */
+  unsigned char dmaNpio;
+  unsigned char CEDint; /* interrupt masks - >> 0 << when interrupt enabled */
+  unsigned char SEDint;
+  unsigned char DERint;
+  unsigned char CUL; /* Connected unit list */
+  struct HDCshape specshape;
+
+  /* Actual size of the drive as set in the config file */
+//  struct HDCshape configshape[4];
+};
+
+/* The global Hard drive state structure */
+//struct HDCStruct HDCData;
+struct HDCStruct HDC;
+
+
 
 #define BIT_BUSY (1<<7)
 #define BIT_COMPARAMREJECT (1<<6)
@@ -368,27 +425,31 @@ static int SetFilePtr(ARMul_State *state,int drive,
   unsigned long ptr;
 
   /* Validate destination - and produce errors as appropriate */
-  if (Cylinder >= HDC.configshape[drive].NCyls) {
+  if (Cylinder >= hArcemConfig.aST506DiskShapes[drive].NCyls) {
     Cause_Error(state,ERR_NSC);
     return 0;
   }
 
-  if (head >= HDC.configshape[drive].NHeads) {
+  if (head >= hArcemConfig.aST506DiskShapes[drive].NHeads) {
     Cause_Error(state,ERR_IPH); /* I think this error is actually supposed to be used against specified value not physical */
     return 0;
   }
 
-  if (Sector >= HDC.configshape[drive].NSectors) {
+  if (Sector >= hArcemConfig.aST506DiskShapes[drive].NSectors) {
     Cause_Error(state,ERR_TOV);  /* ID not found in time */
     return 0;
   }
 
-  ptr=(((Cylinder*HDC.configshape[drive].NHeads)+head)*HDC.configshape[drive].NSectors + Sector)*HDC.configshape[drive].RecordLength;
+  ptr=(((Cylinder * hArcemConfig.aST506DiskShapes[drive].NHeads)+head) * 
+       hArcemConfig.aST506DiskShapes[drive].NSectors + Sector) * 
+       hArcemConfig.aST506DiskShapes[drive].RecordLength;
 
   dbug("HDC:SetFilePtr; drive=%d head=%d cylinder=%d sector=%d ptr=0x%lx\n",
           drive,head,Cylinder,Sector,ptr);
   dbug("                NHeads=%d NSectors=%d RecordLength=%d\n",
-                 HDC.configshape[drive].NHeads,HDC.configshape[drive].NSectors,HDC.configshape[drive].RecordLength);
+                 hArcemConfig.aST506DiskShapes[drive].NHeads,
+                 hArcemConfig.aST506DiskShapes[drive].NSectors,
+                 hArcemConfig.aST506DiskShapes[drive].RecordLength);
 
   if (HDC.HardFile[drive]==NULL) {
 #ifdef DEBUG_DATA
@@ -618,11 +679,11 @@ static void SeekCommand(ARMul_State *state) {
     return;
   }
 
-  if (DesiredCylinder>=HDC.configshape[US].NCyls) {
+  if (DesiredCylinder >= hArcemConfig.aST506DiskShapes[US].NCyls) {
     /* Ook - bad cylinder address */
         fprintf(stderr, "seek: cylinder address greater than "
             "or equal to configured, %u >= %u\n", DesiredCylinder,
-            HDC.configshape[US].NCyls);
+            hArcemConfig.aST506DiskShapes[US].NCyls);
     Cause_Error(state,ERR_NSC); /* Seek screwed up */
     ReturnParams(state,4,0,HDC.SSB,US,0);
     return;
@@ -789,8 +850,8 @@ static void ReadDataCommand(ARMul_State *state) {
   }
 
   /* Number of buffers to read */
-  HDC.CommandData.ReadData.BuffersLeft=((SCNTL+(SCNTH<<8))*HDC.configshape[US].RecordLength)/256;
-  HDC.CommandData.ReadData.NextDestBuffer=0;
+  HDC.CommandData.ReadData.BuffersLeft    = ((SCNTL+(SCNTH<<8)) * hArcemConfig.aST506DiskShapes[US].RecordLength) / 256;
+  HDC.CommandData.ReadData.NextDestBuffer = 0;
   HDC.CurrentlyOpenDataBuffer=0;
 
   HDC.DelayCount=1;
@@ -851,7 +912,7 @@ static void WriteDataCommand(ARMul_State *state) {
   }
 
   /* Number of buffers to Write */
-  HDC.CommandData.WriteData.BuffersLeft=((SCNTL+(SCNTH<<8))*HDC.configshape[US].RecordLength)/256;
+  HDC.CommandData.WriteData.BuffersLeft=((SCNTL+(SCNTH<<8))* hArcemConfig.aST506DiskShapes[US].RecordLength)/256;
   HDC.CommandData.WriteData.CurrentSourceBuffer=0;
   HDC.CurrentlyOpenDataBuffer=0;
 
@@ -957,7 +1018,7 @@ static void CompareDataCommand(ARMul_State *state) {
   }
 
   /* Number of buffers to compare */
-  HDC.CommandData.WriteData.BuffersLeft=((SCNTL+(SCNTH<<8))*HDC.configshape[US].RecordLength)/256;
+  HDC.CommandData.WriteData.BuffersLeft=((SCNTL+(SCNTH<<8)) * hArcemConfig.aST506DiskShapes[US].RecordLength)/256;
   HDC.CommandData.WriteData.CurrentSourceBuffer=0;
   HDC.CurrentlyOpenDataBuffer=0;
 
@@ -1132,7 +1193,7 @@ static void CheckDataCommand(ARMul_State *state) {
   }
 
   /* Number of buffers to read */
-  HDC.CommandData.ReadData.BuffersLeft=((SCNTL+(SCNTH<<8))*HDC.configshape[US].RecordLength)/256;
+  HDC.CommandData.ReadData.BuffersLeft=((SCNTL+(SCNTH<<8)) * hArcemConfig.aST506DiskShapes[US].RecordLength)/256;
   HDC.CommandData.ReadData.NextDestBuffer=0;
 
   HDC.DelayCount=1;
@@ -1226,7 +1287,8 @@ static void WriteFormat_DoNextBufferFull(ARMul_State *state) {
     physical and logical cylinders to mismatch - if we are then we are in trouble! */
 
     /* Write the block to the hard disc image file */
-    fwrite(fillbuffer,1,HDC.configshape[HDC.CommandData.WriteFormat.US].RecordLength,HDC.HardFile[HDC.CommandData.WriteFormat.US]);
+    fwrite(fillbuffer, 1, hArcemConfig.aST506DiskShapes[HDC.CommandData.WriteFormat.US].RecordLength,
+           HDC.HardFile[HDC.CommandData.WriteFormat.US]);
     fflush(HDC.HardFile[HDC.CommandData.WriteFormat.US]);
 
     ptr+=4; /* 4 bytes of values taken out of the buffer */
@@ -1506,6 +1568,10 @@ ARMword HDC_Read(ARMul_State *state, int offset) {
 void HDC_Init(ARMul_State *state) {
   int currentdrive;
   char FileName[32];
+  
+  /* initialise the struct as if it had been calloc'd */
+  memset(&HDC, 0, sizeof(struct HDCStruct));
+  
   
   HDC.StatusReg=0;
   HDC.Sector=0;

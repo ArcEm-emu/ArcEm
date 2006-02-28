@@ -11,6 +11,7 @@
 #include "../armdefs.h"
 #include "../armopts.h"
 
+#include "ArcemConfig.h"
 #include "ReadConfig.h"
 #include "armarc.h"
 #include "hdc63463.h"
@@ -86,10 +87,10 @@ int ReadConfigFile(ARMul_State *state) {
         return 0;
       }
 
-      HDC.configshape[drivenum].NCyls        = numcyl;
-      HDC.configshape[drivenum].NHeads       = numheads;
-      HDC.configshape[drivenum].NSectors     = numsect;
-      HDC.configshape[drivenum].RecordLength = reclength;
+      hArcemConfig.aST506DiskShapes[drivenum].NCyls        = numcyl;
+      hArcemConfig.aST506DiskShapes[drivenum].NHeads       = numheads;
+      hArcemConfig.aST506DiskShapes[drivenum].NSectors     = numsect;
+      hArcemConfig.aST506DiskShapes[drivenum].RecordLength = reclength;
     } else {
       fprintf(stderr,"Unknown configuration file key '%s'\n",tmpbuf);
       return 0;

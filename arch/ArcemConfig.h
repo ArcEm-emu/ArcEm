@@ -34,6 +34,7 @@
       are implimented add code for parsing and setting values
       there too.
 */
+#include "arch/hdc63463.h"
 
 typedef enum ArcemConfig_MemSize_e {
   MemSize_256K,
@@ -69,8 +70,9 @@ typedef struct ArcemConfig_s {
   char *sHostFSDirectory;
 #endif /* HOSTFS_SUPPORT */
 
-  // TODO
-  // MFM Disc details (make sure the ReadConfig stuff fills in these details)
+  /* Shapes of the MFM ST506 drives as set in the config file */
+  struct HDCshape aST506DiskShapes[4];
+
 } ArcemConfig;
 
 extern ArcemConfig hArcemConfig;

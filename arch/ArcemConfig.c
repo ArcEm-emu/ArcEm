@@ -69,6 +69,10 @@ void ArcemConfig_SetupDefaults(void)
   }
 
 #endif /* HOSTFS_SUPPORT */
+
+  /* Default for ST506 drive details is all NULL/zeros */
+  memset(hArcemConfig.aST506DiskShapes, 0, sizeof(struct HDCshape) * 4);
+
 }
 
 /**
