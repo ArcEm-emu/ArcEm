@@ -17,6 +17,9 @@
 
 #include "armdefs.h"
 
+#include "arch/ArcemConfig.h"
+#include "arch/cp15.h"
+
 /***************************************************************************\
 *                            Dummy Co-processors                            *
 \***************************************************************************/
@@ -48,6 +51,14 @@ unsigned ARMul_CoProInit(ARMul_State *state) {
                       LDC routine, STC routine, MRC routine, MCR routine,
                       CDP routine, Read Reg routine, Write Reg routine);
    */
+
+    /* Add in the ARM3 processor CPU control coprocessor if the user
+       wants it */
+    if(Processor_ARM3 == hArcemConfig.eProcessor) {
+      ARMul_CoProAttach(state, 15, ARM3_Initialise, NULL,
+                        NULL, NULL, ARM3_MRCs, ARM3_MCRs,
+                        NULL, ARM3_RegisterRead, ARM3_RegisterWrite);
+    }
 
     /* No handlers below here */
 
