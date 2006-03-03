@@ -167,6 +167,14 @@ SOURCE=..\arch\ControlPane.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\arch\cp15.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\arch\cp15.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\arch\DispKbd.h
 # End Source File
 # Begin Source File
