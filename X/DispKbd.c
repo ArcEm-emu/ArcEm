@@ -33,18 +33,18 @@
 # include <X11/Sunkeysym.h>
 #endif
 
-#include "../armdefs.h"
-#include "armarc.h"
+#include "armdefs.h"
+#include "arch/armarc.h"
 #include "arch/keyboard.h"
-#include "DispKbd.h"
-#include "archio.h"
-#include "hdc63463.h"
-#include "platform.h"
+#include "arch/DispKbd.h"
+#include "arch/archio.h"
+#include "arch/hdc63463.h"
 #ifdef SOUND_SUPPORT
-#include "sound.h"
+#include "arch/sound.h"
 #endif
 
 #include "ControlPane.h"
+#include "platform.h"
 
 /* A sensible set of defaults for the start window, the OS
    will call the VIDC and push this smaller or bigger later. */
@@ -321,7 +321,7 @@ static unsigned AutoKey(ARMul_State *state) {
   KBD.TimerIntHasHappened+=2;
 
   return 0;
-};
+}
 #endif
 
 
@@ -381,7 +381,7 @@ static void RefreshMouse(ARMul_State *state) {
     }
 
   }; /* Shape enabled */
-}; /* RefreshMouse */
+} /* RefreshMouse */
 
 /*----------------------------------------------------------------------------*/
 static void RefreshDisplay_PseudoColor_1bpp(ARMul_State *state, int DisplayHeight, int DisplayWidth) {
@@ -611,8 +611,8 @@ static void RefreshDisplay(ARMul_State *state) {
   int DisplayWidth  = (VIDC.Horiz_DisplayEnd - VIDC.Horiz_DisplayStart) * 2;
 
   DC.AutoRefresh  = AUTOREFRESHPOLL;
-  ioc.IRQStatus  |= 8; /* VSync */
-  ioc.IRQStatus  |= 0x20; /* Sound - just an experiment */
+  ioc.IRQStatus  |= IRQA_VFLYBK; /* VSync */
+  ioc.IRQStatus  |= IRQB_SIRQ; /* Sound - just an experiment */
   IO_UpdateNirq();
 
   RefreshMouse(state);
@@ -716,8 +716,6 @@ static void set_video_4bpp_colourmap(void)
     }
 
     DC.video_palette_dirty = FALSE;
-
-    return;
 }
 
 /* ------------------------------------------------------------------ */
@@ -751,8 +749,6 @@ static void set_video_8bpp_colourmap(void)
     }
 
     DC.video_palette_dirty = FALSE;
-
-    return;
 }
 
 /* ------------------------------------------------------------------ */
@@ -776,8 +772,6 @@ static void set_border_colourmap(void)
     XStoreColor(HD.disp, HD.ArcsColormap, &col);
 
     DC.border_palette_dirty = FALSE;
-
-    return;
 }
 
 /* ------------------------------------------------------------------ */
@@ -804,8 +798,6 @@ static void set_cursor_colourmap(void)
     }
 
     DC.cursor_palette_dirty = FALSE;
-
-    return;
 }
 
 /* ------------------------------------------------------------------ */
@@ -833,8 +825,6 @@ static void set_video_4bpp_pixelmap(void)
     }
 
     DC.video_palette_dirty = FALSE;
-
-    return;
 }
 
 /* ------------------------------------------------------------------ */
@@ -868,8 +858,6 @@ static void set_video_8bpp_pixelmap(void)
     }
 
     DC.video_palette_dirty = FALSE;
-
-    return;
 }
 
 /* ------------------------------------------------------------------ */
@@ -896,8 +884,6 @@ static void set_border_pixelmap(void)
     XClearWindow(HD.disp, HD.BackingWindow);
 
     DC.border_palette_dirty = FALSE;
-
-    return;
 }
 
 /* ------------------------------------------------------------------ */
@@ -926,8 +912,6 @@ static void set_cursor_pixelmap(void)
     }
 
     DC.cursor_palette_dirty = FALSE;
-
-    return;
 }
 
 /*----------------------------------------------------------------------------*/
@@ -1244,7 +1228,7 @@ void DisplayKbd_Init(ARMul_State *state) {
 
   ARMul_ScheduleEvent(&enodes[xpollenode], POLLGAP, DisplayKbd_XPoll);
   xpollenode^=1;
-}; /* DisplayKbd_Init */
+} /* DisplayKbd_Init */
 
 
 /*----------------------------------------------------------------------------*/
@@ -1363,7 +1347,7 @@ static void UpdateCursorPos(ARMul_State *state) {
   fprintf(stderr,"UpdateCursorPos: Height=%d VertPos=%d HorizPos=%d\n",Height,VertPos,HorizPos);
 #endif
   XMoveResizeWindow(HD.disp, HD.CursorPane, HorizPos, VertPos, 32, Height);
-}; /* UpdateCursorPos */
+} /* UpdateCursorPos */
 
 
 /*----------------------------------------------------------------------------*/
@@ -1482,7 +1466,7 @@ static void MainPane_Event(ARMul_State *state,XEvent *e) {
       fprintf(stderr, "unwanted MainPane_Event type=%d\n", e->type);
       break;
   };
-}; /* MainPane_Event */
+} /* MainPane_Event */
 
 
 /*----------------------------------------------------------------------------*/
@@ -1522,7 +1506,7 @@ static void CursorPane_Event(ARMul_State *state,XEvent *e) {
         fprintf(stderr, "unwanted CursorPane_Event type=%d\n", e->type);
       break;
   };
-}; /* CursorPane_Event */
+} /* CursorPane_Event */
 
 
 /*----------------------------------------------------------------------------*/
@@ -1599,7 +1583,7 @@ unsigned int DisplayKbd_XPoll(void *data) {
   xpollenode^=1;
 
   return 0;
-}; /* DisplayKbd_XPoll */
+} /* DisplayKbd_XPoll */
 
 
 /*----------------------------------------------------------------------------*/
@@ -1858,8 +1842,6 @@ static void Resize_Window(void)
 
   if(x > 0 && y > 0) {
     /* Upper bounds checking */
-    #define MaxVideoWidth 2048
-#define MaxVideoHeight 1536
     if(x > MaxVideoWidth || y > MaxVideoHeight) {
       fprintf(stderr, "Resize_Window: Request to display a mode larger than we can handle (%dx%d)\n", x, y);
       exit(EXIT_FAILURE);
