@@ -2,7 +2,7 @@
   DispKbdShared.c
 
   Shared between all platform ports. Shared Parts of Display and Input
-  layer 
+  layer
 
   (c) 1996-2005 D Gilbert, P Howkins, et al
 
@@ -10,10 +10,21 @@
 
 */
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
-#include "armarc.h"
+#include "arch/armarc.h"
+#include "arch/hdc63463.h"
+#include "arch/keyboard.h"
+#ifdef SOUND_SUPPORT
+#include "arch/sound.h"
+#endif
 
+#define DC DISPLAYCONTROL
+
+static struct EventNode enodes[4];
+static int xpollenode = 2; /* Flips between 2 and 3 */
 
 /**
  * MarkAsUpdated
@@ -51,7 +62,7 @@ void MarkAsUpdated(ARMul_State *state, int end)
  * @param state  IMPROVE Unused
  * @param offset Pointer to section of RAM to check
  * @param len    Amount of RAM to check (in bytes)
- * @returns      bool of whether the ram 
+ * @returns      bool of whether the ram
  */
 int QueryRamChange(ARMul_State *state, unsigned int offset, int len)
 {
@@ -100,11 +111,11 @@ int QueryRamChange(ARMul_State *state, unsigned int offset, int len)
  *
  * Copy a lump of screen RAM into the buffer.  The section of screen ram is
  * len bytes from the top left of the screen.  The routine takes into account
- * all scrolling etc. 
+ * all scrolling etc.
  * This routine is burdened with undoing endianness
  *
  * @param state   IMPROVE Unused
- * @param offset  
+ * @param offset
  * @param len
  * @param Buffer
  */
@@ -159,3 +170,95 @@ void CopyScreenRAM(ARMul_State *state, unsigned int offset, int len, char *Buffe
   }
 #endif
 }
+
+void
+DisplayKbd_Init(ARMul_State *state)
+{
+  /* Call Host-specific routine */
+  DisplayKbd_InitHost(state);
+
+  DC.PollCount            = 0; /* Seems to never be used */
+  KBD.KbdState            = KbdState_JustStarted;
+  KBD.MouseTransEnable    = 0;
+  KBD.KeyScanEnable       = 0;
+  KBD.KeyColToSend        = -1;
+  KBD.KeyRowToSend        = -1;
+  KBD.MouseXCount         = 0;
+  KBD.MouseYCount         = 0;
+  KBD.KeyUpNDown          = 0; /* When 0 it means the key to be sent is a key down event, 1 is up */
+  KBD.HostCommand         = 0;
+  KBD.BuffOcc             = 0;
+  KBD.TimerIntHasHappened = 0; /* If using AutoKey should be 2 Otherwise it never reinitialises the event routines */
+  KBD.Leds                = 0;
+  KBD.leds_changed        = NULL;
+  DC.DoingMouseFollow     = 0;
+
+  /* Note the memory model sets its to 1 - note the ordering */
+  /* i.e. it must be updated */
+  memset(DC.UpdateFlags, 0,
+         ((512 * 1024) / UPDATEBLOCKSIZE) * sizeof(unsigned));
+
+#ifdef SOUND_SUPPORT
+  /* Initialise the Sound output */
+  if (sound_init()) {
+    /* There was an error of some sort - it will already have been reported */
+    fprintf(stderr, "Could not initialise sound output - exiting\n");
+    exit(EXIT_FAILURE);
+  }
+#endif
+
+  ARMul_ScheduleEvent(&enodes[xpollenode], POLLGAP, DisplayKbd_Poll);
+  xpollenode ^= 1;
+} /* DisplayKbd_Init */
+
+/* Called using an ARM_ScheduleEvent - it also sets itself up to be called
+   again.                                                                     */
+
+unsigned
+DisplayKbd_Poll(void *data)
+{
+  ARMul_State *state = data;
+  int KbdSerialVal;
+  static int KbdPollInt = 0;
+  static int discconttog = 0;
+
+#ifdef SOUND_SUPPORT
+  sound_poll();
+#endif
+
+#ifndef SYSTEM_gp2x
+  /* Our POLLGAP runs at 125 cycles, HDC (and fdc) want callback at 250 */
+  if (discconttog) {
+    HDC_Regular(state);
+  }
+  discconttog ^= 1;
+#endif
+
+  if ((KbdPollInt++) > 100) {
+    KbdPollInt = 0;
+    /* Keyboard check */
+    KbdSerialVal = IOC_ReadKbdTx(state);
+    if (KbdSerialVal != -1) {
+      Kbd_CodeFromHost(state, KbdSerialVal);
+    } else {
+      if (KBD.TimerIntHasHappened > 2) {
+        KBD.TimerIntHasHappened = 0;
+        if (KBD.KbdState == KbdState_Idle) {
+          Kbd_StartToHost(state);
+        }
+      }
+    }
+  }
+
+  /* Call Host-specific routine */
+  DisplayKbd_PollHost(state);
+
+  if (--(DC.AutoRefresh) < 0) {
+    RefreshDisplay(state);
+  }
+
+  ARMul_ScheduleEvent(&enodes[xpollenode], POLLGAP, DisplayKbd_Poll);
+  xpollenode ^= 1;
+
+  return 0;
+} /* DisplayKbd_Poll */

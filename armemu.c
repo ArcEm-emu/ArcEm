@@ -416,7 +416,7 @@ ARMul_LoadInstrTriplet(ARMword address,
 static void ARMul_InvokeEvent(void)
 {
   if (statestr.Now < ARMul_Time) {
-    DisplayKbd_XPoll(&statestr);
+    DisplayKbd_Poll(&statestr);
   }
 }
 

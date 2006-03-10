@@ -6,8 +6,6 @@
    the palette is changed which it really needs to */
 
 #define KEYREENABLEDELAY 1000
-#define POLLGAP 125
-//#define POLLGAP 1250
 /*#define DEBUG_VIDCREGS */
 /*#define DEBUG_KBD */
 /*#define DEBUG_MOUSEMOVEMENT */
@@ -274,10 +272,6 @@ static const keysym_to_arch_key keysym_to_arch_key_map[] = {
 #ifdef UNUSED__STOP_COMPILER_WARNINGS
 static unsigned AutoKey(ARMul_State *state);
 #endif
-
-static struct EventNode enodes[4];
-static int xpollenode = 2; /* Flips between 2 and 3 */
-
 
 /*----------------------------------------------------------------------------*/
 /* From the GIMP Drawing Kit, in the GTK+ toolkit from GNOME                  */
@@ -606,7 +600,9 @@ static void RefreshDisplay_TrueColor_8bpp(ARMul_State *state, int DisplayHeight,
 } /* RefreshDisplay_TrueColor_8bpp */
 
 /*----------------------------------------------------------------------------*/
-static void RefreshDisplay(ARMul_State *state) {
+void
+RefreshDisplay(ARMul_State *state)
+{
   int DisplayHeight =  VIDC.Vert_DisplayEnd  - VIDC.Vert_DisplayStart;
   int DisplayWidth  = (VIDC.Horiz_DisplayEnd - VIDC.Horiz_DisplayStart) * 2;
 
@@ -934,14 +930,15 @@ static int DisplayKbd_XError(Display* disp, XErrorEvent *err)
 }
 
 /*----------------------------------------------------------------------------*/
-void DisplayKbd_Init(ARMul_State *state) {
+void
+DisplayKbd_InitHost(ARMul_State *state)
+{
   const char *s;
   KeySym ks;
   XSetWindowAttributes attr;
   unsigned long attrmask;
   XColor tmpcol;
   int prescol;
-  int mindex;
   XTextProperty name;
   int shape_event_base, shape_error_base;
 
@@ -1189,46 +1186,12 @@ void DisplayKbd_Init(ARMul_State *state) {
     XFreePixmap(HD.disp, HD.shape_mask);
   };
 
-  DC.PollCount=0;
-  KBD.KbdState=KbdState_JustStarted;
-  KBD.MouseTransEnable=0;
-  KBD.KeyScanEnable=0;
-  KBD.KeyColToSend=-1;
-  KBD.KeyRowToSend=-1;
-  KBD.MouseXCount=0;
-  KBD.MouseYCount=0;
-  KBD.KeyUpNDown=0; /* When 0 it means the key to be sent is a key down event, 1 is up */
-  KBD.HostCommand=0;
-  KBD.BuffOcc=0;
-  KBD.TimerIntHasHappened=0; /* if using AutoKey should be 2 Otherwise it never reinitialises the event routines */
-  KBD.Leds=0;
-  KBD.leds_changed = NULL;
-  DC.DoingMouseFollow=0;
-
-  /* Note the memory model sets it to 1 - note the ordering */
-  /* i.e. it must be updated */
-  for (mindex = 0; mindex < (512*1024) / UPDATEBLOCKSIZE; mindex++) {
-    DC.UpdateFlags[mindex] = 0;
-  }
-
   XMapWindow(HD.disp,HD.BackingWindow);
   XMapSubwindows(HD.disp,HD.BackingWindow);
   XMapSubwindows(HD.disp,HD.MainPane);
 
   ControlPane_Init(state);
-
-#ifdef SOUND_SUPPORT
-  /* Initialise the Sound output */
-  if (sound_init()) {
-    /* There was an error of some sort - it will already have been reported */
-    fprintf(stderr, "Could not initialise sound output - exiting\n");
-    exit(EXIT_FAILURE);
-  }
-#endif
-
-  ARMul_ScheduleEvent(&enodes[xpollenode], POLLGAP, DisplayKbd_XPoll);
-  xpollenode^=1;
-} /* DisplayKbd_Init */
+} /* DisplayKbd_InitHost */
 
 
 /*----------------------------------------------------------------------------*/
@@ -1510,40 +1473,11 @@ static void CursorPane_Event(ARMul_State *state,XEvent *e) {
 
 
 /*----------------------------------------------------------------------------*/
-/* Called using an ARM_ScheduleEvent - it also sets itself up to be called
-   again.                                                                     */
 
-unsigned int DisplayKbd_XPoll(void *data) {
-  ARMul_State *state = data;
+void
+DisplayKbd_PollHost(ARMul_State *state)
+{
   XEvent e;
-  int KbdSerialVal;
-  static int KbdPollInt=0;
-  static int discconttog=0;
-
-#ifdef SOUND_SUPPORT
-  sound_poll();
-#endif
-
-  /* Our POLLGAP runs at 125 cycles, HDC (and fdc) want callback at 250 */
-  if (discconttog)
-    HDC_Regular(state);
-  discconttog^=1;
-
-  if ((KbdPollInt++)>100) {
-    KbdPollInt=0;
-    /* Keyboard check */
-    if (KbdSerialVal=IOC_ReadKbdTx(state),KbdSerialVal!=-1) {
-      Kbd_CodeFromHost(state,KbdSerialVal);
-    } else {
-      if (KBD.TimerIntHasHappened>2) {
-        KBD.TimerIntHasHappened=0;
-        if (KBD.KbdState==KbdState_Idle) {
-          Kbd_StartToHost(state);
-        }
-      };
-    };
-  };
-
 
   if (XCheckMaskEvent(HD.disp, ULONG_MAX, &e)) {
 #ifdef DEBUG_X_PROTOCOL
@@ -1575,15 +1509,7 @@ unsigned int DisplayKbd_XPoll(void *data) {
       exit(EXIT_FAILURE);
     }
   }
-
-  if (--(DC.AutoRefresh)<0)
-    RefreshDisplay(state);
-
-  ARMul_ScheduleEvent(&(enodes[xpollenode]),POLLGAP,DisplayKbd_XPoll);
-  xpollenode^=1;
-
-  return 0;
-} /* DisplayKbd_XPoll */
+} /* DisplayKbd_PollHost */
 
 
 /*----------------------------------------------------------------------------*/

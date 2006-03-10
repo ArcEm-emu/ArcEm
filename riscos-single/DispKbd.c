@@ -4,7 +4,6 @@
 // #define MOUSEKEY XK_KP_Add
 
 #define KEYREENABLEDELAY 1000
-#define POLLGAP 125
 
 /*#define DEBUG_VIDCREGS*/
 /* NOTE: Can't use ARMul's refresh function because it has a small
@@ -43,9 +42,6 @@ static void UpdateCursorPos(ARMul_State *state);
 static void SelectROScreenMode(int x, int y, int bpp);
 
 static void set_cursor_palette(unsigned int *pal);
-
-static struct EventNode enodes[4];
-static int xpollenode = 2; /* Flips between 2 and 3 */
 
 static int MonitorWidth;
 static int MonitorHeight;
@@ -437,7 +433,9 @@ static void RefreshDisplay_PseudoColor_8bpp(ARMul_State *state) {
 /*----------------------------------------------------------------------------*/
 #endif
 
-static void RefreshDisplay(ARMul_State *state) {
+void
+RefreshDisplay(ARMul_State *state)
+{
   DC.AutoRefresh=AUTOREFRESHPOLL;
   ioc.IRQStatus|=8; /* VSync */
   ioc.IRQStatus |= 0x20; /* Sound - just an experiment */
@@ -488,9 +486,9 @@ static void RefreshDisplay(ARMul_State *state) {
 }; /* RefreshDisplay */
 
 /*-----------------------------------------------------------------------------*/
-void DisplayKbd_Init(ARMul_State *state) {
-  int index;
-
+void
+DisplayKbd_InitHost(ARMul_State *state)
+{
 #ifndef DIRECT_DISPLAY
   SelectROScreenMode(800, 600, 3);
 #else
@@ -505,32 +503,7 @@ void DisplayKbd_Init(ARMul_State *state) {
   _swi(OS_WriteI+99, 0);
   _swi(OS_WriteI+64, 0);
 #endif
-
-  DC.PollCount=0;
-  KBD.KbdState=KbdState_JustStarted;
-  KBD.MouseTransEnable=0;
-  KBD.KeyScanEnable=0;
-  KBD.KeyColToSend=-1;
-  KBD.KeyRowToSend=-1;
-  KBD.MouseXCount=0;
-  KBD.MouseYCount=0;
-  KBD.KeyUpNDown=0; /* When 0 it means the key to be sent is a key down event, 1 is up */
-  KBD.HostCommand=0;
-  KBD.BuffOcc=0;
-  KBD.TimerIntHasHappened=0; /* if using AutoKey should be 2 Otherwise it never reinitialises the event routines */
-  KBD.Leds=0;
-    KBD.leds_changed = NULL;
-  DC.DoingMouseFollow=0;
-  DC.AutoRefresh=AUTOREFRESHPOLL; /* Surely this is set somewhere??? */
-
-  /* Note the memory model sets its to 1 - note the ordering */
-  /* i.e. it must be updated */
-  for(index=0;index<(512*1024)/UPDATEBLOCKSIZE;index++)
-    DC.UpdateFlags[index]=0;
-
-  ARMul_ScheduleEvent(&(enodes[xpollenode]),POLLGAP,DisplayKbd_XPoll);
-  xpollenode^=1;
-}; /* DisplayKbd_Init */
+} /* DisplayKbd_InitHost */
 
 
 /*-----------------------------------------------------------------------------*/
@@ -642,31 +615,9 @@ static void MouseMoved(ARMul_State *state, int mousex, int mousey/*,XMotionEvent
 }; /* MouseMoved */
 
 /*----------------------------------------------------------------------------*/
-/* Called using an ARM_ScheduleEvent - it also sets itself up to be called
-   again.                                                                     */
-unsigned int DisplayKbd_XPoll(void *data) {
-  ARMul_State *state = data;
-  int KbdSerialVal;
-  static int KbdPollInt=0;
-  static int discconttog=0;
-
-  /* Our POLLGAP runs at 125 cycles, HDC (and fdc) want callback at 250 */
-  if (discconttog) HDC_Regular(state);
-  discconttog^=1;
-
-  if ((KbdPollInt++)>100) {
-    KbdPollInt=0;
-    /* Keyboard check */
-    if (KbdSerialVal=IOC_ReadKbdTx(state),KbdSerialVal!=-1) {
-      Kbd_CodeFromHost(state,KbdSerialVal);
-    } else {
-      if (KBD.TimerIntHasHappened>2) {
-        KBD.TimerIntHasHappened=0;
-        if (KBD.KbdState==KbdState_Idle) Kbd_StartToHost(state);
-      };
-    };
-  };
-
+void
+DisplayKbd_PollHost(ARMul_State *state)
+{
   /* Keyboard handling */
   {
     int key;
@@ -687,14 +638,7 @@ unsigned int DisplayKbd_XPoll(void *data) {
 
     MouseMoved(state, mousex, mousey);
   }
-
-  if (--(DC.AutoRefresh)<0) RefreshDisplay(state);
-
-  ARMul_ScheduleEvent(&(enodes[xpollenode]),POLLGAP,DisplayKbd_XPoll);
-  xpollenode^=1;
-
-  return 0;
-}; /* DisplayKbd_XPoll */
+} /* DisplayKbd_PollHost */
 
 
 #ifdef DIRECT_DISPLAY

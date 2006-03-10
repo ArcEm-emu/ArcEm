@@ -7,6 +7,8 @@
 #include "../armdefs.h"
 #include "../armopts.h"
 
+#define POLLGAP 125
+
 #define KBDBUFFLEN 128
 
 typedef struct {
@@ -52,7 +54,7 @@ typedef struct {
     unsigned int UpdateFlags[(512*1024)/256];
 
     /* min and max values which need refereshing on the X display */
-    int miny,maxy; 
+    int miny,maxy;
 
     int DoingMouseFollow; /* If true following the mouse */
   } Control;
@@ -87,10 +89,10 @@ typedef struct {
     char *ImageData,*CursorImageData;
 
     /* Map from host memory contents to 'pixel' value for putpixel */
-    unsigned long pixelMap[256]; 
+    unsigned long pixelMap[256];
 
     /* Map from host memory contents to 'pixel' value for putpixel in cursor*/
-    unsigned long cursorPixelMap[4]; 
+    unsigned long cursorPixelMap[4];
     int red_shift,red_prec;
     int green_shift,green_prec;
     int blue_shift,blue_prec;
@@ -112,7 +114,7 @@ typedef struct {
 
     /* Double buffering - update the others while sending this */
     unsigned char MouseXToSend;
-    unsigned char MouseYToSend; 
+    unsigned char MouseYToSend;
     int MouseTransEnable,KeyScanEnable; /* When 1 allowed to transmit */
     int HostCommand;            /* Normally 0 else the command code */
     KbdEntry Buffer[KBDBUFFLEN];
@@ -140,8 +142,10 @@ typedef struct {
 
 /*----------------------------------------------------------------------------*/
 
-unsigned int DisplayKbd_XPoll(void *data);
-void DisplayKbd_Init(ARMul_State *state);
+/* Functions each Host must provide */
+void DisplayKbd_InitHost(ARMul_State *state);
+void DisplayKbd_PollHost(ARMul_State *state);
+void RefreshDisplay(ARMul_State *state);
 void VIDC_PutVal(ARMul_State *state,ARMword address, ARMword data,int bNw);
 
 #ifdef SYSTEM_X
@@ -155,6 +159,7 @@ void hostdisplay_change_focus(int focus);
 void MarkAsUpdated(ARMul_State *state, int end);
 int QueryRamChange(ARMul_State *state, unsigned int offset, int len);
 void CopyScreenRAM(ARMul_State *state, unsigned int offset, int len, char *Buffer);
-
+void DisplayKbd_Init(ARMul_State *state);
+unsigned DisplayKbd_Poll(void *data);
 
 #endif
