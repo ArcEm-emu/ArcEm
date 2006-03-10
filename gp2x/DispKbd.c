@@ -520,11 +520,10 @@ static void MouseMoved(ARMul_State *state, int xdiff, int ydiff ) {
 }; /* MouseMoved */
 
 /*----------------------------------------------------------------------------*/
-void
+int
 DisplayKbd_PollHost(ARMul_State *state)
 {
-  /* Input handling */
-  {
+    int run=0;
     int MouseX=0, MouseY=0;
     unsigned long keys;
     readJoypad();
@@ -549,7 +548,7 @@ DisplayKbd_PollHost(ARMul_State *state)
     if ( MouseX || MouseY )
     {
       MouseMoved(state, MouseX, MouseY);
-      KbdPollInt=1000;
+      run=1;
     }
 
     if ( joypad.changed & KEY_PAD_IN )
@@ -571,9 +570,7 @@ DisplayKbd_PollHost(ARMul_State *state)
         ProcessKey(state, ARCH_KEY_shift_l, !(keys & KEY_LEFT_SHOULDER) );
 
     if ( joypad.changed )
-      KbdPollInt=1000;
-
-  }
+      run=1;
 
   {
       fd_set s;
@@ -604,11 +601,11 @@ DisplayKbd_PollHost(ARMul_State *state)
                 if ( m>=0 )
                     ProcessKey(state, m, 1 );
             }
-            KbdPollInt=1000;
+            run=1;
         }
       }
   }
-};
+  return run;
 } /* DisplayKbd_PollHost */
 
 

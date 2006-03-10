@@ -201,12 +201,13 @@ static void MouseMoved(ARMul_State *state) {
 #endif
 }; /* MouseMoved */
 
-void
+int
 DisplayKbd_PollHost(ARMul_State *state)
 {
   if (keyF) ProcessKey(state);
   if (buttF) ProcessButton(state);
   if (mouseMF) MouseMoved(state);
+  return 0;
 }
 
 
@@ -217,7 +218,7 @@ static unsigned long get_pixelval(unsigned int red, unsigned int green, unsigned
     return (((red   >> (16 - HD.red_prec))   << HD.red_shift)   +
             ((green >> (16 - HD.green_prec)) << HD.green_shift) +
             ((blue  >> (16 - HD.blue_prec))  << HD.blue_shift));
-	
+
 } /* get_pixval */
 
 /*-----------------------------------------------------------------------------*/
@@ -340,16 +341,16 @@ static void RefreshDisplay_TrueColor_1bpp(ARMul_State *state) {
 
       for(x=0;x<VisibleDisplayWidth;x+=8) {
 #if 0
-	int xl = x+yp;
-	int pixel = Buffer[x>>3];
-	dibbmp[xl]   = (unsigned short)HD.pixelMap[pixel &1];
-	dibbmp[xl+1] = (unsigned short)HD.pixelMap[(pixel>>1) &1];
-	dibbmp[xl+2] = (unsigned short)HD.pixelMap[(pixel>>2) &1];
-	dibbmp[xl+3] = (unsigned short)HD.pixelMap[(pixel>>3) &1];
-	dibbmp[xl+4] = (unsigned short)HD.pixelMap[(pixel>>4) &1];
-	dibbmp[xl+5] = (unsigned short)HD.pixelMap[(pixel>>5) &1];
-	dibbmp[xl+6] = (unsigned short)HD.pixelMap[(pixel>>6) &1];
-	dibbmp[xl+7] = (unsigned short)HD.pixelMap[(pixel>>7) &1];
+    int xl = x+yp;
+    int pixel = Buffer[x>>3];
+    dibbmp[xl]   = (unsigned short)HD.pixelMap[pixel &1];
+    dibbmp[xl+1] = (unsigned short)HD.pixelMap[(pixel>>1) &1];
+    dibbmp[xl+2] = (unsigned short)HD.pixelMap[(pixel>>2) &1];
+    dibbmp[xl+3] = (unsigned short)HD.pixelMap[(pixel>>3) &1];
+    dibbmp[xl+4] = (unsigned short)HD.pixelMap[(pixel>>4) &1];
+    dibbmp[xl+5] = (unsigned short)HD.pixelMap[(pixel>>5) &1];
+    dibbmp[xl+6] = (unsigned short)HD.pixelMap[(pixel>>6) &1];
+    dibbmp[xl+7] = (unsigned short)HD.pixelMap[(pixel>>7) &1];
 #else
         int xpos = (x + yp) * 3;
         int pixel = Buffer[x>>3];
@@ -413,13 +414,13 @@ static void RefreshDisplay_TrueColor_2bpp(ARMul_State *state) {
 
       for(x=0;x<VisibleDisplayWidth;x+=4) {
 #if 0
-	int pixs = yp + x;
+    int pixs = yp + x;
         int pixel = Buffer[x>>2];
 
-	dibbmp[pixs  ] = (unsigned short)HD.pixelMap[pixel      &3];
-	dibbmp[pixs+1] = (unsigned short)HD.pixelMap[(pixel>>2) &3];
-	dibbmp[pixs+2] = (unsigned short)HD.pixelMap[(pixel>>4) &3];
-	dibbmp[pixs+3] = (unsigned short)HD.pixelMap[(pixel>>6) &3];
+    dibbmp[pixs  ] = (unsigned short)HD.pixelMap[pixel      &3];
+    dibbmp[pixs+1] = (unsigned short)HD.pixelMap[(pixel>>2) &3];
+    dibbmp[pixs+2] = (unsigned short)HD.pixelMap[(pixel>>4) &3];
+    dibbmp[pixs+3] = (unsigned short)HD.pixelMap[(pixel>>6) &3];
 #else
         int j;
         int pixs = (yp + x) * 3;
@@ -557,7 +558,7 @@ static void RefreshDisplay_TrueColor_8bpp(ARMul_State *state) {
 
       for(x=0;x<VisibleDisplayWidth;x++) {
 #if 0
-		dibbmp[x+yp] = (unsigned short)HD.pixelMap[Buffer[x]];
+        dibbmp[x+yp] = (unsigned short)HD.pixelMap[Buffer[x]];
 #else
           int pixs = (x + yp) * 3;
           unsigned short pic = HD.pixelMap[Buffer[x]];
@@ -603,7 +604,7 @@ static void RefreshMouse(ARMul_State *state) {
       height = 32;
 
   memset(cursorbmp, 0, 32 * 32 * 4);
-  
+
   for(y=0;y<height;y++,memptr+=8,offset+=8) {
     if (offset<512*1024) {
       ARMword tmp[2];
@@ -612,10 +613,10 @@ static void RefreshMouse(ARMul_State *state) {
       tmp[1]=MEMC.PhysRam[memptr/4+1];
 
         for(x=0;x<32;x++,ImgPtr++) {
-	    pix = ((tmp[x/16]>>((x & 15)*2)) & 3);
+        pix = ((tmp[x/16]>>((x & 15)*2)) & 3);
 #if 0
-	    if (pix) curbmp[x+(MonitorHeight-y)*32] = (unsigned short)HD.cursorPixelMap[pix];
-	    else curbmp[x+(MonitorHeight-y)*32] = dibbmp[rMouseX+x+(MonitorHeight-rMouseY-y)*MonitorWidth];
+        if (pix) curbmp[x+(MonitorHeight-y)*32] = (unsigned short)HD.cursorPixelMap[pix];
+        else curbmp[x+(MonitorHeight-y)*32] = dibbmp[rMouseX+x+(MonitorHeight-rMouseY-y)*MonitorWidth];
 #else
             if (pix)
             {
@@ -878,7 +879,7 @@ void VIDC_PutVal(ARMul_State *state,ARMword address, ARMword data,int bNw)
 #endif
       VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Horiz_DisplayStart,(val>>14) & 0x3ff);
       resizeWindow((VIDC.Horiz_DisplayEnd-VIDC.Horiz_DisplayStart)*2,
-		   VIDC.Vert_DisplayEnd-VIDC.Vert_DisplayStart);
+           VIDC.Vert_DisplayEnd-VIDC.Vert_DisplayStart);
       break;
 
     case 0x90:
@@ -887,7 +888,7 @@ void VIDC_PutVal(ARMul_State *state,ARMword address, ARMword data,int bNw)
 #endif
       VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Horiz_DisplayEnd,(val>>14) & 0x3ff);
       resizeWindow((VIDC.Horiz_DisplayEnd-VIDC.Horiz_DisplayStart)*2,
-		   VIDC.Vert_DisplayEnd-VIDC.Vert_DisplayStart);
+           VIDC.Vert_DisplayEnd-VIDC.Vert_DisplayStart);
       break;
 
     case 0x94:
@@ -940,7 +941,7 @@ void VIDC_PutVal(ARMul_State *state,ARMword address, ARMword data,int bNw)
 #endif
       VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Vert_DisplayStart,((val>>14) & 0x3ff));
       resizeWindow((VIDC.Horiz_DisplayEnd-VIDC.Horiz_DisplayStart)*2,
-		   VIDC.Vert_DisplayEnd-VIDC.Vert_DisplayStart);
+           VIDC.Vert_DisplayEnd-VIDC.Vert_DisplayStart);
       break;
 
     case 0xb0:
@@ -949,7 +950,7 @@ void VIDC_PutVal(ARMul_State *state,ARMword address, ARMword data,int bNw)
 #endif
       VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Vert_DisplayEnd,(val>>14) & 0x3ff);
       resizeWindow((VIDC.Horiz_DisplayEnd-VIDC.Horiz_DisplayStart)*2,
-		   VIDC.Vert_DisplayEnd-VIDC.Vert_DisplayStart);
+           VIDC.Vert_DisplayEnd-VIDC.Vert_DisplayStart);
       break;
 
     case 0xb4:

@@ -250,16 +250,16 @@ static const keysym_to_arch_key keysym_to_arch_key_map[] = {
 
 #if defined(sun) && defined(__SVR4)
     /* Extra keycodes found on Sun hardware */
-    X(KP_Insert, kp_0)	/* Labelled "0 (Insert)" */
-    X(F33, kp_1)	/* Labelled "1 (End)" */
-    X(F21, break)	/* Labelled "Pause (Break)" */
-    X(F22, print)	/* Labelled "Print Screen (SysRq)" */
-    X(F23, scroll_lock)	/* Labelled "Scroll Lock" */
-    X(F24, kp_minus)	/* Labelled "-" */
-    X(F25, kp_slash)	/* Labelled "/" */
-    X(F26, kp_star)	/* Labelled "*" */
-    SUNX(F36, f11)	/* Labelled "F11" */
-    SUNX(F37, f12)	/* Labelled "F12" */
+    X(KP_Insert, kp_0)  /* Labelled "0 (Insert)" */
+    X(F33, kp_1)    /* Labelled "1 (End)" */
+    X(F21, break)   /* Labelled "Pause (Break)" */
+    X(F22, print)   /* Labelled "Print Screen (SysRq)" */
+    X(F23, scroll_lock) /* Labelled "Scroll Lock" */
+    X(F24, kp_minus)    /* Labelled "-" */
+    X(F25, kp_slash)    /* Labelled "/" */
+    X(F26, kp_star) /* Labelled "*" */
+    SUNX(F36, f11)  /* Labelled "F11" */
+    SUNX(F37, f12)  /* Labelled "F12" */
 #endif
 
     { NoSymbol },
@@ -1474,7 +1474,7 @@ static void CursorPane_Event(ARMul_State *state,XEvent *e) {
 
 /*----------------------------------------------------------------------------*/
 
-void
+int
 DisplayKbd_PollHost(ARMul_State *state)
 {
   XEvent e;
@@ -1509,6 +1509,7 @@ DisplayKbd_PollHost(ARMul_State *state)
       exit(EXIT_FAILURE);
     }
   }
+  return 0;
 } /* DisplayKbd_PollHost */
 
 

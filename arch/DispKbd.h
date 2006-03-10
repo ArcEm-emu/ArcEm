@@ -144,7 +144,7 @@ typedef struct {
 
 /* Functions each Host must provide */
 void DisplayKbd_InitHost(ARMul_State *state);
-void DisplayKbd_PollHost(ARMul_State *state);
+int DisplayKbd_PollHost(ARMul_State *state);
 void RefreshDisplay(ARMul_State *state);
 void VIDC_PutVal(ARMul_State *state,ARMword address, ARMword data,int bNw);
 

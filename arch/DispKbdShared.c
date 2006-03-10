@@ -251,7 +251,8 @@ DisplayKbd_Poll(void *data)
   }
 
   /* Call Host-specific routine */
-  DisplayKbd_PollHost(state);
+  if ( DisplayKbd_PollHost(state) )
+    KbdPollInt = 1000;
 
   if (--(DC.AutoRefresh) < 0) {
     RefreshDisplay(state);
