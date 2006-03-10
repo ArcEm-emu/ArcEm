@@ -239,7 +239,7 @@ DisplayKbd_Poll(void *data)
     /* Keyboard check */
     KbdSerialVal = IOC_ReadKbdTx(state);
     if (KbdSerialVal != -1) {
-      Kbd_CodeFromHost(state, KbdSerialVal);
+      Kbd_CodeFromHost(state, (unsigned char) KbdSerialVal);
     } else {
       if (KBD.TimerIntHasHappened > 2) {
         KBD.TimerIntHasHappened = 0;

@@ -119,7 +119,7 @@ void Kbd_StartToHost(ARMul_State *state)
       KBD.Buffer[loop - 1] = KBD.Buffer[loop];
     }
 
-    if (IOC_WriteKbdRx(state, (KBD.KeyUpNDown ? 0xd0 : 0xc0) | KBD.KeyRowToSend) != -1) {
+    if (IOC_WriteKbdRx(state, (unsigned char) ((KBD.KeyUpNDown ? 0xd0 : 0xc0) | KBD.KeyRowToSend)) != -1) {
       KBD.KbdState = KbdState_SentKeyByte1;
     }
     KBD.BuffOcc--;
@@ -283,8 +283,8 @@ void Kbd_CodeFromHost(ARMul_State *state, unsigned char FromHost)
               KBD.KbdState = KbdState_SentMouseByte2;
             } else {
               if (IOC_WriteKbdRx(state,
-                  (KBD.KeyUpNDown ? 0xd0 : 0xc0) |
-                  KBD.KeyColToSend) == -1)
+                  (unsigned char) ((KBD.KeyUpNDown ? 0xd0 : 0xc0) |
+                  KBD.KeyColToSend)) == -1)
               {
                   DBG((stderr, "KBD: Couldn't send 2nd byte "
                       "of key value - Kart full\n"));

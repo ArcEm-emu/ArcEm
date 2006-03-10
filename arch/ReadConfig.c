@@ -29,7 +29,7 @@ int ReadConfigFile(ARMul_State *state) {
   char tmpbuf[1024];
 
 #ifdef WIN32
-  nameConf = strdup("arcemrc");
+  nameConf = _strdup("arcemrc");
 #else
 
   if (HomeVar==NULL) {

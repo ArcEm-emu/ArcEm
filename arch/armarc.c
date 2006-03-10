@@ -154,6 +154,7 @@ GetPhysAddress(unsigned address)
   } /* Page size switch */
 
   abort();
+  return 0;
 } /* GetPhysAddress */
 
 
