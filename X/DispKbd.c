@@ -608,7 +608,7 @@ RefreshDisplay(ARMul_State *state)
 
   DC.AutoRefresh  = AUTOREFRESHPOLL;
   ioc.IRQStatus  |= IRQA_VFLYBK; /* VSync */
-  ioc.IRQStatus  |= IRQB_SIRQ; /* Sound - just an experiment */
+  ioc.IRQStatus  |= IRQA_TM0; /* Sound - just an experiment */
   IO_UpdateNirq();
 
   RefreshMouse(state);
