@@ -100,8 +100,6 @@ extern struct MEMCStruct memc;
 
 
 typedef struct {
-  struct FDCStruct FDCData;
-
   DisplayInfo Display;
 
   unsigned int irqflags,fiqflags;

@@ -28,6 +28,49 @@
 #include "ControlPane.h"
 #include "fdc1772.h"
 
+
+typedef struct {
+    /* User-visible name. */
+    const char *name;
+    int bytes_per_sector;
+    int sectors_per_track;
+    int sector_base;
+    int num_cyl;
+    int num_sides;
+} floppy_format;
+
+typedef struct {
+    /* To access the disc image.  NULL if disc ejected. */
+    FILE *fp;
+    /* Based on whether read/write access to the disc image was
+     * obtained. */
+    int write_protected;
+    /* Points to an element of avail_format. */
+    floppy_format *form;
+} floppy_drive;
+
+struct FDCStruct{
+  unsigned char LastCommand;
+  int Direction; /* -1 or 1 */
+  unsigned char StatusReg;
+  unsigned char Track;
+  unsigned char Sector;
+  unsigned char Sector_ReadAddr; /* Used to hold the next sector to be found! */
+  unsigned char Data;
+  int BytesToGo;
+  int DelayCount;
+  int DelayLatch;
+  int CurrentDisc;
+#ifdef MACOSX
+  char* driveFiles[4];  // In MAE, we use *real* filenames for disks
+#endif
+    floppy_drive drive[4];
+    /* The bottom four bits of leds holds their current state.  If the
+     * bit is set the LED should be emitting. */
+    void (*leds_changed)(unsigned int leds);
+};
+
+
 /* Type I commands. */
 #define CMD_RESTORE 0x00
 #define CMD_RESTORE_MASK 0xf0
@@ -76,6 +119,10 @@
 #define TYPE2_BIT_MOTORON (1<<2)
 #define TYPE2_BIT_MULTISECTOR (1<<4)
 
+// Structure containing the state of the floppy drive controller
+struct FDCStruct FDC;
+
+
 static floppy_format avail_format[] = {
     /* First is default for `ejected' discs. */
     { "ADFS 800KB", 1024, 5, 0, 80, 2 },
@@ -112,7 +159,13 @@ static void GenInterrupt(ARMul_State *state, const char *reason) {
 }; /* GenInterrupt */
 
 
-/*--------------------------------------------------------------------------*/
+/**
+ * FDC_Regular
+ *
+ * Called regulaly from the DispKbd poll loop.
+ *
+ * @param state State of the emulator
+ */
 unsigned int FDC_Regular(ARMul_State *state)
 {
   int ActualTrack;
@@ -187,7 +240,14 @@ static void ClearDRQ(ARMul_State *state) {
   FDC.StatusReg&=~BIT_DRQ;
 } /* ClearDRQ */
 
-/*--------------------------------------------------------------------------*/
+/**
+ * FDC_LatchAChange
+ *
+ * Callback function, whenever LatchA is written too (regardless of
+ * whether the value has changed).
+ *
+ * @param state Emulator state
+ */
 void FDC_LatchAChange(ARMul_State *state) {
   static unsigned long TimeWhenInUseChanged,now,diff;
   int bit;
@@ -252,7 +312,14 @@ void FDC_LatchAChange(ARMul_State *state) {
     return;
 } /* FDC_LatchAChange */
 
-/*--------------------------------------------------------------------------*/
+/**
+ * FDC_LatchBChange
+ *
+ * Callback function, whenever LatchA is written too (regardless of
+ * whether the value has changed).
+ *
+ * @param state Emulator state
+ */
 void FDC_LatchBChange(ARMul_State *state) {
   int bit;
   int val;
@@ -332,7 +399,15 @@ static void ReadDataRegSpecial(ARMul_State *state)
   return;
 }
 
-/*--------------------------------------------------------------------------*/
+/**
+ * FDC_Read
+ *
+ * Read from the 1772 FDC controller's registers
+ *
+ * @param state  Emulator State
+ * @param offset Containing the FDC register
+ * @returns      Value of register, or 0 on register not handled
+ */
 ARMword FDC_Read(ARMul_State *state, ARMword offset) {
   int reg=(offset>>2) &3;
 
@@ -709,7 +784,17 @@ static void FDC_NewCommand(ARMul_State *state, ARMword data)
   return;
 }
 
-/*--------------------------------------------------------------------------*/
+/**
+ * FDC_Write
+ *
+ * Write to the 1772 FDC controller's registers
+ *
+ * @param state  Emulator State
+ * @param offset Containing the FDC register
+ * @param data   Data field to write
+ * @param bNw    byteNotWord IMPROVE unused parameter
+ * @returns      IMRPOVE always 0
+ */
 ARMword FDC_Write(ARMul_State *state, ARMword offset, ARMword data, int bNw) {
   int reg=(offset>>2) &3;
 
@@ -757,8 +842,15 @@ ARMword FDC_Write(ARMul_State *state, ARMword offset, ARMword data, int bNw) {
   return 0;
 } /* FDC_Write */
 
-/*--------------------------------------------------------------------------*/
-/* Reopen a floppy drive's image file - mainly so you can flip discs         */
+/**
+ * FDC_ReOpen
+ *
+ * Deprecated.  See FDC_InsertFloppy() and FDC_EjectFloppy().
+ * IMPROVE remove the usage of this by the Mac OS X code
+ *
+ * @param state
+ * @param drive
+ */
 void FDC_ReOpen(ARMul_State *state, int drive) {
 #ifdef MACOSX
     char* tmp;
@@ -775,7 +867,7 @@ void FDC_ReOpen(ARMul_State *state, int drive) {
     return;
   }
 
-  fdc_eject_floppy(drive);
+  FDC_EjectFloppy(drive);
 
 #if defined(__riscos__)
   sprintf(tmp, "<ArcEm$Dir>.^.FloppyImage%d", drive);
@@ -785,14 +877,20 @@ void FDC_ReOpen(ARMul_State *state, int drive) {
   sprintf(tmp, "FloppyImage%d", drive);
 #endif
 
-  fdc_insert_floppy(drive, tmp);
+  FDC_InsertFloppy(drive, tmp);
 
   DBG((stderr, "FDC_ReOpen: Drive %d %s\n", drive,
         (FDC.drive[drive].fp == NULL) ? "unable to reopen" :
         "reopened"));
 } /* FDC_ReOpen */
 
-/*--------------------------------------------------------------------------*/
+/**
+ * FDC_Init
+ *
+ * Called on program startup, initialise the 1772 disk controller
+ *
+ * @param state Emulator state IMPROVE unused
+ */
 void FDC_Init(ARMul_State *state) {
   int drive;
 
@@ -824,7 +922,7 @@ void FDC_Init(ARMul_State *state) {
 #else
     sprintf(tmp, "FloppyImage%d", drive);
 #endif
-    fdc_insert_floppy(drive, tmp);
+    FDC_InsertFloppy(drive, tmp);
   }
 #endif
 
@@ -832,10 +930,18 @@ void FDC_Init(ARMul_State *state) {
   FDC.DelayLatch=10000;
 } /* FDC_Init */
 
-/* ------------------------------------------------------------------ */
-
+/**
+ * FDC_InsertFloppy
+ *
+ * Associate disc image with drive.Drive must be empty
+ * on startup or having been previously ejected.
+ *
+ * @oaram drive Drive number to load image into [0-3]
+ * @param image Filename of image to load
+ * @returns NULL on success or string of error message
+ */
 const char *
-fdc_insert_floppy(int drive, const char *image)
+FDC_InsertFloppy(int drive, const char *image)
 {
   floppy_drive *dr;
   FILE *fp;
@@ -893,10 +999,17 @@ fdc_insert_floppy(int drive, const char *image)
   return NULL;
 }
 
-/* ------------------------------------------------------------------ */
-
+/**
+ * FDC_EjectFloppy
+ *
+ * Close and forget about the disc image associated with drive.  Disc
+ * must be inserted.
+ *
+ * @param drive Drive number to unload image [0-3]
+ * @returns NULL on success or string of error message
+ */
 const char *
-fdc_eject_floppy(int drive)
+FDC_EjectFloppy(int drive)
 {
   floppy_drive *dr;
 
@@ -932,4 +1045,24 @@ static void efseek(FILE *fp, long offset, int whence)
   }
 
   return;
+}
+
+/**
+ * FDC_SetLEDsChangeFunc
+ *
+ * If your platform wants to it can assign a function
+ * to be called back each time the Floppy Drive LEDs
+ * change.
+ * Each time they change the callback function will recieve
+ * the state of the LEDs in the 'leds' parameter. See
+ * X/ControlPane.c  draw_floppy_leds() for an example of
+ * how to process the parameter.
+ *
+ * @param leds_changed Function to callback on LED changes
+ */
+void FDC_SetLEDsChangeFunc(void (*leds_changed)(unsigned int))
+{
+  assert(leds_changed);
+  
+  FDC.leds_changed = leds_changed;
 }

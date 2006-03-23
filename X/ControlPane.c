@@ -31,7 +31,7 @@
 static void TextAt(ARMul_State *state, const char *Text, int x, int y) {
   XDrawImageString(HD.disp, HD.ControlPane, HD.ControlPaneGC, x, y,
                    Text, strlen(Text));
-}; /* TextAt */
+} /* TextAt */
 
 
 /*----------------------------------------------------------------------------*/
@@ -52,7 +52,7 @@ static void DoLED(const char *Text, int On, int ty, int lx)
   XSetForeground(HD.disp, HD.ControlPaneGC, (On?HD.Green:HD.GreyDark).pixel);
   XFillArc(HD.disp, HD.ControlPane, HD.ControlPaneGC, lx+2, ty+6-(LEDHEIGHT+4), LEDWIDTH-4, (LEDHEIGHT-4),
            0, 360*64);
-}; /* DoLED */
+} /* DoLED */
 
 
 /*----------------------------------------------------------------------------*/
@@ -88,12 +88,12 @@ static void insert_or_eject_floppy(int drive)
     const char *err;
 
     if (got_disc[drive]) {
-        err = fdc_eject_floppy(drive);
+        err = FDC_EjectFloppy(drive);
         fprintf(stderr, "ejecting drive %d: %s\n", drive,
             err ? err : "ok");
     } else {
         image[sizeof image - 2] = '0' + drive;
-        err = fdc_insert_floppy(drive, image);
+        err = FDC_InsertFloppy(drive, image);
         fprintf(stderr, "inserting floppy image %s into drive %d: %s\n",
             image, drive, err ? err : "ok");
     }
@@ -123,7 +123,7 @@ static int TextCenteredH(ARMul_State *state, const char *Text, int ty, int lx, i
   TextAt(state, Text, x - overall.width / 2, ty);
 
   return ty + descentret;
-}; /* TextCenteredH */
+} /* TextCenteredH */
 
 
 /*-----------------------------------------------------------------------------*/
@@ -153,7 +153,7 @@ static void ControlPane_Redraw(ARMul_State *state, XExposeEvent *e) {
   y+=2;
   draw_keyboard_leds(KBD.Leds);
   draw_floppy_leds(~ioc.LatchA & 0xf);
-}; /* ControlPane_Redraw */
+} /* ControlPane_Redraw */
 
 
 /*----------------------------------------------------------------------------*/
@@ -182,8 +182,8 @@ void ControlPane_Event(ARMul_State *state, XEvent *event) {
     default:
         fprintf(stderr, "unwanted ControlPane_Event type = %d\n", event->type);
       break;
-  };
-}; /* ControlPane_Event */
+  }
+} /* ControlPane_Event */
 
 
 /*----------------------------------------------------------------------------*/
@@ -208,7 +208,7 @@ void ControlPane_Init(ARMul_State *state) {
   if (XStringListToTextProperty(&tmpptr, 1, &name) == 0) {
     fprintf(stderr, "Could not allocate window name\n");
     exit(1);
-  };
+  }
 
   XSetWMName(HD.disp, HD.ControlPane, &name);
   XFree(name.value);
@@ -222,7 +222,7 @@ void ControlPane_Init(ARMul_State *state) {
   if (HD.ButtonFont == NULL) {
     fprintf(stderr, "Couldn't get font for buttons\n");
     exit(1);
-  };
+  }
 
   XSetFont(HD.disp, HD.ControlPaneGC, HD.ButtonFont->fid);
 
@@ -232,13 +232,14 @@ void ControlPane_Init(ARMul_State *state) {
 
   XMapWindow(HD.disp, HD.ControlPane);
 
+  /* setup callbacks for each time various LEDs change */
   KBD.leds_changed = draw_keyboard_leds;
-  FDC.leds_changed = draw_floppy_leds;
+  FDC_SetLEDsChangeFunc(draw_floppy_leds);
 
   for (drive = 0; drive < 4; drive++) {
     insert_or_eject_floppy(drive);
   }
-}; /* ControlPane_Init */
+} /* ControlPane_Init */
 
 
 

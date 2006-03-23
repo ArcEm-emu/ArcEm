@@ -360,7 +360,7 @@
         // One assumes it we managed to select a file then it exists...
         
         // Force the FDC to reload that drive
-        fdc_insert_floppy(mountDrive, [path cString]);
+        FDC_InsertFloppy(mountDrive, [path cString]);
 
         // Now disable the insert menu option and enable the eject menu option
         [menuItemsMount[mountDrive] setEnabled: NO];
@@ -406,7 +406,7 @@
     mountDrive = 0;
 
     // Update the sim
-    fdc_eject_floppy(mountDrive);
+    FDC_EjectFloppy(mountDrive);
     
     // Now disable the insert menu option and enable the eject menu option
     [menuItemsMount[mountDrive] setEnabled: YES];
@@ -422,7 +422,7 @@
     mountDrive = 1;
 
     // Update the sim
-    fdc_eject_floppy(mountDrive);
+    FDC_EjectFloppy(mountDrive);
 
     // Now disable the insert menu option and enable the eject menu option
     [menuItemsMount[mountDrive] setEnabled: YES];
@@ -439,7 +439,7 @@
     mountDrive = 2;
 
     // Update the sim
-    fdc_eject_floppy(mountDrive);
+    FDC_EjectFloppy(mountDrive);
 
     // Now disable the insert menu option and enable the eject menu option
     [menuItemsMount[mountDrive] setEnabled: YES];
@@ -456,7 +456,7 @@
     mountDrive = 3;
 
     // Update the sim
-    fdc_eject_floppy(mountDrive);
+    FDC_EjectFloppy(mountDrive);
 
     // Now disable the insert menu option and enable the eject menu option
     [menuItemsMount[mountDrive] setEnabled: YES];
