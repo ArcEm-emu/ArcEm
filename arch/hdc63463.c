@@ -160,7 +160,6 @@ static void Dump256Block(unsigned char *Data) {
 
 /*---------------------------------------------------------------------------*/
 unsigned int HDC_Regular(ARMul_State *state) {
-  FDC_Regular(state);
 
   if (--HDC.DelayCount) {
     return(0);

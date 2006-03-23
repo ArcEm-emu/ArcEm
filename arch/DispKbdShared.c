@@ -229,6 +229,7 @@ DisplayKbd_Poll(void *data)
 #ifndef SYSTEM_gp2x
   /* Our POLLGAP runs at 125 cycles, HDC (and fdc) want callback at 250 */
   if (discconttog) {
+    FDC_Regular(state);
     HDC_Regular(state);
   }
   discconttog ^= 1;
