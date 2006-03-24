@@ -11,11 +11,13 @@
 	XOS_CLI               = 0x20005
 	XOS_Exit              = 0x20011
 	XOS_Module            = 0x2001e
+	XOS_ReadModeVariable  = 0x20035
 	XOS_ReadMonotonicTime = 0x20042
 	XWimp_Initialise = 0x600c0
 	XWimp_CreateIcon = 0x600c2
 	XWimp_CloseDown  = 0x600dd
 	XWimp_PollIdle   = 0x600e1
+	XWimp_SpriteOp   = 0x600e9
 
 	Module_Enter = 2
 	Module_Claim = 6
@@ -27,6 +29,10 @@
 	Service_StartFiler        = 0x4b
 	Service_StartedFiler      = 0x4c
 	Service_FilerDying        = 0x4f
+
+	SpriteOp_ReadSpriteInfo = 40
+
+	ModeVariable_YEig = 5
 
 	WIMP_VERSION = 300
 
@@ -63,7 +69,7 @@ title:
 	.string	"ArcEmHostFSFiler"
 
 help:
-	.string	"HostFSFiler\t0.01 (07 Mar 2006)"
+	.string	"HostFSFiler\t0.02 (24 Mar 2006)"
 	.align
 
 
@@ -231,7 +237,7 @@ icon_bar_block:
 	.int	0		@ Minimum X
 	.int	-16		@ Minimum Y
 	.int	96		@ Maximum X
-	.int	60		@ Maximum Y
+	.int	20		@ Maximum Y (excludes Sprite - added later)
 	.int	0x1700310b	@ Flags (includes Indirected Text and Sprite)
 	.int	0		@ Gap for pointer to Text
 	.int	0		@ Gap for pointer to Validation String
@@ -241,7 +247,9 @@ icon_bar_text:
 	.string	"HostFS"
 
 icon_bar_validation:
-	.string	"Sharddisc"
+	.ascii	"S"		@ Unterminated - continues below...
+icon_bar_icon_name:
+	.string	"harddisc"
 
 	.align
 
@@ -278,6 +286,19 @@ start:
 	adr	r9, icon_bar_validation
 	stmia	r1, {r2-r10}
 
+	@ Calculate size of Icon Bar Icon
+	mov	r0, #SpriteOp_ReadSpriteInfo
+	adr	r2, icon_bar_icon_name
+	swi	XWimp_SpriteOp
+	movvc	r0, r6
+	movvc	r1, #ModeVariable_YEig
+	swivc	XOS_ReadModeVariable
+	bvs	close_down
+
+	@ Add sprite height to Maximum Y of icon's Bounding Box
+	ldr	r0, [r12, #WS_ICON_BAR_BLOCK + 16]
+	add	r0, r0, r4, lsl r2	@ += Pixels << YEig
+	str	r0, [r12, #WS_ICON_BAR_BLOCK + 16]
 
 	@ Create Icon on Icon Bar
 	mov	r0, #0x78000000		@ Priority higher than ADFS Hard Disc
