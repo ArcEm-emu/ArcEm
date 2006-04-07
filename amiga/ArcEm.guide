@@ -1,0 +1,51 @@
+@database ArcEm.guide
+@wordwrap
+
+@node Main "ArcEm"
+ArcEm 1.10+CVS
+==============
+
+ArcEm is a GPL emulator for Acorn Archimedes computers.  This guide contains notes pertaining only to the AmigaOS port, the general documentation should be referenced in all other cases.
+
+PLEASE NOTE THAT THIS IS A PORT OF A CVS SNAPSHOT AND THEREFORE VERY MUCH "WORK IN PROGRESS".
+
+@{"Usage" link usage}
+@{"Tooltypes" link tooltypes}
+@{"Known bugs" link bugs} and other things to be aware of
+@{"Contact" link contact}
+
+@{"Bonus!" link Bonus}
+
+@endnode
+
+@node Usage
+Pressing the LAmiga key while the emulator is running will give you options to quit the emulator or change the disk image present in drive 0.
+@endnode
+
+@node Tooltypes
+The Amiga version can use tooltypes in place of command line switches, they follow the same rules.  A list of command line options can be found by typing "ArcEm --help".
+
+Additionally, there is a tooltype ST506DISC which allows you to specify one ".arcemrc" config line.
+@endnode
+
+@node bugs "Known bugs/issues"
+There is no error output when run from Workbench - if it doesn't work, launch it from the Shell and see what it says.  You need a ROM image called "ROM" and the included hexcmos file for ArcEm to start up at all.
+
+There is no sound yet.
+
+The mouse pointer image does not refresh very often.
+
+ArcEm always opens an 8-bit screen even if the emulation requests a lower depth.
+
+Occasionally ArcEm will crash on exit (unable to find reproducable test case as yet).
+
+Some keys produce unexpected characters within the emulation.  This isn't actually a bug - it is not ArcEm's job to remap the user's keyboard, it is up to RISC OS to map the keyboard correctly in the first place.  I have employed a direct Amiga rawkey -> Archimedes key mapping based on key position only (with few exceptions).  If some keys are in unexpected places, I have included Acorn's !IKHG in the hostfs directory which should allow you to remap them.
+@endnode
+
+@node Contact
+For information and bug reports relating to the Amiga version, please contact Chris Young <chris@unsatisfactorysoftware.co.uk>
+@endnode
+
+@node Bonus
+As a special treat, I've included an Amiga pointer preset in the classic (pre-newlook) RISC OS style.
+@endnode
