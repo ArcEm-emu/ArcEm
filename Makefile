@@ -93,6 +93,17 @@ INCS = armdefs.h armemu.h armfpe.h armopts.h armos.h \
 
 TARGET=arcem
 
+ifeq (${SYSTEM},amiga)
+HOST_BIGENDIAN=yes
+HOSTFS_SUPPORT=yes
+EXTNROM_SUPPORT=yes
+SOUND_SUPPORT=no
+SRCS += amiga/wb.c
+OBJS += amiga/wb.o
+CFLAGS += -mcrt=newlib
+LDFLAGS += -mcrt=newlib
+endif
+
 ifeq (${SYSTEM},gp2x)
 CC=arm-linux-gcc
 LD=$(CC)

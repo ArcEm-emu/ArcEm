@@ -44,6 +44,7 @@ static int rdi_state = 0;
 /* Signal handler that terminates excecution in the ARMulator */
 /**************************************************************/
 #ifndef WIN32
+#ifndef AMIGA
 static void dagstandalone_handlesignal(int sig) {
 #ifdef DEBUG
   fprintf(stderr, "Terminate ARMulator - excecution\n");
@@ -59,7 +60,7 @@ static void dagstandalone_handlesignal(int sig) {
   armul_rdi.info(RDISignal_Stop, NULL, NULL);
 }
 #endif
-
+#endif
 
 /* Functions to be called by the emulator core - based on gdbhost.* */
 static void myprint(void *arg,const char *format, va_list ap) {
@@ -113,12 +114,14 @@ static char *mygets(void *arg, char *buffer, int len) {
   ARMword RegVals[] = { 0 }; /* PC - reset*/
   
 #ifndef WIN32
+#ifndef AMIGA
   /* Setup a signal handler for SIGUSR1 */
   action.sa_handler = dagstandalone_handlesignal;
   sigemptyset (&action.sa_mask);
   action.sa_flags = 0;
   
   sigaction(SIGUSR1, &action, (struct sigaction *) 0);
+#endif
 #endif
 
   config.processor = ARM2;

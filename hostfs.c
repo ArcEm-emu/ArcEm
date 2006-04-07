@@ -22,6 +22,10 @@
 
 typedef int bool;
 
+#ifdef AMIGA
+#include <sys/syslimits.h>
+#endif
+
 #define true  ((bool) 1)
 #define false ((bool) 0)
 
@@ -502,6 +506,7 @@ hostfs_path_scan(const char *host_dir_path,
 {
   DIR *d;
   struct dirent *entry;
+	long c;
 
   assert(host_dir_path && object);
   assert(host_name);
@@ -536,6 +541,13 @@ hostfs_path_scan(const char *host_dir_path,
     strcat(entry_path, entry->d_name);
 
     hostfs_read_object_info(entry_path, ro_leaf, object_info);
+
+	/* Tom Walker's fix for . <-> / translation */
+        for (c=0;c<strlen(ro_leaf);c++)
+        {
+                if (ro_leaf[c]=='/')
+                   ro_leaf[c]='.';
+        }
 
     /* Ignore entries we can not read information about,
        or which are neither regular files or directories */
