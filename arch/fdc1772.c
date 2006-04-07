@@ -1018,6 +1018,14 @@ FDC_EjectFloppy(int drive)
 
   dr = FDC.drive + drive;
 
+/* assert(NULL) crashes ArcEm on the Amiga, this gives us a quick clean exit
+   from FDC_EjectFloppy when no disc is present */
+  if (!dr->fp) {
+    fprintf(stderr, "no disc in floppy drive %d: %s\n",
+            drive, strerror(errno));
+	return(NULL);
+  }
+
   assert(dr->fp);
 
   if (fclose(dr->fp)) {

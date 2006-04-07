@@ -19,6 +19,10 @@
 #include "ArcemConfig.h"
 #include "Version.h"
 
+#ifdef AMIGA
+#include <workbench/startup.h>
+#endif
+
 // Local functions
 static char *arcemconfig_StringDuplicate(const char *sInput);
 
@@ -110,6 +114,10 @@ void ArcemConfig_ParseCommandLine(int argc, char *argv[])
   // No commandline arguments?
   if(0 == argc) {
     // There should always be at least 1, the program name
+#ifdef AMIGA
+// Unless we are launching from Workbench...
+	wblaunch((struct WBStartup *)argv);
+#endif
     return;
   }
 

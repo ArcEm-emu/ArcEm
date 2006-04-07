@@ -32,6 +32,10 @@ int ReadConfigFile(ARMul_State *state) {
   nameConf = _strdup("arcemrc");
 #else
 
+#ifdef AMIGA
+  nameConf = (char *)&".arcemrc";
+#else
+
   if (HomeVar==NULL) {
     fprintf(stderr,"Couldn't read $HOME and thus couldn't load config file\n");
     return 0;
@@ -47,6 +51,7 @@ int ReadConfigFile(ARMul_State *state) {
 #else
   sprintf(nameConf, "%s/arcem/arcemrc", HomeVar);
 #endif /* !MACOSX */
+#endif /* AMIGA */
 #endif
 
   if (fConf = fopen(nameConf, "r"), fConf==NULL) {

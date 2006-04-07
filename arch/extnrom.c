@@ -25,6 +25,10 @@
 #include "extnrom.h"
 #include "ArcemConfig.h"
 
+#ifdef AMIGA
+#include <sys/syslimits.h>
+#endif
+
 #define PRODUCT_TYPE_EXTENSION_ROM 0x0087 /* Allocated type for Extension Roms */
 #define MANUFACTURER_CODE 0x0000 /* Any 16-bit value suitable, 0 = Acorn */
 #define COUNTRY_CODE 0x00 /* In most recent docs, all countries should be 0 */
