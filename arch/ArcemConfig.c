@@ -65,7 +65,11 @@ void ArcemConfig_SetupDefaults(void)
 
 #if defined(HOSTFS_SUPPORT)
   // The default directory is hostfs in the current working directory
+#ifdef AMIGA
+  hArcemConfig.sHostFSDirectory = arcemconfig_StringDuplicate("hostfs");
+#else
   hArcemConfig.sHostFSDirectory = arcemconfig_StringDuplicate("./hostfs");
+#endif
   // If we've run out of memory this early, something is very wrong
   if(NULL == hArcemConfig.sHostFSDirectory) {
     fprintf(stderr, "Failed to allocate memory for initial configuration. Please free up more memory.\n");
