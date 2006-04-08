@@ -652,8 +652,7 @@ static void refreshmouse(ARMul_State *state) {
   VertPos -= (signed int)VIDC.Vert_DisplayStart;
 
   if (Height < 1) Height = 1;
-  if (VertPos < 0) VertPos = 0;
-
+  if (VertPos < 1) VertPos = 1; // was 0 - quick fix for window deactivation bug
 
 struct IBox ibox;
 
