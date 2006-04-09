@@ -175,7 +175,6 @@ struct ArcKeyTrans transTable[]={
   {VK_NUMPAD5,4,9},{VK_NUMPAD6,4,10},{VK_ADD,4,11},
   /* {VK_LSHIFT,4,12}, */ {VK_SHIFT,4,12},{VK_Z,4,14},{VK_X,4,15},
 
-
   {VK_C,5,0},{VK_V,5,1},{VK_B,5,2},{VK_N,5,3},{VK_M,5,4},
   {0xBC,5,5},{0xBE,5,6},
   {0xBF,5,7},
