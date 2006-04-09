@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include "win.h"
 #include "gui.h"
+#include "armdefs.h"
+#include "arch/keyboard.h"
 
 #define MonitorWidth 800
 #define MonitorHeight 600
@@ -145,59 +147,57 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 //
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	int wmId, wmEvent;
-	PAINTSTRUCT ps;
-	HDC hdc;
+  int wmId, wmEvent;
+  PAINTSTRUCT ps;
+  HDC hdc;
+
+  switch (message) 
+  {
+    case WM_COMMAND:
+      wmId    = LOWORD(wParam); 
+      wmEvent = HIWORD(wParam); 
+      // Parse the menu selections:
+      switch (wmId)
+      {
+        case IDM_ABOUT:
+          DialogBox(hInst, (LPCTSTR)IDD_ABOUTBOX, hWnd, (DLGPROC)AboutDlgProc);
+          break;
+        case IDM_COPY:
+          break;
+        case IDM_EXIT:
+          DestroyWindow(hWnd);
+          exit(0);
+          break;
+        default:
+          return DefWindowProc(hWnd, message, wParam, lParam);
+      }
+      break;
+
+    case WM_PAINT: {
+      HDC hsrc;
+      HDC hsrc1;
+
+      hdc = BeginPaint(hWnd, &ps);
+
+      hsrc = CreateCompatibleDC(hdc);
+      SelectObject(hsrc, hbmp);
+      BitBlt(hdc, 0, 0, xSize, ySize, hsrc, 0, 0, SRCCOPY);
+      DeleteDC(hsrc);
+
+      hsrc1=CreateCompatibleDC(hdc);
+      SelectObject(hsrc1, cbmp);
+      BitBlt(hdc, rMouseX, rMouseY, 32, rMouseHeight, hsrc1, 0, 0, SRCCOPY);
+      DeleteDC(hsrc1);
+
+      EndPaint(hWnd, &ps);
+		}
+		break;
 
 
-	switch (message) 
-	{
-		case WM_COMMAND:
-			wmId    = LOWORD(wParam); 
-			wmEvent = HIWORD(wParam); 
-			// Parse the menu selections:
-			switch (wmId)
-			{
-				case IDM_ABOUT:
-				   DialogBox(hInst, (LPCTSTR)IDD_ABOUTBOX, hWnd, (DLGPROC)AboutDlgProc);
-				   break;
-				case IDM_COPY:
-				   break;
-				case IDM_EXIT:
-        			   DestroyWindow(hWnd);
-        			   exit(0);
-				   break;
-				default:
-				   return DefWindowProc(hWnd, message, wParam, lParam);
-			}
-			break;
-
-
-		case WM_PAINT: {
-			HDC hsrc;
-			HDC hsrc1;
-
-			hdc = BeginPaint(hWnd, &ps);
-
-			hsrc = CreateCompatibleDC(hdc);
-			SelectObject(hsrc, hbmp);
-			BitBlt(hdc, 0, 0, xSize, ySize, hsrc, 0, 0, SRCCOPY);
-			DeleteDC(hsrc);
-
-			hsrc1=CreateCompatibleDC(hdc);
-			SelectObject(hsrc1, cbmp);
-			BitBlt(hdc, rMouseX, rMouseY, 32, rMouseHeight, hsrc1, 0, 0, SRCCOPY);
-			DeleteDC(hsrc1);
-
-			EndPaint(hWnd, &ps);
-			}
-			break;
-
-
-		case WM_DESTROY:
-			PostQuitMessage(0);
-			exit(0);
-			break;
+    case WM_DESTROY:
+      PostQuitMessage(0);
+      exit(0);
+      break;
 
 
 		case WM_KEYDOWN:
@@ -288,6 +288,25 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			buttF = 1;
 			break;
 
+    case 0x020A: //WM_MOUSEWHEEL:
+      {
+        int iMouseWheelValue = wParam;
+  
+        // You can tell whether it's up or down by checking it's
+        // positive or negative, to work out the extent you use
+        // HIWORD(wParam), but we don't need that.
+
+        if(iMouseWheelValue > 0) {
+          // Fire our fake button_4 wheelup event, this'll get picked up
+          // by the scrollwheel module in RISC OS
+          keyboard_key_changed(&KBD, ARCH_KEY_button_4, 1);
+        } else if(iMouseWheelValue < 0) {
+          // Fire our fake button_5 wheeldown event, this'll get picked up
+          // by the scrollwheel module in RISC OS
+          keyboard_key_changed(&KBD, ARCH_KEY_button_5, 1);
+        }
+      }
+      break;
 
 		case WM_SETCURSOR:
 
