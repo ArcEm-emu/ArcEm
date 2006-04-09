@@ -1269,10 +1269,10 @@ static void ProcessButton(ARMul_State *state, XButtonEvent *button)
     case Button3:
       kid = ARCH_KEY_button_3;
       break;
-    case Button4:
+    case Button4: // Mousewheel up
       kid = ARCH_KEY_button_4;
       break;
-    case Button5:
+    case Button5: // Mousewheel down
       kid = ARCH_KEY_button_5;
       break;
     default:
