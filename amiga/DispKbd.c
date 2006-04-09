@@ -113,9 +113,8 @@ void ChangeDisplayMode(ARMul_State *state,long width,long height,int vidcdepth)
 		return;
 	}
 
-	/* We have to force an Amiga screen depth of 8 otherwise the emulator crashes
-		when it tries to switch to an 8 bit mode...
-        This is a temporary workaround  until the bug is located. */
+	/* We have to force an Amiga screen depth of 8 otherwise we get strange problems when changing modes within the emulator... (!Lander opens a 20Hz screen, for example)
+        This is a temporary workaround until the bug is located. */
 	depth = 8;
 
 	/* Call BestModeID() to hopefully stop crazy screenmodes */
@@ -375,7 +374,6 @@ static void DoPixelMap_Standard(ARMul_State *state,int colours) {
 
 //  DC.MustRedraw = 1;
 
-
   for(c=0;c<colours;c++) {
     tmp.red=(VIDC.Palette[c] & 15)<<28; //12
     tmp.green=((VIDC.Palette[c]>>4) & 15)<<28;
@@ -409,6 +407,9 @@ static void DoPixelMap_256(ARMul_State *state) {
   ULONG c;
 
   if (!DC.MustResetPalette || !screen) return;
+
+// This mostly fixes the Amiga screen depth < 8 crashing bug, but some problems remain.
+	if(olddepth<8) return;
 
   // Don't need to redraw to change the palette on a palette-mapped screen
  // DC.MustRedraw = 1;
@@ -633,70 +634,46 @@ RefreshDisplay(ARMul_State *state)
 /*-----------------------------------------------------------------------------*/
 /* Refresh the mouse pointer image                                                */
 static void refreshmouse(ARMul_State *state) {
-	static int mcount;
   int x,y,height,offset, pix;
   int memptr;
   unsigned short *ImgPtr;
   int HorizPos = (int)VIDC.Horiz_CursorStart - (int)VIDC.Horiz_DisplayStart*2;
   int Height = (int)VIDC.Vert_CursorEnd - (int)VIDC.Vert_CursorStart +1;
   int VertPos;
-/*
-	long oldpdata[8];
-	long *longptr, *oldlongptr = &oldpdata;
-	int pchg = 0;
-*/
 
 	if(!window) return;
+
+	if(!mouseptr.BitMap)
+	{
+		mouseptr.BitMap = IGraphics->AllocBitMap(32,32,2,BMF_DISPLAYABLE | BMF_CLEAR | BMF_INTERLEAVED,NULL);
+
+		mouseobj = IIntuition->NewObject(NULL,"pointerclass",POINTERA_BitMap,mouseptr.BitMap,POINTERA_WordWidth,8,POINTERA_XOffset,0,POINTERA_YOffset,0,POINTERA_XResolution,POINTERXRESN_SCREENRES,POINTERA_YResolution,POINTERYRESN_SCREENRESASPECT,TAG_DONE);
+	}
 
   VertPos = (int)VIDC.Vert_CursorStart;
   VertPos -= (signed int)VIDC.Vert_DisplayStart;
 
   if (Height < 1) Height = 1;
-  if (VertPos < 1) VertPos = 1; // was 0 - quick fix for window deactivation bug
+  if (VertPos < 0) VertPos = 0;
 
 struct IBox ibox;
 
-ibox.Left = HorizPos + 20;
+/* Acorn screen goes down to -22 which causes flickering in the first 22 pixels down the left hand side of the screen.  If we adjust HorizPos and POINTERA_XOffset by 22 and -22 respectively, the pointer doesn't even visibly move into that left hand column.  Leaving the flickering solution for now as that is preferable. */
+
+ibox.Left = HorizPos;
 ibox.Top = VertPos;
-ibox.Width = 0;
-ibox.Height = 0;
+ibox.Width = 1;
+ibox.Height = 1;
 
 IIntuition->SetWindowAttrs(window,WA_MouseLimits,&ibox,TAG_DONE);
 									//WA_GrabFocus,1,TAG_DONE);
-
-/* this stops the pointer being refreshed all the time, which causes flickering
-	and slows everything down.  Ideally we need to check whether the pointer imagery
-    has changed and update the Amiga pointer if it has. */
-
-	if(mcount<100)
-	{
-		mcount++;
-		return;
-	}
-
-	mcount=0;
-
-
-/*
-  longptr=HD.CursorImageData;
-
-  for(y=0;y<8;y++)
-	{
-		if(longptr[y] != oldlongptr[y])
-		{
-			oldlongptr[y] = longptr[y];
-			pchg = 1;
-		}
-	}
-
-	if(pchg == 0) return;
-*/
 
   offset=0;
   memptr=MEMC.Cinit*16;
   height=(VIDC.Vert_CursorEnd-VIDC.Vert_CursorStart)+1;
   ImgPtr=(unsigned short *) HD.CursorImageData;
-  for(y=0;y<height;y++,memptr+=8,offset+=8) {
+  for(y=0;y<32;y++,memptr+=8,offset+=8) {
+// fixed height to 32
 
     if (offset<512*1024) {
       ARMword tmp[2];
@@ -705,23 +682,24 @@ IIntuition->SetWindowAttrs(window,WA_MouseLimits,&ibox,TAG_DONE);
       tmp[1]=MEMC.PhysRam[memptr/4+1];
 
       for(x=0;x<32;x++,ImgPtr++) {
-        pix = ((tmp[x/16]>>((x & 15)*2)) & 3);
 
-	if(!mouseptr.BitMap)
-	{
-		mouseptr.BitMap = IGraphics->AllocBitMap(32,32,2,BMF_DISPLAYABLE | BMF_CLEAR | BMF_INTERLEAVED,NULL);
-
-		mouseobj = IIntuition->NewObject(NULL,"pointerclass",POINTERA_BitMap,mouseptr.BitMap,POINTERA_XOffset,-21,POINTERA_YOffset,0,POINTERA_WordWidth,8,POINTERA_XResolution,POINTERXRESN_SCREENRES,POINTERA_YResolution,POINTERYRESN_SCREENRESASPECT,TAG_DONE);
-
-	}
+		if(y<height)
+		{
+        	pix = ((tmp[x/16]>>((x & 15)*2)) & 3);
+		}
+		else
+		{
+			pix = 0;
+		}
 
 	writepixel(&mouseptr,pix,x,y);
-
-	IIntuition->SetWindowPointer(window,WA_Pointer,mouseobj,WA_PointerDelay,TRUE,TAG_DONE);
 
       }; /* x */
     } else return;
   }; /* y */
+
+	IIntuition->SetWindowPointer(window,WA_Pointer,mouseobj,TAG_DONE);
+
 }; /* RefreshMouse */
 
 void
