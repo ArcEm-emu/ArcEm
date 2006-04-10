@@ -33,8 +33,6 @@ There is no error output when run from Workbench - if it doesn't work, launch it
 
 There is no sound yet.
 
-The mouse pointer image does not refresh very often.
-
 ArcEm always opens an 8-bit screen even if the emulation requests a lower depth.
 
 Occasionally ArcEm will crash on exit (unable to find reproducable test case as yet).
