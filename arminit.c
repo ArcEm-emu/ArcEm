@@ -190,6 +190,9 @@ void ARMul_Abort(ARMul_State *state, ARMword vector) {
       if ((GetWord(ARMul_GetPC(state) - 8) & 0xfdffc0) == ARCEM_SWI_CHUNK) {
         switch (GetWord(ARMul_GetPC(state) - 8) & 0xfdffff) {
         case ARCEM_SWI_SHUTDOWN:
+#ifdef AMIGA
+          cleanup();
+#endif
           exit(statestr.Reg[0] & 0xff);
           break;
         case ARCEM_SWI_DEBUG:
