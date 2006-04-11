@@ -162,7 +162,7 @@ void ChangeDisplayMode(ARMul_State *state,long width,long height,int vidcdepth)
 					WA_WindowName,"ArcEm",
 					WA_ReportMouse,TRUE,
 					WA_MouseQueue,500,
-					WA_IDCMP,IDCMP_MOUSEBUTTONS | IDCMP_MOUSEMOVE | IDCMP_RAWKEY | IDCMP_DELTAMOVE,
+					WA_IDCMP,IDCMP_MOUSEBUTTONS | IDCMP_MOUSEMOVE | IDCMP_RAWKEY | IDCMP_DELTAMOVE | IDCMP_EXTENDEDMOUSE,
 					TAG_DONE);
 	}
 
@@ -226,6 +226,21 @@ void cleanup(void)
 	exit(0);
 }
 
+void MouseMoved(int xdiff,int ydiff)
+{
+				if (xdiff > 63)
+    				xdiff=63;
+  				if (xdiff < -63)
+    				xdiff=-63;
+	  			if (ydiff>63)
+    				ydiff=63;
+  				if (ydiff<-63)
+    				ydiff=-63;
+
+	  			KBD.MouseXCount = xdiff & 127;
+  				KBD.MouseYCount = -ydiff & 127;
+}
+
 int
 DisplayKbd_PollHost(ARMul_State *state)
 {
@@ -233,49 +248,63 @@ DisplayKbd_PollHost(ARMul_State *state)
 	char *err = NULL;
 	STRPTR filename = NULL;
 	int res,keyup,key;
-
+	struct IntuiWheelData *wheel = NULL;
 	if(!port) return(0);
 
 	while((msg=(struct IntuiMessage *)IExec->GetMsg(port)))
 	{
+		switch(msg->Class)
+		{
+			case IDCMP_MOUSEBUTTONS:
 
-		if(msg->Class == IDCMP_MOUSEBUTTONS)
-    	{
-			switch(msg->Code)
-			{
-				case SELECTDOWN:
-					keyboard_key_changed(&KBD, ARCH_KEY_button_1,FALSE);
-				break;
+				switch(msg->Code)
+				{
+					case SELECTDOWN:
+						keyboard_key_changed(&KBD, ARCH_KEY_button_1,FALSE);
+					break;
 
-				case SELECTUP:
-					keyboard_key_changed(&KBD, ARCH_KEY_button_1,TRUE);
-				break;
+					case SELECTUP:
+						keyboard_key_changed(&KBD, ARCH_KEY_button_1,TRUE);
+					break;
 
-				case MENUDOWN:
-					keyboard_key_changed(&KBD, ARCH_KEY_button_3,FALSE);
-				break;
+					case MENUDOWN:
+						keyboard_key_changed(&KBD, ARCH_KEY_button_3,FALSE);
+					break;
 
-				case MENUUP:
-					keyboard_key_changed(&KBD, ARCH_KEY_button_3,TRUE);
-				break;
+					case MENUUP:
+						keyboard_key_changed(&KBD, ARCH_KEY_button_3,TRUE);
+					break;
 
-				case MIDDLEDOWN:
-					keyboard_key_changed(&KBD, ARCH_KEY_button_2,FALSE);
-				break;
+					case MIDDLEDOWN:
+						keyboard_key_changed(&KBD, ARCH_KEY_button_2,FALSE);
+					break;
 
-				case MIDDLEUP:
-					keyboard_key_changed(&KBD, ARCH_KEY_button_2,TRUE);
-				break;
-			}
+					case MIDDLEUP:
+						keyboard_key_changed(&KBD, ARCH_KEY_button_2,TRUE);
+					break;
+				}
+			break;
 
-	    }
+			case IDCMP_EXTENDEDMOUSE:
 
-		if(msg->Class == IDCMP_RAWKEY)
-    	{
-			switch(msg->Code)
-			{
-				case 0x66: // left amiga
-					res = IDOS->TimedDosRequesterTags(TDR_Timeout,30,
+				if(msg->Code == IMSGCODE_INTUIWHEELDATA)
+				{
+					wheel = (struct IntuiWheelData *)msg->IAddress;
+
+					if(wheel->WheelY < 0)
+						keyboard_key_changed(&KBD, ARCH_KEY_button_4,TRUE);
+
+					if(wheel->WheelY > 0)
+						keyboard_key_changed(&KBD, ARCH_KEY_button_5,TRUE);
+				}
+			break;
+
+			case IDCMP_RAWKEY:
+
+				switch(msg->Code)
+				{
+					case 0x66: // left amiga
+						res = IDOS->TimedDosRequesterTags(TDR_Timeout,30,
 							TDR_Window,window,
 							TDR_ImageType,TDRIMAGE_QUESTION,
 							TDR_FormatString,"Select an option",
@@ -283,78 +312,61 @@ DisplayKbd_PollHost(ARMul_State *state)
 							TDR_GadgetString,"Change Floppy|Exit|Quit",
 							TAG_DONE);
 
-					switch(res)
-					{
-						case 1:
-							FDC_EjectFloppy(0);
+						switch(res)
+						{
+							case 1:
+								FDC_EjectFloppy(0);
 
-							if(IAsl->AslRequestTags(filereq,ASLFR_Screen,screen,TAG_DONE))
-							{
-								filename = (STRPTR)IExec->AllocVec(1024,MEMF_CLEAR);
-								strcpy(filename,filereq->fr_Drawer);	
-								IDOS->AddPart(filename,filereq->fr_File,1024);
-
-								err = FDC_InsertFloppy(0,filename);
-
-								IExec->FreeVec(filename);
-
-								if(err)
+								if(IAsl->AslRequestTags(filereq,ASLFR_Screen,screen,TAG_DONE))
 								{
-									IDOS->TimedDosRequesterTags(TDR_Timeout,30,
-									TDR_Window,window,
-									TDR_ImageType,TDRIMAGE_ERROR,
-									TDR_FormatString,err,
-									TDR_TitleString,"ArcEm",
-									TDR_GadgetString,"OK",
-									TAG_DONE);
+									filename = (STRPTR)IExec->AllocVec(1024,MEMF_CLEAR);
+									strcpy(filename,filereq->fr_Drawer);	
+									IDOS->AddPart(filename,filereq->fr_File,1024);
+
+									err = FDC_InsertFloppy(0,filename);
+									IExec->FreeVec(filename);
+
+									if(err)
+									{
+										IDOS->TimedDosRequesterTags(TDR_Timeout,30,
+										TDR_Window,window,
+										TDR_ImageType,TDRIMAGE_ERROR,
+										TDR_FormatString,err,
+										TDR_TitleString,"ArcEm",
+										TDR_GadgetString,"OK",
+										TAG_DONE);
+									}
 								}
-							}
-						break;
+							break;
 
-						case 0:
-							cleanup();
-						break;
-					}
-				break;
+							case 0:
+								cleanup();
+							break;
+						}
+					break;
 
-				default:
-					if(msg->Code >= 0x80)
-					{
-						key = msg->Code - 0x80;
-						keyup = TRUE;
-					}
-					else
-					{
-						key = msg->Code;
-						keyup = FALSE;
-					}
+					default:
+						if(msg->Code >= 0x80)
+						{
+							key = msg->Code - 0x80;
+							keyup = TRUE;
+						}
+						else
+						{
+							key = msg->Code;
+							keyup = FALSE;
+						}
 
-					if(key != -1)
-						keyboard_key_changed(&KBD,amirawkey[key],keyup);
-				break;
-			}
-    	}
+						if(key != -1)
+							keyboard_key_changed(&KBD,amirawkey[key],keyup);
+					break;
+				}
+    		break;
 
-		if(msg->Class == IDCMP_MOUSEMOVE)
-    	{
-			int VertPos = (int)VIDC.Vert_CursorStart;
-			VertPos -= (signed int)VIDC.Vert_DisplayStart;
-
-			int xdiff = msg->MouseX;
-			int ydiff = msg->MouseY;
-
-			if (xdiff > 63)
-    			xdiff=63;
-  			if (xdiff < -63)
-    			xdiff=-63;
-  			if (ydiff>63)
-    			ydiff=63;
-  			if (ydiff<-63)
-    			ydiff=-63;
-
-  			KBD.MouseXCount = xdiff & 127;
-  			KBD.MouseYCount = -ydiff & 127;
-	    }
+			case IDCMP_MOUSEMOVE:
+				MouseMoved(msg->MouseX,msg->MouseY);
+			break;
+		}
 
 		if(msg) IExec->ReplyMsg((struct Message *)msg);
 	}
@@ -654,7 +666,7 @@ static void refreshmouse(ARMul_State *state) {
   VertPos -= (signed int)VIDC.Vert_DisplayStart;
 
   if (Height < 1) Height = 1;
-  if (VertPos < 0) VertPos = 0;
+  if (VertPos < 1) VertPos = 1;
 
 struct IBox ibox;
 
