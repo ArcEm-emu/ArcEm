@@ -20,6 +20,8 @@ PLEASE NOTE THAT THIS IS A PORT OF A CVS SNAPSHOT AND THEREFORE VERY MUCH "WORK 
 
 @node Usage
 Pressing the LAmiga key while the emulator is running will give you options to quit the emulator or change the disk image present in drive 0.
+
+You can also quit with the command *ArcEm_Shutdown
 @endnode
 
 @node Tooltypes
@@ -29,13 +31,13 @@ Additionally, there is a tooltype ST506DISC which allows you to specify one ".ar
 @endnode
 
 @node bugs "Known bugs/issues"
-There is no error output when run from Workbench - if it doesn't work, launch it from the Shell and see what it says.  You need a ROM image called "ROM" and the included hexcmos file for ArcEm to start up at all.
+There is no error output when run from Workbench - if it doesn't work, launch it from the Shell and see what it says.  You need a ROM image called "ROM" for ArcEm to start up at all.
 
 There is no sound yet.
 
 ArcEm always opens an 8-bit screen even if the emulation requests a lower depth.
 
-Occasionally ArcEm will crash on exit (unable to find reproducable test case as yet).
+Occasionally ArcEm will crash on exit (unable to find reproducable test case as yet - also seems to have been fixed with gcc4 recompile).
 
 Some keys produce unexpected characters within the emulation.  This isn't actually a bug - it is not ArcEm's job to remap the user's keyboard, it is up to RISC OS to map the keyboard correctly in the first place.  I have employed a direct Amiga rawkey -> Archimedes key mapping based on key position only (with few exceptions).  If some keys are in unexpected places, I have included Acorn's !IKHG in the hostfs directory which should allow you to remap them.
 @endnode
