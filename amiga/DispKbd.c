@@ -11,29 +11,9 @@
 #include "platform.h"
 #include "../arch/Version.h"
 
-#include <proto/exec.h>
-#include <proto/dos.h>
-#include <proto/asl.h>
-#include <proto/intuition.h>
-#include <proto/graphics.h>
-//#include <proto/picasso96api.h>
-
 #include <intuition/pointerclass.h>
 #include <dos/dostags.h>
 #include <libraries/keymap.h>
-
-struct Library *ExecBase;
-struct ExecIFace *IExec;
-struct Library *IntuitionBase;
-struct IntuitionIFace *IIntuition;
-//struct Library *P96Base;
-//struct P96IFace *IP96;
-struct Library *GfxBase;
-struct GraphicsIFace *IGraphics;
-struct Library *DOSBase;
-struct DOSIFace *IDOS;
-struct Library *AslBase;
-struct AslIFace *IAsl;
 
 struct Window *window = NULL;
 struct Screen *screen = NULL;
@@ -659,7 +639,7 @@ static void refreshmouse(ARMul_State *state) {
 	{
 		mouseptr.BitMap = IGraphics->AllocBitMap(32,32,2,BMF_DISPLAYABLE | BMF_CLEAR | BMF_INTERLEAVED,NULL);
 
-		mouseobj = IIntuition->NewObject(NULL,"pointerclass",POINTERA_BitMap,mouseptr.BitMap,POINTERA_WordWidth,8,POINTERA_XOffset,0,POINTERA_YOffset,0,POINTERA_XResolution,POINTERXRESN_SCREENRES,POINTERA_YResolution,POINTERYRESN_SCREENRESASPECT,TAG_DONE);
+		mouseobj = IIntuition->NewObject(NULL,"pointerclass",POINTERA_BitMap,mouseptr.BitMap,POINTERA_WordWidth,16,POINTERA_XOffset,0,POINTERA_YOffset,0,POINTERA_XResolution,POINTERXRESN_SCREENRES,POINTERA_YResolution,POINTERYRESN_SCREENRESASPECT,TAG_DONE);
 	}
 
   VertPos = (int)VIDC.Vert_CursorStart;
@@ -741,6 +721,7 @@ DisplayKbd_InitHost(ARMul_State *state)
 		cleanup();
 	}
 
+/* should already be open wb.c
 	if((DOSBase = IExec->OpenLibrary((char *)&"dos.library",51)))
 	{
 		IDOS = (struct DOSIFace *)IExec->GetInterface(DOSBase,(char *)&"main",1,NULL);
@@ -749,6 +730,7 @@ DisplayKbd_InitHost(ARMul_State *state)
 	{
 		cleanup();
 	}
+*/
 
 	if((AslBase = IExec->OpenLibrary((char *)&"asl.library",51)))
 	{

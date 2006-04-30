@@ -4,20 +4,12 @@
  *  need to be merged into this file to enable options to be   *
  *  set by tooltypes.                                          */
 
-#include <proto/dos.h>
-#include <proto/icon.h>
-#include <proto/exec.h>
 #include <workbench/startup.h>
 
 #include <stdio.h>
 
 #include "ArcemConfig.h"
-
-struct Library *DOSBase;
-struct DOSIFace *IDOS;
-struct Library *IconBase;
-struct IconIFace *IIcon;
-struct ExecIFace *IExec;
+#include "platform.h"
 
 void wblaunch(struct WBStartup *);
 void closewblibs(void);
@@ -34,11 +26,13 @@ void closewblibs(void)
 		IExec->CloseLibrary(IconBase);
 	}
 
+/*
 	if(IDOS)
 	{
 		IExec->DropInterface((struct Interface *)IDOS);
 		IExec->CloseLibrary(DOSBase);
 	}
+*/
 }
 
 
