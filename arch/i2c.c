@@ -123,14 +123,10 @@ I2C_SetupTransmit(ARMul_State *state)
       I2C.DataBuffer = BIN2BCD(t2->tm_hour);
       break;
     case 5: /* Year/Date */
-#ifdef AMIGA
-// Amiga time starts 8 years later than UNIX time
-      I2C.DataBuffer = (((t2->tm_year + 1908) & 3) << 6) |
-                       BIN2BCD(t2->tm_mday);
-#else
+
       I2C.DataBuffer = (((t2->tm_year + 1900) & 3) << 6) |
                        BIN2BCD(t2->tm_mday);
-#endif
+
       break;
     case 6: /* Weekday/Month */
       I2C.DataBuffer = (t2->tm_wday << 5) |
