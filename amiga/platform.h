@@ -22,6 +22,8 @@ struct AslIFace *IAsl;
 struct Library *IconBase;
 struct IconIFace *IIcon;
 
+extern void cleanup(void);
+
 struct XColor
 {
 	ULONG red;
