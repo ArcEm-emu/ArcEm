@@ -7,10 +7,9 @@ ArcEm 1.10+CVS
 
 ArcEm is a GPL emulator for Acorn Archimedes computers.  This guide contains notes pertaining only to the AmigaOS port, the general documentation should be referenced in all other cases.
 
-PLEASE NOTE THAT THIS IS A PORT OF A CVS SNAPSHOT AND THEREFORE VERY MUCH "WORK IN PROGRESS".
-
 @{"Usage" link usage}
 @{"Tooltypes" link tooltypes}
+@{"ARexx" link arexx}
 @{"Known bugs" link bugs} and other things to be aware of
 @{"Contact" link contact}
 
@@ -19,9 +18,10 @@ PLEASE NOTE THAT THIS IS A PORT OF A CVS SNAPSHOT AND THEREFORE VERY MUCH "WORK 
 @endnode
 
 @node Usage
-Pressing the LAmiga key while the emulator is running will give you options to quit the emulator or change the disk image present in drive 0.
+Pressing the LAmiga key while the emulator is running will present you with a file requester in which to select an ARexx script.
 
-You can also quit with the command *ArcEm_Shutdown
+You can quit with the command *ArcEm_Shutdown or by executing the quit.arcem ARexx script.
+
 @endnode
 
 @node Tooltypes
@@ -30,14 +30,22 @@ The Amiga version can use tooltypes in place of command line switches, they foll
 Additionally, there is a tooltype ST506DISC which allows you to specify one ".arcemrc" config line.
 @endnode
 
+@node ARexx
+ARexx commands currently implemented:
+
+QUIT: Quits ArcEm
+
+FLOPPY: FLOPPY <n> ejects the disk in drive <n>
+        FLOPPY <n> <file> inserts <file> into drive <n>
+
+@endnode
+
 @node bugs "Known bugs/issues"
 There is no error output when run from Workbench - if it doesn't work, launch it from the Shell and see what it says.  You need a ROM image called "ROM" for ArcEm to start up at all.
 
 There is no sound yet.
 
 ArcEm always opens an 8-bit screen even if the emulation requests a lower depth.
-
-Occasionally ArcEm will crash on exit (unable to find reproducable test case as yet - also seems to have been fixed with gcc4 recompile).
 
 Some keys produce unexpected characters within the emulation.  This isn't actually a bug - it is not ArcEm's job to remap the user's keyboard, it is up to RISC OS to map the keyboard correctly in the first place.  I have employed a direct Amiga rawkey -> Archimedes key mapping based on key position only (with few exceptions).  If some keys are in unexpected places, I have included Acorn's !IKHG in the hostfs directory which should allow you to remap them.
 @endnode
