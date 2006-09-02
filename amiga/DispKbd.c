@@ -10,6 +10,7 @@
 #include "KeyTable.h"
 #include "platform.h"
 #include "../arch/Version.h"
+#include "arexx.h"
 
 #include <intuition/pointerclass.h>
 #include <dos/dostags.h>
@@ -30,18 +31,14 @@ ULONG olddepth = 0;
 ULONG oldMouseX = 0;
 ULONG oldMouseY = 0;
 
-
 //#define HD HOSTDISPLAY
 #define HD HostDisplay
 #define DC DISPLAYCONTROL
-
-
 
 #define KEYREENABLEDELAY 1000
 #define AUTOREFRESHPOLL 2500
 
 void writepixel(struct RastPort *,ULONG,ULONG,ULONG);
-void cleanup(void);
 void ChangeDisplayMode(ARMul_State *,long,long,int);
 void CloseDisplay(void);
 
@@ -178,6 +175,7 @@ void cleanup(void)
 	if(mouseobj)
 		IIntuition->DisposeObject(mouseobj);
 
+	ARexx_Cleanup();
 
 	if(IGraphics)
 	{
@@ -284,44 +282,13 @@ DisplayKbd_PollHost(ARMul_State *state)
 				switch(msg->Code)
 				{
 					case 0x66: // left amiga
-						res = IDOS->TimedDosRequesterTags(TDR_Timeout,30,
-							TDR_Window,window,
-							TDR_ImageType,TDRIMAGE_QUESTION,
-							TDR_FormatString,"Select an option",
-							TDR_TitleString,"ArcEm",
-							TDR_GadgetString,"Change Floppy|Exit|Quit",
-							TAG_DONE);
-
-						switch(res)
+						if(IAsl->AslRequestTags(filereq,ASLFR_Screen,screen,TAG_DONE))
 						{
-							case 1:
-								FDC_EjectFloppy(0);
-
-								if(IAsl->AslRequestTags(filereq,ASLFR_Screen,screen,TAG_DONE))
-								{
-									filename = (STRPTR)IExec->AllocVec(1024,MEMF_CLEAR);
-									strcpy(filename,filereq->fr_Drawer);	
-									IDOS->AddPart(filename,filereq->fr_File,1024);
-
-									err = FDC_InsertFloppy(0,filename);
-									IExec->FreeVec(filename);
-
-									if(err)
-									{
-										IDOS->TimedDosRequesterTags(TDR_Timeout,30,
-										TDR_Window,window,
-										TDR_ImageType,TDRIMAGE_ERROR,
-										TDR_FormatString,err,
-										TDR_TitleString,"ArcEm",
-										TDR_GadgetString,"OK",
-										TAG_DONE);
-									}
-								}
-							break;
-
-							case 0:
-								cleanup();
-							break;
+							filename = (STRPTR)IExec->AllocVec(1024,MEMF_CLEAR);
+							strcpy(filename,filereq->fr_Drawer);	
+							IDOS->AddPart(filename,filereq->fr_File,1024);
+							ARexx_Execute(filename);
+							IExec->FreeVec(filename);
 						}
 					break;
 
@@ -350,6 +317,11 @@ DisplayKbd_PollHost(ARMul_State *state)
 
 		if(msg) IExec->ReplyMsg((struct Message *)msg);
 	}
+
+	ARexx_Handle();
+
+	if(arexx_quit)
+		cleanup();
 
   return 0;
 }
@@ -721,17 +693,6 @@ DisplayKbd_InitHost(ARMul_State *state)
 		cleanup();
 	}
 
-/* should already be open wb.c
-	if((DOSBase = IExec->OpenLibrary((char *)&"dos.library",51)))
-	{
-		IDOS = (struct DOSIFace *)IExec->GetInterface(DOSBase,(char *)&"main",1,NULL);
-	}
-	else
-	{
-		cleanup();
-	}
-*/
-
 	if((AslBase = IExec->OpenLibrary((char *)&"asl.library",51)))
 	{
 		IAsl = (struct AslIFace *)IExec->GetInterface(AslBase,(char *)&"main",1,NULL);
@@ -741,10 +702,17 @@ DisplayKbd_InitHost(ARMul_State *state)
 		cleanup();
 	}
 
+	ARexx_Init();
+
 	IGraphics->InitRastPort(&mouseptr);
 	IGraphics->InitRastPort(&friend);
 
-	filereq = IAsl->AllocAslRequestTags(ASL_FileRequest,ASLFR_RejectIcons,TRUE,TAG_DONE);
+	filereq = IAsl->AllocAslRequestTags(ASL_FileRequest,
+									ASLFR_RejectIcons,TRUE,
+	                             	ASLFR_InitialDrawer,"arexx",
+									ASLFR_InitialPattern,"#?.arcem",
+									ASLFR_DoPatterns,TRUE,
+									TAG_DONE);
 
 /*
 	if(P96Base = IExec->OpenLibrary("Picasso96API.library",0))
