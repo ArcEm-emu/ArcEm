@@ -1,0 +1,7 @@
+/* ArcEm floppy script */
+
+address ARCEM
+
+FLOPPY 0 "files:misc_temp/archie/disks/blank.adf"
+
+
