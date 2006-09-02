@@ -98,8 +98,8 @@ HOST_BIGENDIAN=yes
 HOSTFS_SUPPORT=yes
 EXTNROM_SUPPORT=yes
 SOUND_SUPPORT=no
-SRCS += amiga/wb.c
-OBJS += amiga/wb.o
+SRCS += amiga/wb.c amiga/arexx.c
+OBJS += amiga/wb.o amiga/arexx.o
 CFLAGS += -mcrt=newlib
 LDFLAGS += -mcrt=newlib
 endif
