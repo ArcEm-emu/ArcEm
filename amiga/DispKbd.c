@@ -529,6 +529,11 @@ static void RefreshDisplay_TrueColor_8bpp(ARMul_State *state, int DisplayWidth, 
   unsigned char Buffer[DisplayWidth];
   char *ImgPtr=HD.ImageData;
 
+	struct RastPort tmprp;
+    IExec->CopyMem(&friend,&tmprp,sizeof(struct RastPort));
+    tmprp.Layer = NULL;
+    tmprp.BitMap = IGraphics->AllocBitMap(DisplayWidth,1,8,0,NULL);
+
   /* First configure the colourmap */
   DoPixelMap_256(state);
 
@@ -539,14 +544,14 @@ static void RefreshDisplay_TrueColor_8bpp(ARMul_State *state, int DisplayWidth, 
       if (y>DC.maxy) DC.maxy=y;
       CopyScreenRAM(state,memoffset,DisplayWidth, Buffer);
 
+		IGraphics->WritePixelLine8(&friend,0,y,DisplayWidth,Buffer,&tmprp);
 
-      for(x=0;x<DisplayWidth;x++) {
-		writepixel(&friend,Buffer[x],x,y);
-      }; /* X loop */
     }; /* Refresh test */
   }; /* y */
   DC.MustRedraw=0;
   MarkAsUpdated(state,memoffset);
+  IGraphics->FreeBitMap(tmprp.BitMap);
+
 } /* RefreshDisplay_TrueColor_8bpp */
 
 void
