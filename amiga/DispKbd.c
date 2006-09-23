@@ -23,6 +23,7 @@ static struct RastPort mouseptr;
 APTR mouseobj = NULL;
 struct FileRequester *filereq;
 static struct RastPort friend;
+struct RastPort tmprp;
 
 ULONG oldwidth = 0;
 ULONG oldheight = 0;
@@ -115,6 +116,9 @@ void ChangeDisplayMode(ARMul_State *state,long width,long height,int vidcdepth)
 	if(friend.BitMap)
 		IGraphics->FreeBitMap(friend.BitMap);
 
+	if(tmprp.BitMap)
+  		IGraphics->FreeBitMap(tmprp.BitMap);
+
 	CloseDisplay();
 
 	screen = IIntuition->OpenScreenTags(NULL,SA_Width,width,
@@ -150,6 +154,10 @@ void ChangeDisplayMode(ARMul_State *state,long width,long height,int vidcdepth)
 
 	friend.BitMap = IGraphics->AllocBitMap(width,height,depth,BMF_CLEAR | BMF_DISPLAYABLE | BMF_INTERLEAVED,window->RPort->BitMap);
 
+    IExec->CopyMem(&friend,&tmprp,sizeof(struct RastPort));
+    tmprp.Layer = NULL;
+    tmprp.BitMap = IGraphics->AllocBitMap(width,1,depth,0,NULL);
+
 	/* Completely new screen and window, so we have to set the palette and redraw the display */
 
 	DC.MustRedraw = 1;
@@ -162,6 +170,10 @@ void ChangeDisplayMode(ARMul_State *state,long width,long height,int vidcdepth)
 
 void cleanup(void)
 {
+#ifdef SOUND_SUPPORT
+	sound_exit();
+#endif
+
 	IGraphics->WaitBlit();
 
 	if(mouseptr.BitMap)
@@ -169,6 +181,9 @@ void cleanup(void)
 
 	if(friend.BitMap)
 		IGraphics->FreeBitMap(friend.BitMap);
+
+	if(tmprp.BitMap)
+  		IGraphics->FreeBitMap(tmprp.BitMap);
 
 	CloseDisplay();
 
@@ -409,21 +424,13 @@ static void DoPixelMap_256(ARMul_State *state) {
   DC.MustResetPalette=0;
 }; /* DoPixelMap_256 */
 
-
-/*-----------------------------------------------------------------------------*/
-
-void writepixel(struct RastPort *rastport,ULONG colour,ULONG x, ULONG y)
-{
-		IGraphics->SetAPen(rastport,colour);
-		IGraphics->WritePixel(rastport,x,y);
-}
-
 /*-----------------------------------------------------------------------------*/
 static void RefreshDisplay_TrueColor_1bpp(ARMul_State *state, int DisplayWidth, int DisplayHeight)
 {
   int x,y,memoffset;
   char Buffer[DisplayWidth / 8];
   char *ImgPtr = HD.ImageData;
+	UBYTE line[DisplayWidth];
 
   /* First configure the colourmap */
 //	if(DC.MustResetPalette)
@@ -440,16 +447,16 @@ static void RefreshDisplay_TrueColor_1bpp(ARMul_State *state, int DisplayWidth, 
       for(x=0;x<DisplayWidth;x+=8) {
         int pixel = Buffer[x>>3];
 
-		writepixel(&friend,(pixel) &1,x,y);
-		writepixel(&friend,(pixel>>1) &1,x+1,y);
-		writepixel(&friend,(pixel>>2) &1,x+2,y);
-		writepixel(&friend,(pixel>>3) &1,x+3,y);
-		writepixel(&friend,(pixel>>4) &1,x+4,y);
-		writepixel(&friend,(pixel>>5) &1,x+5,y);
-		writepixel(&friend,(pixel>>6) &1,x+6,y);
-		writepixel(&friend,(pixel>>7) &1,x+7,y);
-
+		line[x] = (pixel) &1;
+		line[x+1] = (pixel>>1) &1;
+		line[x+2] = (pixel>>2) &1;
+		line[x+3] = (pixel>>3) &1;
+		line[x+4] = (pixel>>4) &1;
+		line[x+5] = (pixel>>5) &1;
+		line[x+6] = (pixel>>6) &1;
+		line[x+7] = (pixel>>7) &1;
       }; /* x */
+	IGraphics->WritePixelLine8(&friend,0,y,DisplayWidth,line,&tmprp);
     }; /* Refresh test */
   }; /* y */
   DC.MustRedraw=0;
@@ -463,6 +470,7 @@ static void RefreshDisplay_TrueColor_2bpp(ARMul_State *state, int DisplayWidth, 
   int x,y,memoffset;
   char Buffer[DisplayWidth/4];
   char *ImgPtr=HD.ImageData;
+	UBYTE line[DisplayWidth];
 
   /* First configure the colourmap */
 //	if(DC.MustResetPalette)
@@ -479,12 +487,13 @@ static void RefreshDisplay_TrueColor_2bpp(ARMul_State *state, int DisplayWidth, 
       for(x=0;x<DisplayWidth;x+=4) {
         int pixel = Buffer[x>>2];
 
-		writepixel(&friend,(pixel) &3,x,y);
-		writepixel(&friend,(pixel>>2) &3,x+1,y);
-		writepixel(&friend,(pixel>>4) &3,x+2,y);
-		writepixel(&friend,(pixel>>6) &3,x+3,y);
+		line[x] = (pixel) &3;
+		line[x+1] = (pixel>>2) &3;
+		line[x+2] = (pixel>>4) &3;
+		line[x+3] = (pixel>>6) &3;
 
       }; /* x */
+	IGraphics->WritePixelLine8(&friend,0,y,DisplayWidth,line,&tmprp);
     }; /* Update test */
   }; /* y */
   DC.MustRedraw=0;
@@ -496,6 +505,7 @@ static void RefreshDisplay_TrueColor_4bpp(ARMul_State *state, int DisplayWidth, 
   int x,y,memoffset;
   char Buffer[DisplayWidth/2];
   char *ImgPtr=HD.ImageData;
+	UBYTE line[DisplayWidth];
 
   /* First configure the colourmap */
 //	if(DC.MustResetPalette)
@@ -512,10 +522,12 @@ static void RefreshDisplay_TrueColor_4bpp(ARMul_State *state, int DisplayWidth, 
 
     int pixel = Buffer[x>>1];
 
-	writepixel(&friend,pixel &15,x,y);
-	writepixel(&friend,(pixel>>4) &15,x+1,y);
+	line[x] = pixel &15;
+	line[x+1] = (pixel>>4) &15;
 
       }; /* x */
+	IGraphics->WritePixelLine8(&friend,0,y,DisplayWidth,line,&tmprp);
+
     }; /* Refresh test */
   }; /* y */
   DC.MustRedraw=0;
@@ -529,10 +541,6 @@ static void RefreshDisplay_TrueColor_8bpp(ARMul_State *state, int DisplayWidth, 
   unsigned char Buffer[DisplayWidth];
   char *ImgPtr=HD.ImageData;
 
-	struct RastPort tmprp;
-    IExec->CopyMem(&friend,&tmprp,sizeof(struct RastPort));
-    tmprp.Layer = NULL;
-    tmprp.BitMap = IGraphics->AllocBitMap(DisplayWidth,1,8,0,NULL);
 
   /* First configure the colourmap */
   DoPixelMap_256(state);
@@ -550,7 +558,6 @@ static void RefreshDisplay_TrueColor_8bpp(ARMul_State *state, int DisplayWidth, 
   }; /* y */
   DC.MustRedraw=0;
   MarkAsUpdated(state,memoffset);
-  IGraphics->FreeBitMap(tmprp.BitMap);
 
 } /* RefreshDisplay_TrueColor_8bpp */
 
@@ -609,6 +616,7 @@ static void refreshmouse(ARMul_State *state) {
   int HorizPos = (int)VIDC.Horiz_CursorStart - (int)VIDC.Horiz_DisplayStart*2;
   int Height = (int)VIDC.Vert_CursorEnd - (int)VIDC.Vert_CursorStart +1;
   int VertPos;
+	UBYTE line[32];
 
 	if(!window) return;
 
@@ -654,16 +662,15 @@ IIntuition->SetWindowAttrs(window,WA_MouseLimits,&ibox,TAG_DONE);
 
 		if(y<height)
 		{
-        	pix = ((tmp[x/16]>>((x & 15)*2)) & 3);
+        	line[x] = ((tmp[x/16]>>((x & 15)*2)) & 3);
 		}
 		else
 		{
-			pix = 0;
+			line[x] = 0;
 		}
-
-	writepixel(&mouseptr,pix,x,y);
-
       }; /* x */
+
+		IGraphics->WritePixelLine8(&mouseptr,0,y,32,line,&tmprp);
     } else return;
   }; /* y */
 
