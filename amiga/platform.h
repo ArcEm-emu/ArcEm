@@ -5,6 +5,7 @@
 #include <proto/asl.h>
 #include <proto/intuition.h>
 #include <proto/graphics.h>
+#include <proto/utility.h>
 //#include <proto/picasso96api.h>
 
 struct Library *ExecBase;
@@ -21,8 +22,11 @@ struct Library *AslBase;
 struct AslIFace *IAsl;
 struct Library *IconBase;
 struct IconIFace *IIcon;
+struct Library *UtilityBase;
+struct UtilityIFace *IUtility;
 
 extern void cleanup(void);
+extern void sound_exit(void);
 
 struct XColor
 {
