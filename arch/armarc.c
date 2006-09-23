@@ -68,7 +68,7 @@ struct MEMCStruct memc;
 #ifdef SOUND_SUPPORT
 static SoundData soundTable[256];
 static double channelAmount[8][2];
-static unsigned int numberOfChannels;
+static unsigned int numberOfChannels = 0;
 #endif
 
 /*-----------------------------------------------------------------------------*/
@@ -1193,23 +1193,23 @@ int
 SoundDMAFetch(SoundData *buffer)
 {
   int i;
-
   if ((MEMC.ControlReg & (1 << 11)) == 0) {
     return 1;
   }
+
+  if(numberOfChannels==0)
+    SoundUpdateStereoImage();
 
   for (i = 0; i < 16; i += numberOfChannels) {
     int j;
     double leftTotal = 0;
     double rightTotal = 0;
-
     for (j = 0; j < numberOfChannels; j++) {
       unsigned char val = ((unsigned char *) (MEMC.PhysRam + (MEMC.Sptr / sizeof(ARMword))))[i + j];
 
       leftTotal  += (signed short int) soundTable[val] * channelAmount[j][0];
       rightTotal += (signed short int) soundTable[val] * channelAmount[j][1];
     }
-
     buffer[2 * i]       = (SoundData) leftTotal;
     buffer[(2 * i) + 1] = (SoundData) rightTotal;
   }
