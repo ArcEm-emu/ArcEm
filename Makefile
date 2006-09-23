@@ -97,11 +97,15 @@ ifeq (${SYSTEM},amiga)
 HOST_BIGENDIAN=yes
 HOSTFS_SUPPORT=yes
 EXTNROM_SUPPORT=yes
-SOUND_SUPPORT=no
+SOUND_SUPPORT=yes
 SRCS += amiga/wb.c amiga/arexx.c
 OBJS += amiga/wb.o amiga/arexx.o
 CFLAGS += -mcrt=newlib
 LDFLAGS += -mcrt=newlib
+# The following two lines are for Altivec support via libfreevec
+# Uncomment them if you are using a G4 or other PPC with Altivec
+# CFLAGS += -maltivec -mabi=altivec
+# LDFLAGS += -maltivec -mabi=altivec -lfreevec
 endif
 
 ifeq (${SYSTEM},gp2x)
