@@ -26,6 +26,9 @@ EXTNROM_SUPPORT=yes
 # Sound support - currently experimental - to enable set to 'yes'
 SOUND_SUPPORT=no
 
+# Enable this if sound support uses pthreads
+SOUND_PTHREAD=yes
+
 # HostFS support - currently experimental - to enable set to 'yes'
 HOSTFS_SUPPORT=yes
 
@@ -98,14 +101,15 @@ HOST_BIGENDIAN=yes
 HOSTFS_SUPPORT=yes
 EXTNROM_SUPPORT=yes
 SOUND_SUPPORT=yes
+SOUND_PTHREAD=no
 SRCS += amiga/wb.c amiga/arexx.c
 OBJS += amiga/wb.o amiga/arexx.o
 CFLAGS += -mcrt=newlib
 LDFLAGS += -mcrt=newlib
 # The following two lines are for Altivec support via libfreevec
 # Uncomment them if you are using a G4 or other PPC with Altivec
-# CFLAGS += -maltivec -mabi=altivec
-# LDFLAGS += -maltivec -mabi=altivec -lfreevec
+CFLAGS += -maltivec -mabi=altivec
+LDFLAGS += -maltivec -mabi=altivec -lfreevec
 endif
 
 ifeq (${SYSTEM},gp2x)
@@ -153,8 +157,10 @@ endif
 ifeq (${SOUND_SUPPORT},yes)
 CFLAGS += -DSOUND_SUPPORT
 OBJS += $(SYSTEM)/sound.o
-LIBS += -lpthread
 INCS += arch/sound.h
+ifeq (${SOUND_PTHREAD},yes)
+LIBS += -lpthread
+endif
 endif
 
 ifeq (${HOSTFS_SUPPORT},yes)

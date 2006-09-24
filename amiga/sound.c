@@ -1,120 +1,41 @@
+/* Amiga sound support routines
+ * by Chris Young chris@unsatisfactorysoftware.co.uk
+ *
+ * This just writes all sound direct to AUDIO: and lets
+ * that take care of any buffering.
+ */
+
 #include "platform.h"
-
-#include <stdio.h>
-#include <stdlib.h>
-
-#include "pthread.h"
-
 #include "../armdefs.h"
 #include "../arch/sound.h"
 
 BPTR audioh = 0;
 
-//static unsigned long format = AFMT_S16_LE;
-static unsigned long channels = 2;
-/*static unsigned long bits = 16;*/
 static unsigned long sampleRate = 44100;
-
-static unsigned long bufferSize = 0;
-
-/*static unsigned long numberGot = 0;*/
-
-static unsigned long bufferRead = 0;
-static unsigned long bufferWrite = 0;
-
-/* This is how many 16 byte blocks to get before leaving
- * sound_poll to return to the emulator */
-static unsigned long blocksAtATime = 1;
-/* This is how many 16 byte blocks should be collected before
- * calling write(), so this controls the size of the buffer. */
-static unsigned long numberOfFills = 100;
+static unsigned long bufferSize = 64;
 
 /* This is the size of the gap between sound_poll doing something. */
-static unsigned long delayTotal = 5;
+static unsigned long delayTotal = 5; // 100
 static unsigned long delayProgress = 0;
 
-//static int soundDevice;
 static SoundData *buffer = NULL;
-
-static pthread_t thread;
-static pthread_mutex_t mut = PTHREAD_MUTEX_INITIALIZER;
-static pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
-
 
 void
 sound_poll(void)
 {
-  static unsigned long localBufferWrite = 0;
+  delayProgress++;
+  if (delayProgress >= delayTotal)
+	{
+	    delayProgress = 0;
 
-delayProgress++;
-  if (delayProgress >= delayTotal) {
-    int i;
+	      if (SoundDMAFetch(buffer) == 1)
+			{
+        		return;
+      		}
 
-    /*bufferWrite = (numberGot + i) * 16 * 2);*/
-
-    for (i = 0; i < blocksAtATime; i++) {
-      /* *Important*, you must respect whether sound dma
-       * is enabled or not at all times otherwise sound
-       * will come out wrong.
-       */
-      /*if( SoundDMAFetch(buffer + ((numberGot + i) * 16 * 2)) == 1 ) return; */
-
-      if (SoundDMAFetch(buffer+ localBufferWrite) == 1) {
-        return;
-      }
+		IDOS->Write(audioh,buffer,64);
 
     }
-
-    localBufferWrite += (blocksAtATime * 16 * 2);
-    if (localBufferWrite >= (bufferSize / sizeof(SoundData))) {
-      localBufferWrite = 0;
-    }
-
-    if (pthread_mutex_trylock(&mut) == 0) {
-      bufferWrite = localBufferWrite;
-
-      pthread_mutex_unlock(&mut);
-      pthread_cond_broadcast(&cond);
-    } 
-
-    delayProgress = 0;
-  }
-}
-
-static void *
-sound_writeThread(void *arg)
-{
-//	printf("audio: sound_writethread\n");
-  for (;;) {
-    int y;
-//	printf("audio: ^^\n");
-
-    pthread_mutex_lock(&mut); //
-    y = bufferWrite;
-    pthread_mutex_unlock(&mut);
-
-    if (bufferRead != y) {
-      if (y < bufferRead) {
-        y = bufferSize / sizeof(SoundData);
-      }
-
-	IDOS->Write(audioh,buffer+bufferRead,(y-bufferRead)*sizeof(SoundData));
-
-      bufferRead = y;
-      if (bufferRead >= (bufferSize / sizeof(SoundData))) {
-        bufferRead = 0;
-      }
-    }
-
-else {
-      pthread_mutex_lock(&mut); //
-      pthread_cond_wait(&cond, &mut);
-      pthread_mutex_unlock(&mut);
-    }
-
-  }
-
-  return NULL;
 }
 
 int openaudio(void)
@@ -128,7 +49,7 @@ int openaudio(void)
     		fprintf(stderr, "Could not open audio: device\n");
     		return -1;
 		}
-	IExec->FreeVec(audiof);
+		IExec->FreeVec(audiof);
 	}
 	else
 	{
@@ -153,17 +74,11 @@ sound_init(void)
 	if(openaudio() == -1)
 		return -1;
 
-  bufferSize = numberOfFills * 16 * 2 * sizeof(SoundData);
-
-//printf("%ld\n",bufferSize);
-
   buffer = IExec->AllocVec(bufferSize,MEMF_CLEAR);
   if (!buffer) {
     fprintf(stderr, "sound_init(): Out of memory\n");
     exit(EXIT_FAILURE);
   }
-
-  pthread_create(&thread, NULL, sound_writeThread, 0);
 
   return 0;
 }
