@@ -106,6 +106,8 @@ STATIC VOID rx_floppy(struct ARexxCmd *cmd, struct RexxMsg *rxm __attribute__((u
 	long drv = 0;
 	char *err;
 
+	drv = *(long *)cmd->ac_ArgList[0];
+
 	FDC_EjectFloppy(drv);
 
 	if(cmd->ac_ArgList[1])
