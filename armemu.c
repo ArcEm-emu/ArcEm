@@ -654,7 +654,11 @@ GetDPSRegRHS(ARMul_State *state, ARMword instr)
        base = statestr.Reg[base];
     shamt = BITS(7,11);
     switch ((int)BITS(5,6)) {
-       case LSL: ASSIGNC((base >> (32-shamt)) & 1);
+       case LSL:
+                  /* BUGFIX: This copes with the case when base = R15 and shamt = 0 
+                     from Patrick (Adapted Cat) */
+                    if (shamt)
+                      ASSIGNC((base >> (32-shamt)) & 1);
                   return(base << shamt);
        case LSR: if (shamt == 0) {
                      ASSIGNC(base >> 31);
