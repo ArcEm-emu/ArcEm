@@ -176,8 +176,20 @@ void cleanup(void)
 
 	IGraphics->WaitBlit();
 
+	if(mouseobj)
+	{
+		IIntuition->SetWindowPointer(window,TAG_DONE);
+		IIntuition->DisposeObject(mouseobj);
+	}
+
 	if(mouseptr.BitMap)
-		IGraphics->FreeBitMap(mouseptr.BitMap);
+	{
+		IGraphics->FreeRaster(mouseptr.BitMap->Planes[0],32,32);
+		IGraphics->FreeRaster(mouseptr.BitMap->Planes[1],32,32);
+		IExec->FreeVec(mouseptr.BitMap);
+//		IGraphics->FreeBitMap(mouseptr.BitMap);
+		mouseptr.BitMap=NULL;
+	}
 
 	if(friend.BitMap)
 		IGraphics->FreeBitMap(friend.BitMap);
@@ -186,9 +198,6 @@ void cleanup(void)
   		IGraphics->FreeBitMap(tmprp.BitMap);
 
 	CloseDisplay();
-
-	if(mouseobj)
-		IIntuition->DisposeObject(mouseobj);
 
 	ARexx_Cleanup();
 
@@ -622,10 +631,15 @@ static void refreshmouse(ARMul_State *state) {
 
 	if(!mouseptr.BitMap)
 	{
-		mouseptr.BitMap = IGraphics->AllocBitMap(32,32,2,BMF_DISPLAYABLE | BMF_CLEAR | BMF_INTERLEAVED,NULL);
+		mouseptr.BitMap=IExec->AllocVec(sizeof(struct BitMap),MEMF_CLEAR);
+		IGraphics->InitBitMap(mouseptr.BitMap,2,32,32);
+		mouseptr.BitMap->Planes[0] = IGraphics->AllocRaster(32,32);
+		mouseptr.BitMap->Planes[1] = IGraphics->AllocRaster(32,32);
 
-		mouseobj = IIntuition->NewObject(NULL,"pointerclass",POINTERA_BitMap,mouseptr.BitMap,POINTERA_WordWidth,16,POINTERA_XOffset,0,POINTERA_YOffset,0,POINTERA_XResolution,POINTERXRESN_SCREENRES,POINTERA_YResolution,POINTERYRESN_SCREENRESASPECT,TAG_DONE);
+//		mouseptr.BitMap = IGraphics->AllocBitMap(32,32,2,BMF_DISPLAYABLE | BMF_CLEAR | BMF_INTERLEAVED,NULL);
+		mouseobj = IIntuition->NewObject(NULL,"pointerclass",POINTERA_BitMap,mouseptr.BitMap,POINTERA_WordWidth,2,POINTERA_XOffset,0,POINTERA_YOffset,0,POINTERA_XResolution,POINTERXRESN_SCREENRES,POINTERA_YResolution,POINTERYRESN_SCREENRESASPECT,TAG_DONE);
 	}
+
 
   VertPos = (int)VIDC.Vert_CursorStart;
   VertPos -= (signed int)VIDC.Vert_DisplayStart;
@@ -663,18 +677,25 @@ IIntuition->SetWindowAttrs(window,WA_MouseLimits,&ibox,TAG_DONE);
 		if(y<height)
 		{
         	line[x] = ((tmp[x/16]>>((x & 15)*2)) & 3);
+//printf("%ld ",line[x]);
 		}
 		else
 		{
 			line[x] = 0;
 		}
       }; /* x */
-
+//printf("\n");
 		IGraphics->WritePixelLine8(&mouseptr,0,y,32,line,&tmprp);
     } else return;
   }; /* y */
 
 	IIntuition->SetWindowPointer(window,WA_Pointer,mouseobj,TAG_DONE);
+
+/*
+	IGraphics->BltBitMap(mouseptr.BitMap,0,0,
+			window->RPort->BitMap,HorizPos,VertPos,
+			32,height,0x0C0,0xff,NULL);
+*/
 
 }; /* RefreshMouse */
 
