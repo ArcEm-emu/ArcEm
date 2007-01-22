@@ -7,6 +7,7 @@ ArcEm 1.10+CVS
 
 ArcEm is a GPL emulator for Acorn Archimedes computers.  This guide contains notes pertaining only to the AmigaOS port, the general documentation should be referenced in all other cases.
 
+@{"Requirements" link require}
 @{"Usage" link usage}
 @{"Tooltypes" link tooltypes}
 @{"ARexx" link arexx}
@@ -14,7 +15,12 @@ ArcEm is a GPL emulator for Acorn Archimedes computers.  This guide contains not
 @{"Contact" link contact}
 
 @{"Bonus!" link Bonus}
+@{"Icons" link Icons}
 
+@endnode
+
+@node require "Requirements"
+ArcEm for AmigaOS requires OS4 and the AUDIO: device to be mounted.  You also need a suitable ROM image called "ROM" in ArcEm's directory.
 @endnode
 
 @node Usage
@@ -43,8 +49,6 @@ FLOPPY: FLOPPY <n> ejects the disk in drive <n>
 @node bugs "Known bugs/issues"
 There is no error output when run from Workbench - if it doesn't work, launch it from the Shell and see what it says.  You need a ROM image called "ROM" for ArcEm to start up at all.
 
-There is no sound yet.
-
 ArcEm always opens an 8-bit screen even if the emulation requests a lower depth.
 
 Some keys produce unexpected characters within the emulation.  This isn't actually a bug - it is not ArcEm's job to remap the user's keyboard, it is up to RISC OS to map the keyboard correctly in the first place.  I have employed a direct Amiga rawkey -> Archimedes key mapping based on key position only (with few exceptions).  If some keys are in unexpected places, I have included Acorn's !IKHG in the hostfs directory which should allow you to remap them.
@@ -56,4 +60,8 @@ For information and bug reports relating to the Amiga version, please contact Ch
 
 @node Bonus
 As a special treat, I've included an Amiga pointer preset in the classic (pre-newlook) RISC OS style.
+@endnode
+
+@node Icons
+The 32-bit icons included in the ArcEm archive were designed by Martin "Mason" Merz, http://www.masonicons.de
 @endnode
