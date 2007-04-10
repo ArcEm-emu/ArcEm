@@ -15,6 +15,8 @@
 #include <intuition/pointerclass.h>
 #include <dos/dostags.h>
 #include <libraries/keymap.h>
+#include <devices/input.h>
+#include <devices/inputevent.h>
 
 struct Window *window = NULL;
 struct Screen *screen = NULL;
@@ -24,6 +26,9 @@ APTR mouseobj = NULL;
 struct FileRequester *filereq;
 static struct RastPort friend;
 struct RastPort tmprp;
+
+struct IOStdReq *ir;
+struct MsgPort *mport;
 
 ULONG oldwidth = 0;
 ULONG oldheight = 0;
@@ -200,6 +205,14 @@ void cleanup(void)
 	CloseDisplay();
 
 	ARexx_Cleanup();
+
+/* input.device cleanup
+	if(ir)
+		IExec->FreeSysObject(ASOT_IOREQUEST,ir);
+
+	if(mport)
+		IExec->FreeSysObject(ASOT_PORT,mport);
+*/
 
 	if(IGraphics)
 	{
@@ -628,6 +641,7 @@ static void refreshmouse(ARMul_State *state) {
 	UBYTE line[32];
 
 	if(!window) return;
+	if(!screen) return;
 
 	if(!mouseptr.BitMap)
 	{
@@ -637,7 +651,7 @@ static void refreshmouse(ARMul_State *state) {
 		mouseptr.BitMap->Planes[1] = IGraphics->AllocRaster(32,32);
 
 //		mouseptr.BitMap = IGraphics->AllocBitMap(32,32,2,BMF_DISPLAYABLE | BMF_CLEAR | BMF_INTERLEAVED,NULL);
-		mouseobj = IIntuition->NewObject(NULL,"pointerclass",POINTERA_BitMap,mouseptr.BitMap,POINTERA_WordWidth,2,POINTERA_XOffset,0,POINTERA_YOffset,0,POINTERA_XResolution,POINTERXRESN_SCREENRES,POINTERA_YResolution,POINTERYRESN_SCREENRESASPECT,TAG_DONE);
+		mouseobj = IIntuition->NewObject(NULL,"pointerclass",POINTERA_BitMap,mouseptr.BitMap,POINTERA_WordWidth,2,POINTERA_XOffset,-22,POINTERA_YOffset,0,POINTERA_XResolution,POINTERXRESN_SCREENRES,POINTERA_YResolution,POINTERYRESN_SCREENRESASPECT,TAG_DONE);
 	}
 
 
@@ -649,9 +663,12 @@ static void refreshmouse(ARMul_State *state) {
 
 struct IBox ibox;
 
-/* Acorn screen goes down to -22 which causes flickering in the first 22 pixels down the left hand side of the screen.  If we adjust HorizPos and POINTERA_XOffset by 22 and -22 respectively, the pointer doesn't even visibly move into that left hand column.  Leaving the flickering solution for now as that is preferable. */
+/* Acorn screen goes down to -22 which causes flickering in the first 22 pixels down the left hand side of the screen.  If we adjust HorizPos and POINTERA_XOffset by 22 and -22 respectively, the pointer doesn't even visibly move into that left hand column.
 
-ibox.Left = HorizPos;
+This seems to be an AmigaOS issue, as it still happens with the ibox stuff disabled.
+I'm wondering whether the pointer change does not immediately recognise the XOffset. */
+
+ibox.Left = HorizPos+22;
 ibox.Top = VertPos;
 ibox.Width = 1;
 ibox.Height = 1;
@@ -659,6 +676,38 @@ ibox.Height = 1;
 IIntuition->SetWindowAttrs(window,WA_MouseLimits,&ibox,TAG_DONE);
 									//WA_GrabFocus,1,TAG_DONE);
 
+/* Snippet of mouse positioning code by Andy Broad
+In our situation, it doesn't work very well, leaving code here just in case but
+not using it at present.
+
+	if(!IExec->OpenDevice(INPUTNAME,0,ir,0))
+	{
+		struct InputEvent ie;
+		struct IEPointerPixel pp;
+
+		ir->io_Command = IND_WRITEEVENT;
+		ir->io_Length = sizeof(struct InputEvent);
+		ir->io_Data = &ie;
+
+		ie.ie_NextEvent = NULL;
+		ie.ie_Class = IECLASS_NEWPOINTERPOS;
+		ie.ie_SubClass = IESUBCLASS_PIXEL;
+		ie.ie_Code = 0;
+		ie.ie_Qualifier = 0; //IEQUALIFIER_RELATIVEMOUSE;;
+		ie.ie_EventAddress = &pp;
+
+		pp.iepp_Screen = screen;
+		pp.iepp_Position.X = HorizPos+22;
+		pp.iepp_Position.Y = VertPos;
+
+//IExec->DebugPrintF("%ld,%ld,%ld\n",HorizPos+22,VertPos,VIDC.Horiz_CursorStart);
+
+		IExec->DoIO(ir);
+	
+		IExec->CloseDevice(ir);
+	}
+
+*/
   offset=0;
   memptr=MEMC.Cinit*16;
   height=(VIDC.Vert_CursorEnd-VIDC.Vert_CursorStart)+1;
@@ -734,6 +783,24 @@ DisplayKbd_InitHost(ARMul_State *state)
 	{
 		cleanup();
 	}
+
+/* input.device related code
+	if((mport = IExec->AllocSysObjectTags(ASOT_PORT,ASO_NoTrack,FALSE,TAG_DONE)))
+	{
+		if((ir = IExec->AllocSysObjectTags(ASOT_IOREQUEST,ASO_NoTrack,FALSE,ASOIOR_ReplyPort,mport,ASOIOR_Size,sizeof(struct IOStdReq))))
+		{
+
+		}
+		else
+		{
+			cleanup();
+		}
+	}
+	else
+	{
+		cleanup();
+	}
+*/
 
 	ARexx_Init();
 
