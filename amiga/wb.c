@@ -11,6 +11,8 @@
 #include "ArcemConfig.h"
 #include "platform.h"
 
+int force8bit=0;
+
 void wblaunch(struct WBStartup *);
 void closewblibs(void);
 void gettooltypes(struct WBArg *);
@@ -131,6 +133,8 @@ void gettooltypes(struct WBArg *wbarg)
 		         hArcemConfig.eProcessor = Processor_ARM3;
 
 		}
+
+		if(IIcon->FindToolType(toolarray,"FORCE8BIT")) force8bit=1;
 
 		/* This code implements ReadConfig.c via tooltypes - it searches for
 			ST506DISC, but it will only support 1 line atm.
