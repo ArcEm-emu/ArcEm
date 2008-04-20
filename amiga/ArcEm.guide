@@ -34,6 +34,8 @@ You can quit with the command *ArcEm_Shutdown or by executing the quit.arcem ARe
 The Amiga version can use tooltypes in place of command line switches, they follow the same rules.  A list of command line options can be found by typing "ArcEm --help".
 
 Additionally, there is a tooltype ST506DISC which allows you to specify one ".arcemrc" config line.
+
+FORCE8BIT: Force ArcEm to only open 8-bit screens.  This potentially avoids some screen closing/opening and monitor resyncing, but may use more memory or be slower especially on planar configurations.
 @endnode
 
 @node ARexx
