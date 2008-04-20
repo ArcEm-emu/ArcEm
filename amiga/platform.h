@@ -6,6 +6,7 @@
 #include <proto/intuition.h>
 #include <proto/graphics.h>
 #include <proto/utility.h>
+//#include <proto/input.h>
 //#include <proto/picasso96api.h>
 
 struct Library *ExecBase;
@@ -24,6 +25,9 @@ struct Library *IconBase;
 struct IconIFace *IIcon;
 struct Library *UtilityBase;
 struct UtilityIFace *IUtility;
+//struct Device *inputdevice;
+
+extern int force8bit;
 
 extern void cleanup(void);
 extern void sound_exit(void);
