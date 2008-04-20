@@ -30,6 +30,7 @@ struct RastPort tmprp;
 struct IOStdReq *ir;
 struct MsgPort *mport;
 
+ULONG oldid=INVALID_ID;
 ULONG oldwidth = 0;
 ULONG oldheight = 0;
 ULONG olddepth = 0;
@@ -96,9 +97,10 @@ void ChangeDisplayMode(ARMul_State *state,long width,long height,int vidcdepth)
 		return;
 	}
 
-	/* We have to force an Amiga screen depth of 8 otherwise we get strange problems when changing modes within the emulator... (!Lander opens a 20Hz screen, for example)
-        This is a temporary workaround until the bug is located. */
-	depth = 8;
+	/* This forces ArcEm to use an 8-bit Intuition screen, which avoids unnecessary
+       screen opening/closing.  However, it is likely to be slower or less memory
+       efficient, especially on planar display hardware. */
+	if(force8bit) depth = 8;
 
 	/* Call BestModeID() to hopefully stop crazy screenmodes */
 	id = IGraphics->BestModeID(BIDTAG_NominalWidth,width,
@@ -131,7 +133,8 @@ void ChangeDisplayMode(ARMul_State *state,long width,long height,int vidcdepth)
 											SA_Depth,depth,
 											SA_Quiet,TRUE,
 											SA_ShowTitle,FALSE,
-											SA_Type,CUSTOMSCREEN,
+//											SA_Type,CUSTOMSCREEN,
+											SA_PubName,"ArcEm",
 											SA_DisplayID,id,
 											TAG_DONE);
 
@@ -171,6 +174,7 @@ void ChangeDisplayMode(ARMul_State *state,long width,long height,int vidcdepth)
 	oldheight = height;
 	oldwidth = width;
 	olddepth = depth;
+	oldid=id;
 }
 
 void cleanup(void)
@@ -1046,6 +1050,7 @@ void VIDC_PutVal(ARMul_State *state,ARMword address, ARMword data,int bNw)
       fprintf(stderr,"VIDC Control register val=0x%x\n",val);
 #endif
       VideoRelUpdateAndForce(DC.MustRedraw,VIDC.ControlReg,val & 0xffff);
+	ChangeDisplayMode(state,(VIDC.Horiz_DisplayEnd-VIDC.Horiz_DisplayStart)*2,VIDC.Vert_DisplayEnd-VIDC.Vert_DisplayStart,(VIDC.ControlReg & 0xc)>>2);
       break;
 
     default:
