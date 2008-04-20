@@ -108,8 +108,8 @@ CFLAGS += -mcrt=newlib
 LDFLAGS += -mcrt=newlib
 # The following two lines are for Altivec support via libfreevec
 # Uncomment them if you are using a G4 or other PPC with Altivec
-CFLAGS += -maltivec -mabi=altivec
-LDFLAGS += -maltivec -mabi=altivec -lfreevec
+#CFLAGS += -maltivec -mabi=altivec
+#LDFLAGS += -maltivec -mabi=altivec -lfreevec
 endif
 
 ifeq (${SYSTEM},gp2x)
