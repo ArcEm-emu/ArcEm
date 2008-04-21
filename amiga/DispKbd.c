@@ -322,15 +322,16 @@ DisplayKbd_PollHost(ARMul_State *state)
 
 				switch(msg->Code)
 				{
-					case 0x66: // left amiga
-						if(IAsl->AslRequestTags(filereq,ASLFR_Screen,screen,TAG_DONE))
-						{
-							filename = (STRPTR)IExec->AllocVec(1024,MEMF_CLEAR);
-							strcpy(filename,filereq->fr_Drawer);	
-							IDOS->AddPart(filename,filereq->fr_File,1024);
-							ARexx_Execute(filename);
-							IExec->FreeVec(filename);
-						}
+
+					case 0x67:
+					{
+						BPTR *in,*out;
+
+						in = IDOS->Open("NIL:",MODE_OLDFILE);
+						out = IDOS->Open("NIL:",MODE_NEWFILE);
+
+						IDOS->SystemTags("arcempanel",SYS_Asynch,TRUE,SYS_Input,in,SYS_Output,out,TAG_DONE);
+					}
 					break;
 
 					default:
