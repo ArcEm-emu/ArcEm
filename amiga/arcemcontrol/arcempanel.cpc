@@ -1,0 +1,30 @@
+PanelName:ArcEm Control
+PortName:ARCEMPANEL
+ScreenName:ArcEm
+ButtonNum:4
+ColumnNum:2
+/*Button01*/
+Name:Insert Floppy 0
+Port:ARCEM
+Command:FLOPPY 0 
+Requester:file
+/*Button02*/
+Name:Eject Floppy 0
+Port:ARCEM
+Command:FLOPPY 0
+Requester:none
+/*Button03*/
+Name:Quit ArcEm
+Port:ARCEM
+Command:QUIT
+Requester:none
+/*Button04*/
+Name:ARexx script
+Port:DOS
+Command:rx 
+Requester:file
+//
+/*Column01*/
+Order:1|2
+/*Column02*/
+Order:4|3
