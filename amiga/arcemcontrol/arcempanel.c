@@ -17,6 +17,8 @@
 #define GAD_BU2 2
 #define GAD_BU3 3
 #define GAD_BU4 4
+#define GAD_BU5 5
+#define GAD_BU6 6
 
 enum
 {
@@ -117,13 +119,21 @@ int main(void)
 			WINDOW_Position, WPOS_CENTERSCREEN,
 			WINDOW_ParentGroup, LayoutObject,
 			LAYOUT_AddChild,  VLayoutObject,
-				LAYOUT_AddChild, Button("Insert Floppy 0", GAD_BU1),
-				LAYOUT_AddChild, Button("Eject Floppy 0", GAD_BU2),
+				LAYOUT_Label, "Drive 0",
+				LAYOUT_AddChild, Button("Insert Disc", GAD_BU1),
+				LAYOUT_AddChild, Button("Eject Disc", GAD_BU2),
 			End,
 			CHILD_WeightedHeight,0,
 			LAYOUT_AddChild,  VLayoutObject,
-				LAYOUT_AddChild, Button("ARexx script", GAD_BU4),
-				LAYOUT_AddChild, Button("Quit ArcEm", GAD_BU3),
+				LAYOUT_Label, "Drive 1",
+				LAYOUT_AddChild, Button("Insert Disc", GAD_BU5),
+				LAYOUT_AddChild, Button("Eject Disc", GAD_BU6),
+			End,
+			CHILD_WeightedHeight,0,
+			LAYOUT_AddChild,  VLayoutObject,
+				LAYOUT_Label, " ",
+				LAYOUT_AddChild, Button("ARexx", GAD_BU4),
+				LAYOUT_AddChild, Button("Quit", GAD_BU3),
 			End,
 			CHILD_WeightedHeight,0,
 		LayoutEnd,
@@ -210,6 +220,25 @@ int main(void)
 												IExec->FreeVec(temp);
 											}
 											break;
+										case GAD_BU5:
+											if(buf = IExec->AllocVec(1024,MEMF_CLEAR))
+											{
+												amiga_file_request(buf);
+												temp = IUtility->ASPrintf("FLOPPY 1  \"%s\"",buf);
+												IExec->FreeVec(buf);
+												IIntuition->IDoMethod(arexx_obj, AM_EXECUTE, temp, "ARCEM", NULL, NULL, NULL, NULL);
+												IExec->FreeVec(temp);
+											}
+											break;
+										case GAD_BU6:
+											if(buf = IExec->AllocVec(1024,MEMF_CLEAR))
+											{
+												temp = IUtility->ASPrintf("FLOPPY 1",buf);
+												IExec->FreeVec(buf);
+												IIntuition->IDoMethod(arexx_obj, AM_EXECUTE, temp, "ARCEM", NULL, NULL, NULL, NULL);
+												IExec->FreeVec(temp);
+											}
+											break;
 									}
 									break;
 
@@ -247,7 +276,6 @@ STATIC VOID reply_callback(struct Hook *hook __attribute__((unused)), Object *o 
 }
 STATIC VOID rexx_quit( struct ARexxCmd *ac, struct RexxMsg *rxm __attribute__((unused)))
 {
-
 	running = FALSE;
 }
 
