@@ -24,7 +24,7 @@ ArcEm for AmigaOS requires OS4 and the AUDIO: device to be mounted.  You also ne
 @endnode
 
 @node Usage
-Pressing the LAmiga key while the emulator is running will present you with a file requester in which to select an ARexx script.
+Pressing the RAmiga key while the emulator is running will present you with a small GUI to change floppy disks, quit the emulator or run ARexx scripts.
 
 You can quit with the command *ArcEm_Shutdown or by executing the quit.arcem ARexx script.
 
