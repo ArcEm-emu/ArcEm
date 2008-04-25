@@ -55,7 +55,9 @@ void CloseDisplay(void)
 		IIntuition->CloseWindow(window);
 
 	if(screen)
-		IIntuition->CloseScreen(screen);
+	{
+		while(!IIntuition->CloseScreen(screen));
+	}
 
 	window = NULL;
 	screen = NULL;
@@ -154,9 +156,15 @@ void ChangeDisplayMode(ARMul_State *state,long width,long height,int vidcdepth)
 					WA_IDCMP,IDCMP_MOUSEBUTTONS | IDCMP_MOUSEMOVE | IDCMP_RAWKEY | IDCMP_DELTAMOVE | IDCMP_EXTENDEDMOUSE,
 					TAG_DONE);
 	}
+	else
+	{
+		return;
+	}
 
 	if(!window)
 		return;
+
+	IIntuition->PubScreenStatus(screen,0);
 
 	port = window->UserPort;
 
@@ -264,9 +272,7 @@ int
 DisplayKbd_PollHost(ARMul_State *state)
 {
 	struct IntuiMessage *msg;
-	char *err = NULL;
-	STRPTR filename = NULL;
-	int res,keyup,key;
+	int keyup,key;
 	struct IntuiWheelData *wheel = NULL;
 	if(!port) return(0);
 
@@ -564,7 +570,7 @@ static void RefreshDisplay_TrueColor_4bpp(ARMul_State *state, int DisplayWidth, 
 
 /*-----------------------------------------------------------------------------*/
 static void RefreshDisplay_TrueColor_8bpp(ARMul_State *state, int DisplayWidth, int DisplayHeight) {
-  int x,y,memoffset;
+  int y,memoffset;
   unsigned char Buffer[DisplayWidth];
   char *ImgPtr=HD.ImageData;
 
@@ -637,7 +643,7 @@ RefreshDisplay(ARMul_State *state)
 /*-----------------------------------------------------------------------------*/
 /* Refresh the mouse pointer image                                                */
 static void refreshmouse(ARMul_State *state) {
-  int x,y,height,offset, pix;
+  int x,y,height,offset;
   int memptr;
   unsigned short *ImgPtr;
   int HorizPos = (int)VIDC.Horiz_CursorStart - (int)VIDC.Horiz_DisplayStart*2;
@@ -668,10 +674,8 @@ static void refreshmouse(ARMul_State *state) {
 
 struct IBox ibox;
 
-/* Acorn screen goes down to -22 which causes flickering in the first 22 pixels down the left hand side of the screen.  If we adjust HorizPos and POINTERA_XOffset by 22 and -22 respectively, the pointer doesn't even visibly move into that left hand column.
-
-This seems to be an AmigaOS issue, as it still happens with the ibox stuff disabled.
-I'm wondering whether the pointer change does not immediately recognise the XOffset. */
+/* My graphics card has problems getting into the negatively numbered X positions,
+   workaround is to enable SOFTSPRITE in the Radeon monitor tooltypes. */
 
 ibox.Left = HorizPos+22;
 ibox.Top = VertPos;
