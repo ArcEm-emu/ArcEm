@@ -110,11 +110,11 @@ ARCH_KEY_control_l, // also control_r
 ARCH_KEY_alt_l,
 ARCH_KEY_alt_r,
 -1, // lamiga
-ARCH_KEY_control_r, // actually ramiga
+-1, // ramiga
 -1, // 68
 -1, // 69
 -1, // 6A
--1, // menu 6B
+ARCH_KEY_control_r, // menu 6B
 -1, // 6C (Brazil ABNT keyboard only)
 ARCH_KEY_print,
 ARCH_KEY_break,
