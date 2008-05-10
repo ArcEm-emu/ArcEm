@@ -54,6 +54,8 @@ void CloseDisplay(void)
 	if(window)
 		IIntuition->CloseWindow(window);
 
+	IIntuition->IDoMethod(arexx_obj, AM_EXECUTE, "QUIT", "ARCEMPANEL", NULL, NULL, NULL, NULL);
+
 	if(screen)
 	{
 		while(!IIntuition->CloseScreen(screen));
