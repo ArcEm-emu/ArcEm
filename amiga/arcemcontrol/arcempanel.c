@@ -8,17 +8,21 @@
 #include <proto/requester.h>
 #include <proto/asl.h>
 #include <proto/utility.h>
+#include <proto/icon.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#define GAD_BU1 1
-#define GAD_BU2 2
-#define GAD_BU3 3
-#define GAD_BU4 4
-#define GAD_BU5 5
-#define GAD_BU6 6
+enum
+{
+	GAD_BU1,
+	GAD_BU2,
+	GAD_BU3,
+	GAD_BU4,
+	GAD_BU5,
+	GAD_BU6
+};
 
 enum
 {
@@ -29,8 +33,9 @@ STATIC VOID reply_callback(struct Hook *, Object *, struct RexxMsg *);
 STATIC VOID rexx_quit (struct ARexxCmd *, struct RexxMsg *);
 
 BOOL running = TRUE;
-
-STATIC UBYTE systemDate[32];
+ULONG xpos=0;
+ULONG ypos=0;
+int centrewin = WPOS_CENTERSCREEN;
 
 STATIC struct Hook reply_hook;
 
@@ -39,7 +44,45 @@ STATIC struct ARexxCmd Commands[] =
 	{"QUIT", REXX_QUIT, rexx_quit, NULL, 0, NULL, 0, 0, NULL}
 };
 
-int amiga_file_request(char *file)
+void amiga_read_tooltypes(struct WBStartup *WBenchMsg)
+{
+	struct WBArg *wbarg;
+	char i;
+	int olddir;
+	struct DiskObject *dobj;
+	STRPTR *toolarray;
+	char *s;
+
+	for(i=0,wbarg=WBenchMsg->sm_ArgList;i<WBenchMsg->sm_NumArgs;i++,wbarg++)
+	{
+	olddir =-1;
+	if((wbarg->wa_Lock)&&(*wbarg->wa_Name))
+	olddir = IDOS->CurrentDir(wbarg->wa_Lock);
+
+	if((*wbarg->wa_Name) && (dobj=IIcon->GetIconTags(wbarg->wa_Name,NULL)))
+	{
+	toolarray = dobj->do_ToolTypes;
+
+	if((s = IIcon->FindToolType(toolarray,"XPOS")))
+	{
+		xpos=atoi(s);
+			centrewin=0;
+	}
+
+	if((s = IIcon->FindToolType(toolarray,"YPOS")))
+	{
+		ypos=atoi(s);
+			centrewin=0;
+	}
+
+	IIcon->FreeDiskObject(dobj);
+	}
+
+	if(olddir !=-1) IDOS->CurrentDir(olddir);
+	}
+}
+
+int amiga_file_request(char *file,struct Screen *screen)
 {
 	int sel=0;
 	struct FileRequester *freq;
@@ -49,6 +92,7 @@ int amiga_file_request(char *file)
 	{
 	if(IAsl->AslRequestTags(freq,
 		ASLFR_TitleText,"ArcEm Control",
+		ASLFR_Screen,screen,
 		TAG_DONE))
 	{
 	strlcpy(file,freq->fr_Drawer,1024);
@@ -60,7 +104,7 @@ int amiga_file_request(char *file)
 	return sel;
 }
 
-uint32 strreq(STRPTR rbuf,ULONG rbufmax)
+uint32 strreq(STRPTR rbuf,ULONG rbufmax,struct Screen *screen)
 {
 	Object *requester;
 	uint32 result = 0;
@@ -79,19 +123,27 @@ NULL,
 	if (requester)
 	{
 		result = IIntuition->IDoMethod( requester, RM_OPENREQ, NULL, NULL,
-NULL );
+screen );
 		IIntuition->DisposeObject(requester);
 	}
 
 	return(result);
 }
 
-int main(void)
+int main(int argc,char **argv)
 {
 	struct Screen *screen = NULL;
 	Object *arexx_obj;
 	char *buf,*temp;
 	BPTR in,out;
+
+	struct HintInfo helpstrs[] =
+	{
+	{-1,-1,0,0}
+	};
+
+
+	if(0 == argc) amiga_read_tooltypes((struct WBStartup *)argv);
 
 	if (!ButtonBase)
 		return RETURN_FAIL;
@@ -107,7 +159,10 @@ int main(void)
 	{
 		Object *win_obj;
 
-		screen = IIntuition->LockPubScreen("ArcEm");
+		if(!(screen = IIntuition->LockPubScreen("ArcEm")))
+		{
+			screen = IIntuition->LockPubScreen(NULL);
+		}
 
 		win_obj = WindowObject,
 			WA_Title, "ArcEm Control",
@@ -116,24 +171,34 @@ int main(void)
 			WA_DepthGadget, TRUE,
 			WA_Activate, TRUE,
 			WA_PubScreen,screen,
-			WINDOW_Position, WPOS_CENTERSCREEN,
+			WA_Top,ypos,
+			WA_Left,xpos,
+			WINDOW_GadgetHelp,TRUE,
+			WINDOW_HintInfo, &helpstrs,
+			WINDOW_Position, centrewin,
 			WINDOW_ParentGroup, LayoutObject,
 			LAYOUT_AddChild,  VLayoutObject,
 				LAYOUT_Label, "Drive 0",
 				LAYOUT_AddChild, Button("Insert Disc", GAD_BU1),
+				CHILD_MinHeight, 28,
 				LAYOUT_AddChild, Button("Eject Disc", GAD_BU2),
+				CHILD_MinHeight, 28,
 			End,
 			CHILD_WeightedHeight,0,
 			LAYOUT_AddChild,  VLayoutObject,
 				LAYOUT_Label, "Drive 1",
 				LAYOUT_AddChild, Button("Insert Disc", GAD_BU5),
+				CHILD_MinHeight, 28,
 				LAYOUT_AddChild, Button("Eject Disc", GAD_BU6),
+				CHILD_MinHeight, 28,
 			End,
 			CHILD_WeightedHeight,0,
 			LAYOUT_AddChild,  VLayoutObject,
 				LAYOUT_Label, " ",
 				LAYOUT_AddChild, Button("ARexx", GAD_BU4),
-				LAYOUT_AddChild, Button("Quit", GAD_BU3),
+				CHILD_MinHeight, 28,
+				LAYOUT_AddChild, Button("_Quit", GAD_BU3),
+				CHILD_MinHeight, 28,
 			End,
 			CHILD_WeightedHeight,0,
 		LayoutEnd,
@@ -157,8 +222,8 @@ int main(void)
 
 				IIntuition->GetAttr(WINDOW_SigMask, win_obj, &wnsig);
 				IIntuition->GetAttr(AREXX_SigMask, arexx_obj, &rxsig);
-				BPTR in = IDOS->Open("NIL:",MODE_OLDFILE);
-				BPTR out = IDOS->Open("NIL:",MODE_NEWFILE);
+				BPTR in = 0;
+				BPTR out = 0;
 
 				do
 				{
@@ -183,7 +248,7 @@ int main(void)
 										case GAD_BU1:
 											if(buf = IExec->AllocVec(1024,MEMF_CLEAR))
 											{
-												amiga_file_request(buf);
+												amiga_file_request(buf,screen);
 												temp = IUtility->ASPrintf("FLOPPY 0  \"%s\"",buf);
 												IExec->FreeVec(buf);
 												IIntuition->IDoMethod(arexx_obj, AM_EXECUTE, temp, "ARCEM", NULL, NULL, NULL, NULL);
@@ -211,7 +276,7 @@ int main(void)
 										case GAD_BU4:
 											if(buf = IExec->AllocVec(1024,MEMF_CLEAR))
 											{
-												amiga_file_request(buf);
+												amiga_file_request(buf,screen);
 												temp = IUtility->ASPrintf("rx  \"%s\"",buf);
 												IExec->FreeVec(buf);
 												in = IDOS->Open("NIL:",MODE_OLDFILE);
@@ -223,7 +288,7 @@ int main(void)
 										case GAD_BU5:
 											if(buf = IExec->AllocVec(1024,MEMF_CLEAR))
 											{
-												amiga_file_request(buf);
+												amiga_file_request(buf,screen);
 												temp = IUtility->ASPrintf("FLOPPY 1  \"%s\"",buf);
 												IExec->FreeVec(buf);
 												IIntuition->IDoMethod(arexx_obj, AM_EXECUTE, temp, "ARCEM", NULL, NULL, NULL, NULL);

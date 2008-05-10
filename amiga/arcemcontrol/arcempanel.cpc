@@ -9,31 +9,37 @@ Name:Insert Disc
 Port:ARCEM
 Command:FLOPPY 0 
 Requester:file
+Hint:none
 /*Button02*/
 Name:Eject Disc
 Port:ARCEM
 Command:FLOPPY 0
 Requester:none
+Hint:none
 /*Button03*/
-Name:Quit
+Name:_Quit
 Port:ARCEM
 Command:QUIT
 Requester:none
+Hint:none
 /*Button04*/
 Name:ARexx
 Port:DOS
 Command:rx 
 Requester:file
+Hint:none
 /*Button05*/
 Name:Insert Disc
 Port:ARCEM
 Command:FLOPPY 1 
 Requester:file
+Hint:none
 /*Button06*/
 Name:Eject Disc
 Port:ARCEM
 Command:FLOPPY 1
 Requester:none
+Hint:none
 //
 /*Column01*/
 Order:1|2
@@ -43,6 +49,4 @@ Order:5|6
 Label:Drive 1
 /*Column03*/
 Order:4|3
-Label:none
-3
 Label:none
