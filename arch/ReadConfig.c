@@ -54,11 +54,11 @@ int ReadConfigFile(ARMul_State *state) {
 #endif /* AMIGA */
 #endif
 
-  if (fConf = fopen(nameConf, "r"), fConf==NULL) {
-    fprintf(stderr,"Couldn't open config file\n");
-    return 0;
-  }
-  
+    if ((fConf = fopen(nameConf, "r")) == NULL) {
+        fprintf(stderr, "couldn't open config file: %s\n", nameConf);
+        return 0;
+    }
+
   while (!feof(fConf)) {
     char *tptr;
 
