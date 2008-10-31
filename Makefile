@@ -188,7 +188,8 @@ VER=1.0
 all: $(TARGET)
 
 install: all
-	$(INSTALL) armul $(INSTALL_DIR)
+	$(INSTALL) $(TARGET) $(INSTALL_DIR)
+	f=arcemrc; test -f $$HOME/.$$f || $(INSTALL) $$f $(HOME)/.$$f
 
 $(TARGET): $(OBJS) $(MODEL).o
 	$(LD) $(LDFLAGS) $(OBJS) $(LIBS) $(MODEL).o -o $@
