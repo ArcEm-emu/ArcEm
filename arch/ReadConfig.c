@@ -20,42 +20,46 @@
 
   The config file is read from ~/.arcemrc
 */
-int ReadConfigFile(ARMul_State *state) {
-  FILE *fConf;
-#ifndef WIN32
-  char *HomeVar = getenv("HOME");
-#endif
-  char *nameConf;
-  char tmpbuf[1024];
 
-#ifdef WIN32
-  nameConf = _strdup("arcemrc");
+int ReadConfigFile(ARMul_State *state)
+{
+    const char *envvar;
+    const char *basename;
+    char *env;
+    char tmpbuf[1024];
+    FILE *fConf;
+
+/* FIXME:  This should use the SYSTEM_* preprocessor macros set up in
+ * Makefile, not some platform-dependent one. */
+#if defined(WIN32)
+    envvar = NULL;
+    basename = "arcemrc";
+#elif defined(AMIGA)
+    envvar = NULL;
+    basename = ".arcemrc";
+#elif defined(MACOSX)
+    envvar = "HOME";
+    basename = "arcem/.arcemrc";
 #else
-
-#ifdef AMIGA
-  nameConf = (char *)&".arcemrc";
-#else
-
-  if (HomeVar==NULL) {
-    fprintf(stderr,"Couldn't read $HOME and thus couldn't load config file\n");
-    return 0;
-  }
-
-  if (nameConf = malloc(strlen(HomeVar) + 32), nameConf == NULL) {
-    fprintf(stderr,"Couldn't allocate memory for name of config file\n");
-    return 0;
-  }
-
-#ifndef MACOSX
-  sprintf(nameConf, "%s/.arcemrc", HomeVar);
-#else
-  sprintf(nameConf, "%s/arcem/arcemrc", HomeVar);
-#endif /* !MACOSX */
-#endif /* AMIGA */
+    envvar = "HOME";
+    basename = ".arcemrc";
 #endif
 
-    if ((fConf = fopen(nameConf, "r")) == NULL) {
-        fprintf(stderr, "couldn't open config file: %s\n", nameConf);
+    if (envvar && (env = getenv(envvar)) == NULL) {
+        fprintf(stderr, "configuration file is $%s/%s but $%s isn't "
+            "set.", envvar, basename, envvar);
+        return 0;
+    }
+
+    *tmpbuf = '\0';
+    if (envvar) {
+        strcat(tmpbuf, env);
+        strcat(tmpbuf, "/");
+    }
+    strcat(tmpbuf, basename);
+
+    if ((fConf = fopen(tmpbuf, "r")) == NULL) {
+        fprintf(stderr, "couldn't open config file: %s\n", tmpbuf);
         return 0;
     }
 
