@@ -603,8 +603,35 @@ static void RefreshDisplay_TrueColor_8bpp(ARMul_State *state, int DisplayHeight,
 void
 RefreshDisplay(ARMul_State *state)
 {
+    static struct {
+        void (*set_border_map)(void);
+        void (*set_cursor_map)(void);
+        void (*refresh[4])(ARMul_State *state, int DisplayHeight, int DisplayWidth);
+    } visual[] = {
+        {
+            set_border_colourmap,
+            set_cursor_colourmap,
+            {
+                RefreshDisplay_PseudoColor_1bpp,
+                RefreshDisplay_PseudoColor_2bpp,
+                RefreshDisplay_PseudoColor_4bpp,
+                RefreshDisplay_PseudoColor_8bpp,
+            },
+        },
+        {
+            set_border_pixelmap,
+            set_cursor_pixelmap,
+            {
+                RefreshDisplay_TrueColor_1bpp,
+                RefreshDisplay_TrueColor_2bpp,
+                RefreshDisplay_TrueColor_4bpp,
+                RefreshDisplay_TrueColor_8bpp,
+            },
+        },
+    };
   int DisplayHeight =  VIDC.Vert_DisplayEnd  - VIDC.Vert_DisplayStart;
   int DisplayWidth  = (VIDC.Horiz_DisplayEnd - VIDC.Horiz_DisplayStart) * 2;
+    int vi;
 
   DC.AutoRefresh  = AUTOREFRESHPOLL;
   ioc.IRQStatus  |= IRQA_VFLYBK; /* VSync */
@@ -616,60 +643,21 @@ RefreshDisplay(ARMul_State *state)
   DC.miny = DisplayHeight - 1;
   DC.maxy = 0;
 
-  /* First figure out number of BPP */
-  if (HD.visInfo.class == PseudoColor) {
+    vi = (HD.visInfo.class == PseudoColor) ? 0 : 1;
+
     if (DC.border_palette_dirty) {
-      set_border_colourmap();
+        visual[vi].set_border_map();
     }
     if (DC.cursor_palette_dirty) {
-      set_cursor_colourmap();
+        visual[vi].set_cursor_map();
     }
 
     if (DisplayHeight > 0 && DisplayWidth > 0) {
-      switch ((VIDC.ControlReg & 0xC)>>2) {
-        case 0: /* 1bpp */
-          RefreshDisplay_PseudoColor_1bpp(state, DisplayHeight, DisplayWidth);
-          break;
-        case 1: /* 2bpp */
-          RefreshDisplay_PseudoColor_2bpp(state, DisplayHeight, DisplayWidth);
-          break;
-        case 2: /* 4bpp */
-          RefreshDisplay_PseudoColor_4bpp(state, DisplayHeight, DisplayWidth);
-          break;
-        case 3: /* 8bpp */
-          RefreshDisplay_PseudoColor_8bpp(state, DisplayHeight, DisplayWidth);
-          break;
-      }
+        visual[vi].refresh[(VIDC.ControlReg & 0xc) >> 2](state,
+            DisplayHeight, DisplayWidth);
     } else {
       fprintf(stderr,"RefreshDisplay: 0 or -ve display width or height\n");
     }
-  } else {
-    if (DC.border_palette_dirty) {
-      set_border_pixelmap();
-    }
-    if (DC.cursor_palette_dirty) {
-      set_cursor_pixelmap();
-    }
-
-    if (DisplayHeight > 0 && DisplayWidth > 0) {
-      switch ((VIDC.ControlReg & 0xC)>>2) {
-        case 0: /* 1bpp */
-          RefreshDisplay_TrueColor_1bpp(state, DisplayHeight, DisplayWidth);
-          break;
-        case 1: /* 2bpp */
-          RefreshDisplay_TrueColor_2bpp(state, DisplayHeight, DisplayWidth);
-        break;
-        case 2: /* 4bpp */
-          RefreshDisplay_TrueColor_4bpp(state, DisplayHeight, DisplayWidth);
-          break;
-        case 3: /* 8bpp */
-          RefreshDisplay_TrueColor_8bpp(state, DisplayHeight, DisplayWidth);
-          break;
-      }
-    } else {
-      fprintf(stderr,"RefreshDisplay: 0 or -ve display width or height\n");
-    }
-  }
 
   /*fprintf(stderr,"RefreshDisplay: Refreshed %d-%d\n",DC.miny,DC.maxy); */
   /* Only tell X to redisplay those bits which we've replotted into the image */
