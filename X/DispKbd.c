@@ -82,6 +82,9 @@
         (f) = TRUE; \
     }
 
+static void refresh_pseudocolour_display_nbpp(ARMul_State *state,
+    int height, int width, int bpp);
+
 static void set_video_4bpp_colourmap(void);
 static void set_video_8bpp_colourmap(void);
 static void set_border_colourmap(void);
@@ -378,115 +381,66 @@ static void RefreshMouse(ARMul_State *state) {
 } /* RefreshMouse */
 
 /*----------------------------------------------------------------------------*/
+
 static void RefreshDisplay_PseudoColor_1bpp(ARMul_State *state, int DisplayHeight, int DisplayWidth) {
-  int x,y,memoffset;
-  char *ImgPtr=HD.ImageData;
+    refresh_pseudocolour_display_nbpp(state, DisplayHeight, DisplayWidth, 1);
+}
 
-  if (DC.video_palette_dirty) {
-    set_video_4bpp_colourmap();
-  }
-
-  for(y=0,memoffset=0;y<DisplayHeight;
-                      y++,memoffset+=DisplayWidth/8,ImgPtr+=DisplayWidth) {
-    if ((DC.MustRedraw) || (QueryRamChange(state, memoffset, DisplayWidth/8))) {
-      if (y<DC.miny) DC.miny=y;
-      if (y>DC.maxy) DC.maxy=y;
-      CopyScreenRAM(state ,memoffset, DisplayWidth/8, ScanLineBuffer);
-
-      for(x=0;x<DisplayWidth;x+=8) {
-        int bit;
-        /* We are now running along the scan line */
-        /* we'll get this a bit more efficient when it works! */
-        for(bit=0;bit<=8;bit++) {
-          ImgPtr[x+bit]=(ScanLineBuffer[x/8]>>bit) &1;
-        } /* bit */
-      } /* x */
-    } /* Refresh test */
-  } /* y */
-  DC.MustRedraw=0;
-  MarkAsUpdated(state,memoffset);
-} /* RefreshDisplay_PseudoColor_1bpp */
-
-/*----------------------------------------------------------------------------*/
 static void RefreshDisplay_PseudoColor_2bpp(ARMul_State *state, int DisplayHeight, int DisplayWidth) {
-  int x,y,memoffset;
-  char *ImgPtr=HD.ImageData;
+    refresh_pseudocolour_display_nbpp(state, DisplayHeight, DisplayWidth, 2);
+}
 
-  if (DC.video_palette_dirty) {
-    set_video_4bpp_colourmap();
-  }
-
-  for(y=0,memoffset=0;y<DisplayHeight;
-                      y++,memoffset+=DisplayWidth/4,ImgPtr+=DisplayWidth) {
-    if ((DC.MustRedraw) || (QueryRamChange(state,memoffset,DisplayWidth/4))) {
-      if (y<DC.miny) DC.miny=y;
-      if (y>DC.maxy) DC.maxy=y;
-      CopyScreenRAM(state, memoffset, DisplayWidth/4, ScanLineBuffer);
-
-      for(x=0; x<DisplayWidth; x+=4) {
-        int pixel;
-        /* We are now running along the scan line */
-        /* we'll get this a bit more efficient when it works! */
-        for(pixel=0;pixel<4;pixel++) {
-          ImgPtr[x+pixel]=(ScanLineBuffer[x/4]>>(pixel*2)) &3;
-        } /* pixel */
-      } /* x */
-    } /* Update test */
-  } /* y */
-  DC.MustRedraw=0;
-  MarkAsUpdated(state,memoffset);
-} /* RefreshDisplay_PseudoColor_2bpp */
-
-/*----------------------------------------------------------------------------*/
 static void RefreshDisplay_PseudoColor_4bpp(ARMul_State *state, int DisplayHeight, int DisplayWidth) {
-  int x,y,memoffset;
-  char *ImgPtr=HD.ImageData;
+    refresh_pseudocolour_display_nbpp(state, DisplayHeight, DisplayWidth, 4);
+}
 
-  if (DC.video_palette_dirty) {
-    set_video_4bpp_colourmap();
-  }
-
-  for(y=0,memoffset=0; y<DisplayHeight;
-                      y++,memoffset+=(DisplayWidth/2),ImgPtr+=DisplayWidth) {
-    if ((DC.MustRedraw) || (QueryRamChange(state, memoffset, DisplayWidth/2))) {
-      if (y<DC.miny) DC.miny=y;
-      if (y>DC.maxy) DC.maxy=y;
-      CopyScreenRAM(state, memoffset, DisplayWidth/2, ScanLineBuffer);
-
-      for(x=0; x<DisplayWidth; x+=2) {
-        int pixel;
-        /* We are now running along the scan line */
-        /* we'll get this a bit more efficient when it works! */
-        for(pixel=0; pixel<2; pixel++) {
-          ImgPtr[x+pixel] = (ScanLineBuffer[x/2]>>(pixel*4)) &15;
-        } /* pixel */
-      } /* x */
-    } /* Refresh test */
-  } /* y */
-  DC.MustRedraw=0;
-  MarkAsUpdated(state,memoffset);
-} /* RefreshDisplay_PseudoColor_4bpp */
-
-/*----------------------------------------------------------------------------*/
 static void RefreshDisplay_PseudoColor_8bpp(ARMul_State *state, int DisplayHeight, int DisplayWidth) {
-  int y,memoffset;
-  char *ImgPtr=HD.ImageData;
+    refresh_pseudocolour_display_nbpp(state, DisplayHeight, DisplayWidth, 8);
+}
 
-  if (DC.video_palette_dirty) {
-    set_video_8bpp_colourmap();
-  }
+/* ------------------------------------------------------------------ */
 
-  for(y=0,memoffset=0;y<DisplayHeight;
-                      y++,memoffset+=DisplayWidth,ImgPtr+=DisplayWidth) {
-    if ((DC.MustRedraw) || (QueryRamChange(state, memoffset, DisplayWidth))) {
-      if (y<DC.miny) DC.miny=y;
-      if (y>DC.maxy) DC.maxy=y;
-      CopyScreenRAM(state, memoffset, DisplayWidth, ImgPtr);
-    } /* Refresh test */
-  } /* y */
-  DC.MustRedraw=0;
-  MarkAsUpdated(state,memoffset);
-} /* RefreshDisplay_PseudoColor_8bpp */
+static void refresh_pseudocolour_display_nbpp(ARMul_State *state,
+    int height, int width, int bpp)
+{
+    int ppbyte;    /* Pixels per byte. */
+    int bpwidth;    /* Bytes per width. */
+    char *img;
+    int x, y;
+    unsigned int memoffset;
+    unsigned int pixel, pixmask;
+
+    if (DC.video_palette_dirty) {
+        (bpp == 8 ? set_video_8bpp_colourmap :
+            set_video_4bpp_colourmap)();
+    }
+
+    ppbyte = 8 / bpp;
+    bpwidth = width / ppbyte;
+    pixmask = (1 << bpp) - 1;
+    for (y = 0, memoffset = 0, img = HD.ImageData;
+        y < height;
+        y++, memoffset += bpwidth, img += width) {
+
+        if (DC.MustRedraw || QueryRamChange(state, memoffset, bpwidth)) {
+            if (y < DC.miny) DC.miny = y;
+            if (y > DC.maxy) DC.maxy = y;
+            CopyScreenRAM(state, memoffset, bpwidth, ScanLineBuffer);
+
+            for (x = 0; x < width; x += ppbyte) {
+                /* We are now running along the scan line */
+                /* we'll get this a pixel more efficient when it works! */
+                for (pixel = 0; pixel <= ppbyte; pixel++) {
+                    img[x + pixel] = (ScanLineBuffer[x / ppbyte] >> pixel * bpp) & pixmask;
+                }
+            }
+        }
+    }
+    DC.MustRedraw = 0;
+    MarkAsUpdated(state, memoffset);
+
+    return;
+}
 
 /*----------------------------------------------------------------------------*/
 static void RefreshDisplay_TrueColor_1bpp(ARMul_State *state, int DisplayHeight, int DisplayWidth) {
