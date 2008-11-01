@@ -89,6 +89,8 @@ static void set_video_4bpp_colourmap(void);
 static void set_video_8bpp_colourmap(void);
 static void set_border_colourmap(void);
 static void set_cursor_colourmap(void);
+static void store_colour(Colormap map, unsigned long pixel,
+    unsigned short r, unsigned short g, unsigned short b);
 
 static void set_video_4bpp_pixelmap(void);
 static void set_video_8bpp_pixelmap(void);
@@ -635,22 +637,16 @@ static void set_video_4bpp_colourmap(void)
 {
     int c;
     unsigned int pal;
-    XColor col;
+    int r, g, b;
 
     for (c = 0; c < 16; c++) {
         pal = VIDC.Palette[c];
 
-        col.flags = DoRed | DoGreen | DoBlue;
-        col.pixel = c;
-        col.red = pal & 0xf;
-        col.green = pal >> 4 & 0xf;
-        col.blue = pal >> 8 & 0xf;
+        r = pal & 0xf;
+        g = pal >> 4 & 0xf;
+        b = pal >> 8 & 0xf;
 
-        MULT_BY_0x1111(col.red);
-        MULT_BY_0x1111(col.green);
-        MULT_BY_0x1111(col.blue);
-
-        XStoreColor(HD.disp, HD.ArcsColormap, &col);
+        store_colour(HD.ArcsColormap, c, r, g, b);
     }
 
     DC.video_palette_dirty = FALSE;
@@ -665,25 +661,19 @@ static void set_video_8bpp_colourmap(void)
     int l65;
     int l7;
     unsigned int pal;
-    XColor col;
+    int r, g, b;
 
     for (c = 0; c < 256; c++) {
         l4 = c >> 1 & 8;
         l65 = c >> 3 & 0xc;
         l7 = c >> 4 & 8;
 
-        col.flags = DoRed | DoGreen | DoBlue;
-        col.pixel = c;
         pal = VIDC.Palette[c & 0xf];
-        col.red = l4 | (pal & 7);
-        col.green = l65 | (pal >> 4 & 3);
-        col.blue = l7 | (pal >> 8 & 7);
+        r = l4 | (pal & 7);
+        g = l65 | (pal >> 4 & 3);
+        b = l7 | (pal >> 8 & 7);
 
-        MULT_BY_0x1111(col.red);
-        MULT_BY_0x1111(col.green);
-        MULT_BY_0x1111(col.blue);
-
-        XStoreColor(HD.disp, HD.ArcsColormap, &col);
+        store_colour(HD.ArcsColormap, c, r, g, b);
     }
 
     DC.video_palette_dirty = FALSE;
@@ -694,20 +684,14 @@ static void set_video_8bpp_colourmap(void)
 static void set_border_colourmap(void)
 {
     unsigned int pal;
-    XColor col;
+    int r, g, b;
 
     pal = VIDC.BorderCol;
-    col.flags = DoRed | DoGreen | DoBlue;
-    col.pixel = BORDER_COLOURMAP_ENTRY;
-    col.red = pal & 0xf;
-    col.green = pal >> 4 & 0xf;
-    col.blue = pal >> 8 & 0xf;
+    r = pal & 0xf;
+    g = pal >> 4 & 0xf;
+    b = pal >> 8 & 0xf;
 
-    MULT_BY_0x1111(col.red);
-    MULT_BY_0x1111(col.green);
-    MULT_BY_0x1111(col.blue);
-
-    XStoreColor(HD.disp, HD.ArcsColormap, &col);
+    store_colour(HD.ArcsColormap, BORDER_COLOURMAP_ENTRY, r, g, b);
 
     DC.border_palette_dirty = FALSE;
 }
@@ -718,24 +702,39 @@ static void set_cursor_colourmap(void)
 {
     int c;
     unsigned int pal;
-    XColor col;
+    int r, g, b;
 
     for (c = 0; c < 3; c++) {
         pal = VIDC.CursorPalette[c];
-        col.flags = DoRed | DoGreen | DoBlue;
-        col.pixel = c + CURSORCOLBASE;
-        col.red = pal & 0xf;
-        col.green = pal >> 4 & 0xf;
-        col.blue = pal >> 8 & 0xf;
+        r = pal & 0xf;
+        g = pal >> 4 & 0xf;
+        b = pal >> 8 & 0xf;
 
-        MULT_BY_0x1111(col.red);
-        MULT_BY_0x1111(col.green);
-        MULT_BY_0x1111(col.blue);
-
-        XStoreColor(HD.disp, HD.ArcsColormap, &col);
+        store_colour(HD.ArcsColormap, CURSORCOLBASE + c, r, g, b);
     }
 
     DC.cursor_palette_dirty = FALSE;
+}
+
+/* ------------------------------------------------------------------ */
+
+static void store_colour(Colormap map, unsigned long pixel,
+    unsigned short r, unsigned short g, unsigned short b)
+{
+    XColor col;
+
+    MULT_BY_0x1111(r);
+    MULT_BY_0x1111(g);
+    MULT_BY_0x1111(b);
+
+    col.pixel = pixel;
+    col.red = r;
+    col.green = g;
+    col.blue = b;
+    col.flags = DoRed | DoGreen | DoBlue;
+    XStoreColor(HD.disp, map, &col);
+
+    return;
 }
 
 /* ------------------------------------------------------------------ */
