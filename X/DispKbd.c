@@ -71,11 +71,6 @@
 
 #define DC DISPLAYCONTROL
 
-/* 0 <= x < 0x10. */
-#define MULT_BY_0x1111(x) \
-    x |= x << 4; \
-    x |= x << 8
-
 #define IF_DIFF_THEN_ASSIGN_AND_SET_FLAG(a, b, f) \
     if ((a) != (b)) { \
         (a) = (b); \
@@ -101,6 +96,7 @@ static void palette_4bpp_to_rgb(unsigned int pal, int *r, int *g,
     int *b);
 static void palette_8bpp_to_rgb(unsigned int pal, int c, int *r,
     int *g, int *b);
+static void scale_up_rgb(int *r, int *g, int *b);
 
 static void Resize_Window(void);
 
@@ -704,10 +700,6 @@ static void store_colour(Colormap map, unsigned long pixel,
 {
     XColor col;
 
-    MULT_BY_0x1111(r);
-    MULT_BY_0x1111(g);
-    MULT_BY_0x1111(b);
-
     col.pixel = pixel;
     col.red = r;
     col.green = g;
@@ -727,9 +719,6 @@ static void set_video_4bpp_pixelmap(void)
 
     for (c = 0; c < 16; c++) {
         palette_4bpp_to_rgb(VIDC.Palette[c], &r, &g, &b);
-        MULT_BY_0x1111(r);
-        MULT_BY_0x1111(g);
-        MULT_BY_0x1111(b);
         HD.pixelMap[c] = get_pixelval(r, g, b);
     }
 
@@ -745,9 +734,6 @@ static void set_video_8bpp_pixelmap(void)
 
     for (c = 0; c < 256; c++) {
         palette_8bpp_to_rgb(VIDC.Palette[c & 0xf], c, &r, &g, &b);
-        MULT_BY_0x1111(r);
-        MULT_BY_0x1111(g);
-        MULT_BY_0x1111(b);
         HD.pixelMap[c] = get_pixelval(r, g, b);
     }
     DC.video_palette_dirty = FALSE;
@@ -762,10 +748,6 @@ static void set_border_pixelmap(void)
     int r, g, b;
 
     palette_4bpp_to_rgb(VIDC.BorderCol, &r, &g, &b);
-    MULT_BY_0x1111(r);
-    MULT_BY_0x1111(g);
-    MULT_BY_0x1111(b);
-
     HD.border_map = get_pixelval(r, g, b);
     XSetWindowBackground(HD.disp, HD.BackingWindow, HD.border_map);
     XClearWindow(HD.disp, HD.BackingWindow);
@@ -782,10 +764,6 @@ static void set_cursor_pixelmap(void)
 
     for (c = 0; c < 3; c++) {
         palette_4bpp_to_rgb(VIDC.CursorPalette[c], &r, &g, &b);
-        MULT_BY_0x1111(r);
-        MULT_BY_0x1111(g);
-        MULT_BY_0x1111(b);
-
         /* Entry 0 is transparent. */
         HD.cursorPixelMap[c + 1] = get_pixelval(r, g, b);
     }
@@ -804,6 +782,7 @@ static void palette_4bpp_to_rgb(unsigned int pal, int *r, int *g, int *b)
     *r = pal & 0xf;
     *g = pal >> 4 & 0xf;
     *b = pal >> 8 & 0xf;
+    scale_up_rgb(r, g, b);
 
     return;
 }
@@ -826,9 +805,32 @@ static void palette_8bpp_to_rgb(unsigned int pal, int c, int *r,
     *r = l4 | (pal & 7);
     *g = l65 | (pal >> 4 & 3);
     *b = l7 | (pal >> 8 & 7);
+    scale_up_rgb(r, g, b);
 
     return;
 }
+
+/* ------------------------------------------------------------------ */
+
+/* X uses 16-bit RGB amounts.  If we've an Arcem one that's 4-bit, we
+ * need to scale it up so 0x0 remains 0x0000 and 0xf becomes 0xffff,
+ * with ther other fourteen values being evenly spread inbetween. */
+
+/* 0 <= x < 0x10. */
+#define MULT_BY_0x1111(x) \
+    (x) |= (x) << 4; \
+    (x) |= (x) << 8
+
+static void scale_up_rgb(int *r, int *g, int *b)
+{
+    MULT_BY_0x1111(*r);
+    MULT_BY_0x1111(*g);
+    MULT_BY_0x1111(*b);
+
+    return;
+}
+
+#undef MULT_BY_0x1111
 
 /*----------------------------------------------------------------------------*/
 
