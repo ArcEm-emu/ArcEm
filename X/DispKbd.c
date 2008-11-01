@@ -641,7 +641,7 @@ RefreshDisplay(ARMul_State *state)
           break;
       }
     } else {
-      fprintf(stderr,"RefreshDisplay_PseudoColor: 0 or -ve display width or height\n");
+      fprintf(stderr,"RefreshDisplay: 0 or -ve display width or height\n");
     }
   } else {
     if (DC.border_palette_dirty) {
@@ -667,7 +667,7 @@ RefreshDisplay(ARMul_State *state)
           break;
       }
     } else {
-      fprintf(stderr,"RefreshDisplay_TrueColor: 0 or -ve display width or height\n");
+      fprintf(stderr,"RefreshDisplay: 0 or -ve display width or height\n");
     }
   }
 
