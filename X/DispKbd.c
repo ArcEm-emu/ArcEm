@@ -858,7 +858,7 @@ static int DisplayKbd_XError(Display* disp, XErrorEvent *err)
 {
   char s[1024];
 
-  XGetErrorText(disp, err->error_code, s, 1023);
+    XGetErrorText(disp, err->error_code, s, sizeof s - 1);
 
   fprintf(stderr,
 "arcem X error detected: '%s'\n"
