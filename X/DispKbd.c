@@ -99,6 +99,8 @@ static void set_cursor_pixelmap(void);
 
 static void palette_4bpp_to_rgb(unsigned int pal, int *r, int *g,
     int *b);
+static void palette_8bpp_to_rgb(unsigned int pal, int c, int *r,
+    int *g, int *b);
 
 static void Resize_Window(void);
 
@@ -655,26 +657,15 @@ static void set_video_4bpp_colourmap(void)
 static void set_video_8bpp_colourmap(void)
 {
     int c;
-    int l4;
-    int l65;
-    int l7;
-    unsigned int pal;
     int r, g, b;
 
     for (c = 0; c < 256; c++) {
-        l4 = c >> 1 & 8;
-        l65 = c >> 3 & 0xc;
-        l7 = c >> 4 & 8;
-
-        pal = VIDC.Palette[c & 0xf];
-        r = l4 | (pal & 7);
-        g = l65 | (pal >> 4 & 3);
-        b = l7 | (pal >> 8 & 7);
-
+        palette_8bpp_to_rgb(VIDC.Palette[c & 0xf], c, &r, &g, &b);
         store_colour(HD.ArcsColormap, c, r, g, b);
     }
-
     DC.video_palette_dirty = FALSE;
+
+    return;
 }
 
 /* ------------------------------------------------------------------ */
@@ -732,16 +723,13 @@ static void store_colour(Colormap map, unsigned long pixel,
 static void set_video_4bpp_pixelmap(void)
 {
     int c;
-    int r;
-    int g;
-    int b;
+    int r, g, b;
 
     for (c = 0; c < 16; c++) {
         palette_4bpp_to_rgb(VIDC.Palette[c], &r, &g, &b);
         MULT_BY_0x1111(r);
         MULT_BY_0x1111(g);
         MULT_BY_0x1111(b);
-
         HD.pixelMap[c] = get_pixelval(r, g, b);
     }
 
@@ -753,41 +741,25 @@ static void set_video_4bpp_pixelmap(void)
 static void set_video_8bpp_pixelmap(void)
 {
     int c;
-    int l4;
-    int l65;
-    int l7;
-    unsigned int pal;
-    unsigned short r;
-    unsigned short g;
-    unsigned short b;
+    int r, g, b;
 
     for (c = 0; c < 256; c++) {
-        l4 = c >> 1 & 8;
-        l65 = c >> 3 & 0xc;
-        l7 = c >> 4 & 8;
-
-        pal = VIDC.Palette[c & 0xf];
-        r = l4 | (pal & 7);
-        g = l65 | (pal >> 4 & 3);
-        b = l7 | (pal >> 8 & 7);
-
+        palette_8bpp_to_rgb(VIDC.Palette[c & 0xf], c, &r, &g, &b);
         MULT_BY_0x1111(r);
         MULT_BY_0x1111(g);
         MULT_BY_0x1111(b);
-
         HD.pixelMap[c] = get_pixelval(r, g, b);
     }
-
     DC.video_palette_dirty = FALSE;
+
+    return;
 }
 
 /* ------------------------------------------------------------------ */
 
 static void set_border_pixelmap(void)
 {
-    int r;
-    int g;
-    int b;
+    int r, g, b;
 
     palette_4bpp_to_rgb(VIDC.BorderCol, &r, &g, &b);
     MULT_BY_0x1111(r);
@@ -806,9 +778,7 @@ static void set_border_pixelmap(void)
 static void set_cursor_pixelmap(void)
 {
     int c;
-    int r;
-    int g;
-    int b;
+    int r, g, b;
 
     for (c = 0; c < 3; c++) {
         palette_4bpp_to_rgb(VIDC.CursorPalette[c], &r, &g, &b);
@@ -825,11 +795,37 @@ static void set_cursor_pixelmap(void)
 
 /* ------------------------------------------------------------------ */
 
+/* Given a 12-bit palette entry, pick it apart to get 4-bit component
+ * red, green, and blue parts.  The palette entry is used in this way
+ * for 1/2/4 bits per pixel screen resolutions. */
+
 static void palette_4bpp_to_rgb(unsigned int pal, int *r, int *g, int *b)
 {
     *r = pal & 0xf;
     *g = pal >> 4 & 0xf;
     *b = pal >> 8 & 0xf;
+
+    return;
+}
+
+/* ------------------------------------------------------------------ */
+
+/* Given a 12-bit palette entry and an 8-bit palette index, pick it
+ * apart to get 4-bit component red, green, and blue parts.  The palette
+ * entry is used in this way for 8 bits per pixel screen resolutions. */
+
+static void palette_8bpp_to_rgb(unsigned int pal, int c, int *r,
+    int *g, int *b)
+{
+    int l4, l65, l7;
+
+    l4 = c >> 1 & 8;
+    l65 = c >> 3 & 0xc;
+    l7 = c >> 4 & 8;
+
+    *r = l4 | (pal & 7);
+    *g = l65 | (pal >> 4 & 3);
+    *b = l7 | (pal >> 8 & 7);
 
     return;
 }
