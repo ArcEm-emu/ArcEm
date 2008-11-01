@@ -1166,7 +1166,7 @@ static void ProcessKey(ARMul_State *state, XKeyEvent *key)
         /* Create a blank cursor and use that */
         XColor black, dummy;
         Pixmap bm_no;
-        static unsigned char bm_no_data[] = { 0,0,0,0, 0,0,0,0 };
+        static char bm_no_data[8];
         XAllocNamedColor(HD.disp, HD.ArcsColormap, "black", &black, &dummy);
         bm_no = XCreateBitmapFromData(HD.disp, HD.MainPane, bm_no_data, 8, 8);
         XDefineCursor(HD.disp, HD.MainPane,
