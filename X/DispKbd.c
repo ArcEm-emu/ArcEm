@@ -387,24 +387,6 @@ static void RefreshMouse(ARMul_State *state) {
 
 /*----------------------------------------------------------------------------*/
 
-static void RefreshDisplay_PseudoColor_1bpp(ARMul_State *state, int DisplayHeight, int DisplayWidth) {
-    refresh_pseudocolour_display_nbpp(state, DisplayHeight, DisplayWidth, 1);
-}
-
-static void RefreshDisplay_PseudoColor_2bpp(ARMul_State *state, int DisplayHeight, int DisplayWidth) {
-    refresh_pseudocolour_display_nbpp(state, DisplayHeight, DisplayWidth, 2);
-}
-
-static void RefreshDisplay_PseudoColor_4bpp(ARMul_State *state, int DisplayHeight, int DisplayWidth) {
-    refresh_pseudocolour_display_nbpp(state, DisplayHeight, DisplayWidth, 4);
-}
-
-static void RefreshDisplay_PseudoColor_8bpp(ARMul_State *state, int DisplayHeight, int DisplayWidth) {
-    refresh_pseudocolour_display_nbpp(state, DisplayHeight, DisplayWidth, 8);
-}
-
-/* ------------------------------------------------------------------ */
-
 static void refresh_pseudocolour_display_nbpp(ARMul_State *state,
     int height, int width, int bpp)
 {
@@ -448,36 +430,6 @@ static void refresh_pseudocolour_display_nbpp(ARMul_State *state,
 }
 
 /*----------------------------------------------------------------------------*/
-
-static void RefreshDisplay_TrueColor_1bpp(ARMul_State *state, int DisplayHeight, int DisplayWidth)
-{
-    refresh_truecolour_display_nbpp(state, DisplayHeight, DisplayWidth, 1);
-
-    return;
-}
-
-static void RefreshDisplay_TrueColor_2bpp(ARMul_State *state, int DisplayHeight, int DisplayWidth)
-{
-    refresh_truecolour_display_nbpp(state, DisplayHeight, DisplayWidth, 2);
-
-    return;
-}
-
-static void RefreshDisplay_TrueColor_4bpp(ARMul_State *state, int DisplayHeight, int DisplayWidth)
-{
-    refresh_truecolour_display_nbpp(state, DisplayHeight, DisplayWidth, 4);
-
-    return;
-}
-
-static void RefreshDisplay_TrueColor_8bpp(ARMul_State *state, int DisplayHeight, int DisplayWidth)
-{
-    refresh_truecolour_display_nbpp(state, DisplayHeight, DisplayWidth, 8);
-
-    return;
-}
-
-/* ------------------------------------------------------------------ */
 
 static void refresh_truecolour_display_nbpp(ARMul_State *state,
     int height, int width, int bpp)
@@ -525,27 +477,17 @@ RefreshDisplay(ARMul_State *state)
     static struct {
         void (*set_border_map)(void);
         void (*set_cursor_map)(void);
-        void (*refresh[4])(ARMul_State *state, int DisplayHeight, int DisplayWidth);
+        void (*refresh)(ARMul_State *state, int height, int width, int bpp);
     } visual[] = {
         {
             set_border_colourmap,
             set_cursor_colourmap,
-            {
-                RefreshDisplay_PseudoColor_1bpp,
-                RefreshDisplay_PseudoColor_2bpp,
-                RefreshDisplay_PseudoColor_4bpp,
-                RefreshDisplay_PseudoColor_8bpp,
-            },
+            refresh_pseudocolour_display_nbpp,
         },
         {
             set_border_pixelmap,
             set_cursor_pixelmap,
-            {
-                RefreshDisplay_TrueColor_1bpp,
-                RefreshDisplay_TrueColor_2bpp,
-                RefreshDisplay_TrueColor_4bpp,
-                RefreshDisplay_TrueColor_8bpp,
-            },
+            refresh_truecolour_display_nbpp,
         },
     };
   int DisplayHeight =  VIDC.Vert_DisplayEnd  - VIDC.Vert_DisplayStart;
@@ -572,8 +514,8 @@ RefreshDisplay(ARMul_State *state)
     }
 
     if (DisplayHeight > 0 && DisplayWidth > 0) {
-        visual[vi].refresh[(VIDC.ControlReg & 0xc) >> 2](state,
-            DisplayHeight, DisplayWidth);
+        visual[vi].refresh(state, DisplayHeight, DisplayWidth,
+            1 << ((VIDC.ControlReg & 0xc) >> 2));
     } else {
       fprintf(stderr,"RefreshDisplay: 0 or -ve display width or height\n");
     }
