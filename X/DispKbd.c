@@ -91,13 +91,14 @@ static void set_border_colourmap(void);
 static void set_cursor_colourmap(void);
 static void store_colour(Colormap map, unsigned long pixel,
     unsigned short r, unsigned short g, unsigned short b);
-static void palette_4bpp_to_rgb(unsigned int pal, int *r, int *g,
-    int *b);
 
 static void set_video_4bpp_pixelmap(void);
 static void set_video_8bpp_pixelmap(void);
 static void set_border_pixelmap(void);
 static void set_cursor_pixelmap(void);
+
+static void palette_4bpp_to_rgb(unsigned int pal, int *r, int *g,
+    int *b);
 
 static void Resize_Window(void);
 
@@ -707,17 +708,6 @@ static void set_cursor_colourmap(void)
 
 /* ------------------------------------------------------------------ */
 
-static void palette_4bpp_to_rgb(unsigned int pal, int *r, int *g, int *b)
-{
-    *r = pal & 0xf;
-    *g = pal >> 4 & 0xf;
-    *b = pal >> 8 & 0xf;
-
-    return;
-}
-
-/* ------------------------------------------------------------------ */
-
 static void store_colour(Colormap map, unsigned long pixel,
     unsigned short r, unsigned short g, unsigned short b)
 {
@@ -742,18 +732,12 @@ static void store_colour(Colormap map, unsigned long pixel,
 static void set_video_4bpp_pixelmap(void)
 {
     int c;
-    unsigned int pal;
-    unsigned short r;
-    unsigned short g;
-    unsigned short b;
+    int r;
+    int g;
+    int b;
 
     for (c = 0; c < 16; c++) {
-        pal = VIDC.Palette[c];
-
-        r = pal & 0xf;
-        g = pal >> 4 & 0xf;
-        b = pal >> 8 & 0xf;
-
+        palette_4bpp_to_rgb(VIDC.Palette[c], &r, &g, &b);
         MULT_BY_0x1111(r);
         MULT_BY_0x1111(g);
         MULT_BY_0x1111(b);
@@ -801,17 +785,11 @@ static void set_video_8bpp_pixelmap(void)
 
 static void set_border_pixelmap(void)
 {
-    unsigned int pal;
-    unsigned short r;
-    unsigned short g;
-    unsigned short b;
+    int r;
+    int g;
+    int b;
 
-    pal = VIDC.BorderCol;
-
-    r = pal & 0xf;
-    g = pal >> 4 & 0xf;
-    b = pal >> 8 & 0xf;
-
+    palette_4bpp_to_rgb(VIDC.BorderCol, &r, &g, &b);
     MULT_BY_0x1111(r);
     MULT_BY_0x1111(g);
     MULT_BY_0x1111(b);
@@ -828,18 +806,12 @@ static void set_border_pixelmap(void)
 static void set_cursor_pixelmap(void)
 {
     int c;
-    unsigned int pal;
-    unsigned short r;
-    unsigned short g;
-    unsigned short b;
+    int r;
+    int g;
+    int b;
 
     for (c = 0; c < 3; c++) {
-        pal = VIDC.CursorPalette[c];
-
-        r = pal & 0xf;
-        g = pal >> 4 & 0xf;
-        b = pal >> 8 & 0xf;
-
+        palette_4bpp_to_rgb(VIDC.CursorPalette[c], &r, &g, &b);
         MULT_BY_0x1111(r);
         MULT_BY_0x1111(g);
         MULT_BY_0x1111(b);
@@ -849,6 +821,17 @@ static void set_cursor_pixelmap(void)
     }
 
     DC.cursor_palette_dirty = FALSE;
+}
+
+/* ------------------------------------------------------------------ */
+
+static void palette_4bpp_to_rgb(unsigned int pal, int *r, int *g, int *b)
+{
+    *r = pal & 0xf;
+    *g = pal >> 4 & 0xf;
+    *b = pal >> 8 & 0xf;
+
+    return;
 }
 
 /*----------------------------------------------------------------------------*/
