@@ -57,6 +57,7 @@ WARN = -Wall -Wno-return-type -Wno-unknown-pragmas -Wshadow \
 
 ifeq ($(PROFILE),yes)
 CFLAGS = -O -g -pg -ftest-coverage -fprofile-arcs
+LIBS += -lgcov
 else
 CFLAGS = -O3 -funroll-loops -fexpensive-optimizations -ffast-math \
     -fomit-frame-pointer -frerun-cse-after-loop
