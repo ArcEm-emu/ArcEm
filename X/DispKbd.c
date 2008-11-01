@@ -91,6 +91,8 @@ static void set_border_colourmap(void);
 static void set_cursor_colourmap(void);
 static void store_colour(Colormap map, unsigned long pixel,
     unsigned short r, unsigned short g, unsigned short b);
+static void palette_4bpp_to_rgb(unsigned int pal, int *r, int *g,
+    int *b);
 
 static void set_video_4bpp_pixelmap(void);
 static void set_video_8bpp_pixelmap(void);
@@ -636,20 +638,15 @@ RefreshDisplay(ARMul_State *state)
 static void set_video_4bpp_colourmap(void)
 {
     int c;
-    unsigned int pal;
     int r, g, b;
 
     for (c = 0; c < 16; c++) {
-        pal = VIDC.Palette[c];
-
-        r = pal & 0xf;
-        g = pal >> 4 & 0xf;
-        b = pal >> 8 & 0xf;
-
+        palette_4bpp_to_rgb(VIDC.Palette[c], &r, &g, &b);
         store_colour(HD.ArcsColormap, c, r, g, b);
     }
-
     DC.video_palette_dirty = FALSE;
+
+    return;
 }
 
 /* ------------------------------------------------------------------ */
@@ -683,17 +680,13 @@ static void set_video_8bpp_colourmap(void)
 
 static void set_border_colourmap(void)
 {
-    unsigned int pal;
     int r, g, b;
 
-    pal = VIDC.BorderCol;
-    r = pal & 0xf;
-    g = pal >> 4 & 0xf;
-    b = pal >> 8 & 0xf;
-
+    palette_4bpp_to_rgb(VIDC.BorderCol, &r, &g, &b);
     store_colour(HD.ArcsColormap, BORDER_COLOURMAP_ENTRY, r, g, b);
-
     DC.border_palette_dirty = FALSE;
+
+    return;
 }
 
 /* ------------------------------------------------------------------ */
@@ -701,19 +694,26 @@ static void set_border_colourmap(void)
 static void set_cursor_colourmap(void)
 {
     int c;
-    unsigned int pal;
     int r, g, b;
 
     for (c = 0; c < 3; c++) {
-        pal = VIDC.CursorPalette[c];
-        r = pal & 0xf;
-        g = pal >> 4 & 0xf;
-        b = pal >> 8 & 0xf;
-
+        palette_4bpp_to_rgb(VIDC.CursorPalette[c], &r, &g, &b);
         store_colour(HD.ArcsColormap, CURSORCOLBASE + c, r, g, b);
     }
-
     DC.cursor_palette_dirty = FALSE;
+
+    return;
+}
+
+/* ------------------------------------------------------------------ */
+
+static void palette_4bpp_to_rgb(unsigned int pal, int *r, int *g, int *b)
+{
+    *r = pal & 0xf;
+    *g = pal >> 4 & 0xf;
+    *b = pal >> 8 & 0xf;
+
+    return;
 }
 
 /* ------------------------------------------------------------------ */
