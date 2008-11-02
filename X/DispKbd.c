@@ -1596,11 +1596,14 @@ static void Resize_Window(void)
   int x = (VIDC.Horiz_DisplayEnd - VIDC.Horiz_DisplayStart)*2;
   int y = VIDC.Vert_DisplayEnd - VIDC.Vert_DisplayStart;
 
-  if(x > 0 && y > 0) {
-    /* Upper bounds checking */
-    if(x > MaxVideoWidth || y > MaxVideoHeight) {
-      fprintf(stderr, "Resize_Window: Request to display a mode larger than we can handle (%dx%d)\n", x, y);
-      exit(EXIT_FAILURE);
+    if (x <= 0 || y <= 0) {
+        return;
+    }
+
+    if (x > MaxVideoWidth || y > MaxVideoHeight) {
+        fprintf(stderr, "Resize_Window: new size (%d, %d) exceeds maximum (%d, %d)\n",
+            x, y, MaxVideoWidth, MaxVideoHeight);
+            exit(EXIT_FAILURE);
     }
 
     /* resize outer window including border */
@@ -1658,5 +1661,4 @@ static void Resize_Window(void)
       fprintf(stderr, "Resize_Window: Couldn't allocate memory for pixmap data\n");
       exit(EXIT_FAILURE);
     }
-  }
 }
