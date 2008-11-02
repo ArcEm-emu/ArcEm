@@ -524,9 +524,11 @@ RefreshDisplay(ARMul_State *state)
 
     if (DC.border_palette_dirty) {
         visual[vi].set_border_map();
+        DC.border_palette_dirty = FALSE;
     }
     if (DC.cursor_palette_dirty) {
         visual[vi].set_cursor_map();
+        DC.cursor_palette_dirty = FALSE;
     }
 
     if (DisplayHeight > 0 && DisplayWidth > 0) {
@@ -591,7 +593,6 @@ static void set_border_colourmap(void)
 
     palette_4bpp_to_rgb(VIDC.BorderCol, &r, &g, &b);
     store_colour(HD.ArcsColormap, BORDER_COLOURMAP_ENTRY, r, g, b);
-    DC.border_palette_dirty = FALSE;
 
     return;
 }
@@ -607,7 +608,6 @@ static void set_cursor_colourmap(void)
         palette_4bpp_to_rgb(VIDC.CursorPalette[c], &r, &g, &b);
         store_colour(HD.ArcsColormap, CURSORCOLBASE + c, r, g, b);
     }
-    DC.cursor_palette_dirty = FALSE;
 
     return;
 }
@@ -670,7 +670,7 @@ static void set_border_pixelmap(void)
     XSetWindowBackground(HD.disp, HD.BackingWindow, HD.border_map);
     XClearWindow(HD.disp, HD.BackingWindow);
 
-    DC.border_palette_dirty = FALSE;
+    return;
 }
 
 /* ------------------------------------------------------------------ */
@@ -686,7 +686,7 @@ static void set_cursor_pixelmap(void)
         HD.cursorPixelMap[c + 1] = get_pixelval(r, g, b);
     }
 
-    DC.cursor_palette_dirty = FALSE;
+    return;
 }
 
 /* ------------------------------------------------------------------ */
