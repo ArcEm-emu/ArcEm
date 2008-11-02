@@ -114,6 +114,8 @@ static void Resize_Window(void);
 static void *emalloc(size_t n, const char *use);
 static void *ecalloc(size_t n, const char *use);
 
+static void insist(int expr, const char *diag);
+
 /* ------------------------------------------------------------------ */
 
 static int (*prev_x_error_handler)(Display *, XErrorEvent *);
@@ -783,10 +785,7 @@ DisplayKbd_InitHost(ARMul_State *state)
   int shape_event_base, shape_error_base;
 
   HD.disp=XOpenDisplay(NULL);
-  if (HD.disp==NULL) {
-    fprintf(stderr,"DisplayKbd_Init: Couldn't open display\n");
-    exit(EXIT_FAILURE);
-  }
+    insist(!!HD.disp, "opening X display in DisplayKbd_InitHost()");
 
   prev_x_error_handler = XSetErrorHandler(DisplayKbd_XError);
 
@@ -874,11 +873,8 @@ DisplayKbd_InitHost(ARMul_State *state)
   {
     char *title = strdup("Arc emulator - Main display");
 
-    if (XStringListToTextProperty(&title, 1, &name) == 0) {
-      fprintf(stderr,"Could not allocate window name\n");
-      exit(EXIT_FAILURE);
-    }
-
+        insist(XStringListToTextProperty(&title, 1, &name),
+            "allocating window name in DisplayKbd_InitHost()");
     XSetWMName(HD.disp,HD.BackingWindow,&name);
     XFree(name.value);
   }
@@ -909,10 +905,7 @@ DisplayKbd_InitHost(ARMul_State *state)
                                  HD.visInfo.depth, ZPixmap, 0, HD.ImageData,
                                  InitialVideoWidth, InitialVideoHeight, 32,
                                  0);
-  if (HD.DisplayImage == NULL) {
-    fprintf(stderr, "DisplayKbd_Init: Couldn't create image\n");
-    exit(EXIT_FAILURE);
-  }
+    insist(!!HD.DisplayImage, "creating host screen image");
 
     /* Now the same for the cursor image */
     HD.CursorImageData = emalloc(64 * InitialVideoHeight * 4,
@@ -921,11 +914,7 @@ DisplayKbd_InitHost(ARMul_State *state)
                                 HD.visInfo.depth, ZPixmap, 0, HD.CursorImageData,
                                 32, InitialVideoHeight, 32,
                                 0);
-  if (HD.CursorImage == NULL) {
-    fprintf(stderr, "DisplayKbd_Init: Couldn't create cursor image\n");
-    exit(EXIT_FAILURE);
-  }
-
+    insist(!!HD.CursorImage, "creating host cursor image");
 
   XSelectInput(HD.disp,HD.MainPane,ExposureMask |
                                    PointerMotionMask |
@@ -1638,10 +1627,7 @@ static void Resize_Window(void)
                                    HD.ImageData,
                                    x, y, 32,
                                    0);
-    if (HD.DisplayImage == NULL) {
-      fprintf(stderr, "Resize_Window: Couldn't create image\n");
-      exit(EXIT_FAILURE);
-    }
+    insist(!!HD.DisplayImage, "creating host screen image");
 
     /* realocate space for new cursor image */
     HD.CursorImageData = emalloc(64 * 4 * y, "host cursor image memory");
@@ -1651,10 +1637,7 @@ static void Resize_Window(void)
                                   HD.CursorImageData,
                                   32, y, 32,
                                   0);
-    if (HD.CursorImage == NULL) {
-      fprintf(stderr, "Resize_Window: Couldn't create cursor image\n");
-      exit(EXIT_FAILURE);
-    }
+    insist(!!HD.CursorImage, "creating host cursor image");
 
     HD.ShapePixmapData = ecalloc(32 * y, "host cursor shape mask");
 }
@@ -1682,4 +1665,14 @@ static void *ecalloc(size_t n, const char *use)
     memset(p, 0, n);
 
     return p;
+}
+
+static void insist(int expr, const char *diag)
+{
+    if (expr) {
+        return;
+    }
+
+    fprintf(stderr, "arcem: insisting on %s.\n", diag);
+    exit(1);
 }
