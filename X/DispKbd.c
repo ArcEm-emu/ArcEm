@@ -77,6 +77,8 @@
         (f) = TRUE; \
     }
 
+/* ------------------------------------------------------------------ */
+
 static void refresh_pseudocolour_display_nbpp(ARMul_State *state,
     int height, int width, int bpp);
 static void refresh_truecolour_display_nbpp(ARMul_State *state,
@@ -101,6 +103,11 @@ static void palette_8bpp_to_rgb(unsigned int pal, int c, int *r,
 static void scale_up_rgb(int *r, int *g, int *b);
 
 static void Resize_Window(void);
+
+static void *emalloc(size_t n, const char *use);
+static void *ecalloc(size_t n, const char *use);
+
+/* ------------------------------------------------------------------ */
 
 static int (*prev_x_error_handler)(Display *, XErrorEvent *);
 
@@ -887,15 +894,10 @@ DisplayKbd_InitHost(ARMul_State *state)
 
 
 
-  /* Allocate the memory for the actual display image */
-  //TODO!! Need to allocate more for truecolour
-  HD.ImageData = malloc(4 * (InitialVideoWidth+ 32) * InitialVideoHeight);
-
-  if (HD.ImageData == NULL) {
-    fprintf(stderr, "DisplayKbd_Init: Couldn't allocate image memory\n");
-    exit(EXIT_FAILURE);
-  }
-
+    /* Allocate the memory for the actual display image */
+    /* TODO!! Need to allocate more for truecolour */
+    HD.ImageData = emalloc((InitialVideoWidth + 32) *
+        InitialVideoHeight * 4, "host screen image memory");
   HD.DisplayImage = XCreateImage(HD.disp, DefaultVisual(HD.disp, HD.ScreenNum),
                                  HD.visInfo.depth, ZPixmap, 0, HD.ImageData,
                                  InitialVideoWidth, InitialVideoHeight, 32,
@@ -905,13 +907,9 @@ DisplayKbd_InitHost(ARMul_State *state)
     exit(EXIT_FAILURE);
   }
 
-  /* Now the same for the cursor image */
-  HD.CursorImageData = malloc(4 * 64 * InitialVideoHeight);
-  if (HD.CursorImageData == NULL) {
-    fprintf(stderr, "DisplayKbd_Init: Couldn't allocate cursor image memory\n");
-    exit(EXIT_FAILURE);
-  }
-
+    /* Now the same for the cursor image */
+    HD.CursorImageData = emalloc(64 * InitialVideoHeight * 4,
+        "host cursor image memory");
   HD.CursorImage = XCreateImage(HD.disp, DefaultVisual(HD.disp, HD.ScreenNum),
                                 HD.visInfo.depth, ZPixmap, 0, HD.CursorImageData,
                                 32, InitialVideoHeight, 32,
@@ -991,13 +989,8 @@ DisplayKbd_InitHost(ARMul_State *state)
 
   HD.MainPaneGC = XCreateGC(HD.disp, HD.MainPane, 0, NULL);
 
-  /* Calloc to clear it as well */
-  HD.ShapePixmapData = calloc(32 * InitialVideoHeight, 1);
-  if (HD.ShapePixmapData == NULL) {
-    fprintf(stderr, "Couldn't allocate memory for pixmap data\n");
-    exit(EXIT_FAILURE);
-  }
-
+    HD.ShapePixmapData = ecalloc(32 * InitialVideoHeight,
+        "host cursor shape mask");
   /* Shape stuff for the mouse cursor window */
   if (!XShapeQueryExtension(HD.disp, &shape_event_base, &shape_error_base)) {
     HD.ShapeEnabled = 0;
@@ -1620,12 +1613,7 @@ static void Resize_Window(void)
     free(HD.ShapePixmapData);
 
     /* realocate space for new screen image */
-    HD.ImageData = malloc(4 * (x + 32) * y);
-    if (HD.ImageData == NULL) {
-      fprintf(stderr, "Resize_Window: Couldn't allocate image memory\n");
-      exit(EXIT_FAILURE);
-    }
-
+    HD.ImageData = emalloc((x + 32) * 4 * y, "host screen image memory");
     HD.DisplayImage = XCreateImage(HD.disp,
                                    DefaultVisual(HD.disp, HD.ScreenNum),
                                    HD.visInfo.depth, ZPixmap, 0,
@@ -1638,12 +1626,7 @@ static void Resize_Window(void)
     }
 
     /* realocate space for new cursor image */
-    HD.CursorImageData = malloc(4 * 64 * y);
-    if (HD.CursorImageData == NULL) {
-      fprintf(stderr, "Resize_Window: Couldn't allocate cursor image memory\n");
-      exit(EXIT_FAILURE);
-    }
-
+    HD.CursorImageData = emalloc(64 * 4 * y, "host cursor image memory");
     HD.CursorImage = XCreateImage(HD.disp,
                                   DefaultVisual(HD.disp, HD.ScreenNum),
                                   HD.visInfo.depth, ZPixmap, 0,
@@ -1655,10 +1638,30 @@ static void Resize_Window(void)
       exit(EXIT_FAILURE);
     }
 
-    /* Calloc to clear it as well */
-    HD.ShapePixmapData = calloc(32 * y, 1);
-    if (HD.ShapePixmapData == NULL) {
-      fprintf(stderr, "Resize_Window: Couldn't allocate memory for pixmap data\n");
-      exit(EXIT_FAILURE);
+    HD.ShapePixmapData = ecalloc(32 * y, "host cursor shape mask");
+}
+
+/* ------------------------------------------------------------------ */
+
+static void *emalloc(size_t n, const char *use)
+{
+    void *p;
+
+    if ((p = malloc(n)) == NULL) {
+        fprintf(stderr, "arcem: malloc of %u bytes for %s failed.\n",
+            n, use);
+        exit(1);
     }
+
+    return p;
+}
+
+static void *ecalloc(size_t n, const char *use)
+{
+    void *p;
+    
+    p = emalloc(n, use);
+    memset(p, 0, n);
+
+    return p;
 }
