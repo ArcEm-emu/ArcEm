@@ -400,6 +400,7 @@ static void refresh_pseudocolour_display_nbpp(ARMul_State *state,
     if (DC.video_palette_dirty) {
         (bpp == 8 ? set_video_8bpp_colourmap :
             set_video_4bpp_colourmap)();
+        DC.video_palette_dirty = FALSE;
     }
 
     ppbyte = 8 / bpp;
@@ -443,6 +444,7 @@ static void refresh_truecolour_display_nbpp(ARMul_State *state,
     if (DC.video_palette_dirty) {
         (bpp == 8 ? set_video_8bpp_pixelmap :
             set_video_4bpp_pixelmap)();
+        DC.video_palette_dirty = FALSE;
     }
 
     ppbyte = 8 / bpp;
@@ -547,7 +549,6 @@ static void set_video_4bpp_colourmap(void)
         palette_4bpp_to_rgb(VIDC.Palette[c], &r, &g, &b);
         store_colour(HD.ArcsColormap, c, r, g, b);
     }
-    DC.video_palette_dirty = FALSE;
 
     return;
 }
@@ -563,7 +564,6 @@ static void set_video_8bpp_colourmap(void)
         palette_8bpp_to_rgb(VIDC.Palette[c & 0xf], c, &r, &g, &b);
         store_colour(HD.ArcsColormap, c, r, g, b);
     }
-    DC.video_palette_dirty = FALSE;
 
     return;
 }
@@ -626,7 +626,7 @@ static void set_video_4bpp_pixelmap(void)
         HD.pixelMap[c] = get_pixelval(r, g, b);
     }
 
-    DC.video_palette_dirty = FALSE;
+    return;
 }
 
 /* ------------------------------------------------------------------ */
@@ -640,7 +640,6 @@ static void set_video_8bpp_pixelmap(void)
         palette_8bpp_to_rgb(VIDC.Palette[c & 0xf], c, &r, &g, &b);
         HD.pixelMap[c] = get_pixelval(r, g, b);
     }
-    DC.video_palette_dirty = FALSE;
 
     return;
 }
