@@ -519,7 +519,8 @@ RefreshDisplay(ARMul_State *state)
         visual[vi].refresh(state, DisplayHeight, DisplayWidth,
             1 << ((VIDC.ControlReg & 0xc) >> 2));
     } else {
-      fprintf(stderr,"RefreshDisplay: 0 or -ve display width or height\n");
+        fprintf(stderr, "RefreshDisplay: odd guest display width or "
+            "height: %d, %d\n", DisplayWidth, DisplayHeight);
     }
 
   /*fprintf(stderr,"RefreshDisplay: Refreshed %d-%d\n",DC.miny,DC.maxy); */
@@ -795,9 +796,10 @@ DisplayKbd_InitHost(ARMul_State *state)
   HD.RootWindow = DefaultRootWindow(HD.disp);
 
   /* Try and find a visual we can work with */
+    fputs("X visual: ", stdout);
   if (XMatchVisualInfo(HD.disp,HD.ScreenNum,8,PseudoColor,&(HD.visInfo))) {
     /* It's 8 bpp, Pseudo colour - the easiest to deal with */
-    printf("Ah - a nice easy 8bpp visual....\n");
+        printf("PseudoColor 8bpp found\n");
   } else {
     /* Could probably cope with a wider range of visuals - particularly
     any other true colour probably? */
@@ -810,10 +812,12 @@ DisplayKbd_InitHost(ARMul_State *state)
       gdk_visual_decompose_mask(HD.visInfo.visual->red_mask,&(HD.red_shift),&(HD.red_prec));
       gdk_visual_decompose_mask(HD.visInfo.visual->green_mask,&(HD.green_shift),&(HD.green_prec));
       gdk_visual_decompose_mask(HD.visInfo.visual->blue_mask,&(HD.blue_shift),&(HD.blue_prec));
-      printf("Shift/masks = r/g/b = %d/%d,%d/%d,%d/%d\n",HD.red_shift,HD.red_prec,
-                                                         HD.green_shift,HD.green_prec,
-                                                         HD.blue_shift,HD.blue_prec);
+        printf("TrueColor %dbpp found, RGB shift/masks = "
+            "%d/%d, %d/%d, %d/%d\n", HD.visInfo.depth, HD.red_shift,
+            HD.red_prec, HD.green_shift, HD.green_prec, HD.blue_shift,
+            HD.blue_prec);
     } else {
+        puts("nothing suitable");
       fprintf(stderr,"DisplayKbd_Init: Failed to find a matching visual - I'm looking for either 8 bit Pseudo colour, or 32,24,16,  or 15 bit TrueColour - sorry\n");
       exit(EXIT_FAILURE);
     }
