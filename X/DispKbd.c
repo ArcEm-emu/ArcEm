@@ -44,6 +44,13 @@
 #include "ControlPane.h"
 #include "platform.h"
 
+/* ------------------------------------------------------------------ */
+
+/* General macros to help handle arrays.  Number of elements, i.e. what
+ * its dimension is, and a pointer to the element past the end. */
+#define DIM(a) ((sizeof (a)) / sizeof (a)[0])
+#define END(a) ((a) + DIM(a))
+
 /* A sensible set of defaults for the start window, the OS
    will call the VIDC and push this smaller or bigger later. */
 #define InitialVideoWidth 640
@@ -933,24 +940,35 @@ DisplayKbd_InitHost(ARMul_State *state)
                                    KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask);
   HD.DefaultColormap=DefaultColormapOfScreen(HD.xScreen);
 
-  if (!XAllocNamedColor(HD.disp,HD.DefaultColormap,"white",&(HD.White),&tmpcol))
-    fprintf(stderr,"Failed to allocate colour 'white'\n");
-  if (!XAllocNamedColor(HD.disp,HD.DefaultColormap,"black",&(HD.Black),&tmpcol))
-    fprintf(stderr,"Failed to allocate colour 'black'\n");
-  if (!XAllocNamedColor(HD.disp,HD.DefaultColormap,"red",&(HD.Red),&tmpcol))
-    fprintf(stderr,"Failed to allocate colour 'red'\n");
-  if (!XAllocNamedColor(HD.disp,HD.DefaultColormap,"green",&(HD.Green),&tmpcol))
-    fprintf(stderr,"Failed to allocate colour 'green'\n");
-  if (!XAllocNamedColor(HD.disp,HD.DefaultColormap,"gray10",&(HD.GreyDark),&tmpcol))
-    fprintf(stderr,"Failed to allocate colour 'gray10'\n");
-  if (!XAllocNamedColor(HD.disp,HD.DefaultColormap,"gray90",&(HD.GreyLight),&tmpcol))
-    fprintf(stderr,"Failed to allocate colour 'gray90'\n");
+    {
+        typedef struct {
+            const char *name;
+            XColor *dest;
+            XColor *reserve;
+        } desired_colour;
+        static desired_colour desired[] = {
+            { "white", &HD.White, NULL },
+            { "black", &HD.Black, NULL },
+            { "red", &HD.Red, NULL },
+            { "green", &HD.Green, NULL },
+            { "gray10", &HD.GreyDark, NULL },
+            { "gray90", &HD.GreyLight, NULL },
+            { "PapayaWhip", &HD.OffWhite, &HD.White },
+        };
+        desired_colour *d;
+        XColor discard;
 
-  if (!XAllocNamedColor(HD.disp,HD.DefaultColormap,"PapayaWhip",&(HD.OffWhite),&tmpcol)) {
-    /* A great shame - a rather nice colour */
-    HD.OffWhite = HD.White;
-    fprintf(stderr,"Failed to allocate colour 'PapayaWhip'\n");
-  };
+        for (d = desired; d < END(desired); d++) {
+            if (!XAllocNamedColor(HD.disp, HD.DefaultColormap, d->name,
+                d->dest, &discard)) {
+                fprintf(stderr, "arcem: failed to allocate colour %s\n",
+                    d->name);
+                if (d->reserve) {
+                    *d->dest = *d->reserve;
+                }
+            }
+        }
+    }
 
   /* I think the main monitor window will need its own colourmap
      since we need at least 256 colours for 256 colour mode */
