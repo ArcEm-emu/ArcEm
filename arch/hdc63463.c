@@ -4,6 +4,19 @@
    (C) David Alan Gilbert 1995-1999
 */
 
+/* A key point of confusion throughout the source and documentation is
+ * that hArcemConfig.aST506DiskShapes is an array of four elements so
+ * I'd assume that [0] matched onto ADFS::4 and [1] was ADFS::5.  (An
+ * ST506 controller only supported two drives.)  So you'd think that the
+ * "MFM disc" line in ~/.arcemrc had to specify 0 and 1 as they're used
+ * as indexes into aST506DiskShapes[].
+ *
+ * But it seems that the commands RISC OS sends to the ST506 controller
+ * give a two-bit drive number that's either 1 or 2.  Therefore
+ * aST506DiskShapes[0] is never accessed and the "MFM disc" line should
+ * specify the geometry of drive 1 for ADFS::4 and that image file
+ * should be called "HardImage1". */
+
 #include <ctype.h>
 #include <errno.h>
 #include <stdarg.h>
@@ -416,58 +429,72 @@ static void Cause_Error(ARMul_State *state, int errcode) {
 } /* Cause_Error */
 
 /*---------------------------------------------------------------------------*/
+
 /* Sets the pointer in the appropriate data file - returns 1 if it succeeded */
-static int SetFilePtr(ARMul_State *state,int drive,
-                      unsigned int head,
-                      unsigned int Cylinder,
-                      unsigned int Sector)  {
-  unsigned long ptr;
 
-  /* Validate destination - and produce errors as appropriate */
-  if (Cylinder >= hArcemConfig.aST506DiskShapes[drive].NCyls) {
-    Cause_Error(state,ERR_NSC);
-    return 0;
-  }
+/* FIXME: should have just one definition of this. */
+#define DIM(a) ((sizeof (a)) / sizeof (a)[0])
 
-  if (head >= hArcemConfig.aST506DiskShapes[drive].NHeads) {
-    Cause_Error(state,ERR_IPH); /* I think this error is actually supposed to be used against specified value not physical */
-    return 0;
-  }
+static int SetFilePtr(ARMul_State *state, int drive, unsigned int head,
+    unsigned int cyl, unsigned int sect)
+{
+    struct HDCshape *disc;
+    unsigned long ptr;
 
-  if (Sector >= hArcemConfig.aST506DiskShapes[drive].NSectors) {
-    Cause_Error(state,ERR_TOV);  /* ID not found in time */
-    return 0;
-  }
+    dbug("SetFilePtr: drive=%d head=%u cyl=%u sec=%u\n", drive, head, cyl, sect);
 
-  ptr=(((Cylinder * hArcemConfig.aST506DiskShapes[drive].NHeads)+head) * 
-       hArcemConfig.aST506DiskShapes[drive].NSectors + Sector) * 
-       hArcemConfig.aST506DiskShapes[drive].RecordLength;
+    if (drive < 0 || drive > DIM(hArcemConfig.aST506DiskShapes)) {
+        fprintf(stderr, "SetFilePtr: drive %d out of range 0..%d\n",
+            drive, DIM(hArcemConfig.aST506DiskShapes));
+        exit(1);
+    }
 
-  dbug("HDC:SetFilePtr; drive=%d head=%d cylinder=%d sector=%d ptr=0x%lx\n",
-          drive,head,Cylinder,Sector,ptr);
-  dbug("                NHeads=%d NSectors=%d RecordLength=%d\n",
-                 hArcemConfig.aST506DiskShapes[drive].NHeads,
-                 hArcemConfig.aST506DiskShapes[drive].NSectors,
-                 hArcemConfig.aST506DiskShapes[drive].RecordLength);
+    disc = hArcemConfig.aST506DiskShapes + drive;
+    dbug("SetFilePtr: disc: heads=%d sectors=%d sectorsize=%d\n",
+        disc->NHeads, disc->NSectors, disc->RecordLength);
 
-  if (HDC.HardFile[drive]==NULL) {
-#ifdef DEBUG_DATA
-    dbug_data("HDC:SetFilePtr - file handle was NULL\n");
-#endif
-    Cause_Error(state,ERR_NRY);
-    return(0);
-  }
+    if (cyl >= disc->NCyls) {
+        dbug("cyl too large: %u >= %u\n", cyl, disc->NCyls);
+        Cause_Error(state, ERR_NSC);
+        return 0;
+    }
 
-  if (fseek(HDC.HardFile[drive],ptr,SEEK_SET)!=0) {
-    dbug_data("HDC:SetFilePtr - fseek failed (errno=%d)\n",errno);
-    Cause_Error(state,ERR_NRY);
-    return(0);
-  }
+    if (head >= disc->NHeads) {
+        dbug("head too large: %u >= %u\n", head, disc->NHeads);
+        /* I think this error is actually supposed to be used against
+         * specified value not physical. */
+        Cause_Error(state, ERR_IPH);
+        return 0;
+    }
 
-  HDC.Track[drive]=Cylinder;
+    if (sect >= disc->NSectors) {
+        dbug("sector too large: %u >= %u\n", sect, disc->NSectors);
+        /* ID not found in time. */
+        Cause_Error(state, ERR_TOV);
+        return 0;
+    }
 
-  return(1);
-} /* SetFilePtr */
+    ptr = (((cyl * disc->NHeads) + head) * disc->NSectors + sect) *
+        disc->RecordLength;
+    dbug("SetFilePtr: ptr=%lu\n", ptr);
+
+    if (!HDC.HardFile[drive]) {
+        dbug("SetFilePtr:no image for drive %d\n", drive);
+        Cause_Error(state, ERR_NRY);
+        return 0;
+    }
+
+    if (fseek(HDC.HardFile[drive], ptr, SEEK_SET)) {
+        dbug("SetFilePtr: fseek failed: errno=%d\n", errno);
+        Cause_Error(state, ERR_NRY);
+        return 0;
+    }
+
+    HDC.Track[drive] = cyl;
+
+    return 1;
+}
+
 /*---------------------------------------------------------------------------*/
 /* A new 'check drive' command has been received
    params in:
@@ -663,6 +690,7 @@ static void SeekCommand(ARMul_State *state) {
   }
 
   US&=3; /* only 2 bits of drive select */
+  dbug("SeekCommand: drive %u\n", US);
 
   HDC.SSB=0;
 
@@ -1605,11 +1633,9 @@ void HDC_Init(ARMul_State *state) {
       }
     }
 
-//#ifdef DEBUG
     if (!HDC.HardFile[currentdrive]) {
       fprintf(stderr,"HDC: Couldn't open image for drive %d\n", currentdrive);
     }
-//#endif
   } /* Image opening */
 
   HDC.DREQ=0;
