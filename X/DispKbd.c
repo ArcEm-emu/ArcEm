@@ -1029,60 +1029,71 @@ static void BackingWindow_Event(ARMul_State *state,XEvent *e) {
     fprintf(stderr, "unwanted BackingWindow_Event type=%d\n", e->type);
 } /* BackingWindow_Event */
 
+/* ------------------------------------------------------------------ */
 
-
-/*----------------------------------------------------------------------------*/
+/* All X servers will support a cursor of 16 x 16 bits. */
+#define CURSOR_SIZE 16
 
 static void ProcessKey(ARMul_State *state, XKeyEvent *key)
 {
-  KeySym sym;
-  const keysym_to_arch_key *ktak;
+    KeySym sym;
+    static Cursor blank_cursor;
+    const keysym_to_arch_key *ktak;
+    char *name;
 
-  XLookupString(key, NULL, 0, &sym, NULL);
+    XLookupString(key, NULL, 0, &sym, NULL);
 
-  /* Trap the special key for mouse following */
-  if (sym == mouse_key.keysym) {
-    /* And when it is pressed toggle the mouse follow mode */
-    if (key->type == KeyPress) {
-      DC.DoingMouseFollow^=1;
-      fprintf(stderr, "%s pressed, turning mouse tracking %s.\n",
-              mouse_key.name, DC.DoingMouseFollow ? "on" : "off");
+    if (sym == mouse_key.keysym) {
+        if (key->type != KeyPress) {
+            return;
+        }
 
-      if (DC.DoingMouseFollow)
-      {
-        /* Create a blank cursor and use that */
-        XColor black, dummy;
-        Pixmap bm_no;
-        static char bm_no_data[8];
-        XAllocNamedColor(HD.disp, HD.ArcsColormap, "black", &black, &dummy);
-        bm_no = XCreateBitmapFromData(HD.disp, HD.MainPane, bm_no_data, 8, 8);
+        DC.DoingMouseFollow = !DC.DoingMouseFollow;
+        fprintf(stderr, "%s pressed, turning mouse tracking %s.\n",
+            mouse_key.name, DC.DoingMouseFollow ? "on" : "off");
+
+        if (!blank_cursor) {
+            Status s;
+            XColor black, exact;
+            char *bits;
+            Pixmap bm;
+
+            s = XAllocNamedColor(HD.disp, HD.ArcsColormap, "black",
+                &black, &exact);
+            insist(s, "couldn't find black for cursor");
+
+            bits = ecalloc(CURSOR_SIZE * CURSOR_SIZE / 8, "blank cursor");
+            bm = XCreateBitmapFromData(HD.disp, HD.MainPane, bits,
+                CURSOR_SIZE, CURSOR_SIZE);
+            insist(bm, "couldn't create bitmap for cursor");
+            free(bits);
+
+            blank_cursor = XCreatePixmapCursor(HD.disp, bm, bm, &black,
+                &black, 0, 0);
+            insist(blank_cursor, "couldn't create blank cursor");
+        }
+
         XDefineCursor(HD.disp, HD.MainPane,
-                      XCreatePixmapCursor(HD.disp, bm_no, bm_no, &black, &black, 0, 0));
-      }
-      else
-      {
-        /* Restore the original cursor */
-        XUndefineCursor(HD.disp, HD.MainPane);
-      }
+            DC.DoingMouseFollow ? blank_cursor : None);
+        return;
     }
-    return;
-  }
 
-  /* Just take the unshifted version of the key */
-  sym = XLookupKeysym(key,0);
+    /* Just take the unshifted version of the key */
+    sym = XLookupKeysym(key, 0);
 
-  for (ktak = keysym_to_arch_key_map; ktak->sym; ktak++) {
-    if (ktak->sym == sym) {
-      keyboard_key_changed(&KBD, ktak->kid, key->type == KeyRelease);
-      return;
+    for (ktak = keysym_to_arch_key_map; ktak->sym; ktak++) {
+        if (ktak->sym == sym) {
+            keyboard_key_changed(&KBD, ktak->kid, key->type == KeyRelease);
+            return;
+        }
     }
-  }
 
-  fprintf(stderr,"ProcessKey: Unknown key sym=%ld!\n",sym);
-} /* ProcessKey */
+    name = XKeysymToString(sym);
+    fprintf(stderr, "ProcessKey: unknown key: keycode=%u "
+        "keysym=%lu=\"%s\"\n", key->keycode, sym, name ? name : "unknown");
+}
 
-
-/*----------------------------------------------------------------------------*/
+/* ------------------------------------------------------------------ */
 
 static void ProcessButton(ARMul_State *state, XButtonEvent *button)
 {
