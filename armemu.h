@@ -19,8 +19,11 @@
    On ARM we don't want to use it, as it's about 8% slower than using the barrel shifter directly
    Other platforms with decent a rotate right instruction may want to avoid using the table too
 */
+
 #ifndef __arm__
+#ifndef __PPC__
 #define ARMUL_USE_IMMEDTABLE
+#endif
 #endif
 
 /***************************************************************************\
