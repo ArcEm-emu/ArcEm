@@ -27,6 +27,16 @@ struct FileRequester *filereq;
 static struct RastPort friend;
 struct RastPort tmprp;
 
+static struct BitMap *mouse_bm;
+static struct RastPort mouse_rp;
+PLANEPTR mask;
+
+/*
+static struct SimpleSprite ptr_sprite;
+static int ptr_sprite_num;
+static UWORD *ptr_sprite_img;
+*/
+
 struct IOStdReq *ir;
 struct MsgPort *mport;
 
@@ -35,8 +45,8 @@ ULONG oldwidth = 0;
 ULONG oldheight = 0;
 ULONG olddepth = 0;
 
-ULONG oldMouseX = 0;
-ULONG oldMouseY = 0;
+static ULONG OldMouseX = 0;
+static ULONG OldMouseY = 0;
 
 //#define HD HOSTDISPLAY
 #define HD HostDisplay
@@ -45,6 +55,7 @@ ULONG oldMouseY = 0;
 #define KEYREENABLEDELAY 1000
 #define AUTOREFRESHPOLL 2500
 
+static void refreshmouse(ARMul_State *state);
 void writepixel(struct RastPort *,ULONG,ULONG,ULONG);
 void ChangeDisplayMode(ARMul_State *,long,long,int);
 void CloseDisplay(void);
@@ -144,6 +155,8 @@ void ChangeDisplayMode(ARMul_State *state,long width,long height,int vidcdepth)
 
 	if(screen)
 	{
+//		screen->ViewPort.Modes |= SPRITES;
+
 		window = IIntuition->OpenWindowTags(NULL,WA_Width,width,
 					WA_Height,height,
 					WA_RMBTrap,TRUE,
@@ -157,6 +170,13 @@ void ChangeDisplayMode(ARMul_State *state,long width,long height,int vidcdepth)
 					WA_MouseQueue,500,
 					WA_IDCMP,IDCMP_MOUSEBUTTONS | IDCMP_MOUSEMOVE | IDCMP_RAWKEY | IDCMP_DELTAMOVE | IDCMP_EXTENDEDMOUSE,
 					TAG_DONE);
+
+		IIntuition->SetWindowPointer
+
+		if(mouse_bm) IGraphics->FreeBitMap(mouse_bm);
+
+		mouse_bm = IGraphics->AllocBitMap(32, 32, depth, BMF_CLEAR, window->RPort->BitMap);
+		mouse_rp.BitMap = mouse_bm;
 	}
 	else
 	{
@@ -195,6 +215,9 @@ void cleanup(void)
 
 	IGraphics->WaitBlit();
 
+//	IGraphics->FreeSprite(ptr_sprite_num);
+//	IExec->FreeVec(ptr_sprite_img);
+
 	if(mouseobj)
 	{
 		IIntuition->SetWindowPointer(window,TAG_DONE);
@@ -215,6 +238,10 @@ void cleanup(void)
 
 	if(tmprp.BitMap)
   		IGraphics->FreeBitMap(tmprp.BitMap);
+
+	if(mouse_bm) IGraphics->FreeBitMap(mouse_bm);
+
+	if(mask) IGraphics->FreeRaster(mask,32,32);
 
 	CloseDisplay();
 
@@ -268,6 +295,8 @@ void MouseMoved(ARMul_State *state,int xdiff,int ydiff)
 
 	  			KBD.MouseXCount = xdiff & 127;
   				KBD.MouseYCount = -ydiff & 127;
+
+//refreshmouse(state);
 }
 
 int
@@ -652,10 +681,149 @@ static void refreshmouse(ARMul_State *state) {
   int Height = (int)VIDC.Vert_CursorEnd - (int)VIDC.Vert_CursorStart +1;
   int VertPos;
 	UBYTE line[32];
+	ULONG ptr_cols[4];
+	ULONG 	col_reg = 16+((0 & 0x06) << 1);
+	UBYTE maskbit;
+	int maskcount = 0;
 
 	if(!window) return;
 	if(!screen) return;
 
+#if 0
+	if(ptr_sprite_img)
+	{
+		offset=0;
+		memptr=MEMC.Cinit*16;
+		height=(VIDC.Vert_CursorEnd-VIDC.Vert_CursorStart)+1;
+		ImgPtr=(unsigned short *) HD.CursorImageData;
+
+		ptr_sprite_img[0] = 0;
+		ptr_sprite_img[1] = 0;
+
+		for(y=0;y<32;y++,memptr+=8,offset+=8) {
+		// fixed height to 32
+
+    	if (offset<512*1024) {
+			ARMword *pointer_data = MEMC.PhysRam + ((MEMC.Cinit * 16)/4);
+			ARMword tmp[2];
+
+			tmp[0]=MEMC.PhysRam[memptr/4];
+			tmp[1]=MEMC.PhysRam[memptr/4+1];
+
+			for(x=0;x<32;x+=2,ImgPtr+=2) {
+
+			if(y<height)
+			{
+				ptr_sprite_img[2 + (y * 2) + x] = tmp[0];
+				ptr_sprite_img[2 + (y * 2) + x + 1] = tmp[1];
+ //((tmp[x/16]>>((x & 15)*2)) & 3);
+				//printf("%ld ",line[x]);
+			}
+      }; /* x */
+    } else return;
+  }; /* y */
+	
+		IGraphics->ChangeSprite(&screen->ViewPort, &ptr_sprite, ptr_sprite_img);
+
+	}
+
+  VertPos = (int)VIDC.Vert_CursorStart;
+  VertPos -= (signed int)VIDC.Vert_DisplayStart;
+
+	IGraphics->MoveSprite(&screen->ViewPort, &ptr_sprite, HorizPos, VertPos);
+#endif
+
+	if(!mouse_bm) return;
+
+/*
+	if(!mouseptr.BitMap)
+	{
+		mouseptr.BitMap=IExec->AllocVec(sizeof(struct BitMap),MEMF_CLEAR);
+		IGraphics->InitBitMap(mouseptr.BitMap,2,32,32);
+		mouseptr.BitMap->Planes[0] = IGraphics->AllocRaster(32,32);
+		mouseptr.BitMap->Planes[1] = IGraphics->AllocRaster(32,32);
+
+		ptr_cols[1] = IGraphics->FindColor(screen->ViewPort.ColorMap,
+			VIDC.CursorPalette[0]
+);
+
+
+//		mouseptr.BitMap = IGraphics->AllocBitMap(32,32,2,BMF_DISPLAYABLE | BMF_CLEAR | BMF_INTERLEAVED,NULL);
+	}
+*/
+
+  VertPos = (int)VIDC.Vert_CursorStart;
+  VertPos -= (signed int)VIDC.Vert_DisplayStart;
+
+ offset=0;
+  memptr=MEMC.Cinit*16;
+  height=(VIDC.Vert_CursorEnd-VIDC.Vert_CursorStart)+1;
+  ImgPtr=(unsigned short *) HD.CursorImageData;
+
+	IGraphics->BltBitMap(friend.BitMap,OldMouseX,OldMouseY,
+			window->RPort->BitMap,OldMouseX,OldMouseY,
+			32,32,0x0C0,0xff,NULL);
+
+/*
+	IGraphics->BltBitMap(mouse_bm,0,0,
+			window->RPort->BitMap,OldMouseX,OldMouseY,
+			32,32,0x0C0,0xff,NULL);
+
+	IGraphics->BltBitMap(window->RPort->BitMap,HorizPos,VertPos,
+			mouse_bm,0,0,
+			32,32,0x0C0,0xff,NULL);
+*/
+
+  for(y=0;y<32;y++,memptr+=8,offset+=8) {
+// fixed height to 32
+
+    if (offset<512*1024) {
+      ARMword tmp[2];
+
+      tmp[0]=MEMC.PhysRam[memptr/4];
+      tmp[1]=MEMC.PhysRam[memptr/4+1];
+
+      for(x=0;x<32;x++,ImgPtr++) {
+
+		if(y<height)
+		{
+        	line[x] = ((tmp[x/16]>>((x & 15)*2)) & 3) + col_reg;
+
+			if(line[x] == 0) maskbit = 0;
+				else maskbit = 1;
+
+			mask[(y*4) + (x/4)] &= (maskbit << (8 - maskcount));
+
+			maskcount++;
+			if(maskcount > 8) maskcount = 0;
+
+//printf("%ld ",line[x]);
+		}
+		else
+		{
+			line[x] = 0;
+		}
+      }; /* x */
+//printf("\n");
+		IGraphics->WritePixelLine8(&mouse_rp,0,y,32,line,&tmprp); // &mouseptr
+    } else return;
+  }; /* y */
+
+// HorizPos,VertPos
+	IGraphics->BltMaskBitMapRastPort(mouse_bm,0,0,
+			window->RPort,HorizPos,VertPos,
+			32,height,ABC,mask);
+
+/*
+	IGraphics->BltBitMap(mouseptr.BitMap,0,0,
+			window->RPort->BitMap,HorizPos,VertPos,
+			32,height,0x0C0,0xff,NULL);
+*/
+	OldMouseX = HorizPos;
+	OldMouseY = VertPos;
+
+return;
+#if 0
 	if(!mouseptr.BitMap)
 	{
 		mouseptr.BitMap=IExec->AllocVec(sizeof(struct BitMap),MEMF_CLEAR);
@@ -756,7 +924,7 @@ not using it at present.
 			window->RPort->BitMap,HorizPos,VertPos,
 			32,height,0x0C0,0xff,NULL);
 */
-
+#endif
 }; /* RefreshMouse */
 
 void
@@ -816,7 +984,17 @@ DisplayKbd_InitHost(ARMul_State *state)
 	ARexx_Init();
 
 	IGraphics->InitRastPort(&mouseptr);
+	IGraphics->InitRastPort(&mouse_rp);
 	IGraphics->InitRastPort(&friend);
+	mask = IGraphics->AllocRaster(32,32);
+/*
+	ptr_sprite_num = IGraphics->GetSprite(&ptr_sprite, -1);
+	if(ptr_sprite_num == -1) cleanup();
+
+	ptr_sprite_img = IExec->AllocVec((2 + 32) * 4, MEMF_CLEAR); // MEMF_CHIP | 
+*/
+
+	
 
 	filereq = IAsl->AllocAslRequestTags(ASL_FileRequest,
 									ASLFR_RejectIcons,TRUE,
