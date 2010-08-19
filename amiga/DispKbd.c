@@ -171,8 +171,6 @@ void ChangeDisplayMode(ARMul_State *state,long width,long height,int vidcdepth)
 					WA_IDCMP,IDCMP_MOUSEBUTTONS | IDCMP_MOUSEMOVE | IDCMP_RAWKEY | IDCMP_DELTAMOVE | IDCMP_EXTENDEDMOUSE,
 					TAG_DONE);
 
-		IIntuition->SetWindowPointer
-
 		if(mouse_bm) IGraphics->FreeBitMap(mouse_bm);
 
 		mouse_bm = IGraphics->AllocBitMap(32, 32, depth, BMF_CLEAR, window->RPort->BitMap);
