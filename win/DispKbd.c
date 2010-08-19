@@ -41,7 +41,7 @@ static void ProcessButton(ARMul_State *state);
 
 
 
-static unsigned long get_pixelval(unsigned int red, unsigned int green, unsigned int blue) {
+static unsigned long get_pixelval(ARMul_State *state,unsigned int red, unsigned int green, unsigned int blue) {
     return (((red >> (16 - HD.red_prec)) << HD.red_shift) +
            ((green >> (16 - HD.green_prec)) << HD.green_shift) +
            ((blue >> (16 - HD.blue_prec)) << HD.blue_shift));
@@ -128,7 +128,7 @@ static void DoPixelMap_Standard(ARMul_State *state)
 //    tmp.pixel=c;
 //printf("color %d = %s\n", c, tmpstr);
     /* I suppose I should do something with the supremacy bit....*/
-    HD.pixelMap[c] = get_pixelval(tmp.red, tmp.green, tmp.blue);
+    HD.pixelMap[c] = get_pixelval(state, tmp.red, tmp.green, tmp.blue);
   }
 //getchar();
   /* Now do the ones for the cursor */
@@ -138,7 +138,7 @@ static void DoPixelMap_Standard(ARMul_State *state)
     tmp.blue  = ((VIDC.CursorPalette[c] >> 8) & 15) << 12;
 
     /* Entry 0 is transparent */
-    HD.cursorPixelMap[c + 1] = get_pixelval(tmp.red,tmp.green,tmp.blue);
+    HD.cursorPixelMap[c + 1] = get_pixelval(state, tmp.red,tmp.green,tmp.blue);
   }
 
   DC.MustResetPalette = 0;
@@ -165,7 +165,7 @@ static void DoPixelMap_256(ARMul_State *state)
     tmp.green = (((VIDC.Palette[palentry] >> 4) & 3) | (L65 << 2)) << 12;
     tmp.blue  = (((VIDC.Palette[palentry] >> 8) & 7) | (L7 << 3)) << 12;
     /* I suppose I should do something with the supremacy bit....*/
-    HD.pixelMap[c] = get_pixelval(tmp.red, tmp.green, tmp.blue);
+    HD.pixelMap[c] = get_pixelval(state, tmp.red, tmp.green, tmp.blue);
   }
 
   /* Now do the ones for the cursor */
@@ -176,7 +176,7 @@ static void DoPixelMap_256(ARMul_State *state)
     tmp.green = ((VIDC.CursorPalette[c] >> 4) &15) << 12;
     tmp.blue  = ((VIDC.CursorPalette[c] >> 8) &15) << 12;
 
-    HD.cursorPixelMap[c + 1] = get_pixelval(tmp.red, tmp.green, tmp.blue);
+    HD.cursorPixelMap[c + 1] = get_pixelval(state, tmp.red, tmp.green, tmp.blue);
   }
 
   DC.MustResetPalette = 0;
@@ -409,7 +409,7 @@ RefreshDisplay(ARMul_State *state)
   DC.AutoRefresh=AUTOREFRESHPOLL;
   ioc.IRQStatus|=8; /* VSync */
   ioc.IRQStatus |= 0x20; /* Sound - just an experiment */
-  IO_UpdateNirq();
+  IO_UpdateNirq(state);
 
   DC.miny=MonitorHeight-1;
   DC.maxy=0;

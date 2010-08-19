@@ -648,7 +648,7 @@ RefreshDisplay(ARMul_State *state)
     DC.AutoRefresh = AUTOREFRESHPOLL;
     ioc.IRQStatus |= 8; /* VSync */
     ioc.IRQStatus |= 0x20; /* Sound - just an experiment */
-    IO_UpdateNirq();
+    IO_UpdateNirq(state);
 
     DC.miny=MonitorHeight-1;
     DC.maxy=0;

@@ -21,14 +21,14 @@ static unsigned long delayProgress = 0;
 static SoundData *buffer = NULL;
 
 void
-sound_poll(void)
+sound_poll(ARMul_State *state)
 {
   delayProgress++;
   if (delayProgress >= delayTotal)
 	{
 	    delayProgress = 0;
 
-	      if (SoundDMAFetch(buffer) == 1)
+	      if (SoundDMAFetch(buffer, state) == 1)
 			{
         		return;
       		}
@@ -53,8 +53,11 @@ int openaudio(void)
 	}
 	else
 	{
+		fprintf(stderr, "sound_init(): Out of memory\n");
 		return -1;
 	}
+	
+	return 0;
 }
 
 int
@@ -68,6 +71,7 @@ sound_init(void)
 	}
 	else
 	{
+		fprintf(stderr, "sound_init(): Could not open utility.library v51\n");
 		return -1;
 	}
 

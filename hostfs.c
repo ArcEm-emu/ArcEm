@@ -1270,7 +1270,11 @@ hostfs_file_8_create_dir(ARMul_State *state)
   dbug_hostfs("\tHOST_PATHNAME = %s\n", host_pathname);
 
   /* Create directory */
+#ifdef SYSTEM_win
+  if (mkdir(host_pathname)) {
+#else
   if (mkdir(host_pathname, 0777)) {
+#endif
     /* An error occurred whilst creating the directory */
 
     switch (errno) {

@@ -155,7 +155,7 @@ static void GenInterrupt(ARMul_State *state, const char *reason) {
   ioc.FIRQStatus |= FIQ_FDIRQ; /* FH1 line on IOC */
   DBG((stderr,"FDC:GenInterrupt FIRQStatus=0x%x Mask=0x%x\n",
     ioc.FIRQStatus,ioc.FIRQMask));
-  IO_UpdateNfiq();
+  IO_UpdateNfiq(state);
 }; /* GenInterrupt */
 
 
@@ -222,21 +222,21 @@ unsigned int FDC_Regular(ARMul_State *state)
 /*--------------------------------------------------------------------------*/
 static void ClearInterrupt(ARMul_State *state) {
   ioc.FIRQStatus &= ~FIQ_FDIRQ; /* FH1 line on IOC */
-  IO_UpdateNfiq();
+  IO_UpdateNfiq(state);
 } /* ClearInterrupt */
 
 /*--------------------------------------------------------------------------*/
 static void GenDRQ(ARMul_State *state) {
   DBG((stderr,"FDC_GenDRQ (data=0x%x)\n",FDC.Data));
   ioc.FIRQStatus |= FIQ_FDDRQ; /* FH0 line on IOC */
-  IO_UpdateNfiq();
+  IO_UpdateNfiq(state);
 } /* GenDRQ */
 
 /*--------------------------------------------------------------------------*/
 static void ClearDRQ(ARMul_State *state) {
   DBG((stderr,"FDC_ClearDRQ\n"));
   ioc.FIRQStatus &= ~FIQ_FDDRQ; /* FH0 line on IOC */
-  IO_UpdateNfiq();
+  IO_UpdateNfiq(state);
   FDC.StatusReg&=~BIT_DRQ;
 } /* ClearDRQ */
 

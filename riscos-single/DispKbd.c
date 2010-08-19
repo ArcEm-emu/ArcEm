@@ -15,6 +15,7 @@
 
 #include <stdio.h>
 #include <limits.h>
+#include <time.h>
 
 #include "kernel.h"
 #include "swis.h"
@@ -175,7 +176,7 @@ static void set_cursor_palette(unsigned int *pal)
 /* Refresh the mouse's image                                                    */
 static void RefreshMouse(ARMul_State *state) {
   int height;
-  int *pointer_data = MEMC.PhysRam + ((MEMC.Cinit * 16)/4);
+  ARMword *pointer_data = MEMC.PhysRam + ((MEMC.Cinit * 16)/4);
 
   height = (VIDC.Vert_CursorEnd - VIDC.Vert_CursorStart) + 1;
 
@@ -439,7 +440,7 @@ RefreshDisplay(ARMul_State *state)
   DC.AutoRefresh=AUTOREFRESHPOLL;
   ioc.IRQStatus|=8; /* VSync */
   ioc.IRQStatus |= 0x20; /* Sound - just an experiment */
-  IO_UpdateNirq();
+  IO_UpdateNirq(state);
 
   DC.miny=MonitorHeight-1;
   DC.maxy=0;
@@ -478,6 +479,20 @@ RefreshDisplay(ARMul_State *state)
     case 3:
       DoColourMap_256(state);
       break;
+  }
+#endif
+
+#if 1
+  static clock_t oldtime;
+  static ARMword oldcycles;
+  clock_t nowtime = clock();
+  if((nowtime-oldtime) > CLOCKS_PER_SEC)
+  {
+    const float scale = ((float)CLOCKS_PER_SEC)/1000000.0f;
+    float mhz = scale*((float)(ARMul_Time-oldcycles))/((float)(nowtime-oldtime));
+    printf("\x1e%.2fMHz\n",mhz);
+    oldcycles = ARMul_Time;
+    oldtime = nowtime;
   }
 #endif
 
@@ -643,7 +658,7 @@ DisplayKbd_PollHost(ARMul_State *state)
 
 
 #ifdef DIRECT_DISPLAY
-static void UpdateROScreenFromVIDC(void)
+static void UpdateROScreenFromVIDC(ARMul_State *state)
 {
   SelectROScreenMode((VIDC.Horiz_DisplayEnd - VIDC.Horiz_DisplayStart) * 2,
                       VIDC.Vert_DisplayEnd -  VIDC.Vert_DisplayStart,
@@ -748,7 +763,7 @@ void VIDC_PutVal(ARMul_State *state,ARMword address, ARMword data,int bNw) {
       VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Horiz_DisplayStart,(val>>14) & 0x3ff);
 #ifdef DIRECT_DISPLAY
       //if (DC.MustRedraw)
-        UpdateROScreenFromVIDC();
+        UpdateROScreenFromVIDC(state);
 #endif
       break;
 
@@ -759,7 +774,7 @@ void VIDC_PutVal(ARMul_State *state,ARMword address, ARMword data,int bNw) {
       VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Horiz_DisplayEnd,(val>>14) & 0x3ff);
 #ifdef DIRECT_DISPLAY
       //if (DC.MustRedraw)
-        UpdateROScreenFromVIDC();
+        UpdateROScreenFromVIDC(state);
 #endif
       break;
 
@@ -813,7 +828,7 @@ void VIDC_PutVal(ARMul_State *state,ARMword address, ARMword data,int bNw) {
       VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Vert_DisplayStart,((val>>14) & 0x3ff));
 #ifdef DIRECT_DISPLAY
       //if (DC.MustRedraw)
-        UpdateROScreenFromVIDC();
+        UpdateROScreenFromVIDC(state);
 #endif
       break;
 
@@ -824,7 +839,7 @@ void VIDC_PutVal(ARMul_State *state,ARMword address, ARMword data,int bNw) {
       VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Vert_DisplayEnd,(val>>14) & 0x3ff);
 #ifdef DIRECT_DISPLAY
       //if (DC.MustRedraw)
-        UpdateROScreenFromVIDC();
+        UpdateROScreenFromVIDC(state);
 #endif
       break;
 
@@ -865,7 +880,7 @@ void VIDC_PutVal(ARMul_State *state,ARMword address, ARMword data,int bNw) {
       VideoRelUpdateAndForce(DC.MustRedraw,VIDC.ControlReg,val & 0xffff);
 #ifdef DIRECT_DISPLAY
       //if (DC.MustRedraw)
-        UpdateROScreenFromVIDC();
+        UpdateROScreenFromVIDC(state);
 #endif
       break;
 

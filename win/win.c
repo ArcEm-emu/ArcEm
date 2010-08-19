@@ -295,6 +295,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         // You can tell whether it's up or down by checking it's
         // positive or negative, to work out the extent you use
         // HIWORD(wParam), but we don't need that.
+        ARMul_State *state = &statestr;
 
         if(iMouseWheelValue > 0) {
           // Fire our fake button_4 wheelup event, this'll get picked up

@@ -82,8 +82,8 @@ int IOC_WriteKbdRx(ARMul_State *state, unsigned char value);
 /*-----------------------------------------------------------------------------*/
 int IOC_ReadKbdTx(ARMul_State *state);
 
-void UpdateTimerRegisters(void);
-void IO_UpdateNfiq(void);
-void IO_UpdateNirq(void);
+void UpdateTimerRegisters(ARMul_State *state);
+void IO_UpdateNfiq(ARMul_State *state);
+void IO_UpdateNirq(ARMul_State *state);
 
 #endif

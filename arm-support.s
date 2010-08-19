@@ -1,240 +1,237 @@
 
 
 
-__r0	RN	0
-__r1	RN	1
-__r2	RN	2
-__r3	RN	3
-__r4	RN	4
-__r5	RN	5
-__r6	RN	6
-__r7	RN	7
-__r8	RN	8
-__r9	RN	9
-__r10	RN	10
-__r11	RN	11
-__r12	RN	12
-__r13	RN	13
-__r14	RN	14
-__r15	RN	15
-__a1	RN	0
-__a2	RN	1
-__a3	RN	2
-__a4	RN	3
-__v1	RN	4
-__v2	RN	5
-__v3	RN	6
-__v4	RN	7
-__v5	RN	8
-__v6	RN	9
-__sl	RN	10
-__fp	RN	11
-__ip	RN	12
-__sp	RN	13
-__lr	RN	14
-__pc	RN	15
-__f0	FN	0
-__f1	FN	1
-__f2	FN	2
-__f3	FN	3
-__f4	FN	4
-__f5	FN	5
-__f6	FN	6
-__f7	FN	7
+@ r0	RN	0
+@ r1	RN	1
+@ r2	RN	2
+@ r3	RN	3
+@ r4	RN	4
+@ r5	RN	5
+@ r6	RN	6
+@ r7	RN	7
+@ r8	RN	8
+@ r9	RN	9
+@ r10	RN	10
+@ r11	RN	11
+@ r12	RN	12
+@ r13	RN	13
+@ r14	RN	14
+@ r15	RN	15
+@ a1	RN	0
+@ a2	RN	1
+@ a3	RN	2
+@ a4	RN	3
+@ v1	RN	4
+@ v2	RN	5
+@ v3	RN	6
+@ v4	RN	7
+@ v5	RN	8
+@ v6	RN	9
+@ sl	RN	10
+@ fp	RN	11
+@ ip	RN	12
+@ sp	RN	13
+@ lr	RN	14
+@ pc	RN	15
+@ f0	FN	0
+@ f1	FN	1
+@ f2	FN	2
+@ f3	FN	3
+@ f4	FN	4
+@ f5	FN	5
+@ f6	FN	6
+@ f7	FN	7
 
 
-	AREA |C$$code1|, CODE, READONLY
+.text
 
-	IMPORT	|GetDPRegRHS|
-	IMPORT	|GetDPSRegRHS|
-
-|statevars|
-	DCD	|statestr|
-	DCD	|emu_state|
+statevars:
+.word	statestr
+.word	emu_state
 
 
 #include "armsuppmov.s"
 
-	mov	__a1, __a1, lsr #10
-	and	__a1, __a1, #60
-	add	__a4, __a4, #8
-	str	__a2, [__a4, __a1]
+	mov	a1, a1, lsr #10
+	and	a1, a1, #60
+	add	a4, a4, #8
+	str	a2, [a4, a1]
 
-	movs	__pc, __lr
+	mov	pc, lr
 
-|ARMul_Emulate26_MovRegNorm_HasShift|
-	stmfd	__sp!, {__v1, __lr}
+ARMul_Emulate26_MovRegNorm_HasShift:
+	stmfd	sp!, {v1, lr}
 
-	mov	__v1, __a1
-	ldr	__a1, |statevars|+4
-	ldr	__a1, [__a1, #0]
-	mov	__a2, __v1
-	bl	|GetDPRegRHS|
-	ldr	__a4, |statevars|
+	mov	v1, a1
+	ldr	a1, statevars+4
+	ldr	a1, [a1, #0]
+	mov	a2, v1
+	bl	GetDPRegRHS
+	ldr	a4, statevars
 
-	mov	__a2, __v1, lsr #10
-	and	__a2, __a2, #60
-	add	__a3, __a4, #8
-	str	__a1, [__a3, __a2]
+	mov	a2, v1, lsr #10
+	and	a2, a2, #60
+	add	a3, a4, #8
+	str	a1, [a3, a2]
 
-	ldmia	__sp!, {__v1, __pc}^
+	ldmia	sp!, {v1, pc}
 
 
 
 #include "armsuppmovs.s"
 
-	mov	__a1, __a1, lsr #10
-	and	__a1, __a1, #60
-	add	__a4, __a4, #8
-	str	__a2, [__a4, __a1]
+	mov	a1, a1, lsr #10
+	and	a1, a1, #60
+	add	a4, a4, #8
+	str	a2, [a4, a1]
 
-	movs	__a3, __a2, lsr #31
-	beq	|ARMul_Emulate26_MovsRegNorm_Status1|
-	add	__a4, __a4, #424 - 8
-	mov	__a1, #1
-	mov	__a2, #0
-	stmia	__a4, {__a1, __a2}
-	movs	__pc, __lr
+	movs	a3, a2, lsr #31
+	beq	ARMul_Emulate26_MovsRegNorm_Status1
+	add	a4, a4, #424 - 8
+	mov	a1, #1
+	mov	a2, #0
+	stmia	a4, {a1, a2}
+	mov	pc, lr
 
-|ARMul_Emulate26_MovsRegNorm_Status1|
-	cmp	__a2, #0
-	streq	__a3, [__a4, #424 - 8]
-	moveq	__a3, #1
-	streq	__a3, [__a4, #428 - 8]
+ARMul_Emulate26_MovsRegNorm_Status1:
+	cmp	a2, #0
+	streq	a3, [a4, #424 - 8]
+	moveq	a3, #1
+	streq	a3, [a4, #428 - 8]
 
-	strne	__a3, [__a4, #424 - 8]
-	strne	__a3, [__a4, #428 - 8]
-	movs	__pc, __lr
+	strne	a3, [a4, #424 - 8]
+	strne	a3, [a4, #428 - 8]
+	mov	pc, lr
 
-|ARMul_Emulate26_MovsRegNorm_HasShift|
-	stmfd	__sp!, {__v1, __lr}
+ARMul_Emulate26_MovsRegNorm_HasShift:
+	stmfd	sp!, {v1, lr}
 
-	mov	__v1, __a1
-	ldr	__a1, |statevars|+4
-	ldr	__a1, [__a1, #0]
-	mov	__a2, __v1
-	bl	|GetDPSRegRHS|
-	ldr	__a4, |statevars|
+	mov	v1, a1
+	ldr	a1, statevars+4
+	ldr	a1, [a1, #0]
+	mov	a2, v1
+	bl	GetDPSRegRHS
+	ldr	a4, statevars
 
-	mov	__a2, __v1, lsr #10
-	and	__a2, __a2, #60
-	add	__a3, __a4, #8
-	str	__a1, [__a3, __a2]
+	mov	a2, v1, lsr #10
+	and	a2, a2, #60
+	add	a3, a4, #8
+	str	a1, [a3, a2]
 
-	movs	__v1, __a1, lsr #31
-	beq	|ARMul_Emulate26_MovsRegNorm_Status2|
-	add	__a4, __a3, #424 - 8
+	movs	v1, a1, lsr #31
+	beq	ARMul_Emulate26_MovsRegNorm_Status2
+	add	a4, a3, #424 - 8
 
-	mov	__a1, #1
-	mov	__a2, #0
-	stmia	__a4, {__a1, __a2}
-	ldmia	__sp!, {__v1, __pc}^
+	mov	a1, #1
+	mov	a2, #0
+	stmia	a4, {a1, a2}
+	ldmia	sp!, {v1, pc}
 
-|ARMul_Emulate26_MovsRegNorm_Status2|
-	cmp	__a1, #0
-	streq	__v1, [__a4, #424]
-	moveq	__v1, #1
-	streq	__v1, [__a4, #428]
+ARMul_Emulate26_MovsRegNorm_Status2:
+	cmp	a1, #0
+	streq	v1, [a4, #424]
+	moveq	v1, #1
+	streq	v1, [a4, #428]
 
-	strne	__v1, [__a4, #424]
-	strne	__v1, [__a4, #428]
+	strne	v1, [a4, #424]
+	strne	v1, [a4, #428]
 
-	ldmia	__sp!, {__v1, __pc}^
+	ldmia	sp!, {v1, pc}
 
 
 
 #include "armsuppmvn.s"
 
-	mvn	__a2, __a2
+	mvn	a2, a2
 
-	mov	__a1, __a1, lsr #10
-	and	__a1, __a1, #60
-	add	__a4, __a4, #8
-	str	__a2, [__a4, __a1]
+	mov	a1, a1, lsr #10
+	and	a1, a1, #60
+	add	a4, a4, #8
+	str	a2, [a4, a1]
 
-	movs	__pc, __lr
+	mov	pc, lr
 
-|ARMul_Emulate26_MvnRegNorm_HasShift|
-	stmfd	__sp!, {__v1, __lr}
+ARMul_Emulate26_MvnRegNorm_HasShift:
+	stmfd	sp!, {v1, lr}
 
-	mov	__v1, __a1
-	ldr	__a1, |statevars|+4
-	ldr	__a1, [__a1, #0]
-	mov	__a2, __v1
-	bl	|GetDPRegRHS|
-	mvn	__a1, __a1
-	ldr	__a4, |statevars|
+	mov	v1, a1
+	ldr	a1, statevars+4
+	ldr	a1, [a1, #0]
+	mov	a2, v1
+	bl	GetDPRegRHS
+	mvn	a1, a1
+	ldr	a4, statevars
 
-	mov	__a2, __v1, lsr #10
-	and	__a2, __a2, #60
-	add	__a3, __a4, #8
-	str	__a1, [__a3, __a2]
+	mov	a2, v1, lsr #10
+	and	a2, a2, #60
+	add	a3, a4, #8
+	str	a1, [a3, a2]
 
-	ldmia	__sp!, {__v1, __pc}^
+	ldmia	sp!, {v1, pc}
 
 
 
 #include "armsuppmvns.s"
 
-	mvn	__a2, __a2		; MVN
+	mvn	a2, a2		@ MVN
 
-	mov	__a1, __a1, lsr #10
-	and	__a1, __a1, #60
-	add	__a4, __a4, #8
-	str	__a2, [__a4, __a1]
+	mov	a1, a1, lsr #10
+	and	a1, a1, #60
+	add	a4, a4, #8
+	str	a2, [a4, a1]
 
-	movs	__a3, __a2, lsr #31
-	beq	|ARMul_Emulate26_MvnsRegNorm_Status1|
-	add	__a4, __a4, #424 - 8
-	mov	__a1, #1
-	mov	__a2, #0
-	stmia	__a4, {__a1, __a2}
-	movs	__pc, __lr
+	movs	a3, a2, lsr #31
+	beq	ARMul_Emulate26_MvnsRegNorm_Status1
+	add	a4, a4, #424 - 8
+	mov	a1, #1
+	mov	a2, #0
+	stmia	a4, {a1, a2}
+	mov	pc, lr
 
-|ARMul_Emulate26_MvnsRegNorm_Status1|
-	cmp	__a2, #0
-	streq	__a3, [__a4, #424 - 8]
-	moveq	__a3, #1
-	streq	__a3, [__a4, #428 - 8]
+ARMul_Emulate26_MvnsRegNorm_Status1:
+	cmp	a2, #0
+	streq	a3, [a4, #424 - 8]
+	moveq	a3, #1
+	streq	a3, [a4, #428 - 8]
 
-	strne	__a3, [__a4, #424 - 8]
-	strne	__a3, [__a4, #428 - 8]
-	movs	__pc, __lr
+	strne	a3, [a4, #424 - 8]
+	strne	a3, [a4, #428 - 8]
+	mov	pc, lr
 
-|ARMul_Emulate26_MvnsRegNorm_HasShift|
-	stmfd	__sp!, {__v1, __lr}
+ARMul_Emulate26_MvnsRegNorm_HasShift:
+	stmfd	sp!, {v1, lr}
 
-	mov	__v1, __a1
-	ldr	__a1, |statevars|+4
-	ldr	__a1, [__a1, #0]
-	mov	__a2, __v1
-	bl	|GetDPSRegRHS|
-	mvn	__a1, __a1		; MVN
-	ldr	__a4, |statevars|
+	mov	v1, a1
+	ldr	a1, statevars+4
+	ldr	a1, [a1, #0]
+	mov	a2, v1
+	bl	GetDPSRegRHS
+	mvn	a1, a1		@ MVN
+	ldr	a4, statevars
 
-	mov	__a2, __v1, lsr #10
-	and	__a2, __a2, #60
-	add	__a3, __a4, #8
-	str	__a1, [__a3, __a2]
+	mov	a2, v1, lsr #10
+	and	a2, a2, #60
+	add	a3, a4, #8
+	str	a1, [a3, a2]
 
-	movs	__v1, __a1, lsr #31
-	beq	|ARMul_Emulate26_MvnsRegNorm_Status2|
-	add	__a4, __a3, #424 - 8
+	movs	v1, a1, lsr #31
+	beq	ARMul_Emulate26_MvnsRegNorm_Status2
+	add	a4, a3, #424 - 8
 
-	mov	__a1, #1
-	mov	__a2, #0
-	stmia	__a4, {__a1, __a2}
-	ldmia	__sp!, {__v1, __pc}^
+	mov	a1, #1
+	mov	a2, #0
+	stmia	a4, {a1, a2}
+	ldmia	sp!, {v1, pc}
 
-|ARMul_Emulate26_MvnsRegNorm_Status2|
-	cmp	__a1, #0
-	streq	__v1, [__a4, #424]
-	moveq	__v1, #1
-	streq	__v1, [__a4, #428]
+ARMul_Emulate26_MvnsRegNorm_Status2:
+	cmp	a1, #0
+	streq	v1, [a4, #424]
+	moveq	v1, #1
+	streq	v1, [a4, #428]
 
-	strne	__v1, [__a4, #424]
-	strne	__v1, [__a4, #428]
+	strne	v1, [a4, #424]
+	strne	v1, [a4, #428]
 
-	ldmia	__sp!, {__v1, __pc}^
+	ldmia	sp!, {v1, pc}
 
 

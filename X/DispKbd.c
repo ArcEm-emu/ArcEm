@@ -91,17 +91,17 @@ static void refresh_pseudocolour_display_nbpp(ARMul_State *state,
 static void refresh_truecolour_display_nbpp(ARMul_State *state,
     int height, int width, int bpp);
 
-static void set_video_4bpp_colourmap(void);
-static void set_video_8bpp_colourmap(void);
-static void set_border_colourmap(void);
-static void set_cursor_colourmap(void);
+static void set_video_4bpp_colourmap(ARMul_State *state);
+static void set_video_8bpp_colourmap(ARMul_State *state);
+static void set_border_colourmap(ARMul_State *state);
+static void set_cursor_colourmap(ARMul_State *state);
 static void store_colour(Colormap map, unsigned long pixel,
     unsigned short r, unsigned short g, unsigned short b);
 
-static void set_video_4bpp_pixelmap(void);
-static void set_video_8bpp_pixelmap(void);
-static void set_border_pixelmap(void);
-static void set_cursor_pixelmap(void);
+static void set_video_4bpp_pixelmap(ARMul_State *state);
+static void set_video_8bpp_pixelmap(ARMul_State *state);
+static void set_border_pixelmap(ARMul_State *state);
+static void set_cursor_pixelmap(ARMul_State *state);
 
 static void palette_4bpp_to_rgb(unsigned int pal, int *r, int *g,
     int *b);
@@ -109,7 +109,7 @@ static void palette_8bpp_to_rgb(unsigned int pal, int c, int *r,
     int *g, int *b);
 static void scale_up_rgb(int *r, int *g, int *b);
 
-static void Resize_Window(void);
+static void Resize_Window(ARMul_State *state);
 
 static void *emalloc(size_t n, const char *use);
 static void *ecalloc(size_t n, const char *use);
@@ -415,7 +415,7 @@ static void refresh_pseudocolour_display_nbpp(ARMul_State *state,
 
     if (DC.video_palette_dirty) {
         (bpp == 8 ? set_video_8bpp_colourmap :
-            set_video_4bpp_colourmap)();
+            set_video_4bpp_colourmap)(state);
         DC.video_palette_dirty = FALSE;
     }
 
@@ -459,7 +459,7 @@ static void refresh_truecolour_display_nbpp(ARMul_State *state,
 
     if (DC.video_palette_dirty) {
         (bpp == 8 ? set_video_8bpp_pixelmap :
-            set_video_4bpp_pixelmap)();
+            set_video_4bpp_pixelmap)(state);
         DC.video_palette_dirty = FALSE;
     }
 
@@ -493,8 +493,8 @@ void
 RefreshDisplay(ARMul_State *state)
 {
     static struct {
-        void (*set_border_map)(void);
-        void (*set_cursor_map)(void);
+        void (*set_border_map)(ARMul_State *state);
+        void (*set_cursor_map)(ARMul_State *state);
         void (*refresh)(ARMul_State *state, int height, int width, int bpp);
     } visual[] = {
         {
@@ -515,7 +515,7 @@ RefreshDisplay(ARMul_State *state)
   DC.AutoRefresh  = AUTOREFRESHPOLL;
   ioc.IRQStatus  |= IRQA_VFLYBK; /* VSync */
   ioc.IRQStatus  |= IRQA_TM0; /* Sound - just an experiment */
-  IO_UpdateNirq();
+  IO_UpdateNirq(state);
 
   RefreshMouse(state);
 
@@ -525,11 +525,11 @@ RefreshDisplay(ARMul_State *state)
     vi = (HD.visInfo.class == PseudoColor) ? 0 : 1;
 
     if (DC.border_palette_dirty) {
-        visual[vi].set_border_map();
+        visual[vi].set_border_map(state);
         DC.border_palette_dirty = FALSE;
     }
     if (DC.cursor_palette_dirty) {
-        visual[vi].set_cursor_map();
+        visual[vi].set_cursor_map(state);
         DC.cursor_palette_dirty = FALSE;
     }
 
@@ -559,7 +559,7 @@ RefreshDisplay(ARMul_State *state)
 
 /* ------------------------------------------------------------------ */
 
-static void set_video_4bpp_colourmap(void)
+static void set_video_4bpp_colourmap(ARMul_State *state)
 {
     int c;
     int r, g, b;
@@ -574,7 +574,7 @@ static void set_video_4bpp_colourmap(void)
 
 /* ------------------------------------------------------------------ */
 
-static void set_video_8bpp_colourmap(void)
+static void set_video_8bpp_colourmap(ARMul_State *state)
 {
     int c;
     int r, g, b;
@@ -589,7 +589,7 @@ static void set_video_8bpp_colourmap(void)
 
 /* ------------------------------------------------------------------ */
 
-static void set_border_colourmap(void)
+static void set_border_colourmap(ARMul_State *state)
 {
     int r, g, b;
 
@@ -601,7 +601,7 @@ static void set_border_colourmap(void)
 
 /* ------------------------------------------------------------------ */
 
-static void set_cursor_colourmap(void)
+static void set_cursor_colourmap(ARMul_State *state)
 {
     int c;
     int r, g, b;
@@ -633,7 +633,7 @@ static void store_colour(Colormap map, unsigned long pixel,
 
 /* ------------------------------------------------------------------ */
 
-static void set_video_4bpp_pixelmap(void)
+static void set_video_4bpp_pixelmap(ARMul_State *state)
 {
     int c;
     int r, g, b;
@@ -648,7 +648,7 @@ static void set_video_4bpp_pixelmap(void)
 
 /* ------------------------------------------------------------------ */
 
-static void set_video_8bpp_pixelmap(void)
+static void set_video_8bpp_pixelmap(ARMul_State *state)
 {
     int c;
     int r, g, b;
@@ -663,7 +663,7 @@ static void set_video_8bpp_pixelmap(void)
 
 /* ------------------------------------------------------------------ */
 
-static void set_border_pixelmap(void)
+static void set_border_pixelmap(ARMul_State *state)
 {
     int r, g, b;
 
@@ -677,7 +677,7 @@ static void set_border_pixelmap(void)
 
 /* ------------------------------------------------------------------ */
 
-static void set_cursor_pixelmap(void)
+static void set_cursor_pixelmap(ARMul_State *state)
 {
     int c;
     int r, g, b;
@@ -1465,7 +1465,7 @@ void VIDC_PutVal(ARMul_State *state,ARMword address, ARMword data,int bNw) {
       VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Horiz_DisplayStart,((val>>14) & 0x3ff));
       if (must_resize) {
         /* Only resize the window if the screen size has actually changed */
-        Resize_Window();
+        Resize_Window(state);
       }
       break;
 
@@ -1477,7 +1477,7 @@ void VIDC_PutVal(ARMul_State *state,ARMword address, ARMword data,int bNw) {
       VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Horiz_DisplayEnd,(val>>14) & 0x3ff);
       if (must_resize) {
         /* Only resize the window if the screen size has actually changed */
-        Resize_Window();
+        Resize_Window(state);
       }
       break;
 
@@ -1528,7 +1528,7 @@ void VIDC_PutVal(ARMul_State *state,ARMword address, ARMword data,int bNw) {
       fprintf(stderr,"VIDC Vert disp start register val=%d\n",val>>14);
 #endif
       VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Vert_DisplayStart,((val>>14) & 0x3ff));
-      Resize_Window();
+      Resize_Window(state);
       break;
 
     case 0xb0:
@@ -1536,7 +1536,7 @@ void VIDC_PutVal(ARMul_State *state,ARMword address, ARMword data,int bNw) {
       fprintf(stderr,"VIDC Vert disp end register val=%d\n",val>>14);
 #endif
       VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Vert_DisplayEnd,(val>>14) & 0x3ff);
-      Resize_Window();
+      Resize_Window(state);
       break;
 
     case 0xb4:
@@ -1602,7 +1602,7 @@ void hostdisplay_change_focus(int focus)
  *
  * Resize the window to fit the new video mode.
  */
-static void Resize_Window(void)
+static void Resize_Window(ARMul_State *state)
 {
   int x = (VIDC.Horiz_DisplayEnd - VIDC.Horiz_DisplayStart)*2;
   int y = VIDC.Vert_DisplayEnd - VIDC.Vert_DisplayStart;

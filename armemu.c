@@ -1,11 +1,3 @@
-/* DANGER: The instruction read may have changed the ROM mapping and thus it might
-   not be the same when you write the instruction function back ! */
-/* Also there might be an intervening write which overwrites one of the prefetched
-   instructions and thus we mustnt overwrite it with a function corresponding to its
-   old value! */
-
-   /* MUST modify write code to invalidate pInstrFunc etc. */
-
 /*  armemu.c -- Main instruction emulation:  ARM6 Instruction Emulator.
     Copyright (C) 1994 Advanced RISC Machines Ltd.
 
@@ -33,379 +25,121 @@ ARMul_State statestr;
 /* global used to terminate the emulator */
 static int kill_emulator;
 
-ARMword *armflags = &statestr.NFlag;
+typedef struct {
+  ARMword instr;
+  ARMEmuFunc func;
+} PipelineEntry;
 
-static ARMEmuFunc* pInstrFunc;  /* These are only used by the writeback of the instruction function pointer */
-static ARMEmuFunc* pDecFunc;    /* But they are invalidated by word/byte write to point to a dummy location */
-static ARMEmuFunc* pLoadedFunc; /* So that a fetched instruction followed by an overwrite of its location   */
-                        /* doesn't get its function pointer overwritten by the original instruction */
+extern PipelineEntry abortpipe;
 
 /***************************************************************************\
 *                   Load Instruction                                        *
 \***************************************************************************/
-
-static ARMword
-ARMul_LoadInstr(ARMword address, ARMEmuFunc **func)
+static void
+ARMul_LoadInstr(ARMul_State *state,ARMword addr, PipelineEntry *p)
 {
-  static ARMEmuFunc badfunc;
-  ARMword PageTabVal;
-
-  statestr.NumCycles++;
-  address &= 0x3ffffff;
-
-  /* First check if we are doing ROM remapping and are accessing a remapped */
-  /* location.  If it is then map it into the High ROM space                */
-  if ((MEMC.ROMMapFlag) && (address < 0x800000)) {
-    MEMC.ROMMapFlag = 2;
-    /* A simple ROM wrap around */
-    address %= MEMC.ROMHighSize;
-
-    ARMul_CLEARABORT;
-    *func = &MEMC.ROMHighFuncs[address / 4];
-    return MEMC.ROMHigh[address / 4];
-  }
-
-  switch ((address >> 24) & 3) {
-    case 3:
-      /* If we are in ROM and trying to read then there is no hassle */
-      if (address >= MEMORY_0x3400000_R_ROM_LOW) {
-        /* It's ROM read - no hassle */
-        ARMul_CLEARABORT;
-
-        if (MEMC.ROMMapFlag == 2) {
-          MEMC.OldAddress1 = -1;
-          MEMC.OldPage1 = -1;
-          MEMC.ROMMapFlag = 0;
-        }
-
-        if (address >= MEMORY_0x3800000_R_ROM_HIGH) {
-          address -= MEMORY_0x3800000_R_ROM_HIGH;
-          address %= MEMC.ROMHighSize;
-
-          *func = &MEMC.ROMHighFuncs[address / 4];
-          return MEMC.ROMHigh[address / 4];
-        } else {
-          if (MEMC.ROMLow) {
-            address -= MEMORY_0x3400000_R_ROM_LOW;
-            address %= MEMC.ROMLowSize;
-
-            *func = &MEMC.ROMLowFuncs[address / 4];
-            return MEMC.ROMLow[address / 4];
-          } else {
-            return 0;
-          }
-        }
-      } else {
-        if (statestr.NtransSig) {
-
-          if (MEMC.ROMMapFlag == 2) {
-            MEMC.ROMMapFlag = 0;
-            MEMC.OldAddress1 = -1;
-            MEMC.OldPage1 = -1;
-          }
-          badfunc = ARMul_Emulate_DecodeInstr;
-          *func = &badfunc;
-          return GetWord_IO(emu_state, address);
-        } else {
-          ARMul_PREFETCHABORT(address);
-          badfunc = ARMul_Emulate_DecodeInstr;
-          *func = &badfunc;
-          return ARMul_ABORTWORD;
-        }
-      }
-      /* NOTE: No break, IOC has same permissions as physical RAM */
-
-    case 2:
-      /* Privileged only */
-      if (statestr.NtransSig) {
-        ARMul_CLEARABORT;
-        if (MEMC.ROMMapFlag == 2) {
-          MEMC.ROMMapFlag = 0;
-          MEMC.OldAddress1 = -1;
-          MEMC.OldPage1 = -1;
-        }
-        address -= MEMORY_0x2000000_RAM_PHYS;
-
-        /* I used to think memory wrapped after the real RAM - but it doesn't appear to */
-        if (address >= MEMC.RAMSize) {
-          fprintf(stderr, "GetWord returning dead0bad - after PhysRam\n");
-          badfunc = ARMul_Emulate_DecodeInstr;
-          *func = &badfunc;
-          return 0xdead0bad;
-          /*while (address > MEMC.RAMSize)
-            address -= MEMC.RAMSize; */
-        }
-
-        *func = &MEMC.PhysRamfuncs[address / 4];
-        return MEMC.PhysRam[address / 4];
-      } else {
-        ARMul_PREFETCHABORT(address);
-        badfunc = ARMul_Emulate_DecodeInstr;
-        *func = &badfunc;
-        return ARMul_ABORTWORD;
-      }
-      break;
-
-    case 0:
-    case 1:
-#ifdef DEBUG
-      printf("ARMul_LoadInstr (logical map) for address=0x%x\n", address);
-#endif
-      /* OK - it's in logically mapped RAM */
-      if (!FindPageTableEntry(address, &PageTabVal)) {
-        badfunc = ARMul_Emulate_DecodeInstr;
-        *func = &badfunc;
-        ARMul_PREFETCHABORT(address);
-        return ARMul_ABORTWORD;
-      }
-
-      MEMC.TmpPage = PageTabVal;
-
-      /* If it's not supervisor, and not OS mode, and the page is read protected then prefetch abort */
-      if ((!(statestr.NtransSig)) && (!(MEMC.ControlReg & (1 << 12))) &&
-          (PageTabVal & 512))
-      {
-        ARMul_PREFETCHABORT(address);
-        badfunc = ARMul_Emulate_DecodeInstr;
-        *func = &badfunc;
-        return ARMul_ABORTWORD;
-      }
-  }
+  state->NumCycles++;
+  addr &= 0x3fffffc;
 
   ARMul_CLEARABORT;
-  /* Logically mapped RAM */
-  address = GetPhysAddress(address);
-
-  /* I used to think memory wrapped after the real RAM - but it doesn't appear
-     to */
-  if (address >= MEMC.RAMSize) {
-    fprintf(stderr, "GetWord returning dead0bad - after PhysRam (from log ram)\n");
-    badfunc = ARMul_Emulate_DecodeInstr;
-    *func = &badfunc;
-    return 0xdead0bad;
-    /*while (address > MEMC.RAMSize)
-      address -= MEMC.RAMSize; */
+  
+  FastMapEntry *entry = FastMap_GetEntryNoWrap(addr);
+  FastMapRes res = FastMap_DecodeRead(entry,MEMC.FastMapMode);
+//  fprintf(stderr,"LoadInstr: %08x maps to entry %08x res %08x (mode %08x pc %08x)\n",addr,entry,res,MEMC.FastMapMode,state->Reg[15]);
+  if(FASTMAP_RESULT_DIRECT(res))
+  {
+    ARMword *data = FastMap_Log2Phy(entry,addr);
+    ARMword instr = p->instr = *data;
+    ARMEmuFunc *pfunc = FastMap_Phy2Func(data);
+    ARMEmuFunc temp = *pfunc;
+    if(temp == FASTMAP_CLOBBEREDFUNC)
+    {
+      /* Decode the instruction */
+      temp = *pfunc = ARMul_Emulate_DecodeInstr(instr);
+    }
+#if 0
+    else if(temp != ARMul_Emulate_DecodeInstr(instr))
+    {
+      fprintf(stderr,"LoadInstr: %08x maps to entry %08x res %08x (mode %08x pc %08x)\n",addr,entry,res,MEMC.FastMapMode,state->Reg[15]);
+      fprintf(stderr,"-> data %08x pfunc %08x instr %08x func %08x using ofs %08x\n",data,pfunc,instr,temp,MEMC.FastMapInstrFuncOfs);
+      fprintf(stderr,"But should be %08x!\n",ARMul_Emulate_DecodeInstr(instr));
+      exit(5);
+    }
+#endif
+    p->func = temp;
   }
-
-  *func = &MEMC.PhysRamfuncs[address / 4];
-  return MEMC.PhysRam[address / 4];
+  else if(FASTMAP_RESULT_FUNC(res))
+  {
+    /* Use function, means we can't write back the decode result */
+    ARMword instr = p->instr = FastMap_LoadFunc(entry,state,addr);
+    p->func = ARMul_Emulate_DecodeInstr(instr);
+  }
+  else
+  {
+    /* Abort! */
+    *p = abortpipe;
+    ARMul_PREFETCHABORT(addr);
+  }
 }
 
 /* --------------------------------------------------------------------------- */
 static void
-ARMul_LoadInstrTriplet(ARMword address,
-                       ARMword *pw1, ARMword *pw2, ARMword *pw3,
-                       ARMEmuFunc **func1, ARMEmuFunc **func2,
-                       ARMEmuFunc **func3)
+ARMul_LoadInstrTriplet(ARMul_State *state,ARMword addr,PipelineEntry *p)
 {
-  static ARMEmuFunc badfunc;
-  ARMword PageTabVal;
-
-  if ((MEMC.ROMMapFlag) || ((address & 0xfff) > 0xff0)) {
-    *pw1 = ARMul_LoadInstr(address, func1);
-    *pw2 = ARMul_LoadInstr(address + 4, func2);
-    *pw3 = ARMul_LoadInstr(address + 8, func3);
+  if ((addr << 20) > 0xff000000) {
+    ARMul_LoadInstr(state,addr,p);
+    ARMul_LoadInstr(state,addr+4,p+1);
+    ARMul_LoadInstr(state,addr+8,p+2);
     return;
   }
 
-  statestr.NumCycles += 3;
-  address &= 0x3ffffff;
+  state->NumCycles += 3;
+  addr &= 0x3fffffc;
 
-  switch ((address >> 24) & 3) {
-    case 3:
-      /* If we are in ROM and trying to read then there is no hassle */
-      if (address >= MEMORY_0x3400000_R_ROM_LOW) {
-        /* It's ROM read - no hassle */
-        ARMul_CLEARABORT;
-
-        if (MEMC.ROMMapFlag == 2) {
-          MEMC.OldAddress1 = -1;
-          MEMC.OldPage1 = -1;
-          MEMC.ROMMapFlag = 0;
-        }
-
-        if (address >= MEMORY_0x3800000_R_ROM_HIGH) {
-          address -= MEMORY_0x3800000_R_ROM_HIGH;
-          address %= MEMC.ROMHighSize;
-          address /= 4;
-          *pw1 = MEMC.ROMHigh[address];
-          *pw2 = MEMC.ROMHigh[address + 1];
-          *pw3 = MEMC.ROMHigh[address + 2];
-          *func1 = &MEMC.ROMHighFuncs[address];
-          *func2 = &MEMC.ROMHighFuncs[address + 1];
-          *func3 = &MEMC.ROMHighFuncs[address + 2];
-        } else {
-          if (MEMC.ROMLow) {
-            address -= MEMORY_0x3400000_R_ROM_LOW;
-            address %= MEMC.ROMLowSize;
-            address /= 4;
-            *pw1 = MEMC.ROMLow[address];
-            *pw2 = MEMC.ROMLow[address + 1];
-            *pw3 = MEMC.ROMLow[address + 2];
-            *func1 = &MEMC.ROMLowFuncs[address];
-            *func2 = &MEMC.ROMLowFuncs[address + 1];
-            *func3 = &MEMC.ROMLowFuncs[address + 2];
-          } else {
-            /* We should never reach here:
-             * Because no ROM is mapped in the ROM Low address space,
-             * reading data from it will return 0,
-             * and RISC OS should not attempt to execute code from */
-            abort();
-          }
-        }
-        return;
-      } else {
-        if (statestr.NtransSig) {
-
-          if (MEMC.ROMMapFlag == 2) {
-            MEMC.ROMMapFlag = 0;
-            MEMC.OldAddress1 = -1;
-            MEMC.OldPage1 = -1;
-          }
-          *pw1 = GetWord_IO(emu_state, address);
-          *pw2 = GetWord_IO(emu_state, address + 4);
-          *pw3 = GetWord_IO(emu_state, address + 8);
-        } else {
-          ARMul_PREFETCHABORT(address);
-          ARMul_PREFETCHABORT(address + 4);
-          ARMul_PREFETCHABORT(address + 8);
-          *pw1 = ARMul_ABORTWORD;
-          *pw2 = ARMul_ABORTWORD;
-          *pw3 = ARMul_ABORTWORD;
-        }
-        badfunc = ARMul_Emulate_DecodeInstr;
-        *func1 = &badfunc;
-        *func2 = &badfunc;
-        *func3 = &badfunc;
-        return;
-      }
-      /* NOTE: No break, IOC has same permissions as physical RAM */
-
-    case 2:
-      /* Privileged only */
-      if (statestr.NtransSig) {
-        ARMul_CLEARABORT;
-        if (MEMC.ROMMapFlag == 2) {
-          MEMC.ROMMapFlag = 0;
-          MEMC.OldAddress1 = -1;
-          MEMC.OldPage1 = -1;
-        }
-        address -= MEMORY_0x2000000_RAM_PHYS;
-
-        /* I used to think memory wrapped after the real RAM - but it doesn't appear to */
-        if (address >= MEMC.RAMSize) {
-          fprintf(stderr, "LoadInstrTriplet returning dead0bad - after PhysRam address=%x+0x2000000\n", address);
-          *pw1 = 0xdead0bad;
-          *pw2 = 0xdead0bad;
-          *pw3 = 0xdead0bad;
-          badfunc = ARMul_Emulate_DecodeInstr;
-          *func1 = &badfunc;
-          *func2 = &badfunc;
-          *func3 = &badfunc;
-          return;
-          /*while (address>MEMC.RAMSize)
-            address-=MEMC.RAMSize; */
-        }
-
-        address /= 4;
-        *pw1 = MEMC.PhysRam[address];
-        *pw2 = MEMC.PhysRam[address + 1];
-        *pw3 = MEMC.PhysRam[address + 2];
-        *func1 = &MEMC.PhysRamfuncs[address];
-        *func2 = &MEMC.PhysRamfuncs[address + 1];
-        *func3 = &MEMC.PhysRamfuncs[address + 2];
-      } else {
-        ARMul_PREFETCHABORT(address);
-        ARMul_PREFETCHABORT(address + 4);
-        ARMul_PREFETCHABORT(address + 8);
-        *pw1 = ARMul_ABORTWORD;
-        *pw2 = ARMul_ABORTWORD;
-        *pw3 = ARMul_ABORTWORD;
-        badfunc = ARMul_Emulate_DecodeInstr;
-        *func1 = &badfunc;
-        *func2 = &badfunc;
-        *func3 = &badfunc;
-      }
-      return;
-      break;
-
-    case 0:
-    case 1:
-#ifdef DEBUG
-      printf("LITrip (lmap) add=0x%x\n", address);
-#endif
-      /* OK - it's in logically mapped RAM */
-      if (!FindPageTableEntry(address, &PageTabVal)) {
-        ARMul_PREFETCHABORT(address);
-        ARMul_PREFETCHABORT(address + 4);
-        ARMul_PREFETCHABORT(address + 8);
-        *pw1 = ARMul_ABORTWORD;
-        *pw2 = ARMul_ABORTWORD;
-        *pw3 = ARMul_ABORTWORD;
-        badfunc = ARMul_Emulate_DecodeInstr;
-        *func1 = &badfunc;
-        *func2 = &badfunc;
-        *func3 = &badfunc;
-        return;
-      }
-
-      MEMC.TmpPage = PageTabVal;
-
-#ifdef DEBUG
-      printf("LITrip(lmap) add=0x%x PTab=0x%x NT=%d MEMC.Ctrl b 12=%d\n",
-             address, PageTabVal, statestr.NtransSig,
-             MEMC.ControlReg & (1 << 12));
-#endif
-
-      /* The page exists - so if itis supervisor then it's OK */
-      if ((!(statestr.NtransSig)) && (!(MEMC.ControlReg & (1 << 12))) &&
-          (PageTabVal & 512))
-      {
-        ARMul_PREFETCHABORT(address);
-        ARMul_PREFETCHABORT(address + 4);
-        ARMul_PREFETCHABORT(address + 8);
-        *pw1 = ARMul_ABORTWORD;
-        *pw2 = ARMul_ABORTWORD;
-        *pw3 = ARMul_ABORTWORD;
-        badfunc = ARMul_Emulate_DecodeInstr;
-        *func1 = &badfunc;
-        *func2 = &badfunc;
-        *func3 = &badfunc;
-#ifdef DEBUG
-        printf("LITrip(lmap) prefetchabort - no access to usermode address=0x%x\n",
-               address);
-#endif
-        return;
-      }
-  }
   ARMul_CLEARABORT;
-
-  /* Logically mapped RAM */
-  address = GetPhysAddress(address);
-
-  /* I used to think memory wrapped after the real RAM - but it doesn't appear
-     to */
-  if (address >= MEMC.RAMSize) {
-    fprintf(stderr, "LoadInstrTriplet returning dead0bad - after PhysRam (from log ram)\n");
-    *pw1 = 0xdead0bad;
-    *pw2 = 0xdead0bad;
-    *pw3 = 0xdead0bad;
-    badfunc = ARMul_Emulate_DecodeInstr;
-    *func1 = &badfunc;
-    *func2 = &badfunc;
-    *func3 = &badfunc;
-    return;
-    /*while (address > MEMC.RAMSize)
-      address -= MEMC.RAMSize; */
+  
+  FastMapEntry *entry = FastMap_GetEntryNoWrap(addr);
+  FastMapRes res = FastMap_DecodeRead(entry,MEMC.FastMapMode);
+  if(FASTMAP_RESULT_DIRECT(res))
+  {
+    ARMword *data = FastMap_Log2Phy(entry,addr);
+    ARMEmuFunc *pfunc = FastMap_Phy2Func(data);
+    int i;
+    for(i=0;i<3;i++)
+    {
+      ARMword instr = p->instr = *data;
+      ARMEmuFunc temp = *pfunc;
+      if(temp == FASTMAP_CLOBBEREDFUNC)
+      {
+        /* Decode the instruction */
+        temp = *pfunc = ARMul_Emulate_DecodeInstr(instr);
+      }
+      p->func = temp;
+      data++;
+      pfunc++;
+      p++;
+    }
   }
-
-  address /= 4;
-  *pw1 = MEMC.PhysRam[address];
-  *pw2 = MEMC.PhysRam[address + 1];
-  *pw3 = MEMC.PhysRam[address + 2];
-  *func1 = &MEMC.PhysRamfuncs[address];
-  *func2 = &MEMC.PhysRamfuncs[address + 1];
-  *func3 = &MEMC.PhysRamfuncs[address + 2];
+  else if(FASTMAP_RESULT_FUNC(res))
+  {
+    /* We would use the function here... except calling the function may alter the mapping (e.g. during first remapped ROM read following a reset)
+       So instead we'll just fall back to calling LoadInstr 3 times, since this isn't a very common case anyway */
+    state->NumCycles -= 3;
+    ARMul_LoadInstr(state,addr,p);
+    ARMul_LoadInstr(state,addr+4,p+1);
+    ARMul_LoadInstr(state,addr+8,p+2);    
+  }
+  else
+  {
+    /* Abort! */
+    int i;
+    for(i=0;i<3;i++)
+    {
+      *p = abortpipe;
+      p++;
+    }
+    ARMul_PREFETCHABORT(addr);
+  }
 }
 
 /***************************************************************************\
@@ -413,17 +147,17 @@ ARMul_LoadInstrTriplet(ARMword address,
 * scheduled events.                                                         *
 \***************************************************************************/
 
-static void ARMul_InvokeEvent(void)
+static void ARMul_InvokeEvent(ARMul_State *state)
 {
-  if (statestr.Now < ARMul_Time) {
-    DisplayKbd_Poll(&statestr);
+  if (state->Now < ARMul_Time) {
+    DisplayKbd_Poll(state);
   }
 }
 
 
-void ARMul_Icycles(unsigned number)
+void ARMul_Icycles(ARMul_State *state,unsigned number)
 {
-  statestr.NumCycles += number;
+  state->NumCycles += number;
   ARMul_CLEARABORT;
 }
 
@@ -492,26 +226,97 @@ ARMul_SubOverflow(ARMul_State *state, ARMword a, ARMword b, ARMword result)
 * filters the common case of an unshifted register with in line code        *
 \***************************************************************************/
 
-#ifndef __riscos__
+#if !(defined(__riscos__) && defined(ENABLE_ASM))
+#if 1
+typedef ARMword (*RHSFunc)(ARMul_State *state,ARMword instr,ARMword base);
+
+static ARMword RHSFunc_LSL_Imm(ARMul_State *state,ARMword instr,ARMword base)
+{
+  base = state->Reg[base];
+  ARMword shamt = BITS(7,11);
+  return base<<shamt;
+}
+
+static ARMword RHSFunc_LSR_Imm(ARMul_State *state,ARMword instr,ARMword base)
+{
+  base = state->Reg[base];
+  ARMword shamt = BITS(7,11);
+  return (shamt?base>>shamt:0);
+}
+
+static ARMword RHSFunc_ASR_Imm(ARMul_State *state,ARMword instr,ARMword base)
+{
+  base = state->Reg[base];
+  ARMword shamt = BITS(7,11);
+  return (shamt?((ARMword)((int)base>>(int)shamt)):((ARMword)((int)base>>31L)));
+}
+
+static ARMword RHSFunc_ROR_Imm(ARMul_State *state,ARMword instr,ARMword base)
+{
+  base = state->Reg[base];
+  ARMword shamt = BITS(7,11);
+  return (shamt?((base << (32 - shamt)) | (base >> shamt)):((base >> 1) | (CFLAG << 31)));
+}
+
+static ARMword RHSFunc_LSL_Reg(ARMul_State *state,ARMword instr,ARMword base)
+{
+    UNDEF_Shift;
+    INCPC;
+    base = state->Reg[base];
+    ARMul_Icycles(state,1);
+    ARMword shamt = state->Reg[BITS(8,11)] & 0xff;
+  return (shamt>=32?0:base<<shamt);
+}
+
+static ARMword RHSFunc_LSR_Reg(ARMul_State *state,ARMword instr,ARMword base)
+{
+    UNDEF_Shift;
+    INCPC;
+    base = state->Reg[base];
+    ARMul_Icycles(state,1);
+    ARMword shamt = state->Reg[BITS(8,11)] & 0xff;
+  return (shamt>=32?0:base>>shamt);
+}
+
+static ARMword RHSFunc_ASR_Reg(ARMul_State *state,ARMword instr,ARMword base)
+{
+    UNDEF_Shift;
+    INCPC;
+    base = state->Reg[base];
+    ARMul_Icycles(state,1);
+    ARMword shamt = state->Reg[BITS(8,11)] & 0xff;
+  return (shamt<32?((ARMword)((int)base>>(int)shamt)):((ARMword)((int)base>>31L)));
+}
+
+static ARMword RHSFunc_ROR_Reg(ARMul_State *state,ARMword instr,ARMword base)
+{
+    UNDEF_Shift;
+    INCPC;
+    base = state->Reg[base];
+    ARMul_Icycles(state,1);
+    ARMword shamt = state->Reg[BITS(8,11)] & 0x1f;
+  return ((base << (32 - shamt)) | (base >> shamt));
+}
+
+static const RHSFunc RHSFuncs[8] = {RHSFunc_LSL_Imm,RHSFunc_LSL_Reg,RHSFunc_LSR_Imm,RHSFunc_LSR_Reg,RHSFunc_ASR_Imm,RHSFunc_ASR_Reg,RHSFunc_ROR_Imm,RHSFunc_ROR_Reg};
+static ARMword
+GetDPRegRHS(ARMul_State *state, ARMword instr)
+{
+ return (RHSFuncs[BITS(4,6)])(state,instr,RHSReg);
+ }
+#else
 static ARMword
 GetDPRegRHS(ARMul_State *state, ARMword instr)
 {
   ARMword shamt , base;
 
-#ifndef MODE32
  base = RHSReg;
-#endif
  if (BIT(4)) { /* shift amount in a register */
     UNDEF_Shift;
     INCPC;
-#ifndef MODE32
-    if (base == 15)
-       base = ECC | ER15INT | R15PC | EMODE;
-    else
-#endif
-       base = statestr.Reg[base];
-    ARMul_Icycles(1);
-    shamt = statestr.Reg[BITS(8,11)] & 0xff;
+    base = state->Reg[base];
+    ARMul_Icycles(state,1);
+    shamt = state->Reg[BITS(8,11)] & 0xff;
     switch ((int)BITS(5,6)) {
        case LSL: if (shamt == 0)
                      return(base);
@@ -539,12 +344,7 @@ GetDPRegRHS(ARMul_State *state, ARMword instr)
        }
     }
  else { /* shift amount is a constant */
-#ifndef MODE32
-    if (base == 15)
-      base = ECC | ER15INT | R15PC | EMODE;
-    else
-#endif
-       base = statestr.Reg[base];
+    base = state->Reg[base];
     shamt = BITS(7,11);
     switch ((int)BITS(5,6)) {
        case LSL: return(base<<shamt);
@@ -565,6 +365,7 @@ GetDPRegRHS(ARMul_State *state, ARMword instr)
  return(0); /* just to shut up lint */
  }
 #endif
+#endif
 
 /***************************************************************************\
 * This routine evaluates most Logical Data Processing register RHSs        *
@@ -573,26 +374,19 @@ GetDPRegRHS(ARMul_State *state, ARMword instr)
 * with in line code                                                         *
 \***************************************************************************/
 
-#ifndef __riscos__
+#if !(defined(__riscos__) && defined(ENABLE_ASM))
 static ARMword
 GetDPSRegRHS(ARMul_State *state, ARMword instr)
 {
   ARMword shamt , base;
 
-#ifndef MODE32
  base = RHSReg;
-#endif
  if (BIT(4)) { /* shift amount in a register */
     UNDEF_Shift;
     INCPC;
-#ifndef MODE32
-    if (base == 15)
-       base = ECC | ER15INT | R15PC | EMODE;
-    else
-#endif
-       base = statestr.Reg[base];
-    ARMul_Icycles(1);
-    shamt = statestr.Reg[BITS(8,11)] & 0xff;
+    base = state->Reg[base];
+    ARMul_Icycles(state,1);
+    shamt = state->Reg[BITS(8,11)] & 0xff;
     switch ((int)BITS(5,6)) {
        case LSL: if (shamt == 0)
                      return(base);
@@ -646,12 +440,7 @@ GetDPSRegRHS(ARMul_State *state, ARMword instr)
        }
     }
  else { /* shift amount is a constant */
-#ifndef MODE32
-    if (base == 15)
-       base = ECC | ER15INT | R15PC | EMODE;
-    else
-#endif
-       base = statestr.Reg[base];
+    base = state->Reg[base];
     shamt = BITS(7,11);
     switch ((int)BITS(5,6)) {
        case LSL:
@@ -698,12 +487,8 @@ GetDPSRegRHS(ARMul_State *state, ARMword instr)
 
 static void WriteR15(ARMul_State *state, ARMword src)
 {
-#ifdef MODE32
- statestr.Reg[15] = src & PCBITS;
-#else
- statestr.Reg[15] = (src & R15PCBITS) | ECC | ER15INT | EMODE;
+ SETPC(src);
  ARMul_R15Altered(state);
-#endif
  FLUSHPIPE;
  }
 
@@ -714,19 +499,11 @@ static void WriteR15(ARMul_State *state, ARMword src)
 
 static void WriteSR15(ARMul_State *state, ARMword src)
 {
-#ifdef MODE32
- statestr.Reg[15] = src & PCBITS;
- if (statestr.Bank > 0) {
-    statestr.Cpsr = statestr.Spsr[statestr.Bank];
-    ARMul_CPSRAltered(state);
-    }
-#else
- if (statestr.Bank == USERBANK)
-    statestr.Reg[15] = (src & (CCBITS | R15PCBITS)) | ER15INT | EMODE;
+ if (state->Bank == USERBANK)
+    state->Reg[15] = (src & (CCBITS | R15PCBITS)) | R15INTMODE;
  else
-    statestr.Reg[15] = src;
+    state->Reg[15] = src;
  ARMul_R15Altered(state);
-#endif
  FLUSHPIPE;
  }
 
@@ -741,12 +518,7 @@ static ARMword GetLSRegRHS(ARMul_State *state, ARMword instr)
 {ARMword shamt, base;
 
  base = RHSReg;
-#ifndef MODE32
- if (base == 15)
-    base = ECC | ER15INT | R15PC | EMODE; /* Now forbidden, but .... */
- else
-#endif
-    base = statestr.Reg[base];
+ base = state->Reg[base];
 
  shamt = BITS(7,11);
  switch ((int)BITS(5,6)) {
@@ -778,20 +550,18 @@ static unsigned LoadWord(ARMul_State *state, ARMword instr, ARMword address)
  ARMword dest;
 
  BUSUSEDINCPCS;
-#ifndef MODE32
  if (ADDREXCEPT(address)) {
     INTERNALABORT(address);
     }
-#endif
- dest = ARMul_LoadWordN(&statestr,address);
- if (statestr.Aborted) {
+ dest = ARMul_LoadWordN(state,address);
+ if (state->Aborted) {
     TAKEABORT;
-    return(statestr.lateabtSig);
+    return LATEABTSIG;
     }
  if (address & 3)
-    dest = ARMul_Align(&statestr,address,dest);
+    dest = ARMul_Align(state,address,dest);
  WRITEDEST(dest);
- ARMul_Icycles(1);
+ ARMul_Icycles(state,1);
 
  return(DESTReg != LHSReg);
 }
@@ -805,19 +575,17 @@ static unsigned LoadByte(ARMul_State *state, ARMword instr, ARMword address)
  ARMword dest;
 
  BUSUSEDINCPCS;
-#ifndef MODE32
  if (ADDREXCEPT(address)) {
     INTERNALABORT(address);
     }
-#endif
- dest = ARMul_LoadByte(&statestr,address);
- if (statestr.Aborted) {
+ dest = ARMul_LoadByte(state,address);
+ if (state->Aborted) {
     TAKEABORT;
-    return(statestr.lateabtSig);
+    return LATEABTSIG;
     }
  UNDEF_LSRBPC;
  WRITEDEST(dest);
- ARMul_Icycles(1);
+ ARMul_Icycles(state,1);
  return(DESTReg != LHSReg);
 }
 
@@ -827,23 +595,15 @@ static unsigned LoadByte(ARMul_State *state, ARMword instr, ARMword address)
 
 static unsigned StoreWord(ARMul_State *state, ARMword instr, ARMword address)
 {BUSUSEDINCPCN;
-#ifndef MODE32
- if (DESTReg == 15)
-    statestr.Reg[15] = ECC | ER15INT | R15PC | EMODE;
-#endif
-#ifdef MODE32
- ARMul_StoreWordN(&statestr,address,DEST);
-#else
  if (ADDREXCEPT(address)) {
     INTERNALABORT(address);
-    (void)ARMul_LoadWordN(&statestr,address);
+    (void)ARMul_LoadWordN(state,address);
     }
  else
-    ARMul_StoreWordN(&statestr,address,DEST);
-#endif
- if (statestr.Aborted) {
+    ARMul_StoreWordN(state,address,DEST);
+ if (state->Aborted) {
     TAKEABORT;
-    return(statestr.lateabtSig);
+    return LATEABTSIG;
     }
  return(TRUE);
 }
@@ -854,23 +614,15 @@ static unsigned StoreWord(ARMul_State *state, ARMword instr, ARMword address)
 
 static unsigned StoreByte(ARMul_State *state, ARMword instr, ARMword address)
 {BUSUSEDINCPCN;
-#ifndef MODE32
- if (DESTReg == 15)
-    statestr.Reg[15] = ECC | ER15INT | R15PC | EMODE;
-#endif
-#ifdef MODE32
- ARMul_StoreByte(&statestr,address,DEST);
-#else
  if (ADDREXCEPT(address)) {
     INTERNALABORT(address);
-    (void)ARMul_LoadByte(&statestr,address);
+    (void)ARMul_LoadByte(state,address);
     }
  else
-    ARMul_StoreByte(&statestr,address,DEST);
-#endif
- if (statestr.Aborted) {
+    ARMul_StoreByte(state,address,DEST);
+ if (state->Aborted) {
     TAKEABORT;
-    return(statestr.lateabtSig);
+    return LATEABTSIG;
     }
  UNDEF_LSRBPC;
  return(TRUE);
@@ -886,52 +638,74 @@ static unsigned StoreByte(ARMul_State *state, ARMword instr, ARMword address)
 
 static void LoadMult(ARMul_State *state, ARMword instr,
                      ARMword address, ARMword WBBase)
-{ARMword dest, temp;
+{ARMword dest, temp, temp2;
 
  UNDEF_LSMNoRegs;
  UNDEF_LSMPCBase;
  UNDEF_LSMBaseInListWb;
  BUSUSEDINCPCS;
-#ifndef MODE32
  if (ADDREXCEPT(address)) {
     INTERNALABORT(address);
     }
-#endif
  if (BIT(21) && LHSReg != 15)
     LSBase = WBBase;
 
+    temp2 = state->Reg[15];
+
+    /* Check if we can use the fastmap */
+    if(((address<<20) <= 0xfc000000) && !state->Aborted)
+    {
+       FastMapEntry *entry = FastMap_GetEntry(address);
+       FastMapRes res = FastMap_DecodeRead(entry,MEMC.FastMapMode);
+       if(FASTMAP_RESULT_DIRECT(res))
+       {
+          /* Do it fast
+             This assumes we don't differentiate between N & S cycles */
+          ARMul_CLEARABORT;
+          ARMword *data = FastMap_Log2Phy(entry,address&~3);
+          ARMword count=0;
+          for(temp=0;temp<16;temp++)
+            if(BIT(temp))
+            {
+              state->Reg[temp] = *(data++);
+              count++;
+            }
+          state->NumCycles += count;
+          goto done;
+       }
+    }
+
     for (temp = 0; !BIT(temp); temp++); /* N cycle first */
-    dest = ARMul_LoadWordN(&statestr,address);
-    if (!statestr.abortSig && !statestr.Aborted)
-       statestr.Reg[temp] = dest;
+    dest = ARMul_LoadWordN(state,address);
+    if (!state->abortSig && !state->Aborted)
+       state->Reg[temp] = dest;
     else
-       if (!statestr.Aborted)
-          statestr.Aborted = ARMul_DataAbortV;
+       if (!state->Aborted)
+          state->Aborted = ARMul_DataAbortV;
 
     temp++;
 
     for (; temp < 16; temp++) /* S cycles from here on */
        if (BIT(temp)) { /* load this register */
           address += 4;
-          dest = ARMul_LoadWordS(&statestr,address);
-          if (!statestr.abortSig && !statestr.Aborted)
-             statestr.Reg[temp] = dest;
+          dest = ARMul_LoadWordS(state,address);
+          if (!state->abortSig && !state->Aborted)
+             state->Reg[temp] = dest;
           else
-             if (!statestr.Aborted)
-                statestr.Aborted = ARMul_DataAbortV;
+             if (!state->Aborted)
+                state->Aborted = ARMul_DataAbortV;
           }
 
- if ((BIT(15)) && (!statestr.abortSig && !statestr.Aborted)) {
+done:
+ if ((BIT(15)) && (!state->abortSig && !state->Aborted)) {
    /* PC is in the reg list */
-#ifdef MODE32
-    statestr.Reg[15] = PC;
-#endif
+    state->Reg[15] = (temp2 & (R15IFBITS | R15MODEBITS | CCBITS)) | (state->Reg[15] & ~(R15IFBITS | R15MODEBITS | CCBITS));
     FLUSHPIPE;
     }
 
- ARMul_Icycles(1); /* to write back the final register */
+ ARMul_Icycles(state,1); /* to write back the final register */
 
- if (statestr.Aborted) {
+ if (state->Aborted) {
     if (BIT(21) && LHSReg != 15)
        LSBase = WBBase;
     TAKEABORT;
@@ -947,75 +721,87 @@ static void LoadMult(ARMul_State *state, ARMword instr,
 
 static void LoadSMult(ARMul_State *state, ARMword instr,
                       ARMword address, ARMword WBBase)
-{ARMword dest, temp;
+{ARMword dest, temp, temp2;
 
  UNDEF_LSMNoRegs;
  UNDEF_LSMPCBase;
  UNDEF_LSMBaseInListWb;
  BUSUSEDINCPCS;
-#ifndef MODE32
  if (ADDREXCEPT(address)) {
     INTERNALABORT(address);
     }
-#endif
 
  /* Actually do the write back (Hey guys - this is in after the mode change!) DAG */
  if (BIT(21) && LHSReg != 15)
     LSBase = WBBase;
 
- if (!BIT(15) && statestr.Bank != USERBANK) {
-    (void)ARMul_SwitchMode(&statestr,statestr.Mode,USER26MODE); /* temporary reg bank switch */
+    temp2 = state->Reg[15];
+
+ if (!BIT(15) && state->Bank != USERBANK) {
+    (void)ARMul_SwitchMode(state,temp2,USER26MODE); /* temporary reg bank switch */
     UNDEF_LSMUserBankWb;
     }
 
+    /* Check if we can use the fastmap */
+    if(((address<<20) <= 0xfc000000) && !state->Aborted)
+    {
+       FastMapEntry *entry = FastMap_GetEntry(address);
+       FastMapRes res = FastMap_DecodeRead(entry,MEMC.FastMapMode);
+       if(FASTMAP_RESULT_DIRECT(res))
+       {
+          /* Do it fast
+             This assumes we don't differentiate between N & S cycles */
+          ARMul_CLEARABORT;
+          ARMword *data = FastMap_Log2Phy(entry,address&~3);
+          ARMword count=0;
+          for(temp=0;temp<16;temp++)
+            if(BIT(temp))
+            {
+              state->Reg[temp] = *(data++);
+              count++;
+            }
+          state->NumCycles += count;
+          goto done;
+       }
+    }
+
     for (temp = 0; !BIT(temp); temp++); /* N cycle first */
-    dest = ARMul_LoadWordN(&statestr,address);
-    if (!statestr.abortSig)
-       statestr.Reg[temp] = dest;
+    dest = ARMul_LoadWordN(state,address);
+    if (!state->abortSig)
+       state->Reg[temp] = dest;
     else
-       if (!statestr.Aborted)
-          statestr.Aborted = ARMul_DataAbortV;
+       if (!state->Aborted)
+          state->Aborted = ARMul_DataAbortV;
     temp++;
 
     for (; temp < 16; temp++) /* S cycles from here on */
        if (BIT(temp)) { /* load this register */
           address += 4;
-          dest = ARMul_LoadWordS(&statestr,address);
-          if (!(statestr.abortSig || statestr.Aborted))
-             statestr.Reg[temp] = dest;
+          dest = ARMul_LoadWordS(state,address);
+          if (!(state->abortSig || state->Aborted))
+             state->Reg[temp] = dest;
           else
-             if (!statestr.Aborted)
-                statestr.Aborted = ARMul_DataAbortV;
+             if (!state->Aborted)
+                state->Aborted = ARMul_DataAbortV;
           }
-
+done:
  /* DAG - stop corruption of R15 after an abort */
- if (!(statestr.abortSig || statestr.Aborted)) {
+ if (!(state->abortSig || state->Aborted)) {
    if (BIT(15)) { /* PC is in the reg list */
-#ifdef MODE32
-      if (statestr.Mode != USER26MODE && statestr.Mode != USER32MODE) {
-         statestr.Cpsr = GETSPSR(statestr.Bank);
-         ARMul_CPSRAltered(state);
-         }
-      statestr.Reg[15] = PC;
-#else
-      if (statestr.Mode == USER26MODE) { /* protect bits in user mode */
-         ASSIGNN((statestr.Reg[15] & NBIT) != 0);
-         ASSIGNZ((statestr.Reg[15] & ZBIT) != 0);
-         ASSIGNC((statestr.Reg[15] & CBIT) != 0);
-         ASSIGNV((statestr.Reg[15] & VBIT) != 0);
+      if ((temp2 & R15MODEBITS) == USER26MODE) { /* protect bits in user mode */
+         state->Reg[15] = (temp2 & (R15IFBITS | R15MODEBITS)) | (state->Reg[15] & ~(R15IFBITS | R15MODEBITS));
          }
       else
          ARMul_R15Altered(state);
-#endif
       FLUSHPIPE;
       }
 
  }
- if (!BIT(15) && statestr.Mode != USER26MODE)
-    (void)ARMul_SwitchMode(&statestr,USER26MODE,statestr.Mode); /* restore the correct bank */
- ARMul_Icycles(1); /* to write back the final register */
+ if (!BIT(15) && ((temp2 & R15MODEBITS) != USER26MODE))
+    (void)ARMul_SwitchMode(state,USER26MODE,temp2); /* restore the correct bank */
+ ARMul_Icycles(state,1); /* to write back the final register */
 
- if (statestr.Aborted) {
+ if (state->Aborted) {
     if (BIT(21) && LHSReg != 15)
        LSBase = WBBase;
     TAKEABORT;
@@ -1038,24 +824,47 @@ static void StoreMult(ARMul_State *state, ARMword instr,
  UNDEF_LSMPCBase;
  UNDEF_LSMBaseInListWb;
  BUSUSEDINCPCN;
-#ifndef MODE32
  if (ADDREXCEPT(address)) {
     INTERNALABORT(address);
     }
- if (BIT(15))
-    PATCHR15;
-#endif
 
  for (temp = 0; !BIT(temp); temp++); /* N cycle first */
-#ifdef MODE32
- ARMul_StoreWordN(&statestr,address,statestr.Reg[temp++]);
-#else
- if (statestr.Aborted) {
-    (void)ARMul_LoadWordN(&statestr,address);
+
+    /* Check if we can use the fastmap */
+    if(((address<<20) <= 0xfc000000) && !state->Aborted)
+    {
+       FastMapEntry *entry = FastMap_GetEntry(address);
+       FastMapRes res = FastMap_DecodeWrite(entry,MEMC.FastMapMode);
+       if(FASTMAP_RESULT_DIRECT(res))
+       {
+          /* Do it fast
+             This assumes we don't differentiate between N & S cycles */
+          ARMul_CLEARABORT;
+          ARMword *data = FastMap_Log2Phy(entry,address&~3);
+          ARMEmuFunc *pfunc = FastMap_Phy2Func(data);
+          ARMword count=1;
+          *(data++) = state->Reg[temp++];
+          *(pfunc++) = FASTMAP_CLOBBEREDFUNC;
+          if (BIT(21) && LHSReg != 15)
+             LSBase = WBBase;
+          for(;temp<16;temp++)
+            if(BIT(temp))
+            {
+              *(data++) = state->Reg[temp];
+              *(pfunc++) = FASTMAP_CLOBBEREDFUNC;
+              count++;
+            }
+          state->NumCycles += count;
+          return;
+       }
+    }
+
+ if (state->Aborted) {
+    (void)ARMul_LoadWordN(state,address);
     for (; temp < 16; temp++) /* Fake the Stores as Loads */
        if (BIT(temp)) { /* save this register */
           address += 4;
-          (void)ARMul_LoadWordS(&statestr,address);
+          (void)ARMul_LoadWordS(state,address);
           }
     if (BIT(21) && LHSReg != 15)
        LSBase = WBBase;
@@ -1063,10 +872,9 @@ static void StoreMult(ARMul_State *state, ARMword instr,
     return;
     }
  else
-    ARMul_StoreWordN(&statestr,address,statestr.Reg[temp++]);
-#endif
- if (statestr.abortSig && !statestr.Aborted)
-    statestr.Aborted = ARMul_DataAbortV;
+    ARMul_StoreWordN(state,address,state->Reg[temp++]);
+ if (state->abortSig && !state->Aborted)
+    state->Aborted = ARMul_DataAbortV;
 
  if (BIT(21) && LHSReg != 15)
     LSBase = WBBase;
@@ -1074,11 +882,11 @@ static void StoreMult(ARMul_State *state, ARMword instr,
  for (; temp < 16; temp++) /* S cycles from here on */
     if (BIT(temp)) { /* save this register */
        address += 4;
-       ARMul_StoreWordS(&statestr,address,statestr.Reg[temp]);
-       if (statestr.abortSig && !statestr.Aborted)
-             statestr.Aborted = ARMul_DataAbortV;
+       ARMul_StoreWordS(state,address,state->Reg[temp]);
+       if (state->abortSig && !state->Aborted)
+             state->Aborted = ARMul_DataAbortV;
        }
-    if (statestr.Aborted) {
+    if (state->Aborted) {
        TAKEABORT;
        }
  }
@@ -1098,29 +906,52 @@ static void StoreSMult(ARMul_State *state, ARMword instr,
  UNDEF_LSMPCBase;
  UNDEF_LSMBaseInListWb;
  BUSUSEDINCPCN;
-#ifndef MODE32
  if (ADDREXCEPT(address)) {
     INTERNALABORT(address);
     }
- if (BIT(15))
-    PATCHR15;
-#endif
 
- if (statestr.Bank != USERBANK) {
-    (void)ARMul_SwitchMode(&statestr,statestr.Mode,USER26MODE); /* Force User Bank */
+ if (state->Bank != USERBANK) {
+    (void)ARMul_SwitchMode(state,state->Reg[15],USER26MODE); /* Force User Bank */
     UNDEF_LSMUserBankWb;
     }
 
  for (temp = 0; !BIT(temp); temp++); /* N cycle first */
-#ifdef MODE32
- ARMul_StoreWordN(&statestr,address,statestr.Reg[temp++]);
-#else
- if (statestr.Aborted) {
-    (void)ARMul_LoadWordN(&statestr,address);
+
+    /* Check if we can use the fastmap */
+    if(((address<<20) <= 0xfc000000) && !state->Aborted)
+    {
+       FastMapEntry *entry = FastMap_GetEntry(address);
+       FastMapRes res = FastMap_DecodeWrite(entry,MEMC.FastMapMode);
+       if(FASTMAP_RESULT_DIRECT(res))
+       {
+          /* Do it fast
+             This assumes we don't differentiate between N & S cycles */
+          ARMul_CLEARABORT;
+          ARMword *data = FastMap_Log2Phy(entry,address&~3);
+          ARMEmuFunc *pfunc = FastMap_Phy2Func(data);
+          ARMword count=1;
+          *(data++) = state->Reg[temp++];
+          *(pfunc++) = FASTMAP_CLOBBEREDFUNC;
+          if (BIT(21) && LHSReg != 15)
+             LSBase = WBBase;
+          for(;temp<16;temp++)
+            if(BIT(temp))
+            {
+              *(data++) = state->Reg[temp];
+              *(pfunc++) = FASTMAP_CLOBBEREDFUNC;
+              count++;
+            }
+          state->NumCycles += count;
+          goto done;
+       }
+    }
+
+ if (state->Aborted) {
+    (void)ARMul_LoadWordN(state,address);
     for (; temp < 16; temp++) /* Fake the Stores as Loads */
        if (BIT(temp)) { /* save this register */
           address += 4;
-          (void)ARMul_LoadWordS(&statestr,address);
+          (void)ARMul_LoadWordS(state,address);
           }
     if (BIT(21) && LHSReg != 15)
        LSBase = WBBase;
@@ -1128,10 +959,9 @@ static void StoreSMult(ARMul_State *state, ARMword instr,
     return;
     }
  else
-    ARMul_StoreWordN(&statestr,address,statestr.Reg[temp++]);
-#endif
- if (statestr.abortSig && !statestr.Aborted)
-    statestr.Aborted = ARMul_DataAbortV;
+    ARMul_StoreWordN(state,address,state->Reg[temp++]);
+ if (state->abortSig && !state->Aborted)
+    state->Aborted = ARMul_DataAbortV;
 
  if (BIT(21) && LHSReg != 15)
     LSBase = WBBase;
@@ -1139,18 +969,20 @@ static void StoreSMult(ARMul_State *state, ARMword instr,
  for (; temp < 16; temp++) /* S cycles from here on */
     if (BIT(temp)) { /* save this register */
        address += 4;
-       ARMul_StoreWordS(&statestr,address,statestr.Reg[temp]);
-       if (statestr.abortSig && !statestr.Aborted)
-             statestr.Aborted = ARMul_DataAbortV;
+       ARMul_StoreWordS(state,address,state->Reg[temp]);
+       if (state->abortSig && !state->Aborted)
+             state->Aborted = ARMul_DataAbortV;
        }
 
- if (statestr.Mode != USER26MODE)
-    (void)ARMul_SwitchMode(&statestr,USER26MODE,statestr.Mode); /* restore the correct bank */
+done:
+ if (R15MODE != USER26MODE)
+    (void)ARMul_SwitchMode(state,USER26MODE,state->Reg[15]); /* restore the correct bank */
 
- if (statestr.Aborted) {
+ if (state->Aborted) {
     TAKEABORT;
     }
 }
+
 
 /***************************************************************************\
 *                             EMULATION of ARM6                             *
@@ -1162,268 +994,77 @@ static void StoreSMult(ARMul_State *state, ARMword instr,
 
 #undef EMFUNCDECL26
 #undef EMFUNC_CONDTEST
-#define EMFUNCDECL26(name) ARMul_Emulate26_ ## name ## _EQ
-#define EMFUNC_CONDTEST if (!ZFLAG) return;
-#include "armemuinstr.c"
 
-#undef EMFUNCDECL26
-#undef EMFUNC_CONDTEST
-#define EMFUNCDECL26(name) ARMul_Emulate26_ ## name ## _NE
-#define EMFUNC_CONDTEST if (ZFLAG) return;
-
-#include "armemuinstr.c"
-
-#undef EMFUNCDECL26
-#undef EMFUNC_CONDTEST
-#define EMFUNCDECL26(name) ARMul_Emulate26_ ## name ## _VS
-#define EMFUNC_CONDTEST if (!VFLAG) return;
-#include "armemuinstr.c"
-
-#undef EMFUNCDECL26
-#undef EMFUNC_CONDTEST
-#define EMFUNCDECL26(name) ARMul_Emulate26_ ## name ## _VC
-#define EMFUNC_CONDTEST if (VFLAG) return;
-
-#include "armemuinstr.c"
-
-#undef EMFUNCDECL26
-#undef EMFUNC_CONDTEST
-#define EMFUNCDECL26(name) ARMul_Emulate26_ ## name ## _MI
-#define EMFUNC_CONDTEST if (!NFLAG) return;
-#include "armemuinstr.c"
-
-#undef EMFUNCDECL26
-#undef EMFUNC_CONDTEST
-#define EMFUNCDECL26(name) ARMul_Emulate26_ ## name ## _PL
-#define EMFUNC_CONDTEST if (NFLAG) return;
-
-#include "armemuinstr.c"
-
-#undef EMFUNCDECL26
-#undef EMFUNC_CONDTEST
-#define EMFUNCDECL26(name) ARMul_Emulate26_ ## name ## _CS
-#define EMFUNC_CONDTEST if (!CFLAG) return;
-#include "armemuinstr.c"
-
-#undef EMFUNCDECL26
-#undef EMFUNC_CONDTEST
-#define EMFUNCDECL26(name) ARMul_Emulate26_ ## name ## _CC
-#define EMFUNC_CONDTEST if (CFLAG) return;
-
-#include "armemuinstr.c"
-
-#undef EMFUNCDECL26
-#undef EMFUNC_CONDTEST
-#define EMFUNCDECL26(name) ARMul_Emulate26_ ## name ## _HI
-#define EMFUNC_CONDTEST if (!(CFLAG && !ZFLAG)) return;
-
-#include "armemuinstr.c"
-
-#undef EMFUNCDECL26
-#undef EMFUNC_CONDTEST
-#define EMFUNCDECL26(name) ARMul_Emulate26_ ## name ## _LS
-#define EMFUNC_CONDTEST if (!((!CFLAG || ZFLAG))) return;
-
-#include "armemuinstr.c"
-
-#undef EMFUNCDECL26
-#undef EMFUNC_CONDTEST
-#define EMFUNCDECL26(name) ARMul_Emulate26_ ## name ## _GE
-#define EMFUNC_CONDTEST if (!((!NFLAG && !VFLAG) || (NFLAG && VFLAG))) return;
-
-#include "armemuinstr.c"
-
-#undef EMFUNCDECL26
-#undef EMFUNC_CONDTEST
-#define EMFUNCDECL26(name) ARMul_Emulate26_ ## name ## _LT
-#define EMFUNC_CONDTEST if (!((NFLAG && !VFLAG) || (!NFLAG && VFLAG))) return;
-
-#include "armemuinstr.c"
-
-#undef EMFUNCDECL26
-#undef EMFUNC_CONDTEST
-#define EMFUNCDECL26(name) ARMul_Emulate26_ ## name ## _GT
-#define EMFUNC_CONDTEST if (!((!NFLAG && !VFLAG && !ZFLAG) || (NFLAG && VFLAG && !ZFLAG))) return;
-
-#include "armemuinstr.c"
-
-#undef EMFUNCDECL26
-#undef EMFUNC_CONDTEST
-#define EMFUNCDECL26(name) ARMul_Emulate26_ ## name ## _LE
-#define EMFUNC_CONDTEST if (!(((NFLAG && !VFLAG) || (!NFLAG && VFLAG)) || ZFLAG)) return;
-
-#include "armemuinstr.c"
+  int pipeidx = 0; /* Index of instruction to run */
 
 /* ################################################################################## */
 /* ## Function called when the decode is unknown                                   ## */
 /* ################################################################################## */
-void ARMul_Emulate_DecodeInstr(ARMword instr, ARMword pc) {
+ARMEmuFunc ARMul_Emulate_DecodeInstr(ARMword instr) {
   ARMEmuFunc f;
-  switch ((int)TOPBITS(28)) {
-    case AL:
-
-#undef EMFUNCDECL26
 #define EMFUNCDECL26(name) ARMul_Emulate26_ ## name
 #include "armemudec.c"
-      break;
 
-    case EQ:
-#undef EMFUNCDECL26
-#define EMFUNCDECL26(name) ARMul_Emulate26_ ## name ## _EQ
-#include "armemudec.c"
-
-      break;
-
-    case NE:
-#undef EMFUNCDECL26
-#define EMFUNCDECL26(name) ARMul_Emulate26_ ## name ## _NE
-#include "armemudec.c"
-      break;
-
-    case CS:
-#undef EMFUNCDECL26
-#define EMFUNCDECL26(name) ARMul_Emulate26_ ## name ## _CS
-#include "armemudec.c"
-      break;
-
-    case CC:
-#undef EMFUNCDECL26
-#define EMFUNCDECL26(name) ARMul_Emulate26_ ## name ## _CC
-#include "armemudec.c"
-      break;
-
-    case VS:
-#undef EMFUNCDECL26
-#define EMFUNCDECL26(name) ARMul_Emulate26_ ## name ## _VS
-#include "armemudec.c"
-      break;
-
-    case VC:
-#undef EMFUNCDECL26
-#define EMFUNCDECL26(name) ARMul_Emulate26_ ## name ## _VC
-#include "armemudec.c"
-      break;
-
-    case MI:
-#undef EMFUNCDECL26
-#define EMFUNCDECL26(name) ARMul_Emulate26_ ## name ## _MI
-#include "armemudec.c"
-      break;
-
-    case PL:
-#undef EMFUNCDECL26
-#define EMFUNCDECL26(name) ARMul_Emulate26_ ## name ## _PL
-#include "armemudec.c"
-      break;
-
-    case HI:
-#undef EMFUNCDECL26
-#define EMFUNCDECL26(name) ARMul_Emulate26_ ## name ## _HI
-#include "armemudec.c"
-      break;
-
-    case LS:
-#undef EMFUNCDECL26
-#define EMFUNCDECL26(name) ARMul_Emulate26_ ## name ## _LS
-#include "armemudec.c"
-      break;
-
-    case GE:
-#undef EMFUNCDECL26
-#define EMFUNCDECL26(name) ARMul_Emulate26_ ## name ## _GE
-#include "armemudec.c"
-      break;
-
-    case LT:
-#undef EMFUNCDECL26
-#define EMFUNCDECL26(name) ARMul_Emulate26_ ## name ## _LT
-#include "armemudec.c"
-      break;
-
-    case GT:
-#undef EMFUNCDECL26
-#define EMFUNCDECL26(name) ARMul_Emulate26_ ## name ## _GT
-#include "armemudec.c"
-      break;
-
-    case LE:
-#undef EMFUNCDECL26
-#define EMFUNCDECL26(name) ARMul_Emulate26_ ## name ## _LE
-#include "armemudec.c"
-      break;
-
-    default:
-      f = ARMul_Emulate26_Noop;
-      break;
-  };
-
-  /* Update the instruction emulation pointer */
-  *pInstrFunc=f;
-
-  f(instr,pc);
+  return f;
 } /* ARMul_Emulate_DecodeInstr */
 
+/* Pipeline entry used for prefetch aborts */
+PipelineEntry abortpipe = {
+  ARMul_ABORTWORD,
+  EMFUNCDECL26(SWI)
+};
+
+#define PIPESIZE 4 /* 3 or 4. 4 seems to be slightly faster? */
+
 void
-ARMul_Emulate26(void)
+ARMul_Emulate26(ARMul_State *state)
 {
-  ARMword instr,           /* The current instruction */
-          pc = 0;          /* The address of the current instruction */
-  ARMword decoded=0, loaded=0; /* Instruction pipeline */
-  /* Function of decoded instruction functions */
-  ARMEmuFunc instrfunc, decfunc = NULL, loadedfunc = NULL;
-  static ARMEmuFunc dummyfunc = ARMul_Emulate_DecodeInstr;
+  PipelineEntry pipe[PIPESIZE];   /* Instruction pipeline */
+  ARMword pc = 0;          /* The address of the current instruction */
 
   /**************************************************************************\
    *                        Execute the next instruction                    *
   \**************************************************************************/
   kill_emulator = 0;
   while (kill_emulator == 0) {
-    if (statestr.NextInstr < PRIMEPIPE) {
-      decoded = statestr.decoded;
-      loaded  = statestr.loaded;
-      pc      = statestr.pc;
+    if (state->NextInstr < PRIMEPIPE) {
+      pipe[1].instr = state->decoded;
+      pipe[2].instr = state->loaded;
+      pc            = state->pc;
 
-      decfunc = loadedfunc =
-                instrfunc =
-                ARMul_Emulate_DecodeInstr; /* Could do better here! */
+      pipe[1].func = ARMul_Emulate_DecodeInstr(pipe[1].instr);
+      pipe[2].func = ARMul_Emulate_DecodeInstr(pipe[2].instr);
 
-      pInstrFunc = pDecFunc
-                 = pLoadedFunc
-                 = &dummyfunc;
+      pipeidx = 0;
     }
 
     for (;;) { /* just keep going */
-      switch (statestr.NextInstr) {
+      switch (state->NextInstr) {
         case NONSEQ:
         case SEQ:
-          statestr.Reg[15] += 4; /* Advance the pipeline, and an S cycle */
+          SETPC(state->Reg[15]+4); /* Advance the pipeline, and an S cycle */
           pc += 4;
-          instr     = decoded;
-          instrfunc = decfunc;
-          pInstrFunc = pDecFunc;
 
-          decoded  = loaded;
-          decfunc  = loadedfunc;
-          pDecFunc = pLoadedFunc;
-
-          loaded = ARMul_LoadInstr(pc + 8, &pLoadedFunc);
-          loadedfunc = *pLoadedFunc;
+#if PIPESIZE == 3
+          ARMul_LoadInstr(state, pc + 8, &pipe[pipeidx]);
+          pipeidx=(pipeidx<2?pipeidx+1:0);
+#else
+          pipeidx=(pipeidx+1)&3;
+          ARMul_LoadInstr(state, pc + 8, &pipe[pipeidx^2]);
+#endif
           break;
 
         case PCINCEDSEQ:
         case PCINCEDNONSEQ:
           /* DAG: R15 already advanced? */
           pc += 4; /* Program counter advanced, and an S cycle */
-          instr      = decoded;
-          instrfunc  = decfunc;
-          pInstrFunc = pDecFunc;
-
-          decoded  = loaded;
-          decfunc  = loadedfunc;
-          pDecFunc = pLoadedFunc;
-
-          loaded = ARMul_LoadInstr(pc + 8, &pLoadedFunc);
-          loadedfunc = *pLoadedFunc;
+#if PIPESIZE == 3
+          ARMul_LoadInstr(state, pc + 8, &pipe[pipeidx]);
+          pipeidx=(pipeidx<2?pipeidx+1:0);
+#else
+          pipeidx=(pipeidx+1)&3;
+          ARMul_LoadInstr(state, pc + 8, &pipe[pipeidx^2]);
+#endif
           NORMALCYCLE;
           break;
 
@@ -1431,44 +1072,41 @@ ARMul_Emulate26(void)
 
         default: /* The program counter has been changed */
 #ifdef DEBUG
-          printf("PC ch pc=0x%x (O 0x%x\n", statestr.Reg[15], pc);
+          printf("PC ch pc=0x%x (O 0x%x\n", state->Reg[15], pc);
 #endif
-          pc = statestr.Reg[15];
-#ifndef MODE32
-          pc &= R15PCBITS;
-#endif
-          statestr.Reg[15] = pc + 8;
-          statestr.Aborted = 0;
-          ARMul_LoadInstrTriplet(pc, &instr, &decoded, &loaded,
-                                 &pInstrFunc, &pDecFunc, &pLoadedFunc);
-          instrfunc  = *pInstrFunc;
-          decfunc    = *pDecFunc;
-          loadedfunc = *pLoadedFunc;
+          pc = PC;
+          SETPC(pc+8);
+          state->Aborted = 0;
+          pipeidx=0;
+          ARMul_LoadInstrTriplet(state, pc, pipe);
           NORMALCYCLE;
           break;
       }
-      ARMul_InvokeEvent();
+      ARMul_InvokeEvent(state);
 
       if (ARMul_Time >= ioc.NextTimerTrigger)
-        UpdateTimerRegisters();
+        UpdateTimerRegisters(state);
 
-      if (statestr.Exception) { /* Any exceptions */
-        if ((statestr.Exception & 2) && !FFLAG) {
-          ARMul_Abort(&statestr, ARMul_FIQV);
+      if (state->Exception) { /* Any exceptions */
+        if ((state->Exception & 2) && !FFLAG) {
+          ARMul_Abort(state, ARMul_FIQV);
           break;
 
-        } else if ((statestr.Exception & 1) && !IFLAG) {
-          ARMul_Abort(&statestr, ARMul_IRQV);
+        } else if ((state->Exception & 1) && !IFLAG) {
+          ARMul_Abort(state, ARMul_IRQV);
           break;
         }
       }
 
+      ARMword instr = pipe[pipeidx].instr;
       /*fprintf(stderr, "exec: pc=0x%08x instr=0x%08x\n", pc, instr);*/
-      instrfunc(instr, pc);
+      if(ARMul_CCCheck(instr,ECC))
+        (pipe[pipeidx].func)(state, instr, pc);
+
     } /* for loop */
 
-    statestr.decoded = decoded;
-    statestr.loaded = loaded;
-    statestr.pc = pc;
+    state->decoded = pipe[(pipeidx+1)%PIPESIZE].instr;
+    state->loaded = pipe[(pipeidx+2)%PIPESIZE].instr;
+    state->pc = pc;
   }
 } /* Emulate 26 in instruction based mode */

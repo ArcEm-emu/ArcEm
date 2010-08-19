@@ -59,8 +59,12 @@ ifeq ($(PROFILE),yes)
 CFLAGS = -O -g -pg -ftest-coverage -fprofile-arcs
 LIBS += -lgcov
 else
+ifeq ($(DEBUG),yes)
+CFLAGS += -O0 -g
+else
 CFLAGS = -O3 -funroll-loops -fexpensive-optimizations -ffast-math \
     -fomit-frame-pointer -frerun-cse-after-loop
+endif
 endif
 
 CFLAGS += \
@@ -133,8 +137,8 @@ endif
 ifeq (${SYSTEM},riscos-single)
 EXTNROM_SUPPORT=notyet
 DIRECT_DISPLAY=yes
-CFLAGS += -I@ -DSYSTEM_riscos_single -Iriscos-single -mpoke-function-name
-OBJS += arm-support.o rhs.o
+CFLAGS += -I@ -DSYSTEM_riscos_single -Iriscos-single -mpoke-function-name -mtune=xscale -march=armv5te -mthrowback
+#OBJS += arm-support.o rhs.o
 TARGET=!ArcEm/arcem
 endif
 

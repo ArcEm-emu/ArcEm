@@ -104,7 +104,9 @@ static char *mygets(void *arg, char *buffer, int len) {
  void dagstandalone(void) {
   int i;
 #ifndef WIN32
+#ifndef AMIGA
   struct sigaction action;
+#endif
 #endif
   PointHandle point;
   Dbg_ConfigBlock config;
@@ -191,5 +193,4 @@ static char *mygets(void *arg, char *buffer, int len) {
   /* Close and Finalise */
   i = armul_rdi.close();
   rdi_state = 0;
-  emu_state = NULL;
 }

@@ -24,7 +24,7 @@
 int ReadConfigFile(ARMul_State *state)
 {
     const char *envvar;
-    const char *basename;
+    const char *basename2;
     char *env;
     char tmpbuf[1024];
     FILE *fConf;
@@ -33,21 +33,21 @@ int ReadConfigFile(ARMul_State *state)
  * Makefile, not some platform-dependent one. */
 #if defined(WIN32)
     envvar = NULL;
-    basename = "arcemrc";
+    basename2 = "arcemrc";
 #elif defined(AMIGA)
     envvar = NULL;
-    basename = ".arcemrc";
+    basename2 = ".arcemrc";
 #elif defined(MACOSX)
     envvar = "HOME";
-    basename = "arcem/.arcemrc";
+    basename2 = "arcem/.arcemrc";
 #else
     envvar = "HOME";
-    basename = ".arcemrc";
+    basename2 = ".arcemrc";
 #endif
 
     if (envvar && (env = getenv(envvar)) == NULL) {
         fprintf(stderr, "configuration file is $%s/%s but $%s isn't "
-            "set.", envvar, basename, envvar);
+            "set.", envvar, basename2, envvar);
         return 0;
     }
 
@@ -56,7 +56,7 @@ int ReadConfigFile(ARMul_State *state)
         strcat(tmpbuf, env);
         strcat(tmpbuf, "/");
     }
-    strcat(tmpbuf, basename);
+    strcat(tmpbuf, basename2);
 
     if ((fConf = fopen(tmpbuf, "r")) == NULL) {
         fprintf(stderr, "couldn't open config file: %s\n", tmpbuf);

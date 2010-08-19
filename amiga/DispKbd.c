@@ -255,7 +255,7 @@ void cleanup(void)
 	exit(0);
 }
 
-void MouseMoved(int xdiff,int ydiff)
+void MouseMoved(ARMul_State *state,int xdiff,int ydiff)
 {
 				if (xdiff > 63)
     				xdiff=63;
@@ -361,7 +361,7 @@ DisplayKbd_PollHost(ARMul_State *state)
     		break;
 
 			case IDCMP_MOUSEMOVE:
-				MouseMoved(msg->MouseX,msg->MouseY);
+				MouseMoved(state, msg->MouseX,msg->MouseY);
 			break;
 		}
 
@@ -608,7 +608,7 @@ RefreshDisplay(ARMul_State *state)
   DC.AutoRefresh=AUTOREFRESHPOLL;
   ioc.IRQStatus|=8; /* VSync */
   ioc.IRQStatus |= 0x20; /* Sound - just an experiment */
-  IO_UpdateNirq();
+  IO_UpdateNirq(state);
 
   DC.miny=DisplayHeight-1;
   DC.maxy=0;

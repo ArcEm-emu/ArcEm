@@ -45,8 +45,8 @@ IO_Init(ARMul_State *state)
   ioc.TimersLastUpdated = -1;
   ioc.NextTimerTrigger = 0;
 
-  IO_UpdateNirq();
-  IO_UpdateNfiq();
+  IO_UpdateNirq(state);
+  IO_UpdateNfiq(state);
 
   I2C_Init(state);
   FDC_Init(state);
@@ -55,37 +55,37 @@ IO_Init(ARMul_State *state)
 
 /*------------------------------------------------------------------------------*/
 void
-IO_UpdateNfiq(void)
+IO_UpdateNfiq(ARMul_State *state)
 {
-  register unsigned int tmp = statestr.Exception & ~2;
+  register unsigned int tmp = state->Exception & ~2;
 
   if (ioc.FIRQStatus & ioc.FIRQMask) {
     /* Cause FIQ */
     tmp |= 2;
   }
 
-  statestr.Exception = tmp;
+  state->Exception = tmp;
 }
 
 /*------------------------------------------------------------------------------*/
 void
-IO_UpdateNirq(void)
+IO_UpdateNirq(ARMul_State *state)
 {
-  register unsigned int tmp = statestr.Exception & ~1;
+  register unsigned int tmp = state->Exception & ~1;
 
   if (ioc.IRQStatus & ioc.IRQMask) {
     /* Cause interrupt! */
     tmp |= 1;
   }
 
-  statestr.Exception = tmp;
+  state->Exception = tmp;
 }
 
 /** Calculate if Timer0 or Timer1 can cause an interrupt; if either of them
  *  suddenly become able to then call UpdateTimerRegisters to fix an event
  *  to cause the interrupt later */
 static void
-CalcCanTimerInt(void)
+CalcCanTimerInt(ARMul_State *state)
 {
   int oldTimer0CanInt = ioc.Timer0CanInt;
   int oldTimer1CanInt = ioc.Timer1CanInt;
@@ -100,14 +100,14 @@ CalcCanTimerInt(void)
   /* If any have just been enabled update the triggers */
   if (((!oldTimer0CanInt) && (ioc.Timer0CanInt)) ||
       ((!oldTimer1CanInt) && (ioc.Timer1CanInt)))
-    UpdateTimerRegisters();
+    UpdateTimerRegisters(state);
 } /* CalcCanTimerInt */
 
 /** Get the value of a timer uptodate - don't actually update anything - just
  * return the current value (for the Latch command)
  */
 static int
-GetCurrentTimerVal(int toget)
+GetCurrentTimerVal(ARMul_State *state,int toget)
 {
   long timeSinceLastUpdate = ARMul_Time - ioc.TimersLastUpdated;
   long scaledTimeSlip = timeSinceLastUpdate / TIMERSCALE;
@@ -125,7 +125,7 @@ GetCurrentTimerVal(int toget)
 
 /*------------------------------------------------------------------------------*/
 void
-UpdateTimerRegisters(void)
+UpdateTimerRegisters(ARMul_State *state)
 {
   long timeSinceLastUpdate = ARMul_Time - ioc.TimersLastUpdated;
   long scaledTimeSlip = timeSinceLastUpdate / TIMERSCALE;
@@ -139,7 +139,7 @@ UpdateTimerRegisters(void)
   if (ioc.TimerCount[0] <= scaledTimeSlip) {
     KBD.TimerIntHasHappened++;
     ioc.IRQStatus |= IRQA_TM0;
-    IO_UpdateNirq();
+    IO_UpdateNirq(state);
     ioc.Timer0CanInt = 0; /* Because it's just caused one which hasn't cleared yet */
   }
   ioc.TimerCount[0] -= (scaledTimeSlip % tmpL);
@@ -155,7 +155,7 @@ UpdateTimerRegisters(void)
   if (tmpL == 0) tmpL = 1;
   if (ioc.TimerCount[1] <= scaledTimeSlip) {
     ioc.IRQStatus |= IRQA_TM1;
-    IO_UpdateNirq();
+    IO_UpdateNirq(state);
     ioc.Timer1CanInt = 0; /* Because its just caused one which hasn't cleared yet */
   }
   ioc.TimerCount[1] -= (scaledTimeSlip % tmpL);
@@ -230,7 +230,7 @@ GetWord_IOCReg(ARMul_State *state, int Register)
       Result = ioc.SerialRxData;
       ioc.IRQStatus &= ~IRQB_SRX; /* Clear receive reg full */
       dbug_ioc("IOCRead: SerialRxData=0x%x\n", Result);
-      IO_UpdateNirq();
+      IO_UpdateNirq(state);
       break;
 
     case 4: /* IRQ Status A */
@@ -285,8 +285,8 @@ GetWord_IOCReg(ARMul_State *state, int Register)
       Timer = (Register & 0xf) / 4;
       Result = ioc.TimerOutputLatch[Timer] & 0xff;
       /*dbug_ioc("IOCRead: Timer %d low counter read=0x%x\n", Timer, Result);
-      dbug_ioc("SPECIAL: R0=0x%x R1=0x%x R14=0x%x\n", statestr.Reg[0],
-              statestr.Reg[1], statestr.Reg[14]); */
+      dbug_ioc("SPECIAL: R0=0x%x R1=0x%x R14=0x%x\n", state->Reg[0],
+              state->Reg[1], state->Reg[14]); */
       break;
 
     case 0x11: /* T0 count high */
@@ -324,7 +324,7 @@ PutVal_IOCReg(ARMul_State *state, int Register, ARMword data, int bNw)
       ioc.SerialTxData = data; /* Should tell the keyboard about this */
       ioc.IRQStatus &= ~IRQB_STX; /* Clear KART Tx empty */
       dbug_ioc("IOC Write: Serial Tx Reg Val=0x%x\n", data);
-      IO_UpdateNirq();
+      IO_UpdateNirq(state);
       break;
 
     case 5: /* IRQ Clear */
@@ -334,28 +334,28 @@ PutVal_IOCReg(ARMul_State *state, int Register, ARMword data, int bNw)
       ioc.IRQStatus &= ~data;
       /* If we have cleared a timer interrupt then it may cause another */
       if (data & 0x60)
-        CalcCanTimerInt();
-      IO_UpdateNirq();
+        CalcCanTimerInt(state);
+      IO_UpdateNirq(state);
       break;
 
     case 6: /* IRQ Mask A */
       ioc.IRQMask &= 0xff00;
       ioc.IRQMask |= (data & 0xff);
-      CalcCanTimerInt();
+      CalcCanTimerInt(state);
       dbug_ioc("IOC Write: IRQ Mask A Val=0x%x\n", data);
-      IO_UpdateNirq();
+      IO_UpdateNirq(state);
       break;
 
     case 0xa: /* IRQ mask B */
       ioc.IRQMask &= 0xff;
       ioc.IRQMask |= (data & 0xff) << 8;
       dbug_ioc("IOC Write: IRQ Mask B Val=0x%x\n", data);
-      IO_UpdateNirq();
+      IO_UpdateNirq(state);
       break;
 
     case 0xe: /* FIRQ Mask */
       ioc.FIRQMask = data;
-      IO_UpdateNfiq();
+      IO_UpdateNfiq(state);
       dbug_ioc("IOC Write: FIRQ Mask Val=0x%x\n", data);
       break;
 
@@ -364,10 +364,10 @@ PutVal_IOCReg(ARMul_State *state, int Register, ARMword data, int bNw)
     case 0x18: /* T2 latch low */
     case 0x1c: /* T3 latch low */
       Timer = (Register & 0xf) / 4;
-      UpdateTimerRegisters();
+      UpdateTimerRegisters(state);
       ioc.TimerInputLatch[Timer] &= 0xff00;
       ioc.TimerInputLatch[Timer] |= data;
-      UpdateTimerRegisters();
+      UpdateTimerRegisters(state);
       dbug_ioc("IOC Write: Timer %d latch write low Val=0x%x InpLatch=0x%x\n",
               Timer, data, ioc.TimerInputLatch[Timer]);
       break;
@@ -377,10 +377,10 @@ PutVal_IOCReg(ARMul_State *state, int Register, ARMword data, int bNw)
     case 0x19: /* T2 latch High */
     case 0x1d: /* T3 latch High */
       Timer = (Register & 0xf) / 4;
-      UpdateTimerRegisters();
+      UpdateTimerRegisters(state);
       ioc.TimerInputLatch[Timer] &= 0xff;
       ioc.TimerInputLatch[Timer] |= data << 8;
-      UpdateTimerRegisters();
+      UpdateTimerRegisters(state);
       dbug_ioc("IOC Write: Timer %d latch write high Val=0x%x InpLatch=0x%x\n",
               Timer, data, ioc.TimerInputLatch[Timer]);
       break;
@@ -390,9 +390,9 @@ PutVal_IOCReg(ARMul_State *state, int Register, ARMword data, int bNw)
     case 0x1a: /* T2 Go */
     case 0x1e: /* T3 Go */
       Timer = (Register & 0xf) / 4;
-      UpdateTimerRegisters();
+      UpdateTimerRegisters(state);
       ioc.TimerCount[Timer] = ioc.TimerInputLatch[Timer];
-      UpdateTimerRegisters();
+      UpdateTimerRegisters(state);
       dbug_ioc("IOC Write: Timer %d Go! Counter=0x%x\n",
               Timer, ioc.TimerCount[Timer]);
       break;
@@ -402,7 +402,7 @@ PutVal_IOCReg(ARMul_State *state, int Register, ARMword data, int bNw)
     case 0x1b: /* T2 Latch command */
     case 0x1f: /* T3 Latch command */
       Timer = (Register & 0xf) / 4;
-      ioc.TimerOutputLatch[Timer] = GetCurrentTimerVal(Timer) & 0xffff;
+      ioc.TimerOutputLatch[Timer] = GetCurrentTimerVal(state,Timer) & 0xffff;
       /*dbug_ioc("(T%dLc)", Timer); */
       /*dbug_ioc("IOC Write: Timer %d Latch command Output Latch=0x%x\n",
         Timer, ioc.TimerOutputLatch[Timer]); */
@@ -479,7 +479,7 @@ GetWord_IO(ARMul_State *state, ARMword address)
     /* IO-address space unused on Arc hardware */
     /*EnableTrace();*/
     fprintf(stderr, "Read from non-IOC IO space (addr=0x%08x pc=0x%08x\n",
-            address, statestr.pc);
+            address, state->pc);
 
     return 0;
   }
@@ -629,7 +629,7 @@ IOC_ReadKbdTx(ARMul_State *state)
     /* There is a byte present (Kart TX not empty) */
     /* Mark as empty and then return the value */
     ioc.IRQStatus |= IRQB_STX;
-    IO_UpdateNirq();
+    IO_UpdateNirq(state);
     return ioc.SerialTxData;
   } else return -1;
 } /* IOC_ReadKbdTx */
@@ -649,7 +649,7 @@ IOC_WriteKbdRx(ARMul_State *state, unsigned char value)
     ioc.SerialRxData = value;
 
     ioc.IRQStatus |= IRQB_SRX; /* Now full */
-    IO_UpdateNirq();
+    IO_UpdateNirq(state);
   }
 
   return 0;

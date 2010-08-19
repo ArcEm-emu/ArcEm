@@ -6,7 +6,7 @@ typedef unsigned short int SoundData;
 
 int sound_init(void);
 
-void sound_poll(void);
+void sound_poll(ARMul_State *state);
 
 void sound_setSampleRate(unsigned long period);
 

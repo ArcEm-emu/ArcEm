@@ -259,7 +259,7 @@ static void UpdateInterrupt(ARMul_State *state) {
   } else {
     ioc.IRQStatus &= ~IRQB_HDIRQ;
   }
-  IO_UpdateNirq();
+  IO_UpdateNirq(state);
 } /* UpdateInterrupt */
 
 /*---------------------------------------------------------------------------*/

@@ -254,7 +254,7 @@ static int RDI_CPUwrite(unsigned mode, unsigned long mask, ARMword const buffer[
 #endif
 
  if (mode == RDIMode_Curr)
-    mode = (unsigned)(ARMul_GetCPSR(emu_state) & MODEBITS);
+    mode = (unsigned)(ARMul_GetR15(emu_state) & R15MODEBITS);
 
  for (upto = 0, i = 0; i < 15; i++)
     if (mask & (1L << i))
@@ -267,11 +267,6 @@ static int RDI_CPUwrite(unsigned mode, unsigned long mask, ARMword const buffer[
 
    ARMul_SetPC(emu_state,buffer[upto++]);
  }
- if (mask & RDIReg_CPSR)
-    ARMul_SetCPSR(emu_state,buffer[upto++]);
-
- if (mask & RDIReg_SPSR)
-    ARMul_SetSPSR(emu_state,mode,buffer[upto++]);
 
  return(RDIError_NoError);
 }
@@ -362,7 +357,8 @@ static int RDI_info(unsigned type, ARMword *arg1, ARMword *arg2)
 
   case RDIVector_Catch:
     TracePrint((emu_state, "RDIVector_Catch %.8lx\n", *arg1));
-    emu_state->VectorCatch = (unsigned)*arg1;
+    fprintf(stderr,"RDIVector_Catch unsupported!\n");
+    exit(1);
     return RDIError_NoError;
 
   case RDISet_Cmdline:
