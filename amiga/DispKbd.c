@@ -682,7 +682,7 @@ static void refreshmouse(ARMul_State *state) {
 	ULONG ptr_cols[4];
 	ULONG 	col_reg = 16+((0 & 0x06) << 1);
 	UBYTE maskbit;
-	int maskcount = 0;
+	int maskcount = 1;
 
 	if(!window) return;
 	if(!screen) return;
@@ -772,6 +772,23 @@ static void refreshmouse(ARMul_State *state) {
 			32,32,0x0C0,0xff,NULL);
 */
 
+	mask[0] = 0;
+	mask[1] = 0;
+	mask[2] = 0;
+	mask[3] = 0;
+	mask[4] = 0;
+	mask[5] = 0;
+	mask[6] = 0;
+	mask[7] = 0;
+	mask[8] = 0;
+	mask[9] = 0;
+	mask[10] = 0;
+	mask[11] = 0;
+	mask[12] = 0;
+	mask[13] = 0;
+	mask[14] = 0;
+	mask[15] = 0;
+
   for(y=0;y<32;y++,memptr+=8,offset+=8) {
 // fixed height to 32
 
@@ -790,11 +807,15 @@ static void refreshmouse(ARMul_State *state) {
 			if(line[x] == 0) maskbit = 0;
 				else maskbit = 1;
 
-			mask[(y*4) + (x/4)] &= (maskbit << (8 - maskcount));
+IExec->DebugPrintF("%ld,%ld: mask %ld\n",x,y,(y*4) + (x/8));
+
+			mask[(y*4) + (x/8)] = (mask[(y*4) + (x/8)] << 1) | maskbit;
+/*
+ &= (maskbit << (8 - maskcount));
 
 			maskcount++;
-			if(maskcount > 8) maskcount = 0;
-
+			if(maskcount > 8) maskcount = 1;
+*/
 //printf("%ld ",line[x]);
 		}
 		else
@@ -810,7 +831,7 @@ static void refreshmouse(ARMul_State *state) {
 // HorizPos,VertPos
 	IGraphics->BltMaskBitMapRastPort(mouse_bm,0,0,
 			window->RPort,HorizPos,VertPos,
-			32,height,ABC,mask);
+			32,height,(ABC|ABNC|ANBC),mask);
 
 /*
 	IGraphics->BltBitMap(mouseptr.BitMap,0,0,
