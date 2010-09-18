@@ -17,6 +17,7 @@
 #include <libraries/keymap.h>
 #include <devices/input.h>
 #include <devices/inputevent.h>
+#include <graphics/blitattr.h>
 
 struct Window *window = NULL;
 struct Screen *screen = NULL;
@@ -30,12 +31,6 @@ struct RastPort tmprp;
 static struct BitMap *mouse_bm;
 static struct RastPort mouse_rp;
 PLANEPTR mask;
-
-/*
-static struct SimpleSprite ptr_sprite;
-static int ptr_sprite_num;
-static UWORD *ptr_sprite_img;
-*/
 
 struct IOStdReq *ir;
 struct MsgPort *mport;
@@ -155,8 +150,6 @@ void ChangeDisplayMode(ARMul_State *state,long width,long height,int vidcdepth)
 
 	if(screen)
 	{
-//		screen->ViewPort.Modes |= SPRITES;
-
 		window = IIntuition->OpenWindowTags(NULL,WA_Width,width,
 					WA_Height,height,
 					WA_RMBTrap,TRUE,
@@ -170,6 +163,8 @@ void ChangeDisplayMode(ARMul_State *state,long width,long height,int vidcdepth)
 					WA_MouseQueue,500,
 					WA_IDCMP,IDCMP_MOUSEBUTTONS | IDCMP_MOUSEMOVE | IDCMP_RAWKEY | IDCMP_DELTAMOVE | IDCMP_EXTENDEDMOUSE,
 					TAG_DONE);
+
+		IIntuition->SetWindowPointer(window,WA_Pointer,mouseobj,TAG_DONE);
 
 		if(mouse_bm) IGraphics->FreeBitMap(mouse_bm);
 
@@ -213,9 +208,6 @@ void cleanup(void)
 
 	IGraphics->WaitBlit();
 
-//	IGraphics->FreeSprite(ptr_sprite_num);
-//	IExec->FreeVec(ptr_sprite_img);
-
 	if(mouseobj)
 	{
 		IIntuition->SetWindowPointer(window,TAG_DONE);
@@ -224,10 +216,7 @@ void cleanup(void)
 
 	if(mouseptr.BitMap)
 	{
-		IGraphics->FreeRaster(mouseptr.BitMap->Planes[0],32,32);
-		IGraphics->FreeRaster(mouseptr.BitMap->Planes[1],32,32);
-		IExec->FreeVec(mouseptr.BitMap);
-//		IGraphics->FreeBitMap(mouseptr.BitMap);
+		IGraphics->FreeBitMap(mouseptr.BitMap);
 		mouseptr.BitMap=NULL;
 	}
 
@@ -244,14 +233,6 @@ void cleanup(void)
 	CloseDisplay();
 
 	ARexx_Cleanup();
-
-/* input.device cleanup
-	if(ir)
-		IExec->FreeSysObject(ASOT_IOREQUEST,ir);
-
-	if(mport)
-		IExec->FreeSysObject(ASOT_PORT,mport);
-*/
 
 	if(IGraphics)
 	{
@@ -678,77 +659,16 @@ static void refreshmouse(ARMul_State *state) {
   int HorizPos = (int)VIDC.Horiz_CursorStart - (int)VIDC.Horiz_DisplayStart*2;
   int Height = (int)VIDC.Vert_CursorEnd - (int)VIDC.Vert_CursorStart +1;
   int VertPos;
+	ULONG transcol = 16;
 	UBYTE line[32];
 	ULONG ptr_cols[4];
 	ULONG 	col_reg = 16+((0 & 0x06) << 1);
 	UBYTE maskbit;
-	int maskcount = 1;
 
 	if(!window) return;
 	if(!screen) return;
 
-#if 0
-	if(ptr_sprite_img)
-	{
-		offset=0;
-		memptr=MEMC.Cinit*16;
-		height=(VIDC.Vert_CursorEnd-VIDC.Vert_CursorStart)+1;
-		ImgPtr=(unsigned short *) HD.CursorImageData;
-
-		ptr_sprite_img[0] = 0;
-		ptr_sprite_img[1] = 0;
-
-		for(y=0;y<32;y++,memptr+=8,offset+=8) {
-		// fixed height to 32
-
-    	if (offset<512*1024) {
-			ARMword *pointer_data = MEMC.PhysRam + ((MEMC.Cinit * 16)/4);
-			ARMword tmp[2];
-
-			tmp[0]=MEMC.PhysRam[memptr/4];
-			tmp[1]=MEMC.PhysRam[memptr/4+1];
-
-			for(x=0;x<32;x+=2,ImgPtr+=2) {
-
-			if(y<height)
-			{
-				ptr_sprite_img[2 + (y * 2) + x] = tmp[0];
-				ptr_sprite_img[2 + (y * 2) + x + 1] = tmp[1];
- //((tmp[x/16]>>((x & 15)*2)) & 3);
-				//printf("%ld ",line[x]);
-			}
-      }; /* x */
-    } else return;
-  }; /* y */
-	
-		IGraphics->ChangeSprite(&screen->ViewPort, &ptr_sprite, ptr_sprite_img);
-
-	}
-
-  VertPos = (int)VIDC.Vert_CursorStart;
-  VertPos -= (signed int)VIDC.Vert_DisplayStart;
-
-	IGraphics->MoveSprite(&screen->ViewPort, &ptr_sprite, HorizPos, VertPos);
-#endif
-
 	if(!mouse_bm) return;
-
-/*
-	if(!mouseptr.BitMap)
-	{
-		mouseptr.BitMap=IExec->AllocVec(sizeof(struct BitMap),MEMF_CLEAR);
-		IGraphics->InitBitMap(mouseptr.BitMap,2,32,32);
-		mouseptr.BitMap->Planes[0] = IGraphics->AllocRaster(32,32);
-		mouseptr.BitMap->Planes[1] = IGraphics->AllocRaster(32,32);
-
-		ptr_cols[1] = IGraphics->FindColor(screen->ViewPort.ColorMap,
-			VIDC.CursorPalette[0]
-);
-
-
-//		mouseptr.BitMap = IGraphics->AllocBitMap(32,32,2,BMF_DISPLAYABLE | BMF_CLEAR | BMF_INTERLEAVED,NULL);
-	}
-*/
 
   VertPos = (int)VIDC.Vert_CursorStart;
   VertPos -= (signed int)VIDC.Vert_DisplayStart;
@@ -761,16 +681,6 @@ static void refreshmouse(ARMul_State *state) {
 	IGraphics->BltBitMap(friend.BitMap,OldMouseX,OldMouseY,
 			window->RPort->BitMap,OldMouseX,OldMouseY,
 			32,32,0x0C0,0xff,NULL);
-
-/*
-	IGraphics->BltBitMap(mouse_bm,0,0,
-			window->RPort->BitMap,OldMouseX,OldMouseY,
-			32,32,0x0C0,0xff,NULL);
-
-	IGraphics->BltBitMap(window->RPort->BitMap,HorizPos,VertPos,
-			mouse_bm,0,0,
-			32,32,0x0C0,0xff,NULL);
-*/
 
 	mask[0] = 0;
 	mask[1] = 0;
@@ -803,147 +713,38 @@ static void refreshmouse(ARMul_State *state) {
 		if(y<height)
 		{
         	line[x] = ((tmp[x/16]>>((x & 15)*2)) & 3) + col_reg;
-
-			if(line[x] == 0) maskbit = 0;
-				else maskbit = 1;
-
-IExec->DebugPrintF("%ld,%ld: mask %ld\n",x,y,(y*4) + (x/8));
-
-			mask[(y*4) + (x/8)] = (mask[(y*4) + (x/8)] << 1) | maskbit;
-/*
- &= (maskbit << (8 - maskcount));
-
-			maskcount++;
-			if(maskcount > 8) maskcount = 1;
-*/
-//printf("%ld ",line[x]);
 		}
 		else
 		{
-			line[x] = 0;
+			line[x] = transcol;
 		}
+
+			if(line[x] == transcol) maskbit = 0;
+				else maskbit = 1;
+
+			mask[(y*4) + (x/8)] = (mask[(y*4) + (x/8)] << 1) | maskbit;
+
       }; /* x */
-//printf("\n");
 		IGraphics->WritePixelLine8(&mouse_rp,0,y,32,line,&tmprp); // &mouseptr
     } else return;
   }; /* y */
 
 // HorizPos,VertPos
-	IGraphics->BltMaskBitMapRastPort(mouse_bm,0,0,
-			window->RPort,HorizPos,VertPos,
-			32,height,(ABC|ABNC|ANBC),mask);
+	IGraphics->BltBitMapTags(BLITA_Width, 32,
+			BLITA_Height, height,
+			BLITA_Source, mouse_bm,
+			BLITA_SrcType, BLITT_BITMAP,
+			BLITA_Dest, window->RPort,
+			BLITA_DestType, BLITT_RASTPORT,
+			BLITA_Minterm, (ABC|ABNC|ANBC),
+			BLITA_MaskPlane, mask,
+			BLITA_DestX, HorizPos,
+			BLITA_DestY, VertPos,
+			TAG_DONE);
 
-/*
-	IGraphics->BltBitMap(mouseptr.BitMap,0,0,
-			window->RPort->BitMap,HorizPos,VertPos,
-			32,height,0x0C0,0xff,NULL);
-*/
 	OldMouseX = HorizPos;
 	OldMouseY = VertPos;
 
-return;
-#if 0
-	if(!mouseptr.BitMap)
-	{
-		mouseptr.BitMap=IExec->AllocVec(sizeof(struct BitMap),MEMF_CLEAR);
-		IGraphics->InitBitMap(mouseptr.BitMap,2,32,32);
-		mouseptr.BitMap->Planes[0] = IGraphics->AllocRaster(32,32);
-		mouseptr.BitMap->Planes[1] = IGraphics->AllocRaster(32,32);
-
-//		mouseptr.BitMap = IGraphics->AllocBitMap(32,32,2,BMF_DISPLAYABLE | BMF_CLEAR | BMF_INTERLEAVED,NULL);
-		mouseobj = IIntuition->NewObject(NULL,"pointerclass",POINTERA_BitMap,mouseptr.BitMap,POINTERA_WordWidth,2,POINTERA_XOffset,-22,POINTERA_YOffset,0,POINTERA_XResolution,POINTERXRESN_SCREENRES,POINTERA_YResolution,POINTERYRESN_SCREENRESASPECT,TAG_DONE);
-	}
-
-
-  VertPos = (int)VIDC.Vert_CursorStart;
-  VertPos -= (signed int)VIDC.Vert_DisplayStart;
-
-  if (Height < 1) Height = 1;
-  if (VertPos < 1) VertPos = 1;
-
-struct IBox ibox;
-
-/* My graphics card has problems getting into the negatively numbered X positions,
-   workaround is to enable SOFTSPRITE in the Radeon monitor tooltypes. */
-
-ibox.Left = HorizPos+22;
-ibox.Top = VertPos;
-ibox.Width = 1;
-ibox.Height = 1;
-
-IIntuition->SetWindowAttrs(window,WA_MouseLimits,&ibox,TAG_DONE);
-									//WA_GrabFocus,1,TAG_DONE);
-
-/* Snippet of mouse positioning code by Andy Broad
-In our situation, it doesn't work very well, leaving code here just in case but
-not using it at present.
-
-	if(!IExec->OpenDevice(INPUTNAME,0,ir,0))
-	{
-		struct InputEvent ie;
-		struct IEPointerPixel pp;
-
-		ir->io_Command = IND_WRITEEVENT;
-		ir->io_Length = sizeof(struct InputEvent);
-		ir->io_Data = &ie;
-
-		ie.ie_NextEvent = NULL;
-		ie.ie_Class = IECLASS_NEWPOINTERPOS;
-		ie.ie_SubClass = IESUBCLASS_PIXEL;
-		ie.ie_Code = 0;
-		ie.ie_Qualifier = 0; //IEQUALIFIER_RELATIVEMOUSE;;
-		ie.ie_EventAddress = &pp;
-
-		pp.iepp_Screen = screen;
-		pp.iepp_Position.X = HorizPos+22;
-		pp.iepp_Position.Y = VertPos;
-
-//IExec->DebugPrintF("%ld,%ld,%ld\n",HorizPos+22,VertPos,VIDC.Horiz_CursorStart);
-
-		IExec->DoIO(ir);
-	
-		IExec->CloseDevice(ir);
-	}
-
-*/
-  offset=0;
-  memptr=MEMC.Cinit*16;
-  height=(VIDC.Vert_CursorEnd-VIDC.Vert_CursorStart)+1;
-  ImgPtr=(unsigned short *) HD.CursorImageData;
-  for(y=0;y<32;y++,memptr+=8,offset+=8) {
-// fixed height to 32
-
-    if (offset<512*1024) {
-      ARMword tmp[2];
-
-      tmp[0]=MEMC.PhysRam[memptr/4];
-      tmp[1]=MEMC.PhysRam[memptr/4+1];
-
-      for(x=0;x<32;x++,ImgPtr++) {
-
-		if(y<height)
-		{
-        	line[x] = ((tmp[x/16]>>((x & 15)*2)) & 3);
-//printf("%ld ",line[x]);
-		}
-		else
-		{
-			line[x] = 0;
-		}
-      }; /* x */
-//printf("\n");
-		IGraphics->WritePixelLine8(&mouseptr,0,y,32,line,&tmprp);
-    } else return;
-  }; /* y */
-
-	IIntuition->SetWindowPointer(window,WA_Pointer,mouseobj,TAG_DONE);
-
-/*
-	IGraphics->BltBitMap(mouseptr.BitMap,0,0,
-			window->RPort->BitMap,HorizPos,VertPos,
-			32,height,0x0C0,0xff,NULL);
-*/
-#endif
 }; /* RefreshMouse */
 
 void
@@ -982,38 +783,16 @@ DisplayKbd_InitHost(ARMul_State *state)
 		cleanup();
 	}
 
-/* input.device related code
-	if((mport = IExec->AllocSysObjectTags(ASOT_PORT,ASO_NoTrack,FALSE,TAG_DONE)))
-	{
-		if((ir = IExec->AllocSysObjectTags(ASOT_IOREQUEST,ASO_NoTrack,FALSE,ASOIOR_ReplyPort,mport,ASOIOR_Size,sizeof(struct IOStdReq))))
-		{
-
-		}
-		else
-		{
-			cleanup();
-		}
-	}
-	else
-	{
-		cleanup();
-	}
-*/
-
 	ARexx_Init();
 
 	IGraphics->InitRastPort(&mouseptr);
 	IGraphics->InitRastPort(&mouse_rp);
 	IGraphics->InitRastPort(&friend);
 	mask = IGraphics->AllocRaster(32,32);
-/*
-	ptr_sprite_num = IGraphics->GetSprite(&ptr_sprite, -1);
-	if(ptr_sprite_num == -1) cleanup();
 
-	ptr_sprite_img = IExec->AllocVec((2 + 32) * 4, MEMF_CLEAR); // MEMF_CHIP | 
-*/
-
-	
+	/* blank mouse pointer image */
+	mouseptr.BitMap = IGraphics->AllocBitMap(1,1,1,BMF_CLEAR,NULL);
+	mouseobj = IIntuition->NewObject(NULL,"pointerclass",POINTERA_BitMap,mouseptr.BitMap,POINTERA_WordWidth,2,POINTERA_XOffset,0,POINTERA_YOffset,0,POINTERA_XResolution,POINTERXRESN_SCREENRES,POINTERA_YResolution,POINTERYRESN_SCREENRESASPECT,TAG_DONE);
 
 	filereq = IAsl->AllocAslRequestTags(ASL_FileRequest,
 									ASLFR_RejectIcons,TRUE,
@@ -1021,13 +800,6 @@ DisplayKbd_InitHost(ARMul_State *state)
 									ASLFR_InitialPattern,"#?.arcem",
 									ASLFR_DoPatterns,TRUE,
 									TAG_DONE);
-
-/*
-	if(P96Base = IExec->OpenLibrary("Picasso96API.library",0))
-	{
-		IP96 = IExec->GetInterface(P96Base,"main",1,NULL);
-	}
-*/
 
   HD.red_prec    = 8;
   HD.green_prec  = 8;
