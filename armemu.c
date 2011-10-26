@@ -19,6 +19,8 @@
     (arcem@treblig.org) */
 #include "armdefs.h"
 #include "armemu.h"
+#include <time.h>
+#include "prof.h"
 
 ARMul_State statestr;
 
@@ -995,7 +997,6 @@ done:
 #undef EMFUNCDECL26
 #undef EMFUNC_CONDTEST
 
-  int pipeidx = 0; /* Index of instruction to run */
 
 /* ################################################################################## */
 /* ## Function called when the decode is unknown                                   ## */
@@ -1014,19 +1015,37 @@ PipelineEntry abortpipe = {
   EMFUNCDECL26(SWI)
 };
 
+#define FLATPIPE
+
+#ifdef FLATPIPE
+#define PIPESIZE 3
+#else
 #define PIPESIZE 4 /* 3 or 4. 4 seems to be slightly faster? */
+#endif
+
+#ifdef PROFILE_ENABLED
+#define MILLION_INSTRUCTIONS 30
+#else
+#define MILLION_INSTRUCTIONS 50
+#endif
 
 void
 ARMul_Emulate26(ARMul_State *state)
 {
   PipelineEntry pipe[PIPESIZE];   /* Instruction pipeline */
   ARMword pc = 0;          /* The address of the current instruction */
+  int pipeidx = 0; /* Index of instruction to run */
 
   /**************************************************************************\
    *                        Execute the next instruction                    *
   \**************************************************************************/
+#ifdef MILLION_INSTRUCTIONS
+  clock_t start = clock();
+  int icount=MILLION_INSTRUCTIONS*1000000;
+#endif
   kill_emulator = 0;
   while (kill_emulator == 0) {
+    Prof_Begin("ARMul_Emulate26 prime");
     if (state->NextInstr < PRIMEPIPE) {
       pipe[1].instr = state->decoded;
       pipe[2].instr = state->loaded;
@@ -1034,11 +1053,15 @@ ARMul_Emulate26(ARMul_State *state)
 
       pipe[1].func = ARMul_Emulate_DecodeInstr(pipe[1].instr);
       pipe[2].func = ARMul_Emulate_DecodeInstr(pipe[2].instr);
-
+#ifndef FLATPIPE
       pipeidx = 0;
+#endif
     }
+    Prof_End("ARMul_Emulate26 prime");
 
     for (;;) { /* just keep going */
+#ifndef FLATPIPE
+      Prof_Begin("Fetch/decode");
       switch (state->NextInstr) {
         case NONSEQ:
         case SEQ:
@@ -1082,12 +1105,21 @@ ARMul_Emulate26(ARMul_State *state)
           NORMALCYCLE;
           break;
       }
+      Prof_End("Fetch/decode");
+
+      Prof_BeginFunc(ARMul_InvokeEvent);
       ARMul_InvokeEvent(state);
+      Prof_EndFunc(ARMul_InvokeEvent);
 
       if (ARMul_Time >= ioc.NextTimerTrigger)
+      {
+        Prof_BeginFunc(UpdateTimerRegisters);
         UpdateTimerRegisters(state);
+        Prof_EndFunc(UpdateTimerRegisters);
+      }
 
       if (state->Exception) { /* Any exceptions */
+        Prof_BeginFunc(ARMul_Abort);
         if ((state->Exception & 2) && !FFLAG) {
           ARMul_Abort(state, ARMul_FIQV);
           break;
@@ -1096,17 +1128,240 @@ ARMul_Emulate26(ARMul_State *state)
           ARMul_Abort(state, ARMul_IRQV);
           break;
         }
+        Prof_EndFunc(ARMul_Abort);
       }
 
       ARMword instr = pipe[pipeidx].instr;
       /*fprintf(stderr, "exec: pc=0x%08x instr=0x%08x\n", pc, instr);*/
       if(ARMul_CCCheck(instr,ECC))
+      {
+        Prof_BeginFunc(pipe[pipeidx].func);
         (pipe[pipeidx].func)(state, instr, pc);
+        Prof_EndFunc(pipe[pipeidx].func);
+      }
 
+      if(!--icount)
+      {
+        kill_emulator = 1;
+        break;
+      }
+#else
+/* pipeidx = 0 */
+      Prof_Begin("Fetch/decode");
+      switch (state->NextInstr) {
+        case NONSEQ:
+        case SEQ:
+          SETPC(state->Reg[15]+4); /* Advance the pipeline, and an S cycle */
+          pc += 4;
+
+          ARMul_LoadInstr(state, pc + 8, &pipe[0]);
+          break;
+
+        case PCINCEDSEQ:
+        case PCINCEDNONSEQ:
+          /* DAG: R15 already advanced? */
+          pc += 4; /* Program counter advanced, and an S cycle */
+          ARMul_LoadInstr(state, pc + 8, &pipe[0]);
+          NORMALCYCLE;
+          break;
+
+        /* DAG - resume was here! */
+
+        default: /* The program counter has been changed */
+          goto reset_pipe;
+      }
+      Prof_End("Fetch/decode");
+
+      Prof_BeginFunc(ARMul_InvokeEvent);
+      ARMul_InvokeEvent(state);
+      Prof_EndFunc(ARMul_InvokeEvent);
+
+      if (ARMul_Time >= ioc.NextTimerTrigger)
+      {
+        Prof_BeginFunc(UpdateTimerRegisters);
+        UpdateTimerRegisters(state);
+        Prof_EndFunc(UpdateTimerRegisters);
+      }
+
+      if (state->Exception) { /* Any exceptions */
+        Prof_BeginFunc(ARMul_Abort);
+        if ((state->Exception & 2) && !FFLAG) {
+          ARMul_Abort(state, ARMul_FIQV);
+          pipeidx = 1;
+          break;
+
+        } else if ((state->Exception & 1) && !IFLAG) {
+          ARMul_Abort(state, ARMul_IRQV);
+          pipeidx = 1;
+          break;
+        }
+        Prof_EndFunc(ARMul_Abort);
+      }
+
+      ARMword instr = pipe[1].instr;
+      /*fprintf(stderr, "exec: pc=0x%08x instr=0x%08x\n", pc, instr);*/
+      if(ARMul_CCCheck(instr,ECC))
+      {
+        Prof_BeginFunc(pipe[1].func);
+        (pipe[1].func)(state, instr, pc);
+        Prof_EndFunc(pipe[1].func);
+      }
+
+      if(!--icount)
+      {
+        kill_emulator = 1;
+        break;
+      }
+/* pipeidx = 1 */
+      Prof_Begin("Fetch/decode");
+      switch (state->NextInstr) {
+        case NONSEQ:
+        case SEQ:
+          SETPC(state->Reg[15]+4); /* Advance the pipeline, and an S cycle */
+          pc += 4;
+
+          ARMul_LoadInstr(state, pc + 8, &pipe[1]);
+          break;
+
+        case PCINCEDSEQ:
+        case PCINCEDNONSEQ:
+          /* DAG: R15 already advanced? */
+          pc += 4; /* Program counter advanced, and an S cycle */
+          ARMul_LoadInstr(state, pc + 8, &pipe[1]);
+          NORMALCYCLE;
+          break;
+
+        /* DAG - resume was here! */
+
+        default: /* The program counter has been changed */
+          goto reset_pipe;
+      }
+      Prof_End("Fetch/decode");
+
+      Prof_BeginFunc(ARMul_InvokeEvent);
+      ARMul_InvokeEvent(state);
+      Prof_EndFunc(ARMul_InvokeEvent);
+
+      if (ARMul_Time >= ioc.NextTimerTrigger)
+      {
+        Prof_BeginFunc(UpdateTimerRegisters);
+        UpdateTimerRegisters(state);
+        Prof_EndFunc(UpdateTimerRegisters);
+      }
+
+      if (state->Exception) { /* Any exceptions */
+        Prof_BeginFunc(ARMul_Abort);
+        if ((state->Exception & 2) && !FFLAG) {
+          ARMul_Abort(state, ARMul_FIQV);
+          pipeidx = 2;
+          break;
+
+        } else if ((state->Exception & 1) && !IFLAG) {
+          ARMul_Abort(state, ARMul_IRQV);
+          pipeidx = 2;
+          break;
+        }
+        Prof_EndFunc(ARMul_Abort);
+      }
+
+      instr = pipe[2].instr;
+      /*fprintf(stderr, "exec: pc=0x%08x instr=0x%08x\n", pc, instr);*/
+      if(ARMul_CCCheck(instr,ECC))
+      {
+        Prof_BeginFunc(pipe[2].func);
+        (pipe[2].func)(state, instr, pc);
+        Prof_EndFunc(pipe[2].func);
+      }
+
+      if(!--icount)
+      {
+        kill_emulator = 1;
+        break;
+      }
+/* pipeidx = 2 */
+      Prof_Begin("Fetch/decode");
+      switch (state->NextInstr) {
+        case NONSEQ:
+        case SEQ:
+          SETPC(state->Reg[15]+4); /* Advance the pipeline, and an S cycle */
+          pc += 4;
+
+          ARMul_LoadInstr(state, pc + 8, &pipe[2]);
+          break;
+
+        case PCINCEDSEQ:
+        case PCINCEDNONSEQ:
+          /* DAG: R15 already advanced? */
+          pc += 4; /* Program counter advanced, and an S cycle */
+          ARMul_LoadInstr(state, pc + 8, &pipe[2]);
+          NORMALCYCLE;
+          break;
+
+        /* DAG - resume was here! */
+
+        default: /* The program counter has been changed */
+        reset_pipe:
+#ifdef DEBUG
+          printf("PC ch pc=0x%x (O 0x%x\n", state->Reg[15], pc);
+#endif
+          pc = PC;
+          SETPC(pc+8);
+          state->Aborted = 0;
+          ARMul_LoadInstrTriplet(state, pc, pipe);
+          NORMALCYCLE;
+          break;
+      }
+      Prof_End("Fetch/decode");
+
+      Prof_BeginFunc(ARMul_InvokeEvent);
+      ARMul_InvokeEvent(state);
+      Prof_EndFunc(ARMul_InvokeEvent);
+
+      if (ARMul_Time >= ioc.NextTimerTrigger)
+      {
+        Prof_BeginFunc(UpdateTimerRegisters);
+        UpdateTimerRegisters(state);
+        Prof_EndFunc(UpdateTimerRegisters);
+      }
+
+      if (state->Exception) { /* Any exceptions */
+        Prof_BeginFunc(ARMul_Abort);
+        if ((state->Exception & 2) && !FFLAG) {
+          ARMul_Abort(state, ARMul_FIQV);
+          pipeidx = 0;
+          break;
+
+        } else if ((state->Exception & 1) && !IFLAG) {
+          ARMul_Abort(state, ARMul_IRQV);
+          pipeidx = 0;
+          break;
+        }
+        Prof_EndFunc(ARMul_Abort);
+      }
+
+      instr = pipe[0].instr;
+      /*fprintf(stderr, "exec: pc=0x%08x instr=0x%08x\n", pc, instr);*/
+      if(ARMul_CCCheck(instr,ECC))
+      {
+        Prof_BeginFunc(pipe[0].func);
+        (pipe[0].func)(state, instr, pc);
+        Prof_EndFunc(pipe[0].func);
+      }
+
+      if(!--icount)
+      {
+        kill_emulator = 1;
+        break;
+      }
+#endif
     } /* for loop */
 
     state->decoded = pipe[(pipeidx+1)%PIPESIZE].instr;
     state->loaded = pipe[(pipeidx+2)%PIPESIZE].instr;
     state->pc = pc;
   }
+#ifdef MILLION_INSTRUCTIONS
+  int t = clock()-start;
+  printf("%d, %.3f MIPS\n",t,((float)(MILLION_INSTRUCTIONS*CLOCKS_PER_SEC))/t);
+#endif
 } /* Emulate 26 in instruction based mode */

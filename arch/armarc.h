@@ -3,7 +3,6 @@
 /* (c) David Alan Gilbert 1995-1998 - see Readme file for copying info */
 
 #include "../armdefs.h"
-#include "../armopts.h"
 #include "DispKbd.h"
 #include "archio.h"
 #include "fdc1772.h"

@@ -3,7 +3,6 @@
 #include <signal.h>
 #include <stdio.h>
 #include <time.h>
-#include "../armopts.h"
 #include "../armdefs.h"
 
 #ifdef MACOSX

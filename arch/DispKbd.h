@@ -5,7 +5,6 @@
 #define DISPKBD_HEADER
 
 #include "../armdefs.h"
-#include "../armopts.h"
 
 #define POLLGAP 125
 

@@ -39,7 +39,7 @@ HOST_BIGENDIAN=no
 
 # Windowing System
 ifeq ($(SYSTEM),)
-SYSTEM=X
+SYSTEM=riscos-single
 endif
 
 CC=gcc
@@ -80,22 +80,21 @@ INSTALL=cp
 # Everything else should be ok as it is.
 
 OBJS = armcopro.o armemu.o arminit.o \
-	armsupp.o main.o dagstandalone.o armos.o \
-		armrdi.o $(SYSTEM)/DispKbd.o arch/i2c.o arch/archio.o \
+	armsupp.o main.o dagstandalone.o \
+		$(SYSTEM)/DispKbd.o arch/i2c.o arch/archio.o \
     arch/fdc1772.o $(SYSTEM)/ControlPane.o arch/hdc63463.o arch/ReadConfig.o \
     arch/keyboard.o $(SYSTEM)/filecalls.o arch/DispKbdShared.o \
     arch/ArcemConfig.o arch/cp15.o
 
 SRCS = armcopro.c armemu.c arminit.c arch/armarc.c \
-	armsupp.c main.c dagstandalone.c armos.c  \
+	armsupp.c main.c dagstandalone.c  \
 	arm-support.s conditions.s rhs.s \
-	armrdi.c $(SYSTEM)/DispKbd.c arch/i2c.c arch/archio.c \
+	$(SYSTEM)/DispKbd.c arch/i2c.c arch/archio.c \
 	arch/fdc1772.c $(SYSTEM)/ControlPane.c arch/hdc63463.c \
 	arch/ReadConfig.c arch/keyboard.c $(SYSTEM)/filecalls.c \
 	arch/DispKbdShared.c arch/ArcemConfig.c arch/cp15.c
 
-INCS = armdefs.h armemu.h armfpe.h armopts.h armos.h \
-	dbg_conf.h dbg_cp.h dbg_hif.h dbg_rdi.h $(SYSTEM)/KeyTable.h \
+INCS = armdefs.h armemu.h $(SYSTEM)/KeyTable.h \
   arch/i2c.h arch/archio.h arch/fdc1772.h arch/ControlPane.h \
   arch/hdc63463.h arch/keyboard.h arch/ArcemConfig.h arch/cp15.h
 
@@ -137,8 +136,10 @@ endif
 ifeq (${SYSTEM},riscos-single)
 EXTNROM_SUPPORT=notyet
 DIRECT_DISPLAY=yes
-CFLAGS += -I@ -DSYSTEM_riscos_single -Iriscos-single -mpoke-function-name -mtune=xscale -march=armv5te -mthrowback
+CFLAGS += -I@ -DSYSTEM_riscos_single -Iriscos-single -mpoke-function-name -mtune=xscale -march=armv5te -mthrowback -save-temps
+LDFLAGS += -static
 #OBJS += arm-support.o rhs.o
+OBJS += prof.o
 TARGET=!ArcEm/arcem
 endif
 
@@ -232,9 +233,6 @@ arch/armarc.o: armdefs.h arch/armarc.c arch/DispKbd.h arch/armarc.h \
 
 # other objects
 
-armos.o: armos.c armdefs.h armos.h armfpe.h
-	$(CC) $(CFLAGS) -c $*.c
-
 armcopro.o: armcopro.c armdefs.h
 	$(CC) $(CFLAGS) -c $*.c
 
@@ -246,6 +244,9 @@ arm-support.o: arm-support.s instructions
 
 rhs.o: rhs.s
 	$(CC) rhs.s -c
+
+prof.o: prof.s
+	$(CC) -x assembler-with-cpp prof.s -c
 
 instructions: armsuppmov.s armsuppmovs.s armsuppmvn.s armsuppmvns.s
 
@@ -264,17 +265,13 @@ armsuppmvns.s: conditions.s
 arminit.o: arminit.c armdefs.h armemu.h
 	$(CC) $(CFLAGS) -c $*.c
 
-armrdi.o: armrdi.c armdefs.h armemu.h armos.h dbg_cp.h dbg_conf.h dbg_rdi.h \
-		dbg_hif.h
-	$(CC) $(CFLAGS) -c $*.c
-
 armsupp.o: armsupp.c armdefs.h armemu.h
 	$(CC) $(CFLAGS) -c $*.c
 
-dagstandalone.o: dagstandalone.c armdefs.h dbg_conf.h dbg_hif.h dbg_rdi.h
+dagstandalone.o: dagstandalone.c armdefs.h
 	$(CC) $(CFLAGS) -c $*.c
 
-main.o: main.c armdefs.h dbg_rdi.h dbg_conf.h
+main.o: main.c armdefs.h
 	$(CC) $(CFLAGS) -c $*.c
 
 $(SYSTEM)/DispKbd.o: $(SYSTEM)/DispKbd.c arch/DispKbd.h $(SYSTEM)/KeyTable.h \

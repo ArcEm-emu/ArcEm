@@ -1,149 +1,155 @@
 /* ################################################################################## */
 /* ## Individual decoded instruction functions                                     ## */
 /* ################################################################################## */
-static void EMFUNCDECL26(BranchForward) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(Branch) (ARMul_State *state, ARMword instr, ARMword pc) {
   EMFUNC_CONDTEST
-  SETPC(pc + 8 + POSBRANCH);
+  /* Note that the upper bits of instr (those that don't form the branch offset) get masked out by SETPC */
+  SETPC(pc + 8 + (instr<<2));
   FLUSHPIPE;
-} /* EMFUNCDECL26(BranchForward */
+} /* EMFUNCDECL26(Branch */
 
-static void EMFUNCDECL26(BranchForwardLink) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(BranchLink) (ARMul_State *state, ARMword instr, ARMword pc) {
   EMFUNC_CONDTEST
-  state->Reg[14] = (pc + 4) | R15CCINTMODE; /* put PC into Link */
-  SETPC(pc + 8 + POSBRANCH);
+  if(instr & (1<<24))
+    state->Reg[14] = (pc + 4) | R15CCINTMODE;
+  /* Note that the upper bits of instr (those that don't form the branch offset) get masked out by SETPC */
+  SETPC(pc + 8 + (instr<<2));
   FLUSHPIPE;
-} /* EMFUNCDECL26(BranchForwardLink */
+} /* EMFUNCDECL26(BranchLink */
 
-static void EMFUNCDECL26(BranchBackward) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(Mul) (ARMul_State *state, ARMword instr, ARMword pc) {
+  register ARMword temp;
+  ARMword rhs;
+
   EMFUNC_CONDTEST
-  SETPC(pc + 8 + NEGBRANCH);
-  FLUSHPIPE;
-} /* EMFUNCDECL26(BranchBackward */
+  rhs = state->Reg[MULRHSReg];
+  if (MULLHSReg == MULDESTReg) {
+     state->Reg[MULDESTReg] = 0;
+     }
+  else if (MULDESTReg != 15)
+     state->Reg[MULDESTReg] = state->Reg[MULLHSReg] * rhs;
+  else {
+     }
+  for(temp=31;temp;temp--)
+    if (rhs & (1L << temp))
+      break;
+  ARMul_Icycles(state,ARMul_MultTable[temp]);
 
-static void EMFUNCDECL26(BranchBackwardLink) (ARMul_State *state, ARMword instr, ARMword pc) {
-  EMFUNC_CONDTEST
-  state->Reg[14] = (pc + 4) | R15CCINTMODE; /* put PC into Link */
-  SETPC(pc + 8 + NEGBRANCH);
-  FLUSHPIPE;
-} /* EMFUNCDECL26(BranchBackwardLink */
+} /* EMFUNCDECL26(Mul */
 
-static void EMFUNCDECL26(AndRegMul) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(Muls) (ARMul_State *state, ARMword instr, ARMword pc) {
   register ARMword dest,temp;
   ARMword rhs;
 
   EMFUNC_CONDTEST
-             if (BITS(4,7) == 9) { /* MUL */
-                rhs = state->Reg[MULRHSReg];
-                if (MULLHSReg == MULDESTReg) {
-                   state->Reg[MULDESTReg] = 0;
-                   }
-                else if (MULDESTReg != 15)
-                   state->Reg[MULDESTReg] = state->Reg[MULLHSReg] * rhs;
-                else {
-                   }
-                for(temp=31;temp;temp--)
-                  if (rhs & (1L << temp))
-                    break;
-                ARMul_Icycles(state,ARMul_MultTable[temp]);
-                }
-             else { /* AND reg */
-                rhs = DPRegRHS;
-                dest = LHS & rhs;
-                WRITEDEST(dest);
-                }
+  rhs = state->Reg[MULRHSReg];
+  if (MULLHSReg == MULDESTReg) {
+     state->Reg[MULDESTReg] = 0;
+     CLEARN;
+     SETZ;
+     }
+  else if (MULDESTReg != 15) {
+     dest = state->Reg[MULLHSReg] * rhs;
+     ARMul_NegZero(state,dest);
+     state->Reg[MULDESTReg] = dest;
+     }
+  else {
+     }
+  for(temp=31;temp;temp--)
+    if (rhs & (1L << temp))
+      break;
+  ARMul_Icycles(state,ARMul_MultTable[temp]);
 
-} /* EMFUNCDECL26(AndRegMul */
+} /* EMFUNCDECL26(Muls */
 
-static void EMFUNCDECL26(AndsRegMuls) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(Mla) (ARMul_State *state, ARMword instr, ARMword pc) {
+  register ARMword temp;
+  ARMword rhs;
+
+  EMFUNC_CONDTEST
+  rhs = state->Reg[MULRHSReg];
+  if (MULLHSReg == MULDESTReg) {
+     state->Reg[MULDESTReg] = state->Reg[MULACCReg];
+     }
+  else if (MULDESTReg != 15)
+     state->Reg[MULDESTReg] = state->Reg[MULLHSReg] * rhs + state->Reg[MULACCReg];
+  else {
+     }
+  for(temp=31;temp;temp--)
+    if (rhs & (1L << temp))
+      break;
+  ARMul_Icycles(state,ARMul_MultTable[temp]);
+
+} /* EMFUNCDECL26(Mla */
+
+static void EMFUNCDECL26(Mlas) (ARMul_State *state, ARMword instr, ARMword pc) {
   register ARMword dest,temp;
   ARMword rhs;
 
   EMFUNC_CONDTEST
-            if (BITS(4,7) == 9) { /* MULS */
-                rhs = state->Reg[MULRHSReg];
-                if (MULLHSReg == MULDESTReg) {
-                   state->Reg[MULDESTReg] = 0;
-                   CLEARN;
-                   SETZ;
-                   }
-                else if (MULDESTReg != 15) {
-                   dest = state->Reg[MULLHSReg] * rhs;
-                   ARMul_NegZero(state,dest);
-                   state->Reg[MULDESTReg] = dest;
-                   }
-                else {
-                   }
-                for(temp=31;temp;temp--)
-                  if (rhs & (1L << temp))
-                    break;
-                ARMul_Icycles(state,ARMul_MultTable[temp]);
-                }
-             else { /* ANDS reg */
-                rhs = DPSRegRHS;
-                dest = LHS & rhs;
-                WRITESDEST(dest);
-                }
+  rhs = state->Reg[MULRHSReg];
+  if (MULLHSReg == MULDESTReg) {
+     dest = state->Reg[MULACCReg];
+     ARMul_NegZero(state,dest);
+     state->Reg[MULDESTReg] = dest;
+     }
+  else if (MULDESTReg != 15) {
+     dest = state->Reg[MULLHSReg] * rhs + state->Reg[MULACCReg];
+     ARMul_NegZero(state,dest);
+     state->Reg[MULDESTReg] = dest;
+     }
+  else {
+     }
+  for(temp=31;temp;temp--)
+    if (rhs & (1L << temp))
+      break;
+  ARMul_Icycles(state,ARMul_MultTable[temp]);
 
-} /* EMFUNCDECL26(AndsRegMuls */
+} /* EMFUNCDECL26(Mlas */
 
-static void EMFUNCDECL26(EorRegMla) (ARMul_State *state, ARMword instr, ARMword pc) {
-  register ARMword dest,temp;
+static void EMFUNCDECL26(AndReg) (ARMul_State *state, ARMword instr, ARMword pc) {
+  register ARMword dest;
   ARMword rhs;
 
   EMFUNC_CONDTEST
-          if (BITS(4,7) == 9) { /* MLA */
-                rhs = state->Reg[MULRHSReg];
-                if (MULLHSReg == MULDESTReg) {
-                   state->Reg[MULDESTReg] = state->Reg[MULACCReg];
-                   }
-                else if (MULDESTReg != 15)
-                   state->Reg[MULDESTReg] = state->Reg[MULLHSReg] * rhs + state->Reg[MULACCReg];
-                else {
-                   }
-                for(temp=31;temp;temp--)
-                  if (rhs & (1L << temp))
-                    break;
-                ARMul_Icycles(state,ARMul_MultTable[temp]);
-                }
-             else {
-                rhs = DPRegRHS;
-                dest = LHS ^ rhs;
-                WRITEDEST(dest);
-                }
+  rhs = DPRegRHS;
+  dest = LHS & rhs;
+  WRITEDEST(dest);
 
-} /* EMFUNCDECL26(EorRegMla */
+} /* EMFUNCDECL26(AndReg */
 
-static void EMFUNCDECL26(EorsRegMlas) (ARMul_State *state, ARMword instr, ARMword pc) {
-  register ARMword dest,temp;
+static void EMFUNCDECL26(AndsReg) (ARMul_State *state, ARMword instr, ARMword pc) {
+  register ARMword dest;
   ARMword rhs;
 
   EMFUNC_CONDTEST
-            if (BITS(4,7) == 9) { /* MLAS */
-                rhs = state->Reg[MULRHSReg];
-                if (MULLHSReg == MULDESTReg) {
-                   dest = state->Reg[MULACCReg];
-                   ARMul_NegZero(state,dest);
-                   state->Reg[MULDESTReg] = dest;
-                   }
-                else if (MULDESTReg != 15) {
-                   dest = state->Reg[MULLHSReg] * rhs + state->Reg[MULACCReg];
-                   ARMul_NegZero(state,dest);
-                   state->Reg[MULDESTReg] = dest;
-                   }
-                else {
-                   }
-                for(temp=31;temp;temp--)
-                  if (rhs & (1L << temp))
-                    break;
-                ARMul_Icycles(state,ARMul_MultTable[temp]);
-                }
-             else { /* EORS Reg */
-                rhs = DPSRegRHS;
-                dest = LHS ^ rhs;
-                WRITESDEST(dest);
-                }
+  rhs = DPSRegRHS;
+  dest = LHS & rhs;
+  WRITESDEST(dest);
 
-} /* EMFUNCDECL26(EorsRegMlas */
+} /* EMFUNCDECL26(AndsReg */
+
+static void EMFUNCDECL26(EorReg) (ARMul_State *state, ARMword instr, ARMword pc) {
+  register ARMword dest;
+  ARMword rhs;
+
+  EMFUNC_CONDTEST
+  rhs = DPRegRHS;
+  dest = LHS ^ rhs;
+  WRITEDEST(dest);
+
+} /* EMFUNCDECL26(EorReg */
+
+static void EMFUNCDECL26(EorsReg) (ARMul_State *state, ARMword instr, ARMword pc) {
+  register ARMword dest;
+  ARMword rhs;
+
+  EMFUNC_CONDTEST
+  rhs = DPSRegRHS;
+  dest = LHS ^ rhs;
+  WRITESDEST(dest);
+
+} /* EMFUNCDECL26(EorsReg */
 
 static void EMFUNCDECL26(SubReg) (ARMul_State *state, ARMword instr, ARMword pc) {
   register ARMword dest;

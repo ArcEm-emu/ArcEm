@@ -9,7 +9,6 @@
 #include <string.h>
 
 #include "../armdefs.h"
-#include "../armopts.h"
 
 #include "ArcemConfig.h"
 #include "ReadConfig.h"

@@ -8,7 +8,6 @@
 #define HDC63463_HEADER
 
 #include "../armdefs.h"
-#include "../armopts.h"
 
 /* Structure used to store the configurable shape of the Harddrive */
 struct HDCshape {

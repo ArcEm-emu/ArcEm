@@ -7,7 +7,6 @@
 #include <ctype.h>
 #include <signal.h>
 
-#include "../armopts.h"
 #include "../armdefs.h"
 
 #include "dbugsys.h"

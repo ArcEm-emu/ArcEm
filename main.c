@@ -19,6 +19,7 @@
 
 #include "dagstandalone.h"
 #include "ArcemConfig.h"
+#include "prof.h"
 
 #ifdef WIN32
 
@@ -50,6 +51,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 int main(int argc, char *argv[])
 {
+  Prof_Init();
+  
   // Setup the default values for the config system
   ArcemConfig_SetupDefaults();
 
@@ -58,6 +61,8 @@ int main(int argc, char *argv[])
   ArcemConfig_ParseCommandLine(argc, argv);
 
   dagstandalone();
+
+  Prof_Dump();
 
   return EXIT_SUCCESS;
 }

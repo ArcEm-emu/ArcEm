@@ -21,7 +21,6 @@
 #include <stdio.h>
 //#include <unistd.h>
 
-#include "../armopts.h"
 #include "../armdefs.h"
 
 #include "armarc.h"

@@ -4,7 +4,6 @@
 #define FDC1772
 
 #include "../armdefs.h"
-#include "../armopts.h"
 
 /**
  * FDC_Init

@@ -74,22 +74,47 @@
 #define NFLAG ((state->Reg[15]>>31)&1)
 #define SETN state->Reg[15] |= NBIT
 #define CLEARN state->Reg[15] &= ~NBIT
+#ifndef __arm__
 #define ASSIGNN(res) state->Reg[15] = (res?state->Reg[15]|NBIT:state->Reg[15]&~NBIT)
+#else
+#define ASSIGNN(res) inlASSIGN(state,res,NBIT)
+static inline void inlASSIGN(ARMul_State *state,ARMword res,ARMword bit)
+{
+	ARMword temp = state->Reg[15];
+	if(res)
+		temp |= bit;
+	else
+		temp &= ~bit;
+	state->Reg[15] = temp;
+}
+#endif
 
 #define ZFLAG ((state->Reg[15]>>30)&1)
 #define SETZ state->Reg[15] |= ZBIT
 #define CLEARZ state->Reg[15] &= ~ZBIT
+#ifndef __arm__
 #define ASSIGNZ(res) state->Reg[15] = (res?state->Reg[15]|ZBIT:state->Reg[15]&~ZBIT)
+#else
+#define ASSIGNZ(res) inlASSIGN(state,res,ZBIT)
+#endif
 
 #define CFLAG ((state->Reg[15]>>29)&1)
 #define SETC state->Reg[15] |= CBIT
 #define CLEARC state->Reg[15] &= ~CBIT
+#ifndef __arm__
 #define ASSIGNC(res) state->Reg[15] = (res?state->Reg[15]|CBIT:state->Reg[15]&~CBIT)
+#else
+#define ASSIGNC(res) inlASSIGN(state,res,CBIT)
+#endif
 
 #define VFLAG ((state->Reg[15]>>28)&1)
 #define SETV state->Reg[15] |= VBIT
 #define CLEARV state->Reg[15] &= ~VBIT
+#ifndef __arm__
 #define ASSIGNV(res) state->Reg[15] = (res?state->Reg[15]|VBIT:state->Reg[15]&~VBIT)
+#else
+#define ASSIGNV(res) inlASSIGN(state,res,VBIT)
+#endif
 
 #define CLEARNCV state->Reg[15] &= ~(NBIT|CBIT|VBIT)
 #define CLEARCV state->Reg[15] &= ~(CBIT|VBIT)
@@ -189,7 +214,18 @@
 
 #define DEST (state->Reg[DESTReg])
 
+#ifndef __arm__ /* GCC makes a mess of this ternary op, much better to go with the hand-holding approach to ensure there's only one LDR */
 #define LHS ((LHSReg == 15) ? R15PC : (state->Reg[LHSReg]) )
+#else
+#define LHS inlLHS(state,LHSReg)
+static inline ARMword inlLHS(ARMul_State *state,ARMword r)
+{
+	ARMword lhs = state->Reg[r];
+	if(r == 15)
+		lhs &= R15PCBITS;
+	return lhs;
+}
+#endif
 
 #define MULDESTReg (BITS(16,19))
 #define MULLHSReg (BITS(0,3))

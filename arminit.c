@@ -107,21 +107,11 @@ ARMul_State *ARMul_NewState(void)
 
  state->MemDataPtr = NULL;
 
- state->OSptr = NULL;
- state->CommandLine = NULL;
-
  state->Now = 0;
 
  ARMul_Reset(state);
  return(state);
  }
-
-/***************************************************************************\
-*       Call this routine to set ARMulator to model a certain processor     *
-\***************************************************************************/
-
-void ARMul_SelectProcessor(ARMul_State *state, unsigned int processor) {
-}
 
 /***************************************************************************\
 * Call this routine to set up the initial machine state (or perform a RESET *
@@ -140,10 +130,6 @@ void ARMul_Reset(ARMul_State *state)
  state->AbortAddr = 1;
 
  state->NumCycles = 0;
-#ifdef ASIM
-  (void)ARMul_MemoryInit();
-  ARMul_OSInit(state);
-#endif
 }
 
 
@@ -167,11 +153,6 @@ void ARMul_Abort(ARMul_State *state, ARMword vector) {
 
 #ifdef DEBUG
  printf("ARMul_Abort: vector=0x%x\n",vector);
-#endif
-
-#ifndef NOOS
- if (ARMul_OSException(state,vector,ARMul_GetPC(state)))
-    return;
 #endif
 
   temp = state->Reg[15];

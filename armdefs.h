@@ -94,32 +94,9 @@ struct ARMul_State {
    ARMul_CPWrites *CPWrite[16]; /* Write CP register */
    unsigned char *CPData[16]; /* Coprocessor data */
 
-   /* Redundant stuff */
-   unsigned char *OSptr;      /* OS Handle */
-   char *CommandLine;         /* Command Line from ARMsd */
-
-   const struct Dbg_HostosInterface *hostif;
-
  };
 
 #define LATEABTSIG LOW
-
-/***************************************************************************\
-*                        Types of ARM we know about                         *
-\***************************************************************************/
-
-/* The bitflags */
-#define ARM_Fix26_Prop   0x01
-#define ARM_Nexec_Prop   0x02
-#define ARM_Debug_Prop   0x10
-#define ARM_Isync_Prop   ARM_Debug_Prop
-#define ARM_Lock_Prop    0x20
-
-/* ARM2 family */
-#define ARM2    (ARM_Fix26_Prop)
-#define ARM2as  ARM2
-#define ARM61   ARM2
-#define ARM3    ARM2
 
 
 /***************************************************************************\
@@ -173,7 +150,6 @@ struct ARMul_State {
 
 void ARMul_EmulateInit(void);
 ARMul_State *ARMul_NewState(void);
-void ARMul_SelectProcessor(ARMul_State *state, unsigned int processor);
 void ARMul_Reset(ARMul_State *state);
 ARMword ARMul_DoProg(ARMul_State *state);
 
@@ -210,7 +186,7 @@ extern void ARMul_Abort(ARMul_State *state, ARMword address);
 *              Definitons of things in the memory interface                 *
 \***************************************************************************/
 
-extern unsigned ARMul_MemoryInit(ARMul_State *state,unsigned long initmemsize);
+extern unsigned ARMul_MemoryInit(ARMul_State *state);
 extern void ARMul_MemoryExit(ARMul_State *state);
 
 #if 0
@@ -251,19 +227,6 @@ extern void ARMul_CoProAttach(ARMul_State *state, unsigned number,
                               ARMul_CDPs *cdp,
                               ARMul_CPReads *reads, ARMul_CPWrites *writes);
 extern void ARMul_CoProDetach(ARMul_State *state, unsigned number);
-
-/***************************************************************************\
-*               Definitons of things in the host environment                *
-\***************************************************************************/
-
-extern unsigned ARMul_OSInit(ARMul_State *state);
-extern void ARMul_OSExit(ARMul_State *state);
-extern unsigned ARMul_OSHandleSWI(ARMul_State *state,ARMword number);
-extern ARMword ARMul_OSLastErrorP(ARMul_State *state);
-
-extern ARMword ARMul_Debug(ARMul_State *state, ARMword pc, ARMword instr);
-extern unsigned ARMul_OSException(ARMul_State *state, ARMword vector, ARMword pc);
-extern int rdi_log;
 
 /***************************************************************************\
 *                            Host-dependent stuff                           *

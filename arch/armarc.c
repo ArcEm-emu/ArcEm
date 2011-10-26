@@ -15,9 +15,7 @@
 //#include <unistd.h>
 #include <math.h>
 
-#include "../armopts.h"
 #include "../armdefs.h"
-#include "../armrdi.h"
 
 #include "dbugsys.h"
 
@@ -114,12 +112,10 @@ static void DumpHandler(ARMul_State *state,int sig) {
  * load extension Roms
  *
  * @param state
- * @param initmemorysize If non zero, then use this for the ammount of physical ram
- *                       in bytes. If 0 default to 4MB
  * @returns
  */
 unsigned
-ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
+ARMul_MemoryInit(ARMul_State *state)
 {
   PrivateDataType *PrivDPtr;
   FILE *ROMFile;
@@ -130,6 +126,40 @@ ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
 #if defined(EXTNROM_SUPPORT)
   unsigned extnrom_entry_count;
 #endif
+  unsigned long initmemsize;
+  
+  switch(hArcemConfig.eMemSize) {
+    case MemSize_256K:
+    case MemSize_512K:
+    case MemSize_1M:
+      fprintf(stderr, "256K, 512K and 1M memory size not yet supported, rounding up to 2M\n");
+      initmemsize = 2 * 1024 * 1024;
+      break;
+
+    case MemSize_2M:
+      initmemsize = 2 * 1024 * 1024;
+      break;
+
+    case MemSize_4M:
+      initmemsize = 4 * 1024 * 1024;
+      break;
+
+    case MemSize_8M:
+      initmemsize = 8 * 1024 * 1024;
+      break;
+
+    case MemSize_12M:
+      initmemsize = 12 * 1024 * 1024;
+      break;
+
+    case MemSize_16M:
+      initmemsize = 16 * 1024 * 1024;
+      break;
+
+    default:
+      fprintf(stderr, "Unsupported memory size");
+      exit(EXIT_FAILURE);
+  }
 
   PrivDPtr = calloc(sizeof(PrivateDataType), 1);
   if (PrivDPtr == NULL) {
@@ -141,9 +171,6 @@ ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
 
   dbug("Reading config file....\n");
   ReadConfigFile(state);
-
-  if (!initmemsize)
-    initmemsize = 4 * 1024 * 1024; /* seems like a good value! */
 
 #ifndef WIN32
   signal(SIGUSR2,DumpHandler);
@@ -267,12 +294,6 @@ ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
   for (i = 0; i < 512 * 1024 / UPDATEBLOCKSIZE; i++) {
     MEMC.UpdateFlags[i] = 1;
   }
-
-#ifdef DEBUG
-  ARMul_ConsolePrint(state, " Archimedes memory ");
-  ARMul_ConsolePrint(state, Version);
-  ARMul_ConsolePrint(state, "\n");
-#endif
 
   ARMul_RebuildFastMap();
   FastMap_RebuildMapMode(state);
