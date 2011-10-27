@@ -461,11 +461,6 @@ static void EMFUNCDECL26(OrrsRegNorm) (ARMul_State *state, ARMword instr, ARMwor
   WRITESDESTNORM(dest);
 } /* EMFUNCDECL26( */
 
-/* Eventually, for all ARM */
-#if defined(__riscos__) && defined(ENABLE_ASM)
-void EMFUNCDECL26(MovRegNorm) (ARMul_State *state, ARMword instr, ARMword pc);
-void EMFUNCDECL26(MovsRegNorm) (ARMul_State *state, ARMword instr, ARMword pc);
-#else
 static void EMFUNCDECL26(MovRegNorm) (ARMul_State *state, ARMword instr, ARMword pc) {
   register ARMword dest;
 
@@ -481,7 +476,6 @@ static void EMFUNCDECL26(MovsRegNorm) (ARMul_State *state, ARMword instr, ARMwor
   dest = DPSRegRHS;
   WRITESDESTNORM(dest);
 } /* EMFUNCDECL26(MovsReg */
-#endif
 
 static void EMFUNCDECL26(BicRegNorm) (ARMul_State *state, ARMword instr, ARMword pc) {
   register ARMword dest;
@@ -503,10 +497,6 @@ static void EMFUNCDECL26(BicsRegNorm) (ARMul_State *state, ARMword instr, ARMwor
   WRITESDESTNORM(dest);
 } /* EMFUNCDECL26( */
 
-#if defined(__riscos__) && defined(ENABLE_ASM)
-void EMFUNCDECL26(MvnRegNorm) (ARMul_State *state, ARMword instr, ARMword pc);
-void EMFUNCDECL26(MvnsRegNorm) (ARMul_State *state, ARMword instr, ARMword pc);
-#else
 static void EMFUNCDECL26(MvnRegNorm) (ARMul_State *state, ARMword instr, ARMword pc) {
   register ARMword dest;
 
@@ -522,7 +512,6 @@ static void EMFUNCDECL26(MvnsRegNorm) (ARMul_State *state, ARMword instr, ARMwor
   dest = ~DPSRegRHS;
   WRITESDESTNORM(dest);
 } /* EMFUNCDECL26( */
-#endif
 
 static void EMFUNCDECL26(TstRegMrs1SwpPC) (ARMul_State *state, ARMword instr, ARMword pc) {
   register ARMword dest, temp;

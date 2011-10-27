@@ -341,11 +341,6 @@ ARMword ARMul_Align(ARMul_State *state, ARMword address, ARMword data);
 
 void ARMul_UndefInstr(ARMul_State *state,ARMword instr);
 
-#if defined(__riscos__) && defined(ENABLE_ASM)
-ARMword GetDPRegRHS(ARMul_State *state, ARMword instr);
-ARMword GetDPSRegRHS(ARMul_State *state, ARMword instr);
-#endif
-
 
 /***************************************************************************\
 *                      Macros to scrutinise instructions                    *

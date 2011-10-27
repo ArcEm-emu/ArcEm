@@ -133,12 +133,13 @@ TARGET=!ArcEm/arcem
 endif
 
 ifeq (${SYSTEM},riscos-single)
-EXTNROM_SUPPORT=notyet
+EXTNROM_SUPPORT=yes
+HOSTFS_SUPPORT=yes
 DIRECT_DISPLAY=yes
 CFLAGS += -I@ -DSYSTEM_riscos_single -Iriscos-single -mtune=xscale -march=armv5te -mthrowback
 LDFLAGS += -static
 # Disable stack limit checks. -ffixed-sl required to prevent sl being used as temp storage, breaking unixlib and any other code that does do stack checks
-CFLAGS += -mno-apcs-stack-check -ffixed-sl
+#CFLAGS += -mno-apcs-stack-check -ffixed-sl
 # No function name poking for a bit extra speed
 CFLAGS += -mno-poke-function-name
 # Debug options
@@ -146,6 +147,7 @@ CFLAGS += -mno-poke-function-name
 # Profiling
 #CFLAGS += -mpoke-function-name -DPROFILE_ENABLED
 OBJS += prof.o
+HOSTFS_OBJS = riscos-single/hostfs.o
 TARGET=!ArcEm/arcem
 endif
 
@@ -177,7 +179,8 @@ endif
 
 ifeq (${HOSTFS_SUPPORT},yes)
 CFLAGS += -DHOSTFS_SUPPORT
-OBJS += hostfs.o
+HOSTFS_OBJS ?= hostfs.o
+OBJS += ${HOSTFS_OBJS}
 endif
 
 ifeq (${EXTNROM_SUPPORT},yes)

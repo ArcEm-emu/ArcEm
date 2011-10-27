@@ -215,7 +215,6 @@ ARMul_SubOverflow(ARMul_State *state, ARMword a, ARMword b, ARMword result)
 * filters the common case of an unshifted register with in line code        *
 \***************************************************************************/
 
-#if !(defined(__riscos__) && defined(ENABLE_ASM))
 #if 1
 typedef ARMword (*RHSFunc)(ARMul_State *state,ARMword instr,ARMword base);
 
@@ -354,7 +353,6 @@ GetDPRegRHS(ARMul_State *state, ARMword instr)
  return(0); /* just to shut up lint */
  }
 #endif
-#endif
 
 /***************************************************************************\
 * This routine evaluates most Logical Data Processing register RHSs        *
@@ -363,7 +361,6 @@ GetDPRegRHS(ARMul_State *state, ARMword instr)
 * with in line code                                                         *
 \***************************************************************************/
 
-#if !(defined(__riscos__) && defined(ENABLE_ASM))
 static ARMword
 GetDPSRegRHS(ARMul_State *state, ARMword instr)
 {
@@ -467,7 +464,6 @@ GetDPSRegRHS(ARMul_State *state, ARMword instr)
     }
  return(0); /* just to shut up lint */
  }
-#endif
 
 
 /***************************************************************************\
@@ -1013,7 +1009,7 @@ PipelineEntry abortpipe = {
 #ifdef PROFILE_ENABLED
 #define MILLION_INSTRUCTIONS 30
 #else
-#define MILLION_INSTRUCTIONS 50
+//#define MILLION_INSTRUCTIONS 50
 #endif
 
 void
@@ -1126,11 +1122,13 @@ ARMul_Emulate26(ARMul_State *state)
         Prof_EndFunc(pipe[pipeidx].func);
       }
 
+#ifdef MILLION_INSTRUCTIONS
       if(!--icount)
       {
         kill_emulator = 1;
         break;
       }
+#endif
 #else
 /* pipeidx = 0 */
       Prof_Begin("Fetch/decode");
@@ -1191,11 +1189,13 @@ ARMul_Emulate26(ARMul_State *state)
         Prof_EndFunc(pipe[1].func);
       }
 
+#ifdef MILLION_INSTRUCTIONS
       if(!--icount)
       {
         kill_emulator = 1;
         break;
       }
+#endif
 /* pipeidx = 1 */
       Prof_Begin("Fetch/decode");
       switch (state->NextInstr) {
@@ -1255,11 +1255,6 @@ ARMul_Emulate26(ARMul_State *state)
         Prof_EndFunc(pipe[2].func);
       }
 
-      if(!--icount)
-      {
-        kill_emulator = 1;
-        break;
-      }
 /* pipeidx = 2 */
       Prof_Begin("Fetch/decode");
       switch (state->NextInstr) {
@@ -1328,11 +1323,6 @@ ARMul_Emulate26(ARMul_State *state)
         Prof_EndFunc(pipe[0].func);
       }
 
-      if(!--icount)
-      {
-        kill_emulator = 1;
-        break;
-      }
 #endif
     } /* for loop */
 
