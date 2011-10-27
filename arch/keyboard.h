@@ -132,10 +132,11 @@ enum {
     ARCH_KEYBOARD_DEFINITION
 #undef X
 };
-typedef unsigned char arch_key_id;
+typedef uint8_t arch_key_id;
 
 typedef struct {
-  int KeyColToSend, KeyRowToSend, KeyUpNDown;
+  int8_t KeyColToSend, KeyRowToSend;
+  bool KeyUpNDown;
 } KbdEntry;
 
 typedef enum {
@@ -158,25 +159,26 @@ typedef enum {
 
 struct arch_keyboard {
   KbdStates KbdState;
-  /* A signed, 7-bit value stored in an unsigned char as it gets
+  /* A signed, 7-bit value stored in a uint8_t as it gets
    * passed to keyboard transmission functions expecting an
-   * unsigned char. */
-  unsigned char MouseXCount;
-  unsigned char MouseYCount;
-  int KeyColToSend,KeyRowToSend,KeyUpNDown;
-  int Leds;
+   * uint8_t. */
+  uint8_t MouseXCount;
+  uint8_t MouseYCount;
+  int8_t KeyColToSend,KeyRowToSend;
+  bool KeyUpNDown;
+  uint8_t Leds;
   /* The bottom three bits of leds holds their current state.  If
    * the bit is set the LED should be emitting. */
-  void (*leds_changed)(unsigned int leds);
+  void (*leds_changed)(uint8_t leds);
 
   /* Double buffering - update the others while sending this */
-  unsigned char MouseXToSend;
-  unsigned char MouseYToSend;
-  int MouseTransEnable,KeyScanEnable; /* When 1 allowed to transmit */
-  int HostCommand;            /* Normally 0 else the command code */
+  uint8_t MouseXToSend;
+  uint8_t MouseYToSend;
+  bool MouseTransEnable,KeyScanEnable; /* When 1 allowed to transmit */
+  uint8_t HostCommand;            /* Normally 0 else the command code */
   KbdEntry Buffer[KBDBUFFLEN];
-  int BuffOcc;
-  int TimerIntHasHappened;
+  uint8_t BuffOcc;
+  uint8_t TimerIntHasHappened;
 };
 
 #define KBD (*(state->Kbd))
@@ -186,11 +188,14 @@ struct arch_keyboard {
 /* Tell the Archimedes that key `kid' has changed state, this includes
  * mouse buttons. */
 void keyboard_key_changed(struct arch_keyboard *kb, arch_key_id kid,
-    int up);
+    bool up);
 
 void Kbd_Init(ARMul_State *state);
 void Kbd_StartToHost(ARMul_State *state);
-void Kbd_CodeFromHost(ARMul_State *state, unsigned char FromHost);
+void Kbd_CodeFromHost(ARMul_State *state, uint8_t FromHost);
+
+/* Internal function; just exposed so the profiling code can mess with it */
+void Keyboard_Poll(ARMul_State *state,CycleCount nowtime);
 
 /* Frontend must implement this */
 int Kbd_PollHostKbd(ARMul_State *state);

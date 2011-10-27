@@ -16,14 +16,14 @@
 FASTMAP_FUNC ARMword ARMul_LoadWordS(ARMul_State *state,ARMword address)
 {
 	state->NumCycles++;
-	address &= 0x3ffffff;
+	address &= UINT32_C(0x3ffffff);
 
 	FastMapEntry *entry = FastMap_GetEntryNoWrap(state,address);
 	FastMapRes res = FastMap_DecodeRead(entry,state->FastMapMode);
 	ARMul_CLEARABORT; /* More likely to clear the abort than not */
 	if(FASTMAP_RESULT_DIRECT(res))
 	{
-		return *(FastMap_Log2Phy(entry,address&~3));
+		return *(FastMap_Log2Phy(entry,address&~UINT32_C(3)));
 	}
 	else if(FASTMAP_RESULT_FUNC(res))
 	{
@@ -48,7 +48,7 @@ FASTMAP_FUNC ARMword ARMul_LoadWordS(ARMul_State *state,ARMword address)
 FASTMAP_FUNC ARMword ARMul_LoadByte(ARMul_State *state,ARMword address)
 {
 	state->NumCycles++;
-	address &= 0x3ffffff;
+	address &= UINT32_C(0x3ffffff);
 
 	FastMapEntry *entry = FastMap_GetEntryNoWrap(state,address);
 	FastMapRes res = FastMap_DecodeRead(entry,state->FastMapMode);
@@ -58,11 +58,11 @@ FASTMAP_FUNC ARMword ARMul_LoadByte(ARMul_State *state,ARMword address)
 #ifdef HOST_BIGENDIAN
 		address ^= 3;
 #endif
-		return *((unsigned char*)FastMap_Log2Phy(entry,address));
+		return *((uint8_t*)FastMap_Log2Phy(entry,address));
 	}
 	else if(FASTMAP_RESULT_FUNC(res))
 	{
-		return (FastMap_LoadFunc(entry,state,address&~3)>>((address&3)<<3)) & 0xff;
+		return (FastMap_LoadFunc(entry,state,address&~UINT32_C(3))>>((address&3)<<3)) & 0xff;
 	}
 	else
 	{
@@ -83,7 +83,7 @@ FASTMAP_FUNC ARMword ARMul_LoadByte(ARMul_State *state,ARMword address)
 FASTMAP_FUNC void ARMul_StoreWordS(ARMul_State *state, ARMword address, ARMword data)
 {
 	state->NumCycles++;
-	address &= 0x3ffffff;
+	address &= UINT32_C(0x3ffffff);
 
 	FastMapEntry *entry = FastMap_GetEntryNoWrap(state,address);
 	FastMapRes res = FastMap_DecodeWrite(entry,state->FastMapMode);
@@ -91,7 +91,7 @@ FASTMAP_FUNC void ARMul_StoreWordS(ARMul_State *state, ARMword address, ARMword 
 	ARMul_CLEARABORT;
 	if(FASTMAP_RESULT_DIRECT(res))
 	{
-		ARMword *phy = FastMap_Log2Phy(entry,address&~3);
+		ARMword *phy = FastMap_Log2Phy(entry,address&~UINT32_C(3));
 		*phy = data;
 		*(FastMap_Phy2Func(state,phy)) = FASTMAP_CLOBBEREDFUNC; 
 	}
@@ -117,7 +117,7 @@ FASTMAP_FUNC void ARMul_StoreWordS(ARMul_State *state, ARMword address, ARMword 
 FASTMAP_FUNC void ARMul_StoreByte(ARMul_State *state, ARMword address, ARMword data)
 {
 	state->NumCycles++;
-	address &= 0x3ffffff;
+	address &= UINT32_C(0x3ffffff);
 
 	FastMapEntry *entry = FastMap_GetEntryNoWrap(state,address);
 	FastMapRes res = FastMap_DecodeWrite(entry,state->FastMapMode);
@@ -128,8 +128,8 @@ FASTMAP_FUNC void ARMul_StoreByte(ARMul_State *state, ARMword address, ARMword d
 		address ^= 3;
 #endif
 		ARMword *phy = FastMap_Log2Phy(entry,address);
-		*((unsigned char *)phy) = data;
-		*(FastMap_Phy2Func(state,(ARMword*)((FastMapUInt)phy&~3))) = FASTMAP_CLOBBEREDFUNC;
+		*((uint8_t *)phy) = data;
+		*(FastMap_Phy2Func(state,(ARMword*)((FastMapUInt)phy&~UINT32_C(3)))) = FASTMAP_CLOBBEREDFUNC;
 	}
 	else if(FASTMAP_RESULT_FUNC(res))
 	{
@@ -156,14 +156,14 @@ FASTMAP_FUNC ARMword ARMul_SwapWord(ARMul_State *state, ARMword address, ARMword
 	ARMword temp;
 
 	state->NumCycles+=2;
-	address &= 0x3ffffff;
+	address &= UINT32_C(0x3ffffff);
 
 	FastMapEntry *entry = FastMap_GetEntryNoWrap(state,address);
 	FastMapRes res = FastMap_DecodeWrite(entry,state->FastMapMode);
 	ARMul_CLEARABORT;
 	if(FASTMAP_RESULT_DIRECT(res))
 	{
-		ARMword *phy = FastMap_Log2Phy(entry,address&~3);
+		ARMword *phy = FastMap_Log2Phy(entry,address&~UINT32_C(3));
 		temp = *phy;
 		*phy = data;
 		*(FastMap_Phy2Func(state,phy)) = FASTMAP_CLOBBEREDFUNC;
@@ -198,7 +198,7 @@ FASTMAP_FUNC ARMword ARMul_SwapByte(ARMul_State *state, ARMword address, ARMword
 	ARMword temp;
 
 	state->NumCycles+=2;
-	address &= 0x3ffffff;
+	address &= UINT32_C(0x3ffffff);
 
 	FastMapEntry *entry = FastMap_GetEntryNoWrap(state,address);
 	FastMapRes res = FastMap_DecodeWrite(entry,state->FastMapMode);
@@ -209,9 +209,9 @@ FASTMAP_FUNC ARMword ARMul_SwapByte(ARMul_State *state, ARMword address, ARMword
 		address ^= 3;
 #endif
 		ARMword *phy = FastMap_Log2Phy(entry,address);
-		temp = *((unsigned char *)phy);
-		*((unsigned char *)phy) = data;
-		*(FastMap_Phy2Func(state,(ARMword*)((FastMapUInt)phy&~3))) = FASTMAP_CLOBBEREDFUNC;
+		temp = *((uint8_t *)phy);
+		*((uint8_t *)phy) = data;
+		*(FastMap_Phy2Func(state,(ARMword*)((FastMapUInt)phy&~UINT32_C(3)))) = FASTMAP_CLOBBEREDFUNC;
 		return temp;
 	}
 	else if(FASTMAP_RESULT_FUNC(res))

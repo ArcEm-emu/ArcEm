@@ -11,8 +11,8 @@
 /* Information on an arch_key_id. */
 typedef struct {
   const char *name;
-  unsigned char row;
-  unsigned char col;
+  uint8_t row;
+  uint8_t col;
 } key_info;
 
 static key_info keys[] = {
@@ -35,7 +35,7 @@ static key_info keys[] = {
 /* ------------------------------------------------------------------ */
 
 void keyboard_key_changed(struct arch_keyboard *kb, arch_key_id kid,
-                          int up)
+                          bool up)
 {
   key_info *ki;
   KbdEntry *e;
@@ -102,7 +102,7 @@ void Kbd_StartToHost(ARMul_State *state)
 
   /* Perhaps some keyboard data */
   if (KBD.KeyScanEnable && KBD.BuffOcc > 0) {
-    int loop;
+    uint8_t loop;
 
     DBG((stderr, "KBD_StartToHost - sending key -  BuffOcc=%d "
         "(%d,%d,%d)\n", KBD.BuffOcc, KBD.Buffer[0].KeyUpNDown,
@@ -118,7 +118,7 @@ void Kbd_StartToHost(ARMul_State *state)
       KBD.Buffer[loop - 1] = KBD.Buffer[loop];
     }
 
-    if (IOC_WriteKbdRx(state, (unsigned char) ((KBD.KeyUpNDown ? 0xd0 : 0xc0) | KBD.KeyRowToSend)) != -1) {
+    if (IOC_WriteKbdRx(state, (uint8_t) ((KBD.KeyUpNDown ? 0xd0 : 0xc0) | KBD.KeyRowToSend)) != -1) {
       KBD.KbdState = KbdState_SentKeyByte1;
     }
     KBD.BuffOcc--;
@@ -146,7 +146,7 @@ void Kbd_StartToHost(ARMul_State *state)
 /* Called when there is some data in the serial tx register on the
  * IOC. */
 
-void Kbd_CodeFromHost(ARMul_State *state, unsigned char FromHost)
+void Kbd_CodeFromHost(ARMul_State *state, uint8_t FromHost)
 {
   DBG((stderr, "Kbd_CodeFromHost: FromHost=0x%x State=%d\n",
       FromHost, KBD.KbdState));
@@ -282,7 +282,7 @@ void Kbd_CodeFromHost(ARMul_State *state, unsigned char FromHost)
               KBD.KbdState = KbdState_SentMouseByte2;
             } else {
               if (IOC_WriteKbdRx(state,
-                  (unsigned char) ((KBD.KeyUpNDown ? 0xd0 : 0xc0) |
+                  (uint8_t) ((KBD.KeyUpNDown ? 0xd0 : 0xc0) |
                   KBD.KeyColToSend)) == -1)
               {
                   DBG((stderr, "KBD: Couldn't send 2nd byte "
@@ -326,7 +326,7 @@ void Keyboard_Poll(ARMul_State *state,CycleCount nowtime)
   /* Keyboard check */
   int KbdSerialVal = IOC_ReadKbdTx(state);
   if (KbdSerialVal != -1) {
-    Kbd_CodeFromHost(state, (unsigned char) KbdSerialVal);
+    Kbd_CodeFromHost(state, (uint8_t) KbdSerialVal);
   } else {
     if (KBD.TimerIntHasHappened > 2) {
       KBD.TimerIntHasHappened = 0;
@@ -343,13 +343,13 @@ void Kbd_Init(ARMul_State *state)
   state->Kbd = &kbd;
 
   KBD.KbdState            = KbdState_JustStarted;
-  KBD.MouseTransEnable    = 0;
-  KBD.KeyScanEnable       = 0;
+  KBD.MouseTransEnable    = false;
+  KBD.KeyScanEnable       = false;
   KBD.KeyColToSend        = -1;
   KBD.KeyRowToSend        = -1;
   KBD.MouseXCount         = 0;
   KBD.MouseYCount         = 0;
-  KBD.KeyUpNDown          = 0; /* When 0 it means the key to be sent is a key down event, 1 is up */
+  KBD.KeyUpNDown          = false; /* When false it means the key to be sent is a key down event, true is up */
   KBD.HostCommand         = 0;
   KBD.BuffOcc             = 0;
   KBD.TimerIntHasHappened = 0; /* If using AutoKey should be 2 Otherwise it never reinitialises the event routines */

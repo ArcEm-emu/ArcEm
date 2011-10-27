@@ -29,7 +29,7 @@
    the same rate.
 
    Unfortunately using a lookup table isn't always the best solution (e.g.
-   simple 8bpp upscaling), so other algorithms may be added in the future. 
+   simple 8bpp upscaling), so other algorithms may be added in the future.
 */
 
 /*
@@ -70,11 +70,11 @@
       DC.ModeChanged set to 1
 
    void PDD_Name(Host_SetPaletteEntry)(ARMul_State *state,int i,
-                                       unsigned int phys)
+                                       uint_fast16_t phys)
     - Function that gets called when a palette entry needs updating
     - 'phys' is a 13-bit VIDC physical colour
 
-   void PDD_Name(Host_SetBorderColour)(ARMul_State *state,unsigned int phys)
+   void PDD_Name(Host_SetBorderColour)(ARMul_State *state,uint_fast16_t phys)
     - Function that gets called when the border colour needs updating
     - 'phys' is a 13-bit VIDC physical colour
 
@@ -142,17 +142,17 @@ struct PDD_Name(DisplayInfo) {
   struct {
     /* Values which get updated by VIDCPutVal */
 
-    unsigned int DirtyPalette; /* Bit flags of which palette entries have been modified */
-    char ModeChanged; /* Set if any registers change which may require the host to change mode. Remains set until valid mode is available from host (suspends all display output) */
-    char ForceRefresh; /* Set if the entire screen needs redrawing */
+    uint32_t DirtyPalette; /* Bit flags of which palette entries have been modified */
+    bool ModeChanged; /* Set if any registers change which may require the host to change mode. Remains set until valid mode is available from host (suspends all display output) */
+    bool ForceRefresh; /* Set if the entire screen needs redrawing */
 
     /* Values that must only get updated by the event queue/screen blit code */
     
-    char DMAEn; /* 1/0 whether video DMA is enabled for this frame */
+    bool DMAEn; /* Whether video DMA is enabled for this frame */
     int LastHostWidth,LastHostHeight,LastHostDepth,LastHostHz; /* Values we used to request host mode */
     int BitWidth; /* Width of display area, in bits */
-    unsigned int VIDC_CR; /* Control register value in use for this frame */
-    unsigned int Vptr; /* DMA pointer, in bits, as offset from start of phys RAM */
+    uint16_t VIDC_CR; /* Control register value in use for this frame */
+    uint32_t Vptr; /* DMA pointer, in bits, as offset from start of phys RAM */
     int FrameSkip; /* Current frame skip counter */
 
     /* DisplayDev_AutoUpdateFlags logic */
@@ -169,7 +169,7 @@ struct PDD_Name(DisplayInfo) {
 
     /* The core handles these */
     int XOffset,YOffset; /* X & Y offset of first display pixel in host */
-    unsigned int UpdateFlags[(512*1024)/UPDATEBLOCKSIZE]; /* Update flags to track display writes */
+    uint32_t UpdateFlags[(512*1024)/UPDATEBLOCKSIZE]; /* Update flags to track display writes */
   } HostDisplay;
 };
 
@@ -209,7 +209,7 @@ struct PDD_Name(DisplayInfo) {
 {\
   if ((writeto) != (from)) { \
     (writeto) = (from);\
-    flag = 1;\
+    flag = true;\
   };\
 };
 
@@ -224,12 +224,12 @@ struct PDD_Name(DisplayInfo) {
   Version for DisplayDev_UseUpdateFlags == 1
 
 */
-
+       
 static inline int PDD_Name(RowFunc1XSameBitAligned)(ARMul_State *state,PDD_Row drow,int flags)
 {
-  unsigned int Vptr = DC.Vptr;
-  unsigned int Vstart = MEMC.Vstart<<7;
-  unsigned int Vend = (MEMC.Vend+1)<<7; /* Point to pixel after end */
+  uint32_t Vptr = DC.Vptr;
+  uint32_t Vstart = MEMC.Vstart<<7;
+  uint32_t Vend = (MEMC.Vend+1)<<7; /* Point to pixel after end */
   const ARMword *RAM = MEMC.PhysRam;
   int Remaining = DC.BitWidth;
 
@@ -242,7 +242,7 @@ static inline int PDD_Name(RowFunc1XSameBitAligned)(ARMul_State *state,PDD_Row d
   /* Process the row */
   while(Remaining > 0)
   {
-    unsigned int FlagsOffset = Vptr/(8*UPDATEBLOCKSIZE);
+    uint32_t FlagsOffset = Vptr/(8*UPDATEBLOCKSIZE);
     int Available = MIN(Remaining,MIN(((FlagsOffset+1)*8*UPDATEBLOCKSIZE)-Vptr,Vend-Vptr));
 
     if((flags & ROWFUNC_FORCE) || (HD.UpdateFlags[FlagsOffset] != MEMC.UpdateFlags[FlagsOffset]))
@@ -268,10 +268,10 @@ static inline int PDD_Name(RowFunc1XSameBitAligned)(ARMul_State *state,PDD_Row d
 
 static inline int PDD_Name(RowFunc1XSameByteAligned)(ARMul_State *state,PDD_Row drow,int flags)
 {
-  unsigned int Vptr = DC.Vptr>>3;
-  unsigned int Vstart = MEMC.Vstart<<4;
-  unsigned int Vend = (MEMC.Vend+1)<<4; /* Point to pixel after end */
-  const char *RAM = (char *) MEMC.PhysRam;
+  uint32_t Vptr = DC.Vptr>>3;
+  uint32_t Vstart = MEMC.Vstart<<4;
+  uint32_t Vend = (MEMC.Vend+1)<<4; /* Point to pixel after end */
+  const uint8_t *RAM = (uint8_t *) MEMC.PhysRam;
   int Remaining = DC.BitWidth>>3;
 
   /* Sanity checks to avoid looping forever */
@@ -283,7 +283,7 @@ static inline int PDD_Name(RowFunc1XSameByteAligned)(ARMul_State *state,PDD_Row 
   /* Process the row */
   while(Remaining > 0)
   {
-    unsigned int FlagsOffset = Vptr/UPDATEBLOCKSIZE;
+    uint32_t FlagsOffset = Vptr/UPDATEBLOCKSIZE;
     int Available = MIN(Remaining,MIN(((FlagsOffset+1)*UPDATEBLOCKSIZE)-Vptr,Vend-Vptr));
 
     if((flags & ROWFUNC_FORCE) || (HD.UpdateFlags[FlagsOffset] != MEMC.UpdateFlags[FlagsOffset]))
@@ -292,7 +292,7 @@ static inline int PDD_Name(RowFunc1XSameByteAligned)(ARMul_State *state,PDD_Row 
       /* Process the pixels in this region, stopping at end of row/update block/Vend */
       int outoffset;
       ARMword *out = PDD_Name(Host_BeginUpdate)(state,&drow,Available<<3,&outoffset);
-      ByteCopy(((char *)out)+(outoffset>>3),RAM+Vptr,Available);
+      ByteCopy(((uint8_t *)out)+(outoffset>>3),RAM+Vptr,Available);
       PDD_Name(Host_EndUpdate)(state,&drow);
     }
     PDD_Name(Host_AdvanceRow)(state,&drow,Available<<3);
@@ -317,9 +317,9 @@ static inline int PDD_Name(RowFunc1XSameByteAligned)(ARMul_State *state,PDD_Row 
 
 static inline int PDD_Name(RowFuncExpandTable)(ARMul_State *state,PDD_Row drow,int flags)
 {
-  unsigned int Vptr = DC.Vptr;
-  unsigned int Vstart = MEMC.Vstart<<7;
-  unsigned int Vend = (MEMC.Vend+1)<<7; /* Point to pixel after end */
+  uint32_t Vptr = DC.Vptr;
+  uint32_t Vstart = MEMC.Vstart<<7;
+  uint32_t Vend = (MEMC.Vend+1)<<7; /* Point to pixel after end */
   const ARMword *RAM = MEMC.PhysRam;
   int Remaining = DC.BitWidth;
 
@@ -332,7 +332,7 @@ static inline int PDD_Name(RowFuncExpandTable)(ARMul_State *state,PDD_Row drow,i
   /* Process the row */
   while(Remaining > 0)
   {
-    unsigned int FlagsOffset = Vptr/(8*UPDATEBLOCKSIZE);
+    uint32_t FlagsOffset = Vptr/(8*UPDATEBLOCKSIZE);
     int Available = MIN(Remaining,MIN(((FlagsOffset+1)*8*UPDATEBLOCKSIZE)-Vptr,Vend-Vptr));
 
     if((flags & ROWFUNC_FORCE) || (HD.UpdateFlags[FlagsOffset] != MEMC.UpdateFlags[FlagsOffset]))
@@ -366,9 +366,9 @@ static inline int PDD_Name(RowFuncExpandTable)(ARMul_State *state,PDD_Row drow,i
 
 static inline void PDD_Name(RowFunc1XSameBitAlignedNoFlags)(ARMul_State *state,PDD_Row drow)
 {
-  unsigned int Vptr = DC.Vptr;
-  unsigned int Vstart = MEMC.Vstart<<7;
-  unsigned int Vend = (MEMC.Vend+1)<<7; /* Point to pixel after end */
+  uint32_t Vptr = DC.Vptr;
+  uint32_t Vstart = MEMC.Vstart<<7;
+  uint32_t Vend = (MEMC.Vend+1)<<7; /* Point to pixel after end */
   const ARMword *RAM = MEMC.PhysRam;
   int Remaining = DC.BitWidth;
 
@@ -401,10 +401,10 @@ static inline void PDD_Name(RowFunc1XSameBitAlignedNoFlags)(ARMul_State *state,P
 
 static inline void PDD_Name(RowFunc1XSameByteAlignedNoFlags)(ARMul_State *state,PDD_Row drow)
 {
-  unsigned int Vptr = DC.Vptr>>3;
-  unsigned int Vstart = MEMC.Vstart<<4;
-  unsigned int Vend = (MEMC.Vend+1)<<4; /* Point to pixel after end */
-  const char *RAM = (char *) MEMC.PhysRam;
+  uint32_t Vptr = DC.Vptr>>3;
+  uint32_t Vstart = MEMC.Vstart<<4;
+  uint32_t Vend = (MEMC.Vend+1)<<4; /* Point to pixel after end */
+  const uint8_t *RAM = (uint8_t *) MEMC.PhysRam;
   int Remaining = DC.BitWidth>>3;
 
   /* Sanity checks to avoid looping forever */
@@ -421,7 +421,7 @@ static inline void PDD_Name(RowFunc1XSameByteAlignedNoFlags)(ARMul_State *state,
     /* Process the pixels in this region, stopping at end of row/update block/Vend */
     int outoffset;
     ARMword *out = PDD_Name(Host_BeginUpdate)(state,&drow,Available<<3,&outoffset);
-    ByteCopy(((char *)out)+(outoffset>>3),RAM+Vptr,Available);
+    ByteCopy(((uint8_t *)out)+(outoffset>>3),RAM+Vptr,Available);
     PDD_Name(Host_EndUpdate)(state,&drow);
 
     PDD_Name(Host_AdvanceRow)(state,&drow,Available<<3);
@@ -444,9 +444,9 @@ static inline void PDD_Name(RowFunc1XSameByteAlignedNoFlags)(ARMul_State *state,
 
 static inline void PDD_Name(RowFuncExpandTableNoFlags)(ARMul_State *state,PDD_Row drow)
 {
-  unsigned int Vptr = DC.Vptr;
-  unsigned int Vstart = MEMC.Vstart<<7;
-  unsigned int Vend = (MEMC.Vend+1)<<7; /* Point to pixel after end */
+  uint32_t Vptr = DC.Vptr;
+  uint32_t Vstart = MEMC.Vstart<<7;
+  uint32_t Vend = (MEMC.Vend+1)<<7; /* Point to pixel after end */
   const ARMword *RAM = MEMC.PhysRam;
   int Remaining = DC.BitWidth;
 
@@ -488,7 +488,7 @@ static void PDD_Name(EventFunc)(ARMul_State *state,CycleCount nowtime)
 {
   /* Assuming a multiplier of 2, these are the required clock dividers
      (selected via bottom two bits of VIDC.ControlReg): */
-  static const unsigned char ClockDividers[4] = {
+  static const uint_fast8_t ClockDividers[4] = {
   /* Source rates:     24.0MHz     25.0MHz      36.0MHz */
     6, /* 1/3      ->   8.0MHz      8.3MHz      12.0MHz */
     4, /* 1/2      ->  12.0MHz     12.5MHz      18.0MHz */
@@ -499,13 +499,13 @@ static void PDD_Name(EventFunc)(ARMul_State *state,CycleCount nowtime)
   /* Trigger VSync interrupt */
   DisplayDev_VSync(state);
 
-  const unsigned int NewCR = VIDC.ControlReg;
-  const unsigned long ClockIn = 2*DisplayDev_GetVIDCClockIn();
-  const unsigned char ClockDivider = ClockDividers[NewCR&3]; 
+  const uint32_t NewCR = VIDC.ControlReg;
+  const uint32_t ClockIn = 2*DisplayDev_GetVIDCClockIn();
+  const uint8_t ClockDivider = ClockDividers[NewCR&3]; 
 
   /* Work out when to reschedule ourselves */
-  long FramePeriod = (VIDC.Horiz_Cycle*2+2)*(VIDC.Vert_Cycle+1);
-  CycleCount framelength = (((unsigned long long) ARMul_EmuRate)*FramePeriod)*ClockDivider/ClockIn;
+  uint32_t FramePeriod = (VIDC.Horiz_Cycle*2+2)*(VIDC.Vert_Cycle+1);
+  CycleCount framelength = (((uint64_t) ARMul_EmuRate)*FramePeriod)*ClockDivider/ClockIn;
   framelength = MAX(framelength,1000);
   EventQ_Reschedule(state,nowtime+framelength,PDD_Name(EventFunc),EventQ_Find(state,PDD_Name(EventFunc)));
 
@@ -523,8 +523,8 @@ static void PDD_Name(EventFunc)(ARMul_State *state,CycleCount nowtime)
   DC.ModeChanged |= (DC.VIDC_CR & 3) != (NewCR & 3);
 
   /* Force full refresh if DMA just toggled on/off */
-  char newDMAEn = (MEMC.ControlReg>>10)&1;
-  int DMAToggle = (newDMAEn ^ DC.DMAEn);
+  bool newDMAEn = (MEMC.ControlReg>>10)&1;
+  bool DMAToggle = (newDMAEn ^ DC.DMAEn);
   DC.ForceRefresh |= DMAToggle;
   DC.DMAEn = newDMAEn;
 
@@ -579,9 +579,9 @@ static void PDD_Name(EventFunc)(ARMul_State *state,CycleCount nowtime)
       /* Calculate display offsets, for start of first display pixel */
       HD.XOffset = (HD.Width-Width*HD.XScale)/2;
       HD.YOffset = (HD.Height-Height*HD.YScale)/2;
-      DC.ForceRefresh = 1;
+      DC.ForceRefresh = true;
     }
-    DC.ModeChanged = 0;
+    DC.ModeChanged = false;
     DC.DirtyPalette = -1;
   }
 
@@ -623,7 +623,7 @@ static void PDD_Name(EventFunc)(ARMul_State *state,CycleCount nowtime)
           PDD_FrameSkip = 0;
           ARMul_RebuildFastMap();
           /* Ensure the updateflags get reset */
-          DC.ForceRefresh = 1;
+          DC.ForceRefresh = true;
           DC.FrameSkip = 0;
         }
         else
@@ -654,8 +654,8 @@ static void PDD_Name(EventFunc)(ARMul_State *state,CycleCount nowtime)
         {
           int j;
           /* Deal with the funky 8bpp palette */
-          unsigned int Base = VIDC.Palette[i] & 0x1737; /* Only these bits of the palette entry are used in 8bpp modes */
-          static const unsigned int ExtraPal[16] = {
+          uint_fast16_t Base = VIDC.Palette[i] & 0x1737; /* Only these bits of the palette entry are used in 8bpp modes */
+          static const uint_fast16_t ExtraPal[16] = {
             0x000, 0x008, 0x040, 0x048, 0x080, 0x088, 0x0c0, 0x0c8,
             0x800, 0x808, 0x840, 0x848, 0x880, 0x888, 0x8c0, 0x8c8
           };
@@ -737,7 +737,7 @@ static void PDD_Name(EventFunc)(ARMul_State *state,CycleCount nowtime)
         /* Only need to update between MIN(Vinit,Vstart) and Vend */
         int start = MIN(MEMC.Vinit,MEMC.Vstart)/(UPDATEBLOCKSIZE/16);
         int end = (MEMC.Vend/(UPDATEBLOCKSIZE/16))+1;
-        memcpy(HD.UpdateFlags+start,MEMC.UpdateFlags+start,(end-start)*sizeof(unsigned int));
+        memcpy(HD.UpdateFlags+start,MEMC.UpdateFlags+start,(end-start)*sizeof(uint32_t));
       }
     }
     else
@@ -789,7 +789,7 @@ static void PDD_Name(EventFunc)(ARMul_State *state,CycleCount nowtime)
     /* TODO - Cope with other situations, e.g. changes in display area size */
     PDD_Name(Host_DrawBorderRect)(state,HD.XOffset,HD.YOffset,Width*HD.XScale,Height*HD.YScale);
   }
-  DC.ForceRefresh = 0;
+  DC.ForceRefresh = false;
 
   /* Update host */
   PDD_Name(Host_PollDisplay)(state);
@@ -803,15 +803,15 @@ static void PDD_Name(EventFunc)(ARMul_State *state,CycleCount nowtime)
 
 */
 
-static void PDD_Name(VIDCPutVal)(ARMul_State *state,ARMword address, ARMword data,int bNw) {
-  unsigned int addr, val;
+static void PDD_Name(VIDCPutVal)(ARMul_State *state,ARMword address, ARMword data,bool bNw) {
+  uint32_t addr, val;
 
   addr=(data>>24) & 255;
   val=data & 0xffffff;
 
   if (!(addr & 0xc0)) {
-    int Log;
-    int Phy;
+    uint_fast8_t Log;
+    uint_fast16_t Phy;
 
     Log=(addr>>2) & 15;
     Phy = (val & 0x1fff);
@@ -1010,7 +1010,7 @@ static void PDD_Name(VIDCPutVal)(ARMul_State *state,ARMword address, ARMword dat
 }; /* PutValVIDC */
 
 static void PDD_Name(IOEBCRWrite)(ARMul_State *state,ARMword data) {
-  DC.ModeChanged = 1;
+  DC.ModeChanged = true;
 };
 
 /*
@@ -1029,11 +1029,11 @@ static int PDD_Name(Init)(ARMul_State *state,const struct Vidc_Regs *Vidc)
 
   VIDC = *Vidc;
 
-  DC.ModeChanged = 1;
+  DC.ModeChanged = true;
   DC.LastHostWidth = DC.LastHostHeight = DC.LastHostHz = DC.LastHostDepth = -1;
   DC.DirtyPalette = 65535;
   DC.VIDC_CR = 0;
-  DC.DMAEn = 0;
+  DC.DMAEn = false;
 
   memset(HOSTDISPLAY.UpdateFlags,0,sizeof(HOSTDISPLAY.UpdateFlags)); /* Initial value in MEMC.UpdateFlags is 1 */   
 
@@ -1060,7 +1060,7 @@ static void PDD_Name(Shutdown)(ARMul_State *state)
 static void PDD_Name(DAGWrite)(ARMul_State *state,int reg,ARMword val)
 {
   /* Vinit, Vstart & Vend changes require a full screen refresh */
-  DC.ForceRefresh = 1;
+  DC.ForceRefresh = true;
 }
 
 const DisplayDev PDD_DisplayDev = {

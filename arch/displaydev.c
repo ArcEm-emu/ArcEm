@@ -16,8 +16,8 @@
 
 const DisplayDev *DisplayDev_Current = NULL;
 
-int DisplayDev_UseUpdateFlags = 1;
-int DisplayDev_AutoUpdateFlags = 0;
+bool DisplayDev_UseUpdateFlags = true;
+bool DisplayDev_AutoUpdateFlags = false;
 
 int DisplayDev_Set(ARMul_State *state,const DisplayDev *dev)
 {
@@ -44,14 +44,14 @@ int DisplayDev_Set(ARMul_State *state,const DisplayDev *dev)
 
 void DisplayDev_GetCursorPos(ARMul_State *state,int *x,int *y)
 {
-  static const signed char offsets[4] = {19-6,11-6,7-6,5-6};
+  static const int_fast8_t offsets[4] = {19-6,11-6,7-6,5-6};
   *x = VIDC.Horiz_CursorStart-(VIDC.Horiz_DisplayStart*2+offsets[(VIDC.ControlReg & 0xc)>>2]);
   *y = VIDC.Vert_CursorStart-VIDC.Vert_DisplayStart;
 }
 
-static const unsigned long vidcclocks[4] = {24000000,25175000,36000000,24000000};
+static const uint32_t vidcclocks[4] = {24000000,25175000,36000000,24000000};
 
-unsigned long DisplayDev_GetVIDCClockIn(void)
+uint32_t DisplayDev_GetVIDCClockIn(void)
 {
   return vidcclocks[ioc.IOEBControlReg & IOEB_CR_VIDC_MASK];
 }
@@ -91,7 +91,7 @@ void DisplayDev_VSync(ARMul_State *state)
   (instead of just endian swapping the destination, as suggested above)
 
 */
-void ByteCopy(char *dest,const char *src,int size)
+void ByteCopy(uint8_t *dest,const uint8_t *src,size_t size)
 {
   if(!size)
     return;
@@ -147,7 +147,7 @@ void ByteCopy(char *dest,const char *src,int size)
   This time we need to do endian swapping on the destination address
 
 */
-void InvByteCopy(char *dest,const char *src,int size)
+void InvByteCopy(uint8_t *dest,const uint8_t *src,size_t size)
 {
   if(!size)
     return;
@@ -309,7 +309,7 @@ int GetExpandTableSize(unsigned int srcbpp,unsigned int factor)
 
 */
 
-void GenExpandTable(ARMword *dest,unsigned int srcbpp,unsigned int factor,unsigned int mul)
+void GenExpandTable(ARMword *dest,unsigned int srcbpp,unsigned int factor,ARMword mul)
 {
   unsigned int destbpp = srcbpp<<factor;
   unsigned int pixels = 1;

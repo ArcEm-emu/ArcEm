@@ -33,10 +33,10 @@ struct MEMCStruct {
   ARMword ROMLowMask;
   ARMword ROMLowSize;
   ARMword *PhysRam;
-  unsigned int RAMSize;
+  ARMword RAMSize;
   ARMword RAMMask;
 
-  int PageTable[512]; /* Good old fashioned MEMC1 page table */
+  int32_t PageTable[512]; /* Good old fashioned MEMC1 page table */
   ARMword ControlReg;
   ARMword PageSizeFlags;
   ARMword Vinit,Vstart,Vend,Cinit;
@@ -47,18 +47,18 @@ struct MEMCStruct {
   ARMword Sptr; /* Current position in current buffer */
   ARMword SendC; /* End of current buffer */
   ARMword SstartC; /* The start of the current buffer */
-  int NextSoundBufferValid; /* This indicates whether the next buffer has been set yet */
+  bool NextSoundBufferValid; /* This indicates whether the next buffer has been set yet */
 
-  int ROMMapFlag; /* 0 means ROM is mapped as normal,1 means
+  uint_fast8_t ROMMapFlag; /* 0 means ROM is mapped as normal,1 means
                      processor hasn't done access to low memory, 2 means it
                      hasn't done an access to ROM space, so in 1 & 2 accesses
                      to  low mem access ROM */
 
   ARMword DRAMPageSize; /* Page size we pretend our DRAM is */ 
 
-  unsigned int UpdateFlags[(512*1024)/UPDATEBLOCKSIZE]; /* One flag for
-                                                           each block of DMAble RAM
-                                                           incremented on a write */
+  uint32_t UpdateFlags[(512*1024)/UPDATEBLOCKSIZE]; /* One flag for
+                                                       each block of DMAble RAM
+                                                       incremented on a write */
 
   /* Fastmap memory block pointers */
   void *ROMRAMChunk;
@@ -84,7 +84,7 @@ static void FastMap_RebuildMapMode(ARMul_State *state);
 static inline FastMapEntry *FastMap_GetEntry(ARMul_State *state,ARMword addr)
 {
 	/* Return FastMapEntry corresponding to this address */
-	return &state->FastMap[(addr&~0xFC000000UL)>>12];
+	return &state->FastMap[(addr&~UINT32_C(0xFC000000))>>12];
 }
 
 static inline FastMapEntry *FastMap_GetEntryNoWrap(ARMul_State *state,ARMword addr)

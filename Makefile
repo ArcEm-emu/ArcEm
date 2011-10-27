@@ -154,6 +154,8 @@ OBJS += X/true.o X/pseudo.o
 endif
 
 ifeq (${SYSTEM},win)
+CC = gcc-3
+LD = gcc-3
 CFLAGS += -DSYSTEM_win -mno-cygwin
 OBJS += win/gui.o win/win.o
 LIBS += -luser32 -lgdi32 -mno-cygwin

@@ -36,7 +36,7 @@
    void SDD_Name(Host_PollDisplay)(ARMul_State *state)
     - A function that the driver will call at the start of each frame.
 
-   SDD_HostColour SDD_Name(Host_GetColour)(ARMul_State *state,unsigned int col)
+   SDD_HostColour SDD_Name(Host_GetColour)(ARMul_State *state,uint_fast16_t col)
     - A function that the driver will call in order to convert a 13-bit VIDC
       physical colour into a host colour.
 
@@ -140,7 +140,7 @@ enum vidstat {
   vidstat_RefreshFlagsPalette,
   vidstat_MAX,
 };
-static unsigned int vidstats[vidstat_MAX];
+static uint32_t vidstats[vidstat_MAX];
 static const char *vidstatnames[vidstat_MAX] = {
  "BorderRedraw: Total border redraws",
  "BorderRedrawForced: Total forced border redraws",
@@ -190,22 +190,22 @@ struct SDD_Name(DisplayInfo) {
   struct {
     /* Values which get updated by VIDCPutVal */
 
-    unsigned int DirtyPalette; /* Bit flags of which palette entries have been modified */
-    char ModeChanged; /* Set if any registers change which may require the host to change mode. Remains set until valid mode is available from host (suspends all display output) */
+    uint_fast16_t DirtyPalette; /* Bit flags of which palette entries have been modified */
+    bool ModeChanged; /* Set if any registers change which may require the host to change mode. Remains set until valid mode is available from host (suspends all display output) */
 
     /* Values that must only get updated by the event queue/screen blit code */
     
-    char ForceRefresh; /* =1 for the entire frame if the mode has just changed */
-    char DMAEn; /* 1/0 whether video DMA is enabled for this frame */
-    char FLYBK; /* Flyback signal (i.e. whether we've triggered VSync IRQ this frame) */ 
+    bool ForceRefresh; /* True for the entire frame if the mode has just changed */
+    bool DMAEn; /* Whether video DMA is enabled for this frame */
+    bool FLYBK; /* Flyback signal (i.e. whether we've triggered VSync IRQ this frame) */ 
     int LastHostWidth,LastHostHeight,LastHostHz; /* Values we used to request host mode */
     int LastRow; /* Row last event was scheduled to run up to */
     int NextRow; /* Row next event is scheduled to run up to */
     int MaxRow; /* Row to stop at for this frame */
-    unsigned int VIDC_CR; /* Control register value in use for this frame */
-    unsigned int LineRate; /* Line rate, measured in EmuRate clock cycles */
-    unsigned int Vptr; /* DMA pointer, in bits, as offset from start of phys RAM */
-    unsigned int LastVinit; /* Last Vinit, so we can sync changes with the frame start */
+    uint16_t VIDC_CR; /* Control register value in use for this frame */
+    uint32_t LineRate; /* Line rate, measured in EmuRate clock cycles */
+    uint32_t Vptr; /* DMA pointer, in bits, as offset from start of phys RAM */
+    uint32_t LastVinit; /* Last Vinit, so we can sync changes with the frame start */
   } Control;
 
   struct {
@@ -217,8 +217,8 @@ struct SDD_Name(DisplayInfo) {
     SDD_HostColour BorderCol; /* VIDC.Border colour in host format */ 
     SDD_HostColour Palette[256]; /* Host palette */
     SDD_HostColour BorderCols[1024]; /* Last border colour used for each scanline */
-    unsigned int RefreshFlags[1024/32]; /* Bit flags of which display scanlines need full refresh due to Vstart/Vend/palette changes */
-    unsigned int UpdateFlags[1024][(512*1024)/UPDATEBLOCKSIZE]; /* Flags for each scanline (8MB of flags - ouch!) */
+    uint32_t RefreshFlags[1024/32]; /* Bit flags of which display scanlines need full refresh due to Vstart/Vend/palette changes */
+    uint32_t UpdateFlags[1024][(512*1024)/UPDATEBLOCKSIZE]; /* Flags for each scanline (8MB of flags - ouch!) */
   } HostDisplay;
 };
 
@@ -258,7 +258,7 @@ struct SDD_Name(DisplayInfo) {
 {\
   if ((writeto) != (from)) { \
     (writeto) = (from);\
-    flag = 1;\
+    flag = true;\
   };\
 };
 
@@ -298,8 +298,8 @@ static inline void SDD_Name(PaletteUpdate8bpp)(ARMul_State *state,SDD_HostColour
       {
         int j;
         /* Deal with the funky 8bpp palette */
-        unsigned int Base = VIDC.Palette[i] & 0x1737; /* Only these bits of the palette entry are used in 8bpp modes */
-        static const unsigned int ExtraPal[16] = {
+        uint_fast16_t Base = VIDC.Palette[i] & 0x1737; /* Only these bits of the palette entry are used in 8bpp modes */
+        static const uint_fast16_t ExtraPal[16] = {
           0x000, 0x008, 0x040, 0x048, 0x080, 0x088, 0x0c0, 0x0c8,
           0x800, 0x808, 0x840, 0x848, 0x880, 0x888, 0x8c0, 0x8c8
         };
@@ -344,9 +344,9 @@ static int SDD_Name(RowFunc1bpp1X)(ARMul_State *state,int row,SDD_Row drow,int f
   /* Handle palette updates */
   SDD_Name(PaletteUpdate)(state,Palette,2);
 
-  unsigned int Vptr = DC.Vptr;
-  unsigned int Vstart = MEMC.Vstart<<7;
-  unsigned int Vend = (MEMC.Vend+1)<<7; /* Point to pixel after end */
+  uint32_t Vptr = DC.Vptr;
+  uint32_t Vstart = MEMC.Vstart<<7;
+  uint32_t Vend = (MEMC.Vend+1)<<7; /* Point to pixel after end */
   const ARMword *RAM = MEMC.PhysRam;
   int Remaining = DC.LastHostWidth;
 
@@ -357,13 +357,13 @@ static int SDD_Name(RowFunc1bpp1X)(ARMul_State *state,int row,SDD_Row drow,int f
     Vptr = Vstart;
 
   /* Process the row */
-  unsigned int startVptr = Vptr;
+  uint32_t startVptr = Vptr;
   int startRemain = Remaining;
-  const unsigned int *MEMC_UpdateFlags = MEMC.UpdateFlags;
-  unsigned int *HD_UpdateFlags = HD.UpdateFlags[row];
+  const uint32_t *MEMC_UpdateFlags = MEMC.UpdateFlags;
+  uint32_t *HD_UpdateFlags = HD.UpdateFlags[row];
   while(Remaining > 0)
   {
-    unsigned int FlagsOffset = Vptr/(8*UPDATEBLOCKSIZE);
+    uint32_t FlagsOffset = Vptr/(8*UPDATEBLOCKSIZE);
     int Available = MIN(Remaining,MIN(((FlagsOffset+1)*8*UPDATEBLOCKSIZE)-Vptr,Vend-Vptr));
       
     if((flags & ROWFUNC_FORCE) || (HD_UpdateFlags[FlagsOffset] != MEMC_UpdateFlags[FlagsOffset]))
@@ -408,7 +408,7 @@ static int SDD_Name(RowFunc1bpp1X)(ARMul_State *state,int row,SDD_Row drow,int f
     Remaining = startRemain;
     while(Remaining > 0)
     {
-      unsigned int FlagsOffset = Vptr/(8*UPDATEBLOCKSIZE);
+      uint32_t FlagsOffset = Vptr/(8*UPDATEBLOCKSIZE);
       int Available = MIN(Remaining,MIN(((FlagsOffset+1)*8*UPDATEBLOCKSIZE)-Vptr,Vend-Vptr));
   
       HD_UpdateFlags[FlagsOffset] = MEMC_UpdateFlags[FlagsOffset];
@@ -430,9 +430,9 @@ static int SDD_Name(RowFunc2bpp1X)(ARMul_State *state,int row,SDD_Row drow,int f
   /* Handle palette updates */
   SDD_Name(PaletteUpdate)(state,Palette,4);
 
-  unsigned int Vptr = DC.Vptr;
-  unsigned int Vstart = MEMC.Vstart<<7;
-  unsigned int Vend = (MEMC.Vend+1)<<7; /* Point to pixel after end */
+  uint32_t Vptr = DC.Vptr;
+  uint32_t Vstart = MEMC.Vstart<<7;
+  uint32_t Vend = (MEMC.Vend+1)<<7; /* Point to pixel after end */
   const ARMword *RAM = MEMC.PhysRam;
   int Remaining = DC.LastHostWidth*2; /* Scale up to account for everything else counting in bits */
 
@@ -443,13 +443,13 @@ static int SDD_Name(RowFunc2bpp1X)(ARMul_State *state,int row,SDD_Row drow,int f
     Vptr = Vstart;
 
   /* Process the row */
-  unsigned int startVptr = Vptr;
+  uint32_t startVptr = Vptr;
   int startRemain = Remaining;
-  const unsigned int *MEMC_UpdateFlags = MEMC.UpdateFlags;
-  unsigned int *HD_UpdateFlags = HD.UpdateFlags[row];
+  const uint32_t *MEMC_UpdateFlags = MEMC.UpdateFlags;
+  uint32_t *HD_UpdateFlags = HD.UpdateFlags[row];
   while(Remaining > 0)
   {
-    unsigned int FlagsOffset = Vptr/(8*UPDATEBLOCKSIZE);
+    uint32_t FlagsOffset = Vptr/(8*UPDATEBLOCKSIZE);
     /* Note: This is the number of available bits, not pixels */
     int Available = MIN(Remaining,MIN(((FlagsOffset+1)*8*UPDATEBLOCKSIZE)-Vptr,Vend-Vptr));
       
@@ -463,7 +463,7 @@ static int SDD_Name(RowFunc2bpp1X)(ARMul_State *state,int row,SDD_Row drow,int f
       /* Process the pixels in this region, stopping at end of row/update block/Vend */
       SDD_Name(Host_BeginUpdate)(state,&drow,Available>>1);
       const ARMword *In = RAM+(Vptr>>5);
-      unsigned int Shift = (Vptr & 31);
+      uint32_t Shift = (Vptr & 31);
       ARMword Data = (*In++) >> Shift;
       for(i=0;i<Available;i+=2)
       {
@@ -495,7 +495,7 @@ static int SDD_Name(RowFunc2bpp1X)(ARMul_State *state,int row,SDD_Row drow,int f
     Remaining = startRemain;
     while(Remaining > 0)
     {
-      unsigned int FlagsOffset = Vptr/(8*UPDATEBLOCKSIZE);
+      uint32_t FlagsOffset = Vptr/(8*UPDATEBLOCKSIZE);
       int Available = MIN(Remaining,MIN(((FlagsOffset+1)*8*UPDATEBLOCKSIZE)-Vptr,Vend-Vptr));
   
       HD_UpdateFlags[FlagsOffset] = MEMC_UpdateFlags[FlagsOffset];
@@ -518,9 +518,9 @@ static int SDD_Name(RowFunc4bpp1X)(ARMul_State *state,int row,SDD_Row drow,int f
   SDD_Name(PaletteUpdate)(state,Palette,16);
 
 
-  unsigned int Vptr = DC.Vptr;
-  unsigned int Vstart = MEMC.Vstart<<7;
-  unsigned int Vend = (MEMC.Vend+1)<<7; /* Point to pixel after end */
+  uint32_t Vptr = DC.Vptr;
+  uint32_t Vstart = MEMC.Vstart<<7;
+  uint32_t Vend = (MEMC.Vend+1)<<7; /* Point to pixel after end */
   const ARMword *RAM = MEMC.PhysRam;
   int Remaining = DC.LastHostWidth*4; /* Scale up to account for everything else counting in bits */
 
@@ -531,13 +531,13 @@ static int SDD_Name(RowFunc4bpp1X)(ARMul_State *state,int row,SDD_Row drow,int f
     Vptr = Vstart;
 
   /* Process the row */
-  unsigned int startVptr = Vptr;
+  uint32_t startVptr = Vptr;
   int startRemain = Remaining;
-  const unsigned int *MEMC_UpdateFlags = MEMC.UpdateFlags;
-  unsigned int *HD_UpdateFlags = HD.UpdateFlags[row];
+  const uint32_t *MEMC_UpdateFlags = MEMC.UpdateFlags;
+  uint32_t *HD_UpdateFlags = HD.UpdateFlags[row];
   while(Remaining > 0)
   {
-    unsigned int FlagsOffset = Vptr/(8*UPDATEBLOCKSIZE);
+    uint32_t FlagsOffset = Vptr/(8*UPDATEBLOCKSIZE);
     /* Note: This is the number of available bits, not pixels */
     int Available = MIN(Remaining,MIN(((FlagsOffset+1)*8*UPDATEBLOCKSIZE)-Vptr,Vend-Vptr));
       
@@ -553,7 +553,7 @@ static int SDD_Name(RowFunc4bpp1X)(ARMul_State *state,int row,SDD_Row drow,int f
 
       /* Display will always be a multiple of 2 pixels wide, so we can simplify things a bit compared to 1/2bpp case */
       const ARMword *In = RAM+(Vptr>>5);      
-      unsigned int Shift = (Vptr & 31);
+      uint32_t Shift = (Vptr & 31);
       ARMword Data = (*In++) >> Shift;
       for(i=0;i<Available;i+=8)
       {
@@ -587,7 +587,7 @@ static int SDD_Name(RowFunc4bpp1X)(ARMul_State *state,int row,SDD_Row drow,int f
     Remaining = startRemain;
     while(Remaining > 0)
     {
-      unsigned int FlagsOffset = Vptr/(8*UPDATEBLOCKSIZE);
+      uint32_t FlagsOffset = Vptr/(8*UPDATEBLOCKSIZE);
       int Available = MIN(Remaining,MIN(((FlagsOffset+1)*8*UPDATEBLOCKSIZE)-Vptr,Vend-Vptr));
   
       HD_UpdateFlags[FlagsOffset] = MEMC_UpdateFlags[FlagsOffset];
@@ -609,9 +609,9 @@ static int SDD_Name(RowFunc8bpp1X)(ARMul_State *state,int row,SDD_Row drow,int f
   /* Handle palette updates */
   SDD_Name(PaletteUpdate8bpp)(state,Palette);
 
-  unsigned int Vptr = DC.Vptr;
-  unsigned int Vstart = MEMC.Vstart<<7;
-  unsigned int Vend = (MEMC.Vend+1)<<7; /* Point to pixel after end */
+  uint32_t Vptr = DC.Vptr;
+  uint32_t Vstart = MEMC.Vstart<<7;
+  uint32_t Vend = (MEMC.Vend+1)<<7; /* Point to pixel after end */
   const ARMword *RAM = MEMC.PhysRam;
   int Remaining = DC.LastHostWidth*8; /* Scale up to account for everything else counting in bits */
 
@@ -622,13 +622,13 @@ static int SDD_Name(RowFunc8bpp1X)(ARMul_State *state,int row,SDD_Row drow,int f
     Vptr = Vstart;
 
   /* Process the row */
-  unsigned int startVptr = Vptr;
+  uint32_t startVptr = Vptr;
   int startRemain = Remaining;
-  const unsigned int *MEMC_UpdateFlags = MEMC.UpdateFlags;
-  unsigned int *HD_UpdateFlags = HD.UpdateFlags[row];
+  const uint32_t *MEMC_UpdateFlags = MEMC.UpdateFlags;
+  uint32_t *HD_UpdateFlags = HD.UpdateFlags[row];
   while(Remaining > 0)
   {
-    unsigned int FlagsOffset = Vptr/(8*UPDATEBLOCKSIZE);
+    uint32_t FlagsOffset = Vptr/(8*UPDATEBLOCKSIZE);
     /* Note: This is the number of available bits, not pixels */
     int Available = MIN(Remaining,MIN(((FlagsOffset+1)*8*UPDATEBLOCKSIZE)-Vptr,Vend-Vptr));
       
@@ -644,7 +644,7 @@ static int SDD_Name(RowFunc8bpp1X)(ARMul_State *state,int row,SDD_Row drow,int f
 
       /* Display will always be a multiple of 2 pixels wide, so we can simplify things a bit compared to 1/2bpp case */
       const ARMword *In = RAM+(Vptr>>5);
-      unsigned int Shift = (Vptr & 31);
+      uint32_t Shift = (Vptr & 31);
       ARMword Data = (*In++) >> Shift;
       for(i=0;i<Available;i+=16)
       {
@@ -681,7 +681,7 @@ static int SDD_Name(RowFunc8bpp1X)(ARMul_State *state,int row,SDD_Row drow,int f
     Remaining = startRemain;
     while(Remaining > 0)
     {
-      unsigned int FlagsOffset = Vptr/(8*UPDATEBLOCKSIZE);
+      uint32_t FlagsOffset = Vptr/(8*UPDATEBLOCKSIZE);
       int Available = MIN(Remaining,MIN(((FlagsOffset+1)*8*UPDATEBLOCKSIZE)-Vptr,Vend-Vptr));
   
       HD_UpdateFlags[FlagsOffset] = MEMC_UpdateFlags[FlagsOffset];
@@ -709,9 +709,9 @@ static int SDD_Name(RowFunc1bpp2X)(ARMul_State *state,int row,SDD_Row drow,int f
   /* Handle palette updates */
   SDD_Name(PaletteUpdate)(state,Palette,2);
 
-  unsigned int Vptr = DC.Vptr;
-  unsigned int Vstart = MEMC.Vstart<<7;
-  unsigned int Vend = (MEMC.Vend+1)<<7; /* Point to pixel after end */
+  uint32_t Vptr = DC.Vptr;
+  uint32_t Vstart = MEMC.Vstart<<7;
+  uint32_t Vend = (MEMC.Vend+1)<<7; /* Point to pixel after end */
   const ARMword *RAM = MEMC.PhysRam;
   int Remaining = DC.LastHostWidth;
 
@@ -722,13 +722,13 @@ static int SDD_Name(RowFunc1bpp2X)(ARMul_State *state,int row,SDD_Row drow,int f
     Vptr = Vstart;
 
   /* Process the row */
-  unsigned int startVptr = Vptr;
+  uint32_t startVptr = Vptr;
   int startRemain = Remaining;
-  const unsigned int *MEMC_UpdateFlags = MEMC.UpdateFlags;
-  unsigned int *HD_UpdateFlags = HD.UpdateFlags[row];
+  const uint32_t *MEMC_UpdateFlags = MEMC.UpdateFlags;
+  uint32_t *HD_UpdateFlags = HD.UpdateFlags[row];
   while(Remaining > 0)
   {
-    unsigned int FlagsOffset = Vptr/(8*UPDATEBLOCKSIZE);
+    uint32_t FlagsOffset = Vptr/(8*UPDATEBLOCKSIZE);
     int Available = MIN(Remaining,MIN(((FlagsOffset+1)*8*UPDATEBLOCKSIZE)-Vptr,Vend-Vptr));
       
     if((flags & ROWFUNC_FORCE) || (HD_UpdateFlags[FlagsOffset] != MEMC_UpdateFlags[FlagsOffset]))
@@ -773,7 +773,7 @@ static int SDD_Name(RowFunc1bpp2X)(ARMul_State *state,int row,SDD_Row drow,int f
     Remaining = startRemain;
     while(Remaining > 0)
     {
-      unsigned int FlagsOffset = Vptr/(8*UPDATEBLOCKSIZE);
+      uint32_t FlagsOffset = Vptr/(8*UPDATEBLOCKSIZE);
       int Available = MIN(Remaining,MIN(((FlagsOffset+1)*8*UPDATEBLOCKSIZE)-Vptr,Vend-Vptr));
   
       HD_UpdateFlags[FlagsOffset] = MEMC_UpdateFlags[FlagsOffset];
@@ -795,9 +795,9 @@ static int SDD_Name(RowFunc2bpp2X)(ARMul_State *state,int row,SDD_Row drow,int f
   /* Handle palette updates */
   SDD_Name(PaletteUpdate)(state,Palette,4);
 
-  unsigned int Vptr = DC.Vptr;
-  unsigned int Vstart = MEMC.Vstart<<7;
-  unsigned int Vend = (MEMC.Vend+1)<<7; /* Point to pixel after end */
+  uint32_t Vptr = DC.Vptr;
+  uint32_t Vstart = MEMC.Vstart<<7;
+  uint32_t Vend = (MEMC.Vend+1)<<7; /* Point to pixel after end */
   const ARMword *RAM = MEMC.PhysRam;
   int Remaining = DC.LastHostWidth*2; /* Scale up to account for everything else counting in bits */
 
@@ -808,13 +808,13 @@ static int SDD_Name(RowFunc2bpp2X)(ARMul_State *state,int row,SDD_Row drow,int f
     Vptr = Vstart;
 
   /* Process the row */
-  unsigned int startVptr = Vptr;
+  uint32_t startVptr = Vptr;
   int startRemain = Remaining;
-  const unsigned int *MEMC_UpdateFlags = MEMC.UpdateFlags;
-  unsigned int *HD_UpdateFlags = HD.UpdateFlags[row];
+  const uint32_t *MEMC_UpdateFlags = MEMC.UpdateFlags;
+  uint32_t *HD_UpdateFlags = HD.UpdateFlags[row];
   while(Remaining > 0)
   {
-    unsigned int FlagsOffset = Vptr/(8*UPDATEBLOCKSIZE);
+    uint32_t FlagsOffset = Vptr/(8*UPDATEBLOCKSIZE);
     /* Note: This is the number of available bits, not pixels */
     int Available = MIN(Remaining,MIN(((FlagsOffset+1)*8*UPDATEBLOCKSIZE)-Vptr,Vend-Vptr));
       
@@ -828,7 +828,7 @@ static int SDD_Name(RowFunc2bpp2X)(ARMul_State *state,int row,SDD_Row drow,int f
       /* Process the pixels in this region, stopping at end of row/update block/Vend */
       SDD_Name(Host_BeginUpdate)(state,&drow,Available);
       const ARMword *In = RAM+(Vptr>>5);
-      unsigned int Shift = (Vptr & 31);
+      uint32_t Shift = (Vptr & 31);
       ARMword Data = (*In++) >> Shift;
       for(i=0;i<Available;i+=2)
       {
@@ -860,7 +860,7 @@ static int SDD_Name(RowFunc2bpp2X)(ARMul_State *state,int row,SDD_Row drow,int f
     Remaining = startRemain;
     while(Remaining > 0)
     {
-      unsigned int FlagsOffset = Vptr/(8*UPDATEBLOCKSIZE);
+      uint32_t FlagsOffset = Vptr/(8*UPDATEBLOCKSIZE);
       int Available = MIN(Remaining,MIN(((FlagsOffset+1)*8*UPDATEBLOCKSIZE)-Vptr,Vend-Vptr));
   
       HD_UpdateFlags[FlagsOffset] = MEMC_UpdateFlags[FlagsOffset];
@@ -883,9 +883,9 @@ static int SDD_Name(RowFunc4bpp2X)(ARMul_State *state,int row,SDD_Row drow,int f
   SDD_Name(PaletteUpdate)(state,Palette,16);
 
 
-  unsigned int Vptr = DC.Vptr;
-  unsigned int Vstart = MEMC.Vstart<<7;
-  unsigned int Vend = (MEMC.Vend+1)<<7; /* Point to pixel after end */
+  uint32_t Vptr = DC.Vptr;
+  uint32_t Vstart = MEMC.Vstart<<7;
+  uint32_t Vend = (MEMC.Vend+1)<<7; /* Point to pixel after end */
   const ARMword *RAM = MEMC.PhysRam;
   int Remaining = DC.LastHostWidth*4; /* Scale up to account for everything else counting in bits */
 
@@ -896,13 +896,13 @@ static int SDD_Name(RowFunc4bpp2X)(ARMul_State *state,int row,SDD_Row drow,int f
     Vptr = Vstart;
 
   /* Process the row */
-  unsigned int startVptr = Vptr;
+  uint32_t startVptr = Vptr;
   int startRemain = Remaining;
-  const unsigned int *MEMC_UpdateFlags = MEMC.UpdateFlags;
-  unsigned int *HD_UpdateFlags = HD.UpdateFlags[row];
+  const uint32_t *MEMC_UpdateFlags = MEMC.UpdateFlags;
+  uint32_t *HD_UpdateFlags = HD.UpdateFlags[row];
   while(Remaining > 0)
   {
-    unsigned int FlagsOffset = Vptr/(8*UPDATEBLOCKSIZE);
+    uint32_t FlagsOffset = Vptr/(8*UPDATEBLOCKSIZE);
     /* Note: This is the number of available bits, not pixels */
     int Available = MIN(Remaining,MIN(((FlagsOffset+1)*8*UPDATEBLOCKSIZE)-Vptr,Vend-Vptr));
       
@@ -918,7 +918,7 @@ static int SDD_Name(RowFunc4bpp2X)(ARMul_State *state,int row,SDD_Row drow,int f
 
       /* Display will always be a multiple of 2 pixels wide, so we can simplify things a bit compared to 1/2bpp case */
       const ARMword *In = RAM+(Vptr>>5);      
-      unsigned int Shift = (Vptr & 31);
+      uint32_t Shift = (Vptr & 31);
       ARMword Data = (*In++) >> Shift;
       for(i=0;i<Available;i+=8)
       {
@@ -952,7 +952,7 @@ static int SDD_Name(RowFunc4bpp2X)(ARMul_State *state,int row,SDD_Row drow,int f
     Remaining = startRemain;
     while(Remaining > 0)
     {
-      unsigned int FlagsOffset = Vptr/(8*UPDATEBLOCKSIZE);
+      uint32_t FlagsOffset = Vptr/(8*UPDATEBLOCKSIZE);
       int Available = MIN(Remaining,MIN(((FlagsOffset+1)*8*UPDATEBLOCKSIZE)-Vptr,Vend-Vptr));
   
       HD_UpdateFlags[FlagsOffset] = MEMC_UpdateFlags[FlagsOffset];
@@ -974,9 +974,9 @@ static int SDD_Name(RowFunc8bpp2X)(ARMul_State *state,int row,SDD_Row drow,int f
   /* Handle palette updates */
   SDD_Name(PaletteUpdate8bpp)(state,Palette);
 
-  unsigned int Vptr = DC.Vptr;
-  unsigned int Vstart = MEMC.Vstart<<7;
-  unsigned int Vend = (MEMC.Vend+1)<<7; /* Point to pixel after end */
+  uint32_t Vptr = DC.Vptr;
+  uint32_t Vstart = MEMC.Vstart<<7;
+  uint32_t Vend = (MEMC.Vend+1)<<7; /* Point to pixel after end */
   const ARMword *RAM = MEMC.PhysRam;
   int Remaining = DC.LastHostWidth*8; /* Scale up to account for everything else counting in bits */
 
@@ -987,13 +987,13 @@ static int SDD_Name(RowFunc8bpp2X)(ARMul_State *state,int row,SDD_Row drow,int f
     Vptr = Vstart;
 
   /* Process the row */
-  unsigned int startVptr = Vptr;
+  uint32_t startVptr = Vptr;
   int startRemain = Remaining;
-  const unsigned int *MEMC_UpdateFlags = MEMC.UpdateFlags;
-  unsigned int *HD_UpdateFlags = HD.UpdateFlags[row];
+  const uint32_t *MEMC_UpdateFlags = MEMC.UpdateFlags;
+  uint32_t *HD_UpdateFlags = HD.UpdateFlags[row];
   while(Remaining > 0)
   {
-    unsigned int FlagsOffset = Vptr/(8*UPDATEBLOCKSIZE);
+    uint32_t FlagsOffset = Vptr/(8*UPDATEBLOCKSIZE);
     /* Note: This is the number of available bits, not pixels */
     int Available = MIN(Remaining,MIN(((FlagsOffset+1)*8*UPDATEBLOCKSIZE)-Vptr,Vend-Vptr));
       
@@ -1009,7 +1009,7 @@ static int SDD_Name(RowFunc8bpp2X)(ARMul_State *state,int row,SDD_Row drow,int f
 
       /* Display will always be a multiple of 2 pixels wide, so we can simplify things a bit compared to 1/2bpp case */
       const ARMword *In = RAM+(Vptr>>5);
-      unsigned int Shift = (Vptr & 31);
+      uint32_t Shift = (Vptr & 31);
       ARMword Data = (*In++) >> Shift;
       for(i=0;i<Available;i+=16)
       {
@@ -1046,7 +1046,7 @@ static int SDD_Name(RowFunc8bpp2X)(ARMul_State *state,int row,SDD_Row drow,int f
     Remaining = startRemain;
     while(Remaining > 0)
     {
-      unsigned int FlagsOffset = Vptr/(8*UPDATEBLOCKSIZE);
+      uint32_t FlagsOffset = Vptr/(8*UPDATEBLOCKSIZE);
       int Available = MIN(Remaining,MIN(((FlagsOffset+1)*8*UPDATEBLOCKSIZE)-Vptr,Vend-Vptr));
   
       HD_UpdateFlags[FlagsOffset] = MEMC_UpdateFlags[FlagsOffset];
@@ -1150,8 +1150,8 @@ static void SDD_Name(DisplayRow)(ARMul_State *state,int row)
 
   /* Display area */
 
-  unsigned int flags = HD.RefreshFlags[row>>5];
-  unsigned int bit = 1<<(row&31);
+  uint32_t flags = HD.RefreshFlags[row>>5];
+  uint32_t bit = UINT32_C(1)<<(row&31);
   if(flags & bit)
   {
     VIDEO_STAT(DisplayRowForce,1,1);
@@ -1172,7 +1172,7 @@ static void SDD_Name(DisplayRow)(ARMul_State *state,int row)
   else
   {
     /* Remember current Vptr */
-    unsigned int Vptr = DC.Vptr;
+    uint32_t Vptr = DC.Vptr;
     int updated = (rf)(state,row,drow,rowflags);
     SDD_Name(Host_EndRow)(state,&drow);
     if(updated)
@@ -1210,13 +1210,13 @@ static void SDD_Name(Flyback)(ARMul_State *state)
   CycleCount oldrate = ARMul_EmuRate;
 
   /* Trigger VSync */
-  DC.FLYBK = 1;
+  DC.FLYBK = true;
   DisplayDev_VSync(state);
 
   /* If EmuRate has just changed, recalculate the line rate now to try and keep things in sync */
   if(oldrate != ARMul_EmuRate)
   {
-    static const unsigned char ClockDividers[4] = {
+    static const uint_fast8_t ClockDividers[4] = {
     /* Source rates:     24.0MHz     25.0MHz      36.0MHz */
       6, /* 1/3      ->   8.0MHz      8.3MHz      12.0MHz */
       4, /* 1/2      ->  12.0MHz     12.5MHz      18.0MHz */
@@ -1224,25 +1224,25 @@ static void SDD_Name(Flyback)(ARMul_State *state)
       2, /* 1/1      ->  24.0MHz     25.0MHz      36.0MHz */
     };
   
-    const unsigned int NewCR = VIDC.ControlReg;
-    const unsigned long ClockIn = 2*DisplayDev_GetVIDCClockIn();
-    const unsigned char ClockDivider = ClockDividers[NewCR&3]; 
+    const uint_fast16_t NewCR = VIDC.ControlReg;
+    const uint32_t ClockIn = 2*DisplayDev_GetVIDCClockIn();
+    const uint_fast8_t ClockDivider = ClockDividers[NewCR&3]; 
   
     /* Calculate new line rate */
-    DC.LineRate = (((unsigned long long) ARMul_EmuRate)*(VIDC.Horiz_Cycle*2+2))*ClockDivider/ClockIn;
+    DC.LineRate = (((uint64_t) ARMul_EmuRate)*(VIDC.Horiz_Cycle*2+2))*ClockDivider/ClockIn;
     if(DC.LineRate < 100)
       DC.LineRate = 100; /* Clamp to safe minimum value */
   }
 }
 
-static void SDD_Name(Reschedule)(ARMul_State *state,CycleCount nowtime,EventQ_Func func,int row,int flybk)
+static void SDD_Name(Reschedule)(ARMul_State *state,CycleCount nowtime,EventQ_Func func,int row,bool flybk)
 {
   int idx=0;
   /* Force frame end just in case registers have been poked mid-frame */
   if(row >= VIDC.Vert_Cycle+1)
   {
     func = SDD_Name(FrameEnd);
-    flybk = 1;
+    flybk = true;
   }
   if(flybk)
   {
@@ -1263,7 +1263,7 @@ static void SDD_Name(FrameStart)(ARMul_State *state,CycleCount nowtime)
 {
   /* Assuming a multiplier of 2, these are the required clock dividers
      (selected via bottom two bits of VIDC.ControlReg): */
-  static const unsigned char ClockDividers[4] = {
+  static const uint_fast8_t ClockDividers[4] = {
   /* Source rates:     24.0MHz     25.0MHz      36.0MHz */
     6, /* 1/3      ->   8.0MHz      8.3MHz      12.0MHz */
     4, /* 1/2      ->  12.0MHz     12.5MHz      18.0MHz */
@@ -1271,12 +1271,12 @@ static void SDD_Name(FrameStart)(ARMul_State *state,CycleCount nowtime)
     2, /* 1/1      ->  24.0MHz     25.0MHz      36.0MHz */
   };
 
-  const unsigned int NewCR = VIDC.ControlReg;
-  const unsigned long ClockIn = 2*DisplayDev_GetVIDCClockIn();
-  const unsigned char ClockDivider = ClockDividers[NewCR&3]; 
+  const uint_fast16_t NewCR = VIDC.ControlReg;
+  const uint32_t ClockIn = 2*DisplayDev_GetVIDCClockIn();
+  const uint_fast8_t ClockDivider = ClockDividers[NewCR&3];
 
   /* Calculate new line rate */
-  DC.LineRate = (((unsigned long long) ARMul_EmuRate)*(VIDC.Horiz_Cycle*2+2))*ClockDivider/ClockIn;
+  DC.LineRate = (((uint64_t) ARMul_EmuRate)*(VIDC.Horiz_Cycle*2+2))*ClockDivider/ClockIn;
   if(DC.LineRate < 100)
     DC.LineRate = 100; /* Clamp to safe minimum value */
 
@@ -1284,7 +1284,7 @@ static void SDD_Name(FrameStart)(ARMul_State *state,CycleCount nowtime)
   DC.ModeChanged |= (DC.VIDC_CR & 3) != (NewCR & 3);
 
   /* Force full refresh if DMA just toggled on/off */
-  char newDMAEn = (MEMC.ControlReg>>10)&1;
+  bool newDMAEn = (MEMC.ControlReg>>10)&1;
   DC.ForceRefresh = (newDMAEn ^ DC.DMAEn);
   DC.DMAEn = newDMAEn;
   VIDEO_STAT(ForceRefreshDMA,DC.ForceRefresh,1);
@@ -1294,7 +1294,7 @@ static void SDD_Name(FrameStart)(ARMul_State *state,CycleCount nowtime)
   {
     VIDEO_STAT(ForceRefreshBPP,1,1);
     DC.DirtyPalette = 65535;
-    DC.ForceRefresh = 1;
+    DC.ForceRefresh = true;
   }
 
   /* Vinit changes require a full refresh also */
@@ -1310,7 +1310,7 @@ static void SDD_Name(FrameStart)(ARMul_State *state,CycleCount nowtime)
 
   DC.VIDC_CR = NewCR;
 
-  DC.FLYBK = 0;
+  DC.FLYBK = false;
 
   /* Handle any mode changes */
   if(DC.ModeChanged)
@@ -1330,7 +1330,7 @@ static void SDD_Name(FrameStart)(ARMul_State *state,CycleCount nowtime)
          Try using border size instead */
       Height = VIDC.Vert_BorderEnd-VIDC.Vert_BorderStart;
     }
-    long FramePeriod = (VIDC.Horiz_Cycle*2+2)*(VIDC.Vert_Cycle+1);
+    int32_t FramePeriod = (VIDC.Horiz_Cycle*2+2)*(VIDC.Vert_Cycle+1);
     int FrameRate = ClockIn/(FramePeriod*ClockDivider);
     
     if((Width != DC.LastHostWidth) || (Height != DC.LastHostHeight) || (FrameRate != DC.LastHostHz))
@@ -1355,9 +1355,9 @@ static void SDD_Name(FrameStart)(ARMul_State *state,CycleCount nowtime)
       /* Calculate display offsets, for start of first display pixel */
       HD.XOffset = (HD.Width-Width*HD.XScale)/2;
       HD.YOffset = (HD.Height-Height*HD.YScale)/2;
-      DC.ForceRefresh = 1;
+      DC.ForceRefresh = true;
     }
-    DC.ModeChanged = 0;
+    DC.ModeChanged = false;
   }
 
 #ifdef VIDEO_STATS
@@ -1394,8 +1394,8 @@ static void SDD_Name(RowStart)(ARMul_State *state,CycleCount nowtime)
   if(row < VIDC.Vert_BorderStart+1)
     row = VIDC.Vert_BorderStart+1; /* Skip pre-border rows */
   int stop = DC.NextRow;
-  int dmaen = DC.DMAEn;
-  int flybk = 0;
+  bool dmaen = DC.DMAEn;
+  bool flybk = false;
   while(row < stop)
   {
     if(row < (VIDC.Vert_DisplayStart+1))
@@ -1411,7 +1411,7 @@ static void SDD_Name(RowStart)(ARMul_State *state,CycleCount nowtime)
     else if(row < (VIDC.Vert_BorderEnd+1))
     {
       /* Border again */
-      flybk = 1;
+      flybk = true;
       SDD_Name(BorderRow)(state,row);
     }
     else
@@ -1426,7 +1426,7 @@ static void SDD_Name(RowStart)(ARMul_State *state,CycleCount nowtime)
   /* If we've just drawn the last display row, it's time for a vsync */
   if((stop >= (VIDC.Vert_DisplayStart+1)) && (stop >= (VIDC.Vert_DisplayEnd+1)))
   {
-    flybk = 1;
+    flybk = true;
   }
   /* Skip ahead to next row */
   int nextrow = row+SDD_RowsAtOnce;
@@ -1441,15 +1441,15 @@ static void SDD_Name(RowStart)(ARMul_State *state,CycleCount nowtime)
 
 */
 
-static void SDD_Name(VIDCPutVal)(ARMul_State *state,ARMword address, ARMword data,int bNw) {
-  unsigned int addr, val;
+static void SDD_Name(VIDCPutVal)(ARMul_State *state,ARMword address, ARMword data,bool bNw) {
+  uint32_t addr, val;
 
   addr=(data>>24) & 255;
   val=data & 0xffffff;
 
   if (!(addr & 0xc0)) {
-    int Log;
-    int Phy;
+    uint_fast8_t Log;
+    uint_fast16_t Phy;
 
     Log=(addr>>2) & 15;
     Phy = (val & 0x1fff);
@@ -1653,7 +1653,7 @@ static void SDD_Name(VIDCPutVal)(ARMul_State *state,ARMword address, ARMword dat
 }; /* PutValVIDC */
 
 static void SDD_Name(IOEBCRWrite)(ARMul_State *state,ARMword data) {
-  DC.ModeChanged = 1;
+  DC.ModeChanged = true;
 };
 
 /*
@@ -1672,15 +1672,15 @@ static int SDD_Name(Init)(ARMul_State *state,const struct Vidc_Regs *Vidc)
 
   VIDC = *Vidc;
 
-  DC.ModeChanged = 1;
+  DC.ModeChanged = true;
   DC.LastHostWidth = DC.LastHostHeight = DC.LastHostHz = -1;
   DC.DirtyPalette = 65535;
   DC.NextRow = 0;
   DC.LastRow = 0;
   DC.MaxRow = 0;
   DC.VIDC_CR = 0;
-  DC.DMAEn = 0;
-  DC.FLYBK = 0;
+  DC.DMAEn = false;
+  DC.FLYBK = false;
   DC.LineRate = 10000;
   DC.LastVinit = MEMC.Vinit;
   HD.BorderCol = SDD_Name(Host_GetColour)(state,VIDC.BorderCol);

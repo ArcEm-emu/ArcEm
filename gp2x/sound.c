@@ -14,9 +14,9 @@
 #include "../arch/displaydev.h"
 #include "../armemu.h"
 
-static unsigned long format = AFMT_S16_LE;
-static unsigned long channels = 2;
-static unsigned long sampleRate = 44100;
+static uint32_t format = AFMT_S16_LE;
+static uint32_t channels = 2;
+static uint32_t sampleRate = 44100;
 
 static int soundDevice;
 
@@ -31,23 +31,23 @@ static pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
 #define BUFFER_SAMPLES (16384) /* 8K stereo pairs */
 
 SoundData sound_buffer[BUFFER_SAMPLES];
-volatile int sound_buffer_in=BUFFER_SAMPLES; /* Number of samples we've placed in the buffer */
-volatile int sound_buffer_out=0; /* Number of samples read out by the sound thread */
-static const int sound_buff_mask=BUFFER_SAMPLES-1;
+volatile int32_t sound_buffer_in=BUFFER_SAMPLES; /* Number of samples we've placed in the buffer */
+volatile int32_t sound_buffer_out=0; /* Number of samples read out by the sound thread */
+static const int32_t sound_buff_mask=BUFFER_SAMPLES-1;
 #else
 SoundData sound_buffer[256*2]; /* Must be >= 2*Sound_BatchSize! */
 #endif
 
-SoundData *Sound_GetHostBuffer(long *destavail)
+SoundData *Sound_GetHostBuffer(int32_t *destavail)
 {
 #ifdef SOUND_THREAD
   /* Work out how much space is available until next wrap point, or we start overwriting data */
   pthread_mutex_lock(&mut);
-  int local_buffer_in = sound_buffer_in;
-  int used = local_buffer_in-sound_buffer_out;
+  int32_t local_buffer_in = sound_buffer_in;
+  int32_t used = local_buffer_in-sound_buffer_out;
   pthread_mutex_unlock(&mut);
-  int ofs = local_buffer_in & sound_buff_mask;
-  int buffree = BUFFER_SAMPLES-MAX(ofs,used);
+  int32_t ofs = local_buffer_in & sound_buff_mask;
+  int32_t buffree = BUFFER_SAMPLES-MAX(ofs,used);
   *destavail = buffree>>1;
   return sound_buffer + ofs;
 #else
@@ -57,15 +57,15 @@ SoundData *Sound_GetHostBuffer(long *destavail)
 #endif
 }
 
-void Sound_HostBuffered(SoundData *buffer,long numSamples)
+void Sound_HostBuffered(SoundData *buffer,int32_t numSamples)
 {
   numSamples <<= 1;
 #ifdef SOUND_THREAD
   pthread_mutex_lock(&mut);
-  int local_buffer_in = sound_buffer_in;
-  int used = local_buffer_in-sound_buffer_out;
+  int32_t local_buffer_in = sound_buffer_in;
+  int32_t used = local_buffer_in-sound_buffer_out;
   pthread_mutex_unlock(&mut);
-  int ofs = local_buffer_in & sound_buff_mask;
+  int32_t ofs = local_buffer_in & sound_buff_mask;
 
   local_buffer_in += numSamples;
   
@@ -112,10 +112,10 @@ void Sound_HostBuffered(SoundData *buffer,long numSamples)
        We aim for the buffer to be somewhere between 1/4 and 3/4 full, but don't
        explicitly set the buffer size, so we're at the mercy of the sound system
        in terms of how much lag there'll be */
-    long bufsize = buf.fragsize*buf.fragstotal;
-    long buffree = buf.bytes/sizeof(SoundData);
-    long used = (bufsize-buf.bytes)/sizeof(SoundData);
-    long stepsize = Sound_DMARate>>2;
+    int32_t bufsize = buf.fragsize*buf.fragstotal;
+    int32_t buffree = buf.bytes/sizeof(SoundData);
+    int32_t used = (bufsize-buf.bytes)/sizeof(SoundData);
+    int32_t stepsize = Sound_DMARate>>2;
     bufsize /= sizeof(SoundData);
     if(numSamples > buffree)
     {
@@ -157,9 +157,9 @@ void Sound_HostBuffered(SoundData *buffer,long numSamples)
 static void *
 sound_writeThread(void *arg)
 {
-  int local_buffer_out = sound_buffer_out;
+  int32_t local_buffer_out = sound_buffer_out;
   for (;;) {
-    int avail;
+    int32_t avail;
 
     pthread_mutex_lock(&mut);
     sound_buffer_out = local_buffer_out;
@@ -168,7 +168,7 @@ sound_writeThread(void *arg)
 
     printf("%d\n",avail);
     if (avail) {
-      int ofs = local_buffer_out & sound_buff_mask;
+      int32_t ofs = local_buffer_out & sound_buff_mask;
 
       if(ofs + avail > BUFFER_SAMPLES) {
         /* We're about to wrap */

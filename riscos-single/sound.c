@@ -203,7 +203,7 @@ int Sound_InitHost(ARMul_State *state)
   return 0;
 }
 
-SoundData *Sound_GetHostBuffer(long *destavail)
+SoundData *Sound_GetHostBuffer(int32_t *destavail)
 {
   /* Work out how much space is available until next wrap point, or we start overwriting data */
   if(!sound_handler_id)
@@ -218,7 +218,7 @@ SoundData *Sound_GetHostBuffer(long *destavail)
   return sound_buffer + ofs;
 }
 
-void Sound_HostBuffered(SoundData *buffer,long numSamples)
+void Sound_HostBuffered(SoundData *buffer,int32_t numSamples)
 {
   if(!sound_handler_id)
     return;

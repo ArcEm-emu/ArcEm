@@ -50,6 +50,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 
 #ifdef USE_FAKEMAIN
+int fakemain(int argc,char *argv[]);
+
 int fakemain(int argc,char *argv[])
 #else
 int main(int argc, char *argv[])

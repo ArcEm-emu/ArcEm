@@ -11,7 +11,7 @@
 
 /* Structure used to store the configurable shape of the Harddrive */
 struct HDCshape {
-  unsigned int NCyls,NHeads,NSectors,RecordLength;
+  uint32_t NCyls,NHeads,NSectors,RecordLength;
 };
 
 /* Write to HDC memory space */

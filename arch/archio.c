@@ -81,7 +81,7 @@ IO_Init(ARMul_State *state)
 void
 IO_UpdateNfiq(ARMul_State *state)
 {
-  register unsigned int tmp = state->Exception & ~Exception_FIQ;
+  register ARMword tmp = state->Exception & ~Exception_FIQ;
 
   if (ioc.FIRQStatus & ioc.FIRQMask) {
     /* Cause FIQ */
@@ -95,7 +95,7 @@ IO_UpdateNfiq(ARMul_State *state)
 void
 IO_UpdateNirq(ARMul_State *state)
 {
-  register unsigned int tmp = state->Exception & ~Exception_IRQ;
+  register ARMword tmp = state->Exception & ~Exception_IRQ;
 
   if (ioc.IRQStatus & ioc.IRQMask) {
     /* Cause interrupt! */
@@ -111,8 +111,8 @@ IO_UpdateNirq(ARMul_State *state)
 static void
 CalcCanTimerInt(ARMul_State *state)
 {
-  int oldTimer0CanInt = ioc.Timer0CanInt;
-  int oldTimer1CanInt = ioc.Timer1CanInt;
+  bool oldTimer0CanInt = ioc.Timer0CanInt;
+  bool oldTimer1CanInt = ioc.Timer1CanInt;
 
 #if 0 /* This old code was wrong and was preventing RISC OS from booting, since RISC OS checks that the timers are working (or something) by programming one of them while the IRQ is masked out */
   /* If its not causing an interrupt at the moment, and its interrupt is
@@ -136,13 +136,13 @@ CalcCanTimerInt(ARMul_State *state)
 /** Get the value of a timer uptodate - don't actually update anything - just
  * return the current value (for the Latch command)
  */
-static int
+static int32_t
 GetCurrentTimerVal(ARMul_State *state,int toget)
 {
-  long timeSinceLastUpdate = ARMul_Time - ioc.TimersLastUpdated;
-  long scaledTimeSlip = (((unsigned long long) timeSinceLastUpdate) * ioc.IOCRate + ioc.TimerFracBit)>>16;
-  long tmpL;
-  int result;
+  CycleDiff timeSinceLastUpdate = ARMul_Time - ioc.TimersLastUpdated;
+  int32_t scaledTimeSlip = (((uint64_t) timeSinceLastUpdate) * ioc.IOCRate + ioc.TimerFracBit)>>16;
+  int32_t tmpL;
+  int32_t result;
 
   tmpL = ioc.TimerInputLatch[toget]+1;
   result = ioc.TimerCount[toget] - (scaledTimeSlip % tmpL);
@@ -157,10 +157,10 @@ static void UpdateTimerRegisters_Internal(ARMul_State *state,CycleCount nowtime,
 {
   CycleDiff timeSinceLastUpdate = nowtime - ioc.TimersLastUpdated;
   /* Take into account any lost fractions of an IOC tick */
-  unsigned long long TimeSlip = (((unsigned long long) timeSinceLastUpdate) * ioc.IOCRate)+ioc.TimerFracBit;
+  uint64_t TimeSlip = (((uint64_t) timeSinceLastUpdate) * ioc.IOCRate)+ioc.TimerFracBit;
   ioc.TimerFracBit = TimeSlip & 0xffff;
   CycleDiff scaledTimeSlip = TimeSlip>>16;
-  unsigned long tmpL;
+  uint32_t tmpL;
 
   /* In theory we should be able to use MAX_CYCLES_INTO_FUTURE as our default
      next trigger time. But some software (e.g. Lotus Turbo Challenge II) seems
@@ -182,7 +182,7 @@ static void UpdateTimerRegisters_Internal(ARMul_State *state,CycleCount nowtime,
   if (ioc.TimerCount[0] < 0) ioc.TimerCount[0] += tmpL;
 
   if (ioc.Timer0CanInt) {
-    tmpL = (((unsigned long long) (ioc.TimerCount[0]+1)) * ioc.InvIOCRate) >> 16;
+    tmpL = (((uint64_t) (ioc.TimerCount[0]+1)) * ioc.InvIOCRate) >> 16;
     if (tmpL < nextTrigger) nextTrigger = tmpL;
   }
 
@@ -197,7 +197,7 @@ static void UpdateTimerRegisters_Internal(ARMul_State *state,CycleCount nowtime,
   if (ioc.TimerCount[1] < 0) ioc.TimerCount[1] += tmpL;
 
   if (ioc.Timer1CanInt) {
-    tmpL = (((unsigned long long) (ioc.TimerCount[1]+1)) * ioc.InvIOCRate) >> 16;
+    tmpL = (((uint64_t) (ioc.TimerCount[1]+1)) * ioc.InvIOCRate) >> 16;
     if (tmpL < nextTrigger) nextTrigger = tmpL;
   }
 
@@ -344,7 +344,7 @@ GetWord_IOCReg(ARMul_State *state, int Register)
     case 0x14: /* T1 count low */
     case 0x18: /* T2 count low */
     case 0x1c: /* T3 count low */
-      Timer = (Register & 0xf) / 4;
+      Timer = (Register & 0xf) >> 2;
       Result = ioc.TimerOutputLatch[Timer] & 0xff;
       /*dbug_ioc("IOCRead: Timer %d low counter read=0x%x\n", Timer, Result);
       dbug_ioc("SPECIAL: R0=0x%x R1=0x%x R14=0x%x\n", state->Reg[0],
@@ -355,8 +355,8 @@ GetWord_IOCReg(ARMul_State *state, int Register)
     case 0x15: /* T1 count high */
     case 0x19: /* T2 count high */
     case 0x1a: /* T3 count high */
-      Timer = (Register & 0xf) / 4;
-      Result = (ioc.TimerOutputLatch[Timer] / 256) & 0xff;
+      Timer = (Register & 0xf) >> 2;
+      Result = (ioc.TimerOutputLatch[Timer] >> 8) & 0xff;
       dbug_ioc("IOCRead: Timer %d high counter read=0x%x\n", Timer, Result);
       break;
 
@@ -371,7 +371,7 @@ GetWord_IOCReg(ARMul_State *state, int Register)
 
 /*-----------------------------------------------------------------------------*/
 static ARMword
-PutVal_IOCReg(ARMul_State *state, int Register, ARMword data, int bNw)
+PutVal_IOCReg(ARMul_State *state, int Register, ARMword data, bool bNw)
 {
   int Timer;
 
@@ -425,7 +425,7 @@ PutVal_IOCReg(ARMul_State *state, int Register, ARMword data, int bNw)
     case 0x14: /* T1 latch low */
     case 0x18: /* T2 latch low */
     case 0x1c: /* T3 latch low */
-      Timer = (Register & 0xf) / 4;
+      Timer = (Register & 0xf) >> 2;
       UpdateTimerRegisters(state);
       ioc.TimerInputLatch[Timer] &= 0xff00;
       ioc.TimerInputLatch[Timer] |= data;
@@ -438,7 +438,7 @@ PutVal_IOCReg(ARMul_State *state, int Register, ARMword data, int bNw)
     case 0x15: /* T1 latch High */
     case 0x19: /* T2 latch High */
     case 0x1d: /* T3 latch High */
-      Timer = (Register & 0xf) / 4;
+      Timer = (Register & 0xf) >> 2;
       UpdateTimerRegisters(state);
       ioc.TimerInputLatch[Timer] &= 0xff;
       ioc.TimerInputLatch[Timer] |= data << 8;
@@ -451,7 +451,7 @@ PutVal_IOCReg(ARMul_State *state, int Register, ARMword data, int bNw)
     case 0x16: /* T1 Go */
     case 0x1a: /* T2 Go */
     case 0x1e: /* T3 Go */
-      Timer = (Register & 0xf) / 4;
+      Timer = (Register & 0xf) >> 2;
       UpdateTimerRegisters(state);
       ioc.TimerCount[Timer] = ioc.TimerInputLatch[Timer];
       UpdateTimerRegisters(state);
@@ -560,10 +560,10 @@ GetWord_IO(ARMul_State *state, ARMword address)
  * \param state       Emulator state
  * \param address     Address to write to (must be in IO address space)
  * \param data        Data to store
- * \param byteNotword Non-zero if this is a byte store, not a word store
+ * \param byteNotword True if this is a byte store, not a word store
  */
 void
-PutValIO(ARMul_State *state, ARMword address, ARMword data, int byteNotword)
+PutValIO(ARMul_State *state, ARMword address, ARMword data, bool byteNotword)
 {
   /* Test CS (Chip-Select) bit */
   if (address & (1 << 21)) {
@@ -693,7 +693,7 @@ IOC_ReadKbdTx(ARMul_State *state)
  *  still full.
  */
 int
-IOC_WriteKbdRx(ARMul_State *state, unsigned char value)
+IOC_WriteKbdRx(ARMul_State *state, uint8_t value)
 {
   /*fprintf(stderr, "ArmArc_WriteKbdRx: value=0x%x\n", value); */
   if (ioc.IRQStatus & IRQB_SRX) {

@@ -35,6 +35,7 @@
       there too.
 */
 #include "arch/hdc63463.h"
+#include "../c99.h"
 
 typedef enum ArcemConfig_MemSize_e {
   MemSize_256K,
@@ -80,10 +81,10 @@ typedef struct ArcemConfig_s {
   /* Platform-specific bits */
 #if defined(SYSTEM_riscos_single)
   ArcemConfig_DisplayDriver eDisplayDriver;
-  int bRedBlueSwap; /* Red/blue swap 16bpp output */
-  int bAspectRatioCorrection; /* Apply H/V scaling for aspect ratio correction */
-  int bUpscale; /* Allow upscaling to fill screen */
-  int bNoLowColour; /* Disable 1/2/4bpp modes */
+  bool bRedBlueSwap; /* Red/blue swap 16bpp output */
+  bool bAspectRatioCorrection; /* Apply H/V scaling for aspect ratio correction */
+  bool bUpscale; /* Allow upscaling to fill screen */
+  bool bNoLowColour; /* Disable 1/2/4bpp modes */
   int iMinResX,iMinResY;
   int iLCDResX,iLCDResY;
 #endif

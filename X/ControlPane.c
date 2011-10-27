@@ -56,7 +56,7 @@ static void DoLED(const char *Text, int On, int ty, int lx)
 
 /*----------------------------------------------------------------------------*/
 
-static void draw_keyboard_leds(unsigned int leds)
+static void draw_keyboard_leds(uint8_t leds)
 {
     DoLED("Caps Lock",   leds & KBD_LED_CAPSLOCK, LEDTOPS, 0);
     DoLED("Num Lock",    leds & KBD_LED_NUMLOCK, LEDTOPS, 90);

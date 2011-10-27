@@ -120,13 +120,14 @@ static void DumpHandler(int sig) {
   int idx;
   for(idx=0;idx<512;idx++)
   {
-    int pt = MEMC.PageTable[idx];
+    int32_t pt = MEMC.PageTable[idx];
     if(pt>0)
     {
       ARMword logadr,phys,mangle;
       /* Assume MEMC isn't in OS mode */
       static const char *prot[4] = {"USR R/W","USR R","SVC only","SVC only"};
       switch(MEMC.PageSizeFlags) {
+        default:
         case MEMC_PAGESIZE_O_4K:
           phys = pt & 127;
           logadr = (pt & 0x7ff000)
@@ -192,11 +193,11 @@ ARMul_MemoryInit(ARMul_State *state)
   FILE *ROMFile;
   int PresPage;
   unsigned int i;
-  unsigned extnrom_size = 0;
+  uint32_t extnrom_size = 0;
 #if defined(EXTNROM_SUPPORT)
-  unsigned extnrom_entry_count;
+  uint32_t extnrom_entry_count;
 #endif
-  unsigned long initmemsize;
+  uint32_t initmemsize;
   
   MEMC.DRAMPageSize = MEMC_PAGESIZE_3_32K;
   switch(hArcemConfig.eMemSize) {
@@ -260,7 +261,7 @@ ARMul_MemoryInit(ARMul_State *state)
   MEMC.ROMMapFlag    = 1; /* Map ROM to address 0 */
   MEMC.ControlReg    = 0; /* Defaults */
   MEMC.PageSizeFlags = MEMC_PAGESIZE_O_4K;
-  MEMC.NextSoundBufferValid = 0; /* Not set till Sstart and SendN have been written */
+  MEMC.NextSoundBufferValid = false; /* Not set till Sstart and SendN have been written */
 
   MEMC.RAMSize = initmemsize;
   MEMC.RAMMask = (initmemsize-1) & (4*1024*1024-1); /* Mask within a 4M MEMC bank */
@@ -320,7 +321,7 @@ ARMul_MemoryInit(ARMul_State *state)
 
   dbug(" Loading ROM....\n ");
 
-  File_ReadEmu(ROMFile,(char *) MEMC.ROMHigh,MEMC.ROMHighSize);
+  File_ReadEmu(ROMFile,(uint8_t *) MEMC.ROMHigh,MEMC.ROMHighSize);
 
   /* Close System ROM Image File */
   fclose(ROMFile);
@@ -341,8 +342,7 @@ ARMul_MemoryInit(ARMul_State *state)
 #if defined(EXTNROM_SUPPORT)
     /* Load extension ROM */
     dbug("Loading Extension ROM...\n");
-    extnrom_load(extnrom_size, extnrom_entry_count,
-                 (unsigned char *) MEMC.ROMLow);
+    extnrom_load(extnrom_size, extnrom_entry_count, MEMC.ROMLow);
 #endif /* EXTNROM_SUPPORT */
   }
 
@@ -525,11 +525,12 @@ static void ARMul_PurgeFastMapPTIdx(ARMword idx)
   if(MEMC.ROMMapFlag)
     return; /* Still in ROM mode, abort */
     
-  int pt = MEMC.PageTable[idx];
+  int32_t pt = MEMC.PageTable[idx];
   if(pt>0)
   {
     ARMword logadr,phys,mask;
     switch(MEMC.PageSizeFlags) {
+      default:
       case MEMC_PAGESIZE_O_4K:
         phys = pt & 127;
         logadr = (pt & 0x7ff000)
@@ -575,7 +576,7 @@ static void ARMul_PurgeFastMapPTIdx(ARMword idx)
       {
         if(idx2 != idx)
         {
-          int pt2 = MEMC.PageTable[idx2];
+          int32_t pt2 = MEMC.PageTable[idx2];
           if((pt2 > 0) && ((pt2 & mask) == pt))
           {
             /* We've found a suitable replacement */
@@ -634,11 +635,12 @@ static void ARMul_RebuildFastMapPTIdx(ARMword idx)
   FASTMAP_R_OS|FASTMAP_R_SVC|FASTMAP_W_SVC,  /* PPL 11 */
   };
 
-  int pt = MEMC.PageTable[idx];
+  int32_t pt = MEMC.PageTable[idx];
   if(pt>0)
   {
     ARMword logadr,phys;
     switch(MEMC.PageSizeFlags) {
+      default:
       case MEMC_PAGESIZE_O_4K:
         phys = pt & 127;
         logadr = (pt & 0x7ff000)
@@ -663,7 +665,7 @@ static void ARMul_RebuildFastMapPTIdx(ARMword idx)
     ARMword size=12+MEMC.PageSizeFlags;
     phys = ARMul_ManglePhysAddr(phys<<size);
     size = 1<<size;
-    ARMword flags = PPL_To_Flags[(pt>>8)&3];
+    FastMapUInt flags = PPL_To_Flags[(pt>>8)&3];
     if((phys<512*1024) && DisplayDev_UseUpdateFlags)
     {
       /* DMAable, must use func on write */

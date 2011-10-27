@@ -21,7 +21,7 @@ typedef struct Directory_s Directory;
  * @param hDir Pointer to a Directory struct to fill in
  * @returns 1 on success 0 on failure
  */
-unsigned Directory_Open(const char *sPath, Directory *hDir);
+bool Directory_Open(const char *sPath, Directory *hDir);
 
 /**
  * Directory_Close
@@ -44,9 +44,9 @@ char *Directory_GetNextEntry(Directory *hDirectory);
 
 typedef struct FileInfo
 {
-  unsigned long ulFilesize;      /* In bytes */
-  unsigned char bIsRegularFile;
-  unsigned char bIsDirectory;
+  uint32_t ulFilesize;      /* In bytes */
+  bool bIsRegularFile;
+  bool bIsDirectory;
 } FileInfo;
 
 /**
@@ -58,7 +58,7 @@ typedef struct FileInfo
  * @param phFileInfo pointer to FileInfo struct to fill in
  * @returns 0 on failure 1 on success
  */
-unsigned char File_GetInfo(const char *sPath, FileInfo *phFileInfo);
+bool File_GetInfo(const char *sPath, FileInfo *phFileInfo);
 
 /* These next few are implemented in arch/filecommon.c */
 
@@ -73,7 +73,7 @@ unsigned char File_GetInfo(const char *sPath, FileInfo *phFileInfo);
  * @param uCount Number of bytes to read
  * @returns Number of bytes read
  */
-size_t File_ReadEmu(FILE *pFile,char *pBuffer,size_t uCount);
+size_t File_ReadEmu(FILE *pFile,uint8_t *pBuffer,size_t uCount);
 
 /**
  * File_WriteEmu
@@ -86,7 +86,7 @@ size_t File_ReadEmu(FILE *pFile,char *pBuffer,size_t uCount);
  * @param uCount Number of bytes to write
  * @returns Number of bytes written
  */
-size_t File_WriteEmu(FILE *pFile,const char *pBuffer,size_t uCount);
+size_t File_WriteEmu(FILE *pFile,const uint8_t *pBuffer,size_t uCount);
 
 /**
  * File_ReadRAM

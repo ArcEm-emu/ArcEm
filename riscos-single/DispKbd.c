@@ -34,7 +34,6 @@ static int enable_stats = 0;
 static int do_screenshot = 0;
 #ifdef PROFILE_ENABLED
 static int enable_profile = 0;
-extern void Keyboard_Poll(ARMul_State *state,CycleCount nowtime);
 #endif
 
 static void GoMenu(void);
@@ -51,7 +50,7 @@ typedef struct {
   int YScale;
 } DisplayParams;
 
-static void set_cursor_palette(unsigned int *pal);
+static void set_cursor_palette(uint16_t *pal);
 static void UpdateCursorPos(ARMul_State *state,const DisplayParams *params);
 static void Host_PollDisplay_Common(ARMul_State *state,const DisplayParams *params);
 
@@ -430,7 +429,7 @@ PDD_Name(Host_PollDisplay)(ARMul_State *state)
 
 /* ------------------------------------------------------------------ */
 
-static void set_cursor_palette(unsigned int *pal)
+static void set_cursor_palette(uint16_t *pal)
 {
   char buf[5];
   int c;
@@ -656,7 +655,7 @@ static void Host_PollDisplay_Common(ARMul_State *state,const DisplayParams *para
 
 /*-----------------------------------------------------------------------------*/
 
-static void leds_changed(unsigned int leds)
+static void leds_changed(uint8_t leds)
 {
   int newstate = 0;
   if(!(leds & KBD_LED_CAPSLOCK))
@@ -982,26 +981,29 @@ typedef struct {
   const char label;
   const char *name;
   const char **values;
-  int *val;
+  void *val;
+  size_t valsz;
 } menu_item;
 
 static const char *values_bool[] = {"Off","On",NULL};
 static const char *values_display[] = {"Palettised","16bpp",NULL};
 static const char *values_skip[] = {"0","1","2","3","4","5","6","7","8","9","10",NULL};
 
+#define XX(X) &X,sizeof(X)
+
 static const menu_item items[] =
 {
-  {'1',"Display driver",values_display,(int *) &hArcemConfig.eDisplayDriver},
-  {'2',"Red/blue swap 16bpp output",values_bool,&hArcemConfig.bRedBlueSwap},
-  {'3',"Palettised auto UpdateFlags",values_bool,&DisplayDev_AutoUpdateFlags},
-  {'4',"Palettised uses UpdateFlags",values_bool,&DisplayDev_UseUpdateFlags},
-  {'5',"Palettised output frameskip",values_skip,&PDD_FrameSkip},
-  {'6',"Aspect ratio correction",values_bool,&hArcemConfig.bAspectRatioCorrection},
-  {'7',"2X upscaling",values_bool,&hArcemConfig.bUpscale},
-  {'8',"Take screenshots on Print Screen",values_bool,&enable_screenshots},
-  {'9',"Show stats",values_bool,&enable_stats},
+  {'1',"Display driver",values_display,XX(hArcemConfig.eDisplayDriver)},
+  {'2',"Red/blue swap 16bpp output",values_bool,XX(hArcemConfig.bRedBlueSwap)},
+  {'3',"Palettised auto UpdateFlags",values_bool,XX(DisplayDev_AutoUpdateFlags)},
+  {'4',"Palettised uses UpdateFlags",values_bool,XX(DisplayDev_UseUpdateFlags)},
+  {'5',"Palettised output frameskip",values_skip,XX(PDD_FrameSkip)},
+  {'6',"Aspect ratio correction",values_bool,XX(hArcemConfig.bAspectRatioCorrection)},
+  {'7',"2X upscaling",values_bool,XX(hArcemConfig.bUpscale)},
+  {'8',"Take screenshots on Print Screen",values_bool,XX(enable_screenshots)},
+  {'9',"Show stats",values_bool,XX(enable_stats)},
 #ifdef PROFILE_ENABLED
-  {'P',"Profiling",values_bool,&enable_profile},
+  {'P',"Profiling",values_bool,XX(enable_profile)},
 #endif
   {'R',"Resume",NULL,NULL},
   {'Q',"Quit",NULL,NULL},
@@ -1011,6 +1013,28 @@ static const menu_item items[] =
 #define ITEM_QUIT (ITEM_MAX-1)
 #define ITEM_RESUME (ITEM_MAX-2)
 
+static uint32_t readval(int i)
+{
+  uint8_t *val = (uint8_t *) items[i].val;
+  size_t j;
+  uint32_t temp=0;
+  for(j=0;j<items[i].valsz;j++)
+  {
+    temp |= (val[j])<<(j<<3);
+  }
+  return temp;
+}
+
+static void writeval(int i,uint32_t temp)
+{
+  uint8_t *val = (uint8_t *) items[i].val;
+  size_t j;
+  for(j=0;j<items[i].valsz;j++)
+  {
+    val[j] = temp>>(j<<3);
+  }
+}
+
 static void DrawMenu(void)
 {
   _swi(OS_WriteC,_IN(0),12);
@@ -1019,7 +1043,7 @@ static void DrawMenu(void)
   for(i=0;i<ITEM_MAX;i++)
   {
     if(items[i].values)
-      printf("%c. [%s] %s\n",items[i].label,items[i].values[*items[i].val],items[i].name);
+      printf("%c. [%s] %s\n",items[i].label,items[i].values[readval(i)],items[i].name);
     else
       printf("%c. %s\n",items[i].label,items[i].name);
   }
@@ -1059,11 +1083,11 @@ static void GoMenu(void)
     }
     else if(i<ITEM_MAX)
     {
-      int val = *(items[i].val);
+      uint32_t val = readval(i);
       val++;
       if(!items[i].values[val])
         val = 0;
-      *(items[i].val) = val;
+      writeval(i,val);
       if(items[i].val == &DisplayDev_AutoUpdateFlags)
       {
         /* Make sure these are sane */

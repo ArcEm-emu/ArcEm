@@ -21,7 +21,8 @@
 #define USE_FILEBUFFER
 
 /* Note: Musn't be used as a parameter to ReadEmu/WriteEmu! */
-static char temp_buf[32768];
+static ARMword temp_buf_word[32768/4];
+static uint8_t *temp_buf = (uint8_t *) temp_buf_word;
 
 #ifdef USE_FILEBUFFER
 /* File buffering */
@@ -29,7 +30,7 @@ static char temp_buf[32768];
 #define MAX_FILEBUFFER (1024*1024)
 #define MIN_FILEBUFFER (32768)
 
-static char *buffer=0;
+static uint8_t *buffer=0;
 static size_t buffer_size=0;
 
 static void ensure_buffer_size(size_t buffer_size_needed)
@@ -75,7 +76,7 @@ static void filebuffer_initread(FILE *pFile,size_t uCount)
   filebuffer_fill();
 }
 
-static size_t filebuffer_read(char *pBuffer,size_t uCount,bool endian)
+static size_t filebuffer_read(uint8_t *pBuffer,size_t uCount,bool endian)
 {
   if(!filebuffer_inuse)
   {
@@ -120,7 +121,7 @@ static void filebuffer_initwrite(FILE *pFile,size_t uCount)
   filebuffer_offset = 0;
 }
 
-static void filebuffer_write(char *pBuffer,size_t uCount,bool endian)
+static void filebuffer_write(uint8_t *pBuffer,size_t uCount,bool endian)
 {
   if(filebuffer_remain == filebuffer_buffered)
     return;
@@ -185,7 +186,7 @@ static size_t filebuffer_endwrite(void)
  * @param uCount Number of bytes to read
  * @returns Number of bytes read
  */
-size_t File_ReadEmu(FILE *pFile,char *pBuffer,size_t uCount)
+size_t File_ReadEmu(FILE *pFile,uint8_t *pBuffer,size_t uCount)
 {
 #ifdef HOST_BIGENDIAN
   /* The only way to safely read the data without running the risk of corrupting
@@ -224,7 +225,7 @@ size_t File_ReadEmu(FILE *pFile,char *pBuffer,size_t uCount)
  * @param uCount Number of bytes to write
  * @returns Number of bytes written
  */
-size_t File_WriteEmu(FILE *pFile,const char *pBuffer,size_t uCount)
+size_t File_WriteEmu(FILE *pFile,const uint8_t *pBuffer,size_t uCount)
 {
 #ifdef HOST_BIGENDIAN
   /* Split into chunks and copy into the temp buffer */
@@ -270,24 +271,24 @@ size_t File_ReadRAM(FILE *pFile,ARMword uAddress,size_t uCount)
   {
     size_t amt = MIN(4096-(uAddress&4095),uCount);
 
-    uAddress &= 0x3ffffff;
+    uAddress &= UINT32_C(0x3ffffff);
 
     FastMapEntry *entry = FastMap_GetEntryNoWrap(state,uAddress);
     FastMapRes res = FastMap_DecodeWrite(entry,state->FastMapMode);
     if(FASTMAP_RESULT_DIRECT(res))
     {
-      char *phy = (char *) FastMap_Log2Phy(entry,uAddress);
+      uint8_t *phy = (uint8_t *) FastMap_Log2Phy(entry,uAddress);
 
       /* Scan ahead to work out the size of this memory block */
       while(amt < uCount)
       {
-        ARMword uAddrNext = (uAddress+amt) & 0x3ffffff;
+        ARMword uAddrNext = (uAddress+amt) & UINT32_C(0x3ffffff);
         size_t amt2 = MIN(4096,uCount-amt);
         FastMapEntry *entry2 = FastMap_GetEntryNoWrap(state,uAddrNext);
         FastMapRes res2 = FastMap_DecodeRead(entry2,state->FastMapMode);
         if(!FASTMAP_RESULT_DIRECT(res2))
           break;
-        char *phy2 = (char *) FastMap_Log2Phy(entry2,uAddrNext);
+        uint8_t *phy2 = (uint8_t *) FastMap_Log2Phy(entry2,uAddrNext);
         if(phy2 != phy+amt)
           break;
         /* These fastmap pages are contiguous in physical memory */
@@ -301,7 +302,7 @@ size_t File_ReadRAM(FILE *pFile,ARMword uAddress,size_t uCount)
 #endif
 
       /* Clobber emu funcs for that region */
-      size_t temp2 = (temp+(uAddress&3)+3)&~3;
+      size_t temp2 = (temp+(uAddress&3)+3)&~UINT32_C(3);
       ARMEmuFunc *func = FastMap_Phy2Func(state,(ARMword *) (phy-(uAddress&3)));
       while(temp2>0)
       {
@@ -326,7 +327,7 @@ size_t File_ReadRAM(FILE *pFile,ARMword uAddress,size_t uCount)
 #endif
       size_t temp2 = temp;
       /* Deal with start bytes */
-      char *c = temp_buf+(uAddress&3);
+      uint8_t *c = temp_buf+(uAddress&3);
       while((uAddress&3) && temp2)
       {
         FastMap_StoreFunc(entry,state,uAddress,*c,FASTMAP_ACCESSFUNC_BYTE);
@@ -394,13 +395,13 @@ size_t File_WriteRAM(FILE *pFile,ARMword uAddress,size_t uCount)
   {
     size_t amt = MIN(4096-(uAddress&4095),uCount);
 
-    uAddress &= 0x3ffffff;
+    uAddress &= UINT32_C(0x3ffffff);
 
     FastMapEntry *entry = FastMap_GetEntryNoWrap(state,uAddress);
     FastMapRes res = FastMap_DecodeRead(entry,state->FastMapMode);
     if(FASTMAP_RESULT_DIRECT(res))
     {
-      char *phy = (char *) FastMap_Log2Phy(entry,uAddress);
+      uint8_t *phy = (uint8_t *) FastMap_Log2Phy(entry,uAddress);
 
       /* Scan ahead to work out the size of this memory block */
       while(amt < uCount)
@@ -411,7 +412,7 @@ size_t File_WriteRAM(FILE *pFile,ARMword uAddress,size_t uCount)
         FastMapRes res2 = FastMap_DecodeRead(entry2,state->FastMapMode);
         if(!FASTMAP_RESULT_DIRECT(res2))
           break;
-        char *phy2 = (char *) FastMap_Log2Phy(entry2,uAddrNext);
+        uint8_t *phy2 = (uint8_t *) FastMap_Log2Phy(entry2,uAddrNext);
         if(phy2 != phy+amt)
           break;
         /* These fastmap pages are contiguous in physical memory */
@@ -437,12 +438,12 @@ size_t File_WriteRAM(FILE *pFile,ARMword uAddress,size_t uCount)
     else if(FASTMAP_RESULT_FUNC(res))
     {
       /* Copy into temp buffer so we can perform endian swapping */
-      char *temp = temp_buf+(uAddress&3);
-      size_t temp2 = (amt+(uAddress&3)+3)&~3; /* How many words to read */
+      uint8_t *temp = temp_buf+(uAddress&3);
+      size_t temp2 = (amt+(uAddress&3)+3)&~UINT32_C(3); /* How many words to read */
       
       /* Copy the data a word at a time */
       ARMword *w = (ARMword *) temp_buf;
-      uAddress &= ~3;
+      uAddress &= ~UINT32_C(3);
       while(temp2 >= 4)
       {
         *w = EndianSwap(FastMap_LoadFunc(entry,state,uAddress));

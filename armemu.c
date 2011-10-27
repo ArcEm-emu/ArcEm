@@ -26,7 +26,7 @@
 ARMul_State statestr;
 
 /* global used to terminate the emulator */
-static int kill_emulator;
+static bool kill_emulator;
 
 typedef struct {
   ARMword instr;
@@ -237,7 +237,7 @@ static ARMword RHSFunc_ASR_Imm(ARMul_State *state,ARMword instr,ARMword base)
 {
   base = state->Reg[base];
   ARMword shamt = BITS(7,11);
-  return (shamt?((ARMword)((int)base>>(int)shamt)):((ARMword)((int)base>>31L)));
+  return (shamt?((ARMword)((int32_t)base>>(int)shamt)):((ARMword)((int32_t)base>>31L)));
 }
 
 static ARMword RHSFunc_ROR_Imm(ARMul_State *state,ARMword instr,ARMword base)
@@ -274,7 +274,7 @@ static ARMword RHSFunc_ASR_Reg(ARMul_State *state,ARMword instr,ARMword base)
     base = state->Reg[base];
     ARMul_Icycles(state,1);
     ARMword shamt = state->Reg[BITS(8,11)] & 0xff;
-  return (shamt<32?((ARMword)((int)base>>(int)shamt)):((ARMword)((int)base>>31L)));
+  return (shamt<32?((ARMword)((int32_t)base>>(int)shamt)):((ARMword)((int32_t)base>>31L)));
 }
 
 static ARMword RHSFunc_ROR_Reg(ARMul_State *state,ARMword instr,ARMword base)
@@ -306,7 +306,7 @@ GetDPRegRHS(ARMul_State *state, ARMword instr)
     base = state->Reg[base];
     ARMul_Icycles(state,1);
     shamt = state->Reg[BITS(8,11)] & 0xff;
-    switch ((int)BITS(5,6)) {
+    switch (BITS(5,6)) {
        case LSL: if (shamt == 0)
                      return(base);
                   else if (shamt >= 32)
@@ -322,9 +322,9 @@ GetDPRegRHS(ARMul_State *state, ARMword instr)
        case ASR: if (shamt == 0)
                      return(base);
                   else if (shamt >= 32)
-                     return((ARMword)((int)base >> 31L));
+                     return((ARMword)((int32_t)base >> 31L));
                   else
-                     return((ARMword)((int)base >> (int)shamt));
+                     return((ARMword)((int32_t)base >> (int)shamt));
        case ROR: shamt &= 0x1f;
                   if (shamt == 0)
                      return(base);
@@ -335,16 +335,16 @@ GetDPRegRHS(ARMul_State *state, ARMword instr)
  else { /* shift amount is a constant */
     base = state->Reg[base];
     shamt = BITS(7,11);
-    switch ((int)BITS(5,6)) {
+    switch (BITS(5,6)) {
        case LSL: return(base<<shamt);
        case LSR: if (shamt == 0)
                      return(0);
                   else
                      return(base >> shamt);
        case ASR: if (shamt == 0)
-                     return((ARMword)((int)base >> 31L));
+                     return((ARMword)((int32_t)base >> 31L));
                   else
-                     return((ARMword)((int)base >> (int)shamt));
+                     return((ARMword)((int32_t)base >> (int)shamt));
        case ROR: if (shamt==0) /* it's an RRX */
                      return((base >> 1) | (CFLAG << 31));
                   else
@@ -374,7 +374,7 @@ GetDPSRegRHS(ARMul_State *state, ARMword instr)
     base = state->Reg[base];
     ARMul_Icycles(state,1);
     shamt = state->Reg[BITS(8,11)] & 0xff;
-    switch ((int)BITS(5,6)) {
+    switch (BITS(5,6)) {
        case LSL: if (shamt == 0)
                      return(base);
                   else if (shamt == 32) {
@@ -407,11 +407,11 @@ GetDPSRegRHS(ARMul_State *state, ARMword instr)
                      return(base);
                   else if (shamt >= 32) {
                      ASSIGNC(base >> 31L);
-                     return((ARMword)((int)base >> 31L));
+                     return((ARMword)((int32_t)base >> 31L));
                      }
                   else {
-                     ASSIGNC((ARMword)((int)base >> (int)(shamt-1)) & 1);
-                     return((ARMword)((int)base >> (int)shamt));
+                     ASSIGNC((ARMword)((int32_t)base >> (int)(shamt-1)) & 1);
+                     return((ARMword)((int32_t)base >> (int)shamt));
                      }
        case ROR: if (shamt == 0)
                      return(base);
@@ -429,7 +429,7 @@ GetDPSRegRHS(ARMul_State *state, ARMword instr)
  else { /* shift amount is a constant */
     base = state->Reg[base];
     shamt = BITS(7,11);
-    switch ((int)BITS(5,6)) {
+    switch (BITS(5,6)) {
        case LSL:
                   /* BUGFIX: This copes with the case when base = R15 and shamt = 0 
                      from Patrick (Adapted Cat) */
@@ -446,11 +446,11 @@ GetDPSRegRHS(ARMul_State *state, ARMword instr)
                      }
        case ASR: if (shamt == 0) {
                      ASSIGNC(base >> 31L);
-                     return((ARMword)((int)base >> 31L));
+                     return((ARMword)((int32_t)base >> 31L));
                      }
                   else {
-                     ASSIGNC((ARMword)((int)base >> (int)(shamt-1)) & 1);
-                     return((ARMword)((int)base >> (int)shamt));
+                     ASSIGNC((ARMword)((int32_t)base >> (int)(shamt-1)) & 1);
+                     return((ARMword)((int32_t)base >> (int)shamt));
                      }
        case ROR: if (shamt == 0) { /* its an RRX */
                      shamt = CFLAG;
@@ -507,7 +507,7 @@ static ARMword GetLSRegRHS(ARMul_State *state, ARMword instr)
  base = state->Reg[base];
 
  shamt = BITS(7,11);
- switch ((int)BITS(5,6)) {
+ switch (BITS(5,6)) {
     case LSL: return(base << shamt);
     case LSR: if (shamt == 0)
                   return(0);
@@ -515,9 +515,9 @@ static ARMword GetLSRegRHS(ARMul_State *state, ARMword instr)
                   return(base >> shamt);
 
     case ASR: if (shamt == 0)
-                  return((ARMword)((int)base >> 31L));
+                  return((ARMword)((int32_t)base >> 31L));
                else
-                  return((ARMword)((int)base >> (int)shamt));
+                  return((ARMword)((int32_t)base >> (int)shamt));
 
     case ROR: if (shamt == 0) /* it's an RRX */
                   return((base >> 1) | (CFLAG << 31));
@@ -976,7 +976,7 @@ done:
 
 static CycleCount EmuRate_LastUpdateCycle;
 static clock_t EmuRate_LastUpdateTime;
-unsigned long ARMul_EmuRate = 1000000; /* Start with safe value of 1MHz */
+uint32_t ARMul_EmuRate = 1000000; /* Start with safe value of 1MHz */
 
 void EmuRate_Reset(ARMul_State *state)
 {
@@ -1009,7 +1009,7 @@ void EmuRate_Update(ARMul_State *state)
   /* Force 8MHz when profiling is on */
   ARMul_EmuRate = 8000000;
 #else
-  unsigned long newrate = (unsigned long) ((((double)cycles)*CLOCKS_PER_SEC)/timediff);
+  uint32_t newrate = (uint32_t) ((((double)cycles)*CLOCKS_PER_SEC)/timediff);
   /* Clamp to a sensible minimum value, just in case something crazy happens */
   if(newrate < 1000000)
     newrate = 1000000;
@@ -1019,8 +1019,8 @@ void EmuRate_Update(ARMul_State *state)
 
   /* Recalculate IOC rates */
 
-  ioc.InvIOCRate = (((unsigned long long) ARMul_EmuRate)<<16)/2000000;
-  ioc.IOCRate = (((unsigned long long) 2000000)<<16)/ARMul_EmuRate;
+  ioc.InvIOCRate = (((uint64_t) ARMul_EmuRate)<<16)/2000000;
+  ioc.IOCRate = (((uint64_t) 2000000)<<16)/ARMul_EmuRate;
 
   /* Update IOC timers again, to ensure the next interrupt occurs at the right time */
   UpdateTimerRegisters(state);
@@ -1070,15 +1070,15 @@ ARMul_Emulate26(ARMul_State *state)
 {
   PipelineEntry pipe[PIPESIZE];   /* Instruction pipeline */
   ARMword pc = 0;          /* The address of the current instruction */
-  int pipeidx = 0; /* Index of instruction to run */
+  uint_fast8_t pipeidx = 0; /* Index of instruction to run */
 
   EmuRate_Reset(state);
 
   /**************************************************************************\
    *                        Execute the next instruction                    *
   \**************************************************************************/
-  kill_emulator = 0;
-  while (kill_emulator == 0) {
+  kill_emulator = false;
+  while (kill_emulator == false) {
     Prof_Begin("ARMul_Emulate26 prime");
     if (state->NextInstr < PRIMEPIPE) {
       pipe[1].instr = state->decoded;

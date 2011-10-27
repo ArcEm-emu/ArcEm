@@ -6,16 +6,16 @@
 #include "../armdefs.h"
 
 struct IOCStruct {
-  unsigned char ControlReg;
-  unsigned char ControlRegInputData;
-  unsigned char SerialRxData;
-  unsigned char SerialTxData;
-  unsigned char IOEBControlReg;
-  unsigned int IRQStatus,IRQMask;
-  unsigned int FIRQStatus,FIRQMask;
-  int TimerCount[4];
-  unsigned int TimerInputLatch[4];
-  unsigned int TimerOutputLatch[4];
+  uint8_t ControlReg;
+  uint8_t ControlRegInputData;
+  uint8_t SerialRxData;
+  uint8_t SerialTxData;
+  uint8_t IOEBControlReg;
+  uint16_t IRQStatus,IRQMask;
+  uint16_t FIRQStatus,FIRQMask;
+  int32_t TimerCount[4];
+  uint16_t TimerInputLatch[4];
+  uint16_t TimerOutputLatch[4];
 
   struct {
     unsigned int insidebitcount;
@@ -28,14 +28,14 @@ struct IOCStruct {
   unsigned int LatchB;
   unsigned int LatchBold;
 
-  unsigned long TimersLastUpdated;
-  unsigned long NextTimerTrigger;
-  unsigned int TimerFracBit;
-  unsigned int Timer0CanInt;
-  unsigned int Timer1CanInt;
+  CycleCount TimersLastUpdated;
+  CycleCount NextTimerTrigger;
+  uint16_t TimerFracBit;
+  bool Timer0CanInt;
+  bool Timer1CanInt;
 
-  unsigned long IOCRate; /* Number of IOC clock ticks per emu cycle, in 16.16 fixed-point format */
-  unsigned long InvIOCRate; /* Inverse IOC rate, 16.16 */
+  uint32_t IOCRate; /* Number of IOC clock ticks per emu cycle, in 16.16 fixed-point format */
+  uint32_t InvIOCRate; /* Inverse IOC rate, 16.16 */
 };
 
 extern struct IOCStruct ioc;
@@ -82,10 +82,10 @@ void IO_Init(ARMul_State *state);
 ARMword GetWord_IO(ARMul_State *state, ARMword address);
 
 /*-----------------------------------------------------------------------------*/
-void PutValIO(ARMul_State *state,ARMword address, ARMword data,int bNw);
+void PutValIO(ARMul_State *state,ARMword address, ARMword data,bool bNw);
 
 /*-----------------------------------------------------------------------------*/
-int IOC_WriteKbdRx(ARMul_State *state, unsigned char value);
+int IOC_WriteKbdRx(ARMul_State *state, uint8_t value);
 /*-----------------------------------------------------------------------------*/
 int IOC_ReadKbdTx(ARMul_State *state);
 

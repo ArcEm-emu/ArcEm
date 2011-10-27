@@ -31,11 +31,11 @@
 typedef struct {
     /* User-visible name. */
     const char *name;
-    int bytes_per_sector;
-    int sectors_per_track;
-    int sector_base;
-    int num_cyl;
-    int num_sides;
+    uint16_t bytes_per_sector;
+    uint8_t sectors_per_track;
+    uint8_t sector_base;
+    uint8_t num_cyl;
+    uint8_t num_sides;
 } floppy_format;
 
 typedef struct {
@@ -43,23 +43,23 @@ typedef struct {
     FILE *fp;
     /* Based on whether read/write access to the disc image was
      * obtained. */
-    int write_protected;
+    bool write_protected;
     /* Points to an element of avail_format. */
     floppy_format *form;
 } floppy_drive;
 
 struct FDCStruct{
-  unsigned char LastCommand;
-  int Direction; /* -1 or 1 */
-  unsigned char StatusReg;
-  unsigned char Track;
-  unsigned char Sector;
-  unsigned char Sector_ReadAddr; /* Used to hold the next sector to be found! */
-  unsigned char Data;
-  int BytesToGo;
-  int DelayCount;
-  int DelayLatch;
-  int CurrentDisc;
+  uint8_t LastCommand;
+  int8_t Direction; /* -1 or 1 */
+  uint8_t StatusReg;
+  uint8_t Track;
+  uint8_t Sector;
+  uint8_t Sector_ReadAddr; /* Used to hold the next sector to be found! */
+  uint8_t Data;
+  int32_t BytesToGo;
+  int32_t DelayCount;
+  int32_t DelayLatch;
+  int32_t CurrentDisc;
 #ifdef MACOSX
   char* driveFiles[4];  // In MAE, we use *real* filenames for disks
 #endif
@@ -146,7 +146,7 @@ static void FDC_DoWriteChar(ARMul_State *state);
 static void FDC_DoReadChar(ARMul_State *state);
 static void FDC_DoReadAddressChar(ARMul_State *state);
 
-static void efseek(FILE *fp, long offset, int whence);
+static void efseek(FILE *fp, int32_t offset, int whence);
 
 /*--------------------------------------------------------------------------*/
 static void GenInterrupt(ARMul_State *state, const char *reason) {
@@ -248,7 +248,7 @@ static void ClearDRQ(ARMul_State *state) {
  * @param state Emulator state
  */
 void FDC_LatchAChange(ARMul_State *state) {
-  static unsigned long TimeWhenInUseChanged,now,diff;
+  static CycleCount TimeWhenInUseChanged,now,diff;
   int bit;
   int val;
   int diffmask=ioc.LatchA ^ ioc.LatchAold;
@@ -293,7 +293,7 @@ void FDC_LatchAChange(ARMul_State *state) {
           now=ARMul_Time;
           diff=now-TimeWhenInUseChanged;
           DBG((stderr,"Floppy In use line now %d (was %s for %lu ticks)\n",
-                  val?1:0,val?"low":"high",diff));
+                  val?1:0,val?"low":"high",(long unsigned int) diff));
           TimeWhenInUseChanged=now;
           break;
 
@@ -600,7 +600,7 @@ static void FDC_StepDirCommand(ARMul_State *state,int Dir) {
 
 /*--------------------------------------------------------------------------*/
 static void FDC_ReadAddressCommand(ARMul_State *state) {
-  long offset;
+  int32_t offset;
   int Side=(ioc.LatchA & (1<<4))?0:1; /* Note: Inverted??? Yep!!! */
 
   FDC.StatusReg|=BIT_BUSY;
@@ -632,7 +632,7 @@ static void FDC_ReadAddressCommand(ARMul_State *state) {
 
 /*--------------------------------------------------------------------------*/
 static void FDC_ReadCommand(ARMul_State *state) {
-  unsigned long offset;
+  uint32_t offset;
   int Side=(ioc.LatchA & (1<<4))?0:1; /* Note: Inverted??? Yep!!! */
 
   FDC.StatusReg|=BIT_BUSY;
@@ -688,7 +688,7 @@ static void FDC_DoWriteChar(ARMul_State *state) {
 } /* FDC_DoWriteChar */
 /*--------------------------------------------------------------------------*/
 static void FDC_WriteCommand(ARMul_State *state) {
-  unsigned long offset;
+  uint32_t offset;
   int Side=(ioc.LatchA & (1<<4))?0:1; /* Note: Inverted??? Yep!!! */
   FDC.StatusReg|=BIT_BUSY;
   FDC.StatusReg &= ~(BIT_DRQ | BIT_LOSTDATA | (1<<5) | BIT_WRITEPROT | BIT_RECNOTFOUND);
@@ -794,7 +794,7 @@ static void FDC_NewCommand(ARMul_State *state, ARMword data)
  * @param bNw    byteNotWord IMPROVE unused parameter
  * @returns      IMRPOVE always 0
  */
-ARMword FDC_Write(ARMul_State *state, ARMword offset, ARMword data, int bNw) {
+ARMword FDC_Write(ARMul_State *state, ARMword offset, ARMword data, bool bNw) {
   int reg=(offset>>2) &3;
 
   switch (reg) {
@@ -944,7 +944,7 @@ FDC_InsertFloppy(int drive, const char *image)
 {
   floppy_drive *dr;
   FILE *fp;
-  int len;
+  int32_t len;
   floppy_format *ff;
 
   assert(drive >= 0 && drive < sizeof FDC.drive /
@@ -962,9 +962,9 @@ FDC_InsertFloppy(int drive, const char *image)
   assert(dr->fp == NULL);
 
   if ((fp = fopen(image, "rb+")) != NULL) {
-    dr->write_protected = FALSE;
+    dr->write_protected = false;
   } else if ((fp = fopen(image, "rb")) != NULL) {
-    dr->write_protected = TRUE;
+    dr->write_protected = true;
   } else {
     fprintf(stderr, "couldn't open disc image %s on drive %d\n",
           image, drive);
@@ -1043,10 +1043,10 @@ FDC_EjectFloppy(int drive)
 
 /* ------------------------------------------------------------------ */
 
-static void efseek(FILE *fp, long offset, int whence)
+static void efseek(FILE *fp, int32_t offset, int whence)
 {
   if (fseek(fp, offset, whence)) {
-    fprintf(stderr, "efseek(%p, %ld, %d) failed.\n", fp, offset,
+    fprintf(stderr, "efseek(%p, %ld, %d) failed.\n", fp, (long int) offset,
             whence);
     exit(1);
   }

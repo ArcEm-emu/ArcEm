@@ -84,10 +84,10 @@ void ArcemConfig_SetupDefaults(void)
 
 #if defined(SYSTEM_riscos_single)
   hArcemConfig.eDisplayDriver = DisplayDriver_Palettised;
-  hArcemConfig.bRedBlueSwap = 0;
-  hArcemConfig.bAspectRatioCorrection = 1;
-  hArcemConfig.bUpscale = 1;
-  hArcemConfig.bNoLowColour = 0;
+  hArcemConfig.bRedBlueSwap = false;
+  hArcemConfig.bAspectRatioCorrection = true;
+  hArcemConfig.bUpscale = true;
+  hArcemConfig.bNoLowColour = false;
   hArcemConfig.iMinResX = 0;
   hArcemConfig.iMinResY = 0;
   hArcemConfig.iLCDResX = 0;
@@ -335,16 +335,16 @@ void ArcemConfig_ParseCommandLine(int argc, char *argv[])
         exit(EXIT_FAILURE);
       }
     } else if(0 == strcmp("--rbswap",argv[iArgument])) {
-      hArcemConfig.bRedBlueSwap = 1;
+      hArcemConfig.bRedBlueSwap = true;
       iArgument += 1;
     } else if(0 == strcmp("--noaspect",argv[iArgument])) {
-      hArcemConfig.bAspectRatioCorrection = 0;
+      hArcemConfig.bAspectRatioCorrection = false;
       iArgument += 1;
     } else if(0 == strcmp("--noupscale",argv[iArgument])) {
-      hArcemConfig.bUpscale = 0;
+      hArcemConfig.bUpscale = false;
       iArgument += 1;
     } else if(0 == strcmp("--nolowcolour",argv[iArgument])) {
-      hArcemConfig.bNoLowColour = 1;
+      hArcemConfig.bNoLowColour = true;
       iArgument += 1;
     } else if(0 == strcmp("--minres",argv[iArgument])) {
       if(iArgument+2 < argc) {

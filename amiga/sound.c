@@ -38,14 +38,14 @@ int openaudio(void)
 	return 0;
 }
 
-SoundData *Sound_GetHostBuffer(long *destavail)
+SoundData *Sound_GetHostBuffer(int32_t *destavail)
 {
 	/* Just assume we always have enough space for the max batch size */
 	*destavail = sizeof(sound_buffer)/(sizeof(SoundData)*2);
 	return sound_buffer;
 }
 
-void Sound_HostBuffered(SoundData *buffer,long numSamples)
+void Sound_HostBuffered(SoundData *buffer,int32_t numSamples)
 {
 	numSamples *= 2;
 

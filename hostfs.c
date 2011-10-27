@@ -87,6 +87,8 @@ static char HOSTFS_ROOT[512];
 
 #endif /* !HOSTFS_ARCEM */
 
+//#define OLD_FILECODE
+
 #define HOSTFS_PROTOCOL_VERSION	1
 
 /* Windows mkdir() function only takes one argument name, and
@@ -953,7 +955,7 @@ hostfs_open(ARMul_State *state)
   }
 
   /* Find the extent of the file */
-  fseeko64(open_file[idx], 0uLL, SEEK_END);
+  fseeko64(open_file[idx], UINT64_C(0), SEEK_END);
   state->Reg[3] = (ARMword) ftello64(open_file[idx]);
   rewind(open_file[idx]); /* Return to start */
 
@@ -980,7 +982,19 @@ hostfs_getbytes(ARMul_State *state)
 
   fseeko64(f, (off64_t) state->Reg[4], SEEK_SET);
 
+#ifdef OLD_FILECODE
+  ARMword i;
+
+  hostfs_ensure_buffer_size(state->Reg[3]);
+
+  fread(buffer, 1, state->Reg[3], f);
+
+  for (i = 0; i < state->Reg[3]; i++) {
+    ARMul_StoreByte(state, ptr++, buffer[i]);
+  }
+#else
   File_ReadRAM(f, ptr, state->Reg[3]);
+#endif
 }
 
 static void
@@ -1000,7 +1014,20 @@ hostfs_putbytes(ARMul_State *state)
 
   fseeko64(f, (off64_t) state->Reg[4], SEEK_SET);
 
+#ifdef OLD_FILECODE
+  ARMword i;
+
+  hostfs_ensure_buffer_size(state->Reg[3]);
+
+  for (i = 0; i < state->Reg[3]; i++) {
+    buffer[i] = ARMul_LoadByte(state, ptr);
+    ptr++;
+  }
+
+  fwrite(buffer, 1, state->Reg[3], f);
+#else
   File_WriteRAM(f, ptr, state->Reg[3]);
+#endif
 }
 
 static void
@@ -1054,7 +1081,7 @@ hostfs_args_7_ensure_file_size(ARMul_State *state)
   dbug_hostfs("\tr1 = %u (our file handle)\n", state->Reg[1]);
   dbug_hostfs("\tr2 = %u (size of file to ensure)\n", state->Reg[2]);
 
-  fseeko64(f, 0uLL, SEEK_END);
+  fseeko64(f, UINT64_C(0), SEEK_END);
 
   state->Reg[2] = (ARMword) ftello64(f);
 }
@@ -1226,6 +1253,34 @@ hostfs_write_file(ARMul_State *state, bool with_data)
     return;
   }
 
+#ifdef OLD_FILECODE
+  hostfs_ensure_buffer_size(BUFSIZE);
+
+  /* Fill the data buffer with 0's if we are not saving supplied data */
+  if (!with_data) {
+    memset(buffer, 0, BUFSIZE);
+  }
+
+  /* Save file in blocks of up to BUFSIZE */
+  while (length > 0) {
+    size_t buffer_amount = MIN(length, BUFSIZE);
+    size_t bytes_written;
+
+    if (with_data) {
+      unsigned i;
+
+      /* Copy the correct amount of data into the buffer */
+      for (i = 0; i < buffer_amount; i++) {
+        buffer[i] = ARMul_LoadByte(state, ptr);
+        ptr++;
+      }
+    }
+
+    /* TODO check for errors */
+    bytes_written = fwrite(buffer, 1, buffer_amount, f);
+    length -= bytes_written;
+  }
+#else
   size_t bytes_written;
   if (with_data) {
     bytes_written = File_WriteRAM(f,ptr,length);
@@ -1245,6 +1300,7 @@ hostfs_write_file(ARMul_State *state, bool with_data)
   }
 
   /* TODO - Check for errors */
+#endif
 
   fclose(f); /* TODO check for errors */
 
@@ -1521,7 +1577,24 @@ hostfs_file_255_load_file(ARMul_State *state)
     return;
   }
 
+#ifdef OLD_FILECODE
+  const unsigned BUFSIZE = MINIMUM_BUFFER_SIZE;
+  size_t bytes_read;
+
+  hostfs_ensure_buffer_size(BUFSIZE);
+
+  do {
+    unsigned i;
+
+    bytes_read = fread(buffer, 1, BUFSIZE, f);
+
+    for (i = 0; i < bytes_read; i++) {
+      ARMul_StoreByte(state, ptr++, buffer[i]);
+    }
+  } while (bytes_read == BUFSIZE);
+#else
   File_ReadRAM(f,ptr,state->Reg[4]);
+#endif
 
   fclose(f);
 }
@@ -1881,7 +1954,7 @@ hostfs_read_dir(ARMul_State *state, bool with_info, bool with_timestamp)
   if (object_info.type != OBJECT_TYPE_DIRECTORY) {
     /* TODO Improve error return */
     state->Reg[3] = 0;
-    state->Reg[4] = (uint32_t) -1;
+    state->Reg[4] = ~(UINT32_C(0));
     return;
   }
 
@@ -1932,7 +2005,7 @@ hostfs_read_dir(ARMul_State *state, bool with_info, bool with_timestamp)
         if (with_timestamp) {
           ARMul_StoreWordS(state, ptr + 20, 0); /* Always 0 */
           /* Test if Load and Exec contain timestamp */
-          if ((cache_entries[offset].object_info.load & 0xfff00000u) == 0xfff00000u) {
+          if ((cache_entries[offset].object_info.load & UINT32_C(0xfff00000)) == UINT32_C(0xfff00000)) {
             ARMul_StoreWordS(state, ptr + 24,
                              (cache_entries[offset].object_info.load << 24) |
                              (cache_entries[offset].object_info.exec >> 8));

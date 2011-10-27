@@ -235,7 +235,7 @@
 
       case 0xe:
       {
-        f = (instr & (1 << 20)) ? EMFUNCDECL26(CoMRCDataOp) : EMFUNCDECL26(CoMCRDataOp);
+        f = (instr & (UINT32_C(1) << 20)) ? EMFUNCDECL26(CoMRCDataOp) : EMFUNCDECL26(CoMCRDataOp);
       };
       break;
 

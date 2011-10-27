@@ -26,6 +26,8 @@
 #endif
 #endif
 
+#include "c99.h"
+
 /***************************************************************************\
 *                           Condition code values                           *
 \***************************************************************************/
@@ -60,13 +62,13 @@
 *               Macros to twiddle the status flags and mode                 *
 \***************************************************************************/
 
-#define NBIT ((unsigned)1L << 31)
-#define ZBIT (1L << 30)
-#define CBIT (1L << 29)
-#define VBIT (1L << 28)
-#define R15IBIT (1L << 27)
-#define R15FBIT (1L << 26)
-#define R15IFBITS (3L << 26)
+#define NBIT (UINT32_C(1) << 31)
+#define ZBIT (UINT32_C(1) << 30)
+#define CBIT (UINT32_C(1) << 29)
+#define VBIT (UINT32_C(1) << 28)
+#define R15IBIT (UINT32_C(1) << 27)
+#define R15FBIT (UINT32_C(1) << 26)
+#define R15IFBITS (UINT32_C(3) << 26)
 
 #define POS(i) ( (~(i)) >> 31 )
 #define NEG(i) ( (i) >> 31 )
@@ -125,11 +127,11 @@ static inline void inlASSIGN(ARMul_State *state,ARMword res,ARMword bit)
 #define ASSIGNR15INT(res) state->Reg[15] = (state->Reg[15]&~R15IFBITS) | ((res)&R15IFBITS)
 
 
-#define CCBITS (0xf0000000L)
-#define R15INTBITS (3L << 26)
-#define R15PCBITS (0x03fffffcL)
-#define R15PCMODEBITS (0x03ffffffL)
-#define R15MODEBITS (0x3L)
+#define CCBITS (UINT32_C(0xf0000000))
+#define R15INTBITS (UINT32_C(3) << 26)
+#define R15PCBITS (UINT32_C(0x03fffffc))
+#define R15PCMODEBITS (UINT32_C(0x03ffffff))
+#define R15MODEBITS (UINT32_C(0x3))
 
 #define PCMASK R15PCBITS
 #define PCWRAP(pc) ((pc) & R15PCBITS)
@@ -170,7 +172,7 @@ static inline void inlASSIGN(ARMul_State *state,ARMword res,ARMword bit)
                       } while(0)
 #endif
 
-#define LEGALADDR 0x03ffffff
+#define LEGALADDR (UINT32_C(0x03ffffff))
 #define ADDREXCEPT(address) (address >= (LEGALADDR+1))
 
 #define INTERNALABORT(address) state->Aborted = ARMul_AddrExceptnV;
@@ -327,12 +329,12 @@ static inline ARMword inlLHS(ARMul_State *state,ARMword r)
 void ARMul_Emulate26(ARMul_State *state);
 void ARMul_Icycles(ARMul_State *state,unsigned number);
 
-extern unsigned char ARMul_MultTable[]; /* Number of I cycles for a mult */
+extern uint_fast8_t ARMul_MultTable[]; /* Number of I cycles for a mult */
 #ifdef ARMUL_USE_IMMEDTABLE
 extern ARMword ARMul_ImmedTable[]; /* Immediate DP LHS values */
 #endif
-extern char ARMul_BitList[];       /* Number of bits in a byte table */
-extern unsigned int ARMul_CCTable[16];
+extern uint_fast8_t ARMul_BitList[];       /* Number of bits in a byte table */
+extern uint_fast16_t ARMul_CCTable[16];
 #define ARMul_CCCheck(instr,psr) (ARMul_CCTable[instr>>28] & (1<<(psr>>28)))
 
 unsigned ARMul_NthReg(ARMword instr,unsigned number);
@@ -355,7 +357,7 @@ ARMword ARMul_Align(ARMul_State *state, ARMword address, ARMword data);
 void ARMul_UndefInstr(ARMul_State *state,ARMword instr);
 
 /* An estimate of how many cycles the host is executing per second */
-extern unsigned long ARMul_EmuRate;
+extern uint32_t ARMul_EmuRate;
 
 /* Reset the EmuRate code, to cope with situations where the emulator has just been resumed after being suspended for a period of time (i.e. > 1 second) */
 void EmuRate_Reset(ARMul_State *state);

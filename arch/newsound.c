@@ -35,21 +35,21 @@
 int Sound_BatchSize = 1; /* How many 16*2 sample batches to try to do at once */
 CycleCount Sound_DMARate; /* How many cycles between DMA fetches */
 Sound_StereoSense eSound_StereoSense = Stereo_LeftRight;
-int Sound_FudgeRate = 0;
+CycleDiff Sound_FudgeRate = 0;
 
 #ifdef SOUND_SUPPORT
-unsigned long Sound_HostRate; /* Rate of host sound system, in 1/1024 Hz */
+uint32_t Sound_HostRate; /* Rate of host sound system, in 1/1024 Hz */
 
 
 static SoundData soundTable[256];
 static ARMword channelAmount[8][2];
 
 static SoundData soundBuffer[16*2*MAX_BATCH_SIZE];
-static unsigned long soundBufferAmt=0; /* Number of stereo pairs buffered */
+static uint32_t soundBufferAmt=0; /* Number of stereo pairs buffered */
 #define TIMESHIFT 9 /* Bigger values make the mixing more accurate. But 9 is the biggest value possible to avoid overflows in the 32bit accumulators. */
-static unsigned long soundTime=0; /* Offset into 1st sample pair of buffer */
-static unsigned long soundTimeStep; /* How many source samples per dest sample, fixed point with TIMESHIFT fraction bits */
-static unsigned long soundScale; /* Output scale factor, 16.16 fixed point */
+static uint32_t soundTime=0; /* Offset into 1st sample pair of buffer */
+static uint32_t soundTimeStep; /* How many source samples per dest sample, fixed point with TIMESHIFT fraction bits */
+static uint32_t soundScale; /* Output scale factor, 16.16 fixed point */
 #endif
 
 void Sound_UpdateDMARate(ARMul_State *state)
@@ -59,9 +59,9 @@ void Sound_UpdateDMARate(ARMul_State *state)
      VIDC.SoundFreq - the rate of the sound system we're trying to emulate
      ARMul_EmuRate - roughly how many EventQ clock cycles occur per second
      ioc.IOEBControlReg - the VIDC clock source */
-  static unsigned char oldsoundfreq = 0;
-  static unsigned long oldemurate = 0;
-  static unsigned char oldioebcr = 0;
+  static uint8_t oldsoundfreq = 0;
+  static uint32_t oldemurate = 0;
+  static uint8_t oldioebcr = 0;
   if((VIDC.SoundFreq == oldsoundfreq) && (ARMul_EmuRate == oldemurate) && (ioc.IOEBControlReg == oldioebcr))
     return;
   oldsoundfreq = VIDC.SoundFreq;
@@ -71,7 +71,7 @@ void Sound_UpdateDMARate(ARMul_State *state)
      So for a variable clock, and taking into account ARMul_EmuRate, we get:
      Sound_DMARate = ARMul_EmuRate*16*(VIDC.SoundFreq+2)*24/VIDC_clk
  */
-  Sound_DMARate = (((unsigned long long) ARMul_EmuRate)*(16*24)*(VIDC.SoundFreq+2))/DisplayDev_GetVIDCClockIn();
+  Sound_DMARate = (((uint64_t) ARMul_EmuRate)*(16*24)*(VIDC.SoundFreq+2))/DisplayDev_GetVIDCClockIn();
 //  printf("UpdateDMARate: f %d r %u -> %u\n",VIDC.SoundFreq,ARMul_EmuRate,Sound_DMARate);
 }
 
@@ -90,15 +90,15 @@ SoundInitTable(void)
      * 7,6,5 Chord select
      */
 
-    unsigned int chordSelect = (i & 0xE0) >> 5;
-    unsigned int pointSelect = (i & 0x1E) >> 1;
-    unsigned int sign = (i & 1);
+    uint32_t chordSelect = (i & 0xE0) >> 5;
+    uint32_t pointSelect = (i & 0x1E) >> 1;
+    uint32_t sign = (i & 1);
 
-    unsigned int stepSize;
+    uint32_t stepSize;
 
-    const unsigned int scale = (0xFFFF / (247 * 2));
-    unsigned int chordBase;
-    int sample;
+    const uint32_t scale = (0xFFFF / (247 * 2));
+    uint32_t chordBase;
+    int32_t sample;
 
     switch (chordSelect) {
       case 0: chordBase = 0;
@@ -154,7 +154,7 @@ void Sound_StereoUpdated(ARMul_State *state)
   int i = 0;
 
   for (i = 0; i < 8; i++) {
-    int reg = VIDC.StereoImageReg[i];
+    uint8_t reg = VIDC.StereoImageReg[i];
     if(eSound_StereoSense == Stereo_RightLeft)
       reg = 8-reg; /* Swap stereo */
     switch (reg) {
@@ -200,7 +200,7 @@ void Sound_SoundFreqUpdated(ARMul_State *state)
   /* Do nothing for now */
 }
 
-static void Sound_Log2Lin(const unsigned char *in,SoundData *out,int avail)
+static void Sound_Log2Lin(const uint8_t *in,SoundData *out,int32_t avail)
 {
   /* Convert the source log data to linear. Note that no mixing is done here. */
   avail *= 2;
@@ -247,7 +247,7 @@ static void Sound_Log2Lin(const unsigned char *in,SoundData *out,int avail)
   }
 }
 
-static long Sound_Mix(SoundData *out,long destavail)
+static int32_t Sound_Mix(SoundData *out,int32_t destavail)
 {
   /* This mixing function performs two roles:
   
@@ -305,10 +305,10 @@ static long Sound_Mix(SoundData *out,long destavail)
   */
      
   const SoundData *in = soundBuffer;
-  long srcavail = soundBufferAmt;
-  unsigned long time = soundTime;
-  const long timestep = soundTimeStep;
-  const unsigned long scale = soundScale;
+  int32_t srcavail = soundBufferAmt;
+  uint32_t time = soundTime;
+  const int32_t timestep = soundTimeStep;
+  const uint32_t scale = soundScale;
 
   /* We can only generate a destination sample if all the required source
      samples are present. Bias the source sample count by a suitable amount
@@ -326,9 +326,9 @@ static long Sound_Mix(SoundData *out,long destavail)
        Second set will count to significantly less due to lack of multipliers */
     while((srcavail > 0) && (destavail > 0))
     {
-      long lacc=0,racc=0;
+      int32_t lacc=0,racc=0;
       const SoundData *oldin = in;
-      long amt = (1<<TIMESHIFT)-time;
+      int32_t amt = (1<<TIMESHIFT)-time;
       /* Calculate the sum of the first few samples
          'amt' is being used to store the contribution factor */ 
       while(amt<(8<<TIMESHIFT))
@@ -340,7 +340,7 @@ static long Sound_Mix(SoundData *out,long destavail)
       /* Calculate the sum of the middle bit (using the 2nd accumulator set)
          'amt' is being used to store the time (contriubtion factor is fixed
          at 8 source ticks) */
-      long lacc2=0,racc2=0;
+      int32_t lacc2=0,racc2=0;
       while(amt<=timestep)
       {
         lacc2 += *in++;
@@ -374,8 +374,8 @@ static long Sound_Mix(SoundData *out,long destavail)
        Accumulators will reach max of 32768*8*timestep */
     while((srcavail > 0) && (destavail > 0))
     {
-      long lacc=0,racc=0;
-      long amt = (8<<TIMESHIFT)-time;
+      int32_t lacc=0,racc=0;
+      int32_t amt = (8<<TIMESHIFT)-time;
       /* Work backwards from the last sample that has both its start and end
          cropped by the 'sides' of the sampling window. This corresponds to
          S4-S8 in the diagram above.
@@ -429,23 +429,23 @@ static void Sound_DoMix(void)
   if(soundBufferAmt <= 10+(soundTimeStep>>TIMESHIFT))
     return;
   /* Get host buffer params */
-  long destavail;
+  int32_t destavail;
   SoundData *out = Sound_GetHostBuffer(&destavail);
   if(destavail)
   {
     /* Mix into host buffer */
-    long remain = Sound_Mix(out,destavail);
+    int32_t remain = Sound_Mix(out,destavail);
     /* Tell the host */
     Sound_HostBuffered(out,destavail-remain);
   }
 }
 
-static void Sound_Process(ARMul_State *state,long avail)
+static void Sound_Process(ARMul_State *state,int32_t avail)
 {
   /* Recalc soundTimeStep */
-  static unsigned char oldsoundfreq=0;
-  static unsigned char oldioebcr=0;
-  static unsigned long oldhostrate=0;
+  static uint8_t oldsoundfreq=0;
+  static uint8_t oldioebcr=0;
+  static uint32_t oldhostrate=0;
   if((VIDC.SoundFreq != oldsoundfreq) || (ioc.IOEBControlReg != oldioebcr) || (Sound_HostRate != oldhostrate))
   {
     oldsoundfreq = VIDC.SoundFreq;
@@ -453,11 +453,11 @@ static void Sound_Process(ARMul_State *state,long avail)
     oldhostrate = Sound_HostRate;
     /* Arc sample rate has most likely changed; process as much of the existing buffer as possible (using the current step values) */
     Sound_DoMix();
-    unsigned long clockin = DisplayDev_GetVIDCClockIn();
+    uint32_t clockin = DisplayDev_GetVIDCClockIn();
     /* Arc sound runs at a rate of (clockin*1024)/(24*(VIDC.SoundFreq+2)) in 1/1024Hz units
        We need that divided by Sound_HostRate, and the reciprocal */
-    unsigned long long a = ((unsigned long long) clockin)*1024;
-    unsigned long long b = ((unsigned long long) Sound_HostRate)*24*(VIDC.SoundFreq+2);
+    uint64_t a = ((uint64_t) clockin)*1024;
+    uint64_t b = ((uint64_t) Sound_HostRate)*24*(VIDC.SoundFreq+2);
     soundTimeStep = (a<<TIMESHIFT)/b;
     soundScale = (b<<16)/a;
     fprintf(stderr,"New sample period %d (VIDC %dMHz) host %dHz -> timestep %08x scale %08x\n",VIDC.SoundFreq+2,clockin/1000000,Sound_HostRate>>10,soundTimeStep,soundScale);
@@ -466,7 +466,7 @@ static void Sound_Process(ARMul_State *state,long avail)
   if(avail)
   {
     /* Log -> lin conversion */
-    Sound_Log2Lin(((unsigned char *) MEMC.PhysRam) + MEMC.Sptr,soundBuffer+(soundBufferAmt<<1),avail);
+    Sound_Log2Lin(((uint8_t *) MEMC.PhysRam) + MEMC.Sptr,soundBuffer+(soundBufferAmt<<1),avail);
     soundBufferAmt += avail<<4;
   }
   /* Process this new data */
@@ -479,14 +479,14 @@ static void Sound_DMAEvent(ARMul_State *state,CycleCount nowtime)
   Sound_UpdateDMARate(state);
 #ifdef SOUND_SUPPORT
   /* Work out how many source samples are required to generate Sound_BatchSize dest samples */
-  long srcbatchsize = (Sound_BatchSize*soundTimeStep)>>TIMESHIFT;
+  int32_t srcbatchsize = (Sound_BatchSize*soundTimeStep)>>TIMESHIFT;
   if(!srcbatchsize)
     srcbatchsize = 1;
 #else
   int srcbatchsize = 4;
 #endif
   /* How many DMA fetches are possible? */
-  long avail = 0;
+  int32_t avail = 0;
   if(MEMC.ControlReg & (1 << 11))
   {
     /* Trigger any pending buffer swap */
@@ -517,7 +517,7 @@ static void Sound_DMAEvent(ARMul_State *state,CycleCount nowtime)
     if(avail > srcbatchsize)
       avail = srcbatchsize;
 #ifdef SOUND_SUPPORT
-    long bufspace = (16*MAX_BATCH_SIZE-soundBufferAmt)>>4;
+    int32_t bufspace = (16*MAX_BATCH_SIZE-soundBufferAmt)>>4;
     if(avail > bufspace)
       avail = bufspace;
 #endif 

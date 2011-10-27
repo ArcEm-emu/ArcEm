@@ -156,7 +156,7 @@ static void UpdateCursorPos(ARMul_State *state);
 static void SelectScreenMode(int x, int y, int bpp);
 static void RefreshMouse(ARMul_State *state);
 
-static void set_cursor_palette(unsigned int *pal);
+static void set_cursor_palette(uint16_t *pal);
 
 static int MonitorWidth;
 static int MonitorHeight;
@@ -189,7 +189,7 @@ void mmsp2writepal( void )
 
 /* ------------------------------------------------------------------ */
 
-static void set_cursor_palette(unsigned int *pal)
+static void set_cursor_palette(uint16_t *pal)
 {
     int c;
     for(c = 0; c < 2; c++)  /* Should be 0..3 but gp2x h/w cursor is only 2 colour */

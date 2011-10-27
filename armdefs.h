@@ -23,7 +23,9 @@
 #include <stdlib.h>
 #include <limits.h>
 
-typedef unsigned int ARMword; /* must be 32 bits wide */
+#include "c99.h"
+
+typedef uint32_t ARMword; /* must be 32 bits wide */
 
 typedef struct ARMul_State ARMul_State;
 extern ARMul_State statestr;
@@ -103,13 +105,12 @@ extern ARMul_State statestr;
 #endif
 #endif
 
+typedef intptr_t FastMapInt;
+typedef uintptr_t FastMapUInt;
+
 #ifdef FASTMAP_64
-typedef signed long int FastMapInt;
-typedef unsigned long int FastMapUInt;
 #define FASTMAP_FLAG(X) (((FastMapUInt)(X))<<56) /* Shift a byte to the top byte of the word */
 #else
-typedef signed int FastMapInt;
-typedef unsigned int FastMapUInt;
 #define FASTMAP_FLAG(X) (((FastMapUInt)(X))<<24) /* Shift a byte to the top byte of the word */
 #endif
 
@@ -166,8 +167,8 @@ typedef struct {
    be considered as having already been triggered and will fire immediately.
  */
 
-typedef unsigned long CycleCount;
-typedef signed long CycleDiff;
+typedef uint32_t CycleCount;
+typedef int32_t CycleDiff;
 #define MAX_CYCLES_INTO_FUTURE LONG_MAX
 
 typedef void (*EventQ_Func)(ARMul_State *state,CycleCount nowtime);
@@ -235,7 +236,7 @@ struct ARMul_State {
 
    /* Event queue */
    EventQ_Entry EventQ[EVENTQ_SIZE];
-   unsigned char NumEvents;
+   uint_fast8_t NumEvents;
 
    /* Fastmap stuff */
    FastMapUInt FastMapMode;   /* Current access mode flags */
