@@ -83,7 +83,10 @@ void ArcemConfig_SetupDefaults(void)
 
 
 #if defined(SYSTEM_riscos_single)
+  hArcemConfig.eDisplayDriver = DisplayDriver_Palettised;
   hArcemConfig.bRedBlueSwap = 0;
+  hArcemConfig.bAspectRatioCorrection = 1;
+  hArcemConfig.bUpscale = 1;
   hArcemConfig.iMinResX = 0;
   hArcemConfig.iMinResY = 0;
   hArcemConfig.iLCDResX = 0;
@@ -123,7 +126,10 @@ void ArcemConfig_ParseCommandLine(int argc, char *argv[])
     "  --processor <value> - Set the emulated CPU\n"
     "     Where value is one of 'ARM2', 'ARM250', 'ARM3'\n"
 #if defined(SYSTEM_riscos_single)
-    "  --rbswap - Swap red & blue (e.g. for Iyonix with GeForce FX card)\n"
+    "  --display <mode> - Select display driver, 'pal' or '16bpp'\n"
+    "  --rbswap - Swap red & blue in 16bpp mode (e.g. for Iyonix with GeForce FX)\n"
+    "  --noaspect - Disable aspect ratio correction\n"
+    "  --noupscale - Disable upscaling\n"
     "  --minres <x> <y> - Specify dimensions of smallest screen mode to use\n"
     "  --lcdres <x> <y> - Specify native resolution of your monitor (to avoid using\n"
     "     modes that won't scale well on an LCD)\n"
@@ -308,8 +314,32 @@ void ArcemConfig_ParseCommandLine(int argc, char *argv[])
       }
     }
 #if defined(SYSTEM_riscos_single)
-    else if(0 == strcmp("--rbswap",argv[iArgument])) {
+    else if(0 == strcmp("--display", argv[iArgument])) {
+      if(iArgument+1 < argc) { // Is there a following argument?
+        if(0 == strcmp("pal", argv[iArgument + 1])) {
+          hArcemConfig.eDisplayDriver = DisplayDriver_Palettised;
+          iArgument += 2;
+        }
+        else if(0 == strcmp("16bpp", argv[iArgument + 1])) {
+          hArcemConfig.eDisplayDriver = DisplayDriver_Standard;
+          iArgument += 2;
+        }
+        else {
+          fprintf(stderr, "Unrecognised value to the --display option\n");
+          exit(EXIT_FAILURE);
+        }
+      } else {
+        fprintf(stderr, "No argument following the --display option\n");
+        exit(EXIT_FAILURE);
+      }
+    } else if(0 == strcmp("--rbswap",argv[iArgument])) {
       hArcemConfig.bRedBlueSwap = 1;
+      iArgument += 1;
+    } else if(0 == strcmp("--noaspect",argv[iArgument])) {
+      hArcemConfig.bAspectRatioCorrection = 0;
+      iArgument += 1;
+    } else if(0 == strcmp("--noupscale",argv[iArgument])) {
+      hArcemConfig.bUpscale = 0;
       iArgument += 1;
     } else if(0 == strcmp("--minres",argv[iArgument])) {
       if(iArgument+2 < argc) {

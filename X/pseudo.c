@@ -5,6 +5,8 @@
 
   Standard display device implementation for pseudocolour X11 displays
 
+  TODO - This should probably be converted to use the palettised display device
+
 */
 
 #include <limits.h>

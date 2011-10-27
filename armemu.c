@@ -1001,6 +1001,17 @@ static void EmuRate_Update(ARMul_State *state,CycleCount nowcycle)
   EventQ_RescheduleHead(state,nowcycle+(ARMul_EmuRate>>3),EmuRate_Update); /* Update 8 times per second? */
 }
 
+void EmuRate_Reset(ARMul_State *state)
+{
+  /* Reset the EmuRate code */
+  int idx = EventQ_Find(state,EmuRate_Update);
+  if(idx != -1)
+    EventQ_Remove(state,idx);
+  EmuRate_LastUpdateCycle = ARMul_Time;
+  EmuRate_LastUpdateTime = clock();
+  EventQ_Insert(state,ARMul_Time+100000,EmuRate_Update);
+}
+
 /***************************************************************************\
 *                             EMULATION of ARM2/3                           *
 \***************************************************************************/
@@ -1051,13 +1062,7 @@ ARMul_Emulate26(ARMul_State *state)
   ARMword pc = 0;          /* The address of the current instruction */
   int pipeidx = 0; /* Index of instruction to run */
 
-  /* Reset the EmuRate code */
-  int idx = EventQ_Find(state,EmuRate_Update);
-  if(idx != -1)
-    EventQ_Remove(state,idx);
-  EmuRate_LastUpdateCycle = ARMul_Time;
-  EmuRate_LastUpdateTime = clock();
-  EventQ_Insert(state,ARMul_Time+100000,EmuRate_Update);
+  EmuRate_Reset(state);
 
   /**************************************************************************\
    *                        Execute the next instruction                    *

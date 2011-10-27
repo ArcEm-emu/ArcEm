@@ -29,7 +29,7 @@ static inline void EventQ_Remove(ARMul_State *state,int idx)
 {
 	if(--state->NumEvents)
 	{
-		memmove(&state->EventQ[idx],&state->EventQ[idx+1],state->NumEvents-idx);
+		memmove(&state->EventQ[idx],&state->EventQ[idx+1],sizeof(EventQ_Entry)*(state->NumEvents-idx));
 	}
 	else
 	{

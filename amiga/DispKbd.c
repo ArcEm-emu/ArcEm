@@ -11,6 +11,8 @@
 #include "platform.h"
 #include "../arch/Version.h"
 #include "arexx.h"
+#include "../armemu.h"
+#include "arch/displaydev.h"
 
 #include <intuition/pointerclass.h>
 #include <dos/dostags.h>
@@ -38,17 +40,144 @@ struct MsgPort *mport;
 ULONG oldid=INVALID_ID;
 ULONG oldwidth = 0;
 ULONG oldheight = 0;
-ULONG olddepth = 0;
+ULONG oldlog2bpp = 0;
 
 static ULONG OldMouseX = 0;
 static ULONG OldMouseY = 0;
 
 
-static void refreshmouse(ARMul_State *state);
 void writepixel(struct RastPort *,ULONG,ULONG,ULONG);
 void ChangeDisplayMode(ARMul_State *,long,long,int);
 void CloseDisplay(void);
 
+int ChangeMode(int width,int height,int log2bpp,int *xscale,int *yscale)
+{
+	printf("New display mode: %d x %d x %d ",width,height,1<<log2bpp);
+
+	if(width == oldwidth && height == oldheight && log2bpp == oldlog2bpp)
+	{
+		printf("-> Existing mode\n");
+		return;
+	}
+
+	if((width<=0) || (height <= 0) || (log2bpp < 0))
+	{
+		printf("-> Invalid mode\n");
+		exit(EXIT_FAILURE);
+	}
+
+	*xscale = 1;
+	*yscale = 1;
+#if 0 /* TODO - Get scaling working on amiga. Cursor image will need to be scaled, for a start. */
+	/* Try and detect rectangular pixel modes */
+	if(width >= height*2)
+	{
+		*yscale = 2;
+		height *= 2;
+	}
+	else if(height >= width*2)
+	{
+		*xscale = 2;
+		width *= 2;
+	}
+#endif
+
+	/* This forces ArcEm to use an 8-bit Intuition screen, which avoids unnecessary
+       screen opening/closing.  However, it is likely to be slower or less memory
+       efficient, especially on planar display hardware. */
+	if(force8bit && (log2bpp < 3)) log2bpp = 3;
+
+
+	/* Call BestModeID() to hopefully stop crazy screenmodes */
+	id = IGraphics->BestModeID(BIDTAG_NominalWidth,width,
+								BIDTAG_NominalHeight,height,
+								BIDTAG_DesiredWidth,width,
+								BIDTAG_DesiredHeight,height,
+								BIDTAG_Depth,1<<log2bpp,
+								TAG_DONE);
+
+	if(id == INVALID_ID)
+	{
+		printf("-> No suitable mode found\n");
+		return;
+	}
+
+	printf("-> ModeID: %lx\n",id);
+
+	IGraphics->WaitBlit();
+
+	if(friend.BitMap)
+		IGraphics->FreeBitMap(friend.BitMap);
+
+	if(tmprp.BitMap)
+		IGraphics->FreeBitMap(tmprp.BitMap);
+
+	CloseDisplay();
+
+	screen = IIntuition->OpenScreenTags(NULL,SA_Width,width,
+											SA_Height,height,
+											SA_Depth,1<<log2bpp,
+											SA_Quiet,TRUE,
+											SA_ShowTitle,FALSE,
+//											SA_Type,CUSTOMSCREEN,
+											SA_PubName,"ArcEm",
+											SA_DisplayID,id,
+											TAG_DONE);
+
+	if(screen)
+	{
+		window = IIntuition->OpenWindowTags(NULL,WA_Width,width,
+					WA_Height,height,
+					WA_RMBTrap,TRUE,
+					WA_NoCareRefresh,TRUE,
+					WA_CustomScreen,screen,
+					WA_Borderless,TRUE,
+					WA_Activate,TRUE,
+					WA_Backdrop,TRUE,
+					WA_WindowName,"ArcEm",
+					WA_ReportMouse,TRUE,
+					WA_MouseQueue,500,
+					WA_IDCMP,IDCMP_MOUSEBUTTONS | IDCMP_MOUSEMOVE | IDCMP_RAWKEY | IDCMP_DELTAMOVE | IDCMP_EXTENDEDMOUSE,
+					TAG_DONE);
+
+		IIntuition->SetWindowPointer(window,WA_Pointer,mouseobj,TAG_DONE);
+
+		if(mouse_bm) IGraphics->FreeBitMap(mouse_bm);
+
+		mouse_bm = IGraphics->AllocBitMap(32, 32, 1<<log2bpp, BMF_CLEAR, window->RPort->BitMap);
+		mouse_rp.BitMap = mouse_bm;
+	}
+	else
+	{
+		printf("-> Failed to create screen\n");
+		exit(EXIT_FAILURE);
+	}
+
+	if(!window)
+	{
+		printf("-> Failed to create window\n");
+		exit(EXIT_FAILURE);
+	}
+
+	IIntuition->PubScreenStatus(screen,0);
+
+	port = window->UserPort;
+
+	friend.BitMap = IGraphics->AllocBitMap(width,height,1<<log2bpp,BMF_CLEAR | BMF_DISPLAYABLE | BMF_INTERLEAVED,window->RPort->BitMap);
+
+    IExec->CopyMem(&friend,&tmprp,sizeof(struct RastPort));
+    tmprp.Layer = NULL;
+    tmprp.BitMap = IGraphics->AllocBitMap(width,1,1<<log2bpp,0,NULL);
+
+	oldheight = height;
+	oldwidth = width;
+	oldlog2bpp = log2bpp;
+	oldid=id;
+
+	return log2bpp;
+}
+
+#if 0
 /* ------------------------------------------------------------------ */
 
 /* Standard display device */
@@ -58,6 +187,7 @@ typedef unsigned short SDD_HostColour;
 static const int SDD_RowsAtOnce = 1;
 typedef SDD_HostColour *SDD_Row;
 
+static void sdd_refreshmouse(ARMul_State *state);
 
 static SDD_HostColour *ImageData,*CursorImageData;
 
@@ -118,107 +248,347 @@ void SDD_Name(Host_PollDisplay)(ARMul_State *state);
 
 static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,int hz)
 {
-	int depth = 16;
+	int realdepth = ChangeMode(width,height,4,&HD.XScale,&HD.YScale);
 
-	HD.XScale = 1;
-	HD.YScale = 1;
-#if 0 /* TODO - Get scaling working on Amiga */
-	/* Try and detect rectangular pixel modes */
-	if(width >= height*2)
-	{
-		HD.YScale = 2;
-		height *= 2;
-	}
-	else if(height >= width*2)
-	{
-		HD.XScale = 2;
-		width *= 2;
-	}
+	HD.Width = oldwidth;
+	HD.Height = oldheight;
+}
+
+/*-----------------------------------------------------------------------------*/
+/* Refresh the mouse pointer image                                                */
+static void sdd_refreshmouse(ARMul_State *state) {
+  int x,y,height,offset;
+  int memptr;
+  int HorizPos;
+  int height = (int)VIDC.Vert_CursorEnd - (int)VIDC.Vert_CursorStart;
+  int VertPos;
+  DisplayDev_GetCursorPos(state,&HorizPos,&VertPos);
+	ULONG transcol = 1;
+	SDD_HostColour line[32];
+	UBYTE maskbit;
+
+	if(!window) return;
+	if(!screen) return;
+
+	if(!mouse_bm) return;
+
+ offset=0;
+  memptr=MEMC.Cinit*16;
+
+	IGraphics->BltBitMap(friend.BitMap,OldMouseX,OldMouseY,
+			window->RPort->BitMap,OldMouseX,OldMouseY,
+			32,32,0x0C0,0xff,NULL);
+
+	mask[0] = 0;
+	mask[1] = 0;
+	mask[2] = 0;
+	mask[3] = 0;
+	mask[4] = 0;
+	mask[5] = 0;
+	mask[6] = 0;
+	mask[7] = 0;
+	mask[8] = 0;
+	mask[9] = 0;
+	mask[10] = 0;
+	mask[11] = 0;
+	mask[12] = 0;
+	mask[13] = 0;
+	mask[14] = 0;
+	mask[15] = 0;
+
+  /* Cursor palette */
+  SDD_HostColour cursorPal[4];
+  cursorPal[0] = transcol;
+  for(x=0; x<3; x++) {
+    cursorPal[x+1] = SDD_Name(Host_GetColour)(state,VIDC.CursorPalette[x]);
+  }
+
+  for(y=0;y<32;y++,memptr+=8,offset+=8) {
+// fixed height to 32
+
+    if (offset<512*1024) {
+      ARMword tmp[2];
+
+      tmp[0]=MEMC.PhysRam[memptr/4];
+      tmp[1]=MEMC.PhysRam[memptr/4+1];
+
+      for(x=0;x<32;x++) {
+
+		int idx = 0;
+		if(y<height)
+		{
+			idx = (tmp[x/16]>>((x & 15)*2)) & 3;
+		}
+		line[x] = cursorPal[idx];
+
+		if(!idx) maskbit = 0;
+			else maskbit = 1;
+
+		mask[(y*4) + (x/8)] = (mask[(y*4) + (x/8)] << 1) | maskbit;
+
+      }; /* x */
+#error TODO - Needs updating for 16bpp
+		IGraphics->WritePixelLine8(&mouse_rp,0,y,32,line,&tmprp); // &mouseptr
+    } else return;
+  }; /* y */
+
+// HorizPos,VertPos
+	IGraphics->BltBitMapTags(BLITA_Width, 32,
+			BLITA_Height, height,
+			BLITA_Source, mouse_bm,
+			BLITA_SrcType, BLITT_BITMAP,
+			BLITA_Dest, window->RPort,
+			BLITA_DestType, BLITT_RASTPORT,
+			BLITA_Minterm, (ABC|ABNC|ANBC),
+			BLITA_MaskPlane, mask,
+			BLITA_DestX, HorizPos,
+			BLITA_DestY, VertPos,
+			TAG_DONE);
+
+	OldMouseX = HorizPos;
+	OldMouseY = VertPos;
+
+}; /* RefreshMouse */
+
+/*-----------------------------------------------------------------------------*/
+
+void
+SDD_Name(Host_PollDisplay)(ARMul_State *state)
+{
+	sdd_refreshmouse(state);
+}
 #endif
-	HD.Width = width;
-	HD.Height = height;
 
-	id = IGraphics->BestModeID(BIDTAG_NominalWidth,width,
-								BIDTAG_NominalHeight,height,
-								BIDTAG_DesiredWidth,width,
-								BIDTAG_DesiredHeight,height,
-								BIDTAG_Depth,depth,
-								TAG_DONE);
+/* ------------------------------------------------------------------ */
 
-	if(id == INVALID_ID)
+/* Palettised display code */
+#define PDD_Name(x) pdd_##x
+
+static int BorderPalEntry;
+
+/* Technically this buffer only needs to be big enough to hold UPDATEBLOCKSIZE bytes * max X scale */
+#define MAX_DISPLAY_WIDTH 2048
+static ARMword RowBuffer[MAX_DISPLAY_WIDTH/4];
+
+/* TODO - Allow this to be configured */
+static int PDD_FrameSkip = 0;
+
+typedef struct {
+	int x,y; /* Current coordinates in pixels */
+	int width; /* Width of area being updated */
+} PDD_Row;
+
+static void PDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,int depth,int hz);
+
+static void PDD_Name(Host_SetPaletteEntry)(ARMul_State *state,int i,unsigned int phys)
+{
+	int r = (phys & 0xf)*0x11;
+	int g = ((phys>>4) & 0xf)*0x11;
+	int b = ((phys>>8) & 0xf)*0x11;
+	IGraphics->SetRGB32(&screen->ViewPort,i,r,g,b);
+}
+
+static void PDD_Name(Host_SetBorderColour)(ARMul_State *state,unsigned int phys)
+{
+	/* Set border palette entry */
+	if(BorderPalEntry != 256)
 	{
-		printf("-> No suitable mode found\n");
-		exit(EXIT_FAILURE);
+		int r = (phys & 0xf)*0x11;
+		int g = ((phys>>4) & 0xf)*0x11;
+		int b = ((phys>>8) & 0xf)*0x11;
+		IGraphics->SetRGB32(&screen->ViewPort,BorderPalEntry,r,g,b);
 	}
+}
 
-	printf("-> ModeID: %lx\n",id);
+static inline PDD_Row PDD_Name(Host_BeginRow)(ARMul_State *state,int row,int offset,int *alignment)
+{
+	PDD_Row drow;
+	drow.x = offset;
+	drow.y = row;
+	*alignment = 0;
+	return drow;
+}
 
-	IGraphics->WaitBlit();
+static inline void PDD_Name(Host_EndRow)(ARMul_State *state,PDD_Row *row) { /* nothing */ };
 
-	if(friend.BitMap)
-		IGraphics->FreeBitMap(friend.BitMap);
+static inline ARMword *PDD_Name(Host_BeginUpdate)(ARMul_State *state,PDD_Row *row,unsigned int count,int *outoffset)
+{
+	drow.width = count>>3;
+	*outoffset = 0;
+	return RowBuffer;
+}
 
-	if(tmprp.BitMap)
-		IGraphics->FreeBitMap(tmprp.BitMap);
+static inline void PDD_Name(Host_EndUpdate)(ARMul_State *state,PDD_Row *row)
+{
+	IGraphics->WritePixelLine8(&friend,row->x,row->y,row->width,RowBuffer,&tmprp);
+}
 
-	CloseDisplay();
+static inline void PDD_Name(Host_AdvanceRow)(ARMul_State *state,PDD_Row *row,unsigned int count)
+{
+	drow.x += count>>3;
+}
 
-	screen = IIntuition->OpenScreenTags(NULL,SA_Width,width,
-											SA_Height,height,
-											SA_Depth,depth,
-											SA_Quiet,TRUE,
-											SA_ShowTitle,FALSE,
-//											SA_Type,CUSTOMSCREEN,
-											SA_PubName,"ArcEm",
-											SA_DisplayID,id,
-											TAG_DONE);
+static void
+PDD_Name(Host_PollDisplay)(ARMul_State *state);
 
-	if(screen)
+static void PDD_Name(Host_DrawBorderRect)(ARMul_State *state,int x,int y,int width,int height)
+{
+	if(BorderPalEntry != 256)
 	{
-		window = IIntuition->OpenWindowTags(NULL,WA_Width,width,
-					WA_Height,height,
-					WA_RMBTrap,TRUE,
-					WA_NoCareRefresh,TRUE,
-					WA_CustomScreen,screen,
-					WA_Borderless,TRUE,
-					WA_Activate,TRUE,
-					WA_Backdrop,TRUE,
-					WA_WindowName,"ArcEm",
-					WA_ReportMouse,TRUE,
-					WA_MouseQueue,500,
-					WA_IDCMP,IDCMP_MOUSEBUTTONS | IDCMP_MOUSEMOVE | IDCMP_RAWKEY | IDCMP_DELTAMOVE | IDCMP_EXTENDEDMOUSE,
-					TAG_DONE);
+		/* TODO - Fill rectangle with border colour */
+	}
+}
 
-		IIntuition->SetWindowPointer(window,WA_Pointer,mouseobj,TAG_DONE);
+#include "../arch/paldisplaydev.c"
 
-		if(mouse_bm) IGraphics->FreeBitMap(mouse_bm);
+void PDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,int depth,int hz)
+{
+	int realdepth = ChangeMode(width,height,depth,&HD.XScale,&HD.YScale);
 
-		mouse_bm = IGraphics->AllocBitMap(32, 32, depth, BMF_CLEAR, window->RPort->BitMap);
-		mouse_rp.BitMap = mouse_bm;
+	HD.Width = oldwidth;
+	HD.Height = oldheight;
+
+	if(realdepth > depth)
+	{
+		/* We have enough palette entries to have a border */
+		BorderPalEntry = 1<<(1<<depth);
 	}
 	else
 	{
-		printf("-> Failed to create screen\n");
-		exit(EXIT_FAILURE);
+		/* Disable border entry */
+		BorderPalEntry = 256;
 	}
 
-	if(!window)
+	/* Calculate expansion params */
+	if((depth == 3) && (HD.XScale == 1))
 	{
-		printf("-> Failed to create window\n");
-		exit(EXIT_FAILURE);
+		/* No expansion */
+		HD.ExpandTable = NULL;
+	}
+	else
+	{
+		/* Expansion! */
+		static ARMword expandtable[256];
+		HD.ExpandFactor = 0;
+		while((1<<HD.ExpandFactor) < HD.XScale)
+			HD.ExpandFactor++;
+		HD.ExpandFactor += (3-depth);
+		HD.ExpandTable = expandtable;
+		unsigned int mul = 1;
+		int i;
+		for(i=0;i<HD.XScale;i++)
+		{
+			mul |= 1<<(i*8);
+		}
+		GenExpandTable(HD.ExpandTable,1<<depth,HD.ExpandFactor,mul);
 	}
 
-	IIntuition->PubScreenStatus(screen,0);
-
-	port = window->UserPort;
-
-	friend.BitMap = IGraphics->AllocBitMap(width,height,depth,BMF_CLEAR | BMF_DISPLAYABLE | BMF_INTERLEAVED,window->RPort->BitMap);
-
-    IExec->CopyMem(&friend,&tmprp,sizeof(struct RastPort));
-    tmprp.Layer = NULL;
-    tmprp.BitMap = IGraphics->AllocBitMap(width,1,depth,0,NULL);
+	/* Screen is expected to be cleared */
+	PDD_Name(Host_DrawBorderRect)(state,0,0,HD.Width,HD.Height);
 }
 
+/*-----------------------------------------------------------------------------*/
+/* Refresh the mouse pointer image                                                */
+static void pdd_refreshmouse(ARMul_State *state) {
+  int x,y,height,offset;
+  int memptr;
+  int HorizPos;
+  int height = (int)VIDC.Vert_CursorEnd - (int)VIDC.Vert_CursorStart;
+  int VertPos;
+  DisplayDev_GetCursorPos(state,&HorizPos,&VertPos);
+	ULONG transcol = 16;
+	UBYTE line[32];
+	ULONG ptr_cols[4];
+	ULONG 	col_reg = 16+((0 & 0x06) << 1);
+	UBYTE maskbit;
+
+	if(!window) return;
+	if(!screen) return;
+
+	if(!mouse_bm) return;
+
+ offset=0;
+  memptr=MEMC.Cinit*16;
+
+	IGraphics->BltBitMap(friend.BitMap,OldMouseX,OldMouseY,
+			window->RPort->BitMap,OldMouseX,OldMouseY,
+			32,32,0x0C0,0xff,NULL);
+
+	mask[0] = 0;
+	mask[1] = 0;
+	mask[2] = 0;
+	mask[3] = 0;
+	mask[4] = 0;
+	mask[5] = 0;
+	mask[6] = 0;
+	mask[7] = 0;
+	mask[8] = 0;
+	mask[9] = 0;
+	mask[10] = 0;
+	mask[11] = 0;
+	mask[12] = 0;
+	mask[13] = 0;
+	mask[14] = 0;
+	mask[15] = 0;
+
+  for(y=0;y<32;y++,memptr+=8,offset+=8) {
+// fixed height to 32
+
+    if (offset<512*1024) {
+      ARMword tmp[2];
+
+      tmp[0]=MEMC.PhysRam[memptr/4];
+      tmp[1]=MEMC.PhysRam[memptr/4+1];
+
+      for(x=0;x<32;x++) {
+
+		if(y<height)
+		{
+        	line[x] = ((tmp[x/16]>>((x & 15)*2)) & 3) + col_reg;
+		}
+		else
+		{
+			line[x] = transcol;
+		}
+
+			if(line[x] == transcol) maskbit = 0;
+				else maskbit = 1;
+
+			mask[(y*4) + (x/8)] = (mask[(y*4) + (x/8)] << 1) | maskbit;
+
+      }; /* x */
+		IGraphics->WritePixelLine8(&mouse_rp,0,y,32,line,&tmprp); // &mouseptr
+    } else return;
+  }; /* y */
+
+// HorizPos,VertPos
+	IGraphics->BltBitMapTags(BLITA_Width, 32,
+			BLITA_Height, height,
+			BLITA_Source, mouse_bm,
+			BLITA_SrcType, BLITT_BITMAP,
+			BLITA_Dest, window->RPort,
+			BLITA_DestType, BLITT_RASTPORT,
+			BLITA_Minterm, (ABC|ABNC|ANBC),
+			BLITA_MaskPlane, mask,
+			BLITA_DestX, HorizPos,
+			BLITA_DestY, VertPos,
+			TAG_DONE);
+
+	OldMouseX = HorizPos;
+	OldMouseY = VertPos;
+
+}; /* RefreshMouse */
+
+static void
+PDD_Name(Host_PollDisplay)(ARMul_State *state)
+{
+	pdd_refreshmouse(state);
+}
+
+#undef DISPLAYINFO
+#undef HOSTDISPLAY
+#undef DC
+#undef HD
 
 /* ------------------------------------------------------------------ */
 
@@ -425,113 +795,8 @@ Kbd_PollHostKbd(ARMul_State *state)
 
 /*-----------------------------------------------------------------------------*/
 
-void
-SDD_Name(Host_PollDisplay)(ARMul_State *state)
-{
-  refreshmouse(state);
-}
 
 /*-----------------------------------------------------------------------------*/
-
-/*-----------------------------------------------------------------------------*/
-/* Refresh the mouse pointer image                                                */
-static void refreshmouse(ARMul_State *state) {
-  int x,y,height,offset;
-  int memptr;
-  int HorizPos;
-  int Height = (int)VIDC.Vert_CursorEnd - (int)VIDC.Vert_CursorStart;
-  int VertPos;
-  DisplayDev_GetCursorPos(state,&HorizPos,&VertPos);
-	ULONG transcol = 1;
-	SDD_HostColour line[32];
-	UBYTE maskbit;
-
-	if(!window) return;
-	if(!screen) return;
-
-	if(!mouse_bm) return;
-
-  VertPos = (int)VIDC.Vert_CursorStart;
-  VertPos -= (signed int)VIDC.Vert_DisplayStart;
-
- offset=0;
-  memptr=MEMC.Cinit*16;
-  height=(VIDC.Vert_CursorEnd-VIDC.Vert_CursorStart)+1;
-
-	IGraphics->BltBitMap(friend.BitMap,OldMouseX,OldMouseY,
-			window->RPort->BitMap,OldMouseX,OldMouseY,
-			32,32,0x0C0,0xff,NULL);
-
-	mask[0] = 0;
-	mask[1] = 0;
-	mask[2] = 0;
-	mask[3] = 0;
-	mask[4] = 0;
-	mask[5] = 0;
-	mask[6] = 0;
-	mask[7] = 0;
-	mask[8] = 0;
-	mask[9] = 0;
-	mask[10] = 0;
-	mask[11] = 0;
-	mask[12] = 0;
-	mask[13] = 0;
-	mask[14] = 0;
-	mask[15] = 0;
-
-  /* Cursor palette */
-  SDD_HostColour cursorPal[4];
-  cursorPal[0] = transcol;
-  for(x=0; x<3; x++) {
-    cursorPal[x+1] = SDD_Name(Host_GetColour)(state,VIDC.CursorPalette[x]);
-  }
-
-  for(y=0;y<32;y++,memptr+=8,offset+=8) {
-// fixed height to 32
-
-    if (offset<512*1024) {
-      ARMword tmp[2];
-
-      tmp[0]=MEMC.PhysRam[memptr/4];
-      tmp[1]=MEMC.PhysRam[memptr/4+1];
-
-      for(x=0;x<32;x++) {
-
-		int idx = 0;
-		if(y<height)
-		{
-			idx = (tmp[x/16]>>((x & 15)*2)) & 3;
-		}
-		line[x] = cursorPal[idx];
-
-		if(!idx) maskbit = 0;
-			else maskbit = 1;
-
-		mask[(y*4) + (x/8)] = (mask[(y*4) + (x/8)] << 1) | maskbit;
-
-      }; /* x */
-#error TODO - Needs updating for 16bpp
-		IGraphics->WritePixelLine8(&mouse_rp,0,y,32,line,&tmprp); // &mouseptr
-    } else return;
-  }; /* y */
-
-// HorizPos,VertPos
-	IGraphics->BltBitMapTags(BLITA_Width, 32,
-			BLITA_Height, height,
-			BLITA_Source, mouse_bm,
-			BLITA_SrcType, BLITT_BITMAP,
-			BLITA_Dest, window->RPort,
-			BLITA_DestType, BLITT_RASTPORT,
-			BLITA_Minterm, (ABC|ABNC|ANBC),
-			BLITA_MaskPlane, mask,
-			BLITA_DestX, HorizPos,
-			BLITA_DestY, VertPos,
-			TAG_DONE);
-
-	OldMouseX = HorizPos;
-	OldMouseY = VertPos;
-
-}; /* RefreshMouse */
 
 int
 DisplayDev_Init(ARMul_State *state)
@@ -587,5 +852,9 @@ DisplayDev_Init(ARMul_State *state)
 									ASLFR_DoPatterns,TRUE,
 									TAG_DONE);
 
+#if 0
 	return DisplayDev_Set(state,&SDD_DisplayDev);
+#else
+	return DisplayDev_Set(state,&PDD_DisplayDev);
+#endif
 }

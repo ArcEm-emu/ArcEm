@@ -1609,6 +1609,18 @@ static int SDD_Name(Init)(ARMul_State *state,const struct Vidc_Regs *Vidc)
 
 static void SDD_Name(Shutdown)(ARMul_State *state)
 {
+  int idx = EventQ_Find(state,SDD_Name(FrameStart));
+  if(idx == -1)
+    idx = EventQ_Find(state,SDD_Name(FrameEnd));
+  if(idx == -1)
+    idx = EventQ_Find(state,SDD_Name(RowStart));
+  if(idx >= 0)
+    EventQ_Remove(state,idx);
+  else
+  {
+    fprintf(stderr,"Couldn't find SDD event func!\n");
+    exit(EXIT_FAILURE);
+  }
   free(state->Display);
   state->Display = NULL;
 }

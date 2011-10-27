@@ -53,6 +53,10 @@ typedef enum ArcemConfig_Processor_e {
   Processor_ARM3                  // ARM 2AS
 } ArcemConfig_Processor;
 
+typedef enum ArcemConfig_DisplayDriver_e {
+  DisplayDriver_Palettised,
+  DisplayDriver_Standard, /* i.e. 16/32bpp true colour */
+} ArcemConfig_DisplayDriver;
 
 /* THIS IS THE MAIN CONFIGURATION STRUCTURE */
 
@@ -75,7 +79,10 @@ typedef struct ArcemConfig_s {
 
   /* Platform-specific bits */
 #if defined(SYSTEM_riscos_single)
-  int bRedBlueSwap;
+  ArcemConfig_DisplayDriver eDisplayDriver;
+  int bRedBlueSwap; /* Red/blue swap 16bpp output */
+  int bAspectRatioCorrection; /* Apply H/V scaling for aspect ratio correction */
+  int bUpscale; /* Allow upscaling to fill screen */
   int iMinResX,iMinResY;
   int iLCDResX,iLCDResY;
 #endif

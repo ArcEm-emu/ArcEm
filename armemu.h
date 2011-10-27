@@ -344,6 +344,9 @@ void ARMul_UndefInstr(ARMul_State *state,ARMword instr);
 /* An estimate of how many cycles the host is executing per second */
 extern unsigned long ARMul_EmuRate;
 
+/* Reset the EmuRate code, to cope with situations where the emulator has just been resumed after being suspended for a period of time (i.e. > 1 second) */
+void EmuRate_Reset(ARMul_State *state);
+
 /***************************************************************************\
 *                      Macros to scrutinise instructions                    *
 \***************************************************************************/

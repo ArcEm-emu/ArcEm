@@ -60,5 +60,15 @@ extern void DisplayDev_GetCursorPos(ARMul_State *state,int *x,int *y);
 
 extern unsigned long DisplayDev_GetVIDCClockIn(void); /* Get VIDC source clock rate (affected by IOEB CR) */
 
+/* Helper functions for display devices */
+
+extern void BitCopy(ARMword *dest,int destalign,const ARMword *src,int srcalign,int count);
+
+extern int GetExpandTableSize(unsigned int srcbpp,unsigned int factor);
+
+extern void GenExpandTable(ARMword *dest,unsigned int srcbpp,unsigned int factor,unsigned int mul);
+
+extern void BitCopyExpand(ARMword *dest,int destalign,const ARMword *src,int srcalign,int count,const ARMword *expandtable,unsigned int srcbpp,unsigned int factor);
+
 #endif
 
