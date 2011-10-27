@@ -341,6 +341,8 @@ ARMword ARMul_Align(ARMul_State *state, ARMword address, ARMword data);
 
 void ARMul_UndefInstr(ARMul_State *state,ARMword instr);
 
+/* An estimate of how many cycles the host is executing per second */
+extern unsigned long ARMul_EmuRate;
 
 /***************************************************************************\
 *                      Macros to scrutinise instructions                    *

@@ -58,7 +58,7 @@ extern struct IOCStruct ioc;
 #define FIQ_FORCE   (1U << 7)   /* Software generated FIQ */
 
 
-#define TIMERSCALE 10
+#define TIMERSCALE 3
 #define IOCTIMERSTEP 1
 
 /*------------------------------------------------------------------------------*/

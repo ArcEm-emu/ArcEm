@@ -1,6 +1,6 @@
 #include "eventq.h"
 
-void DummyEventFunc(ARMul_State *state,CycleCount nowtime)
+static void DummyEventFunc(ARMul_State *state,CycleCount nowtime)
 {
 	/* Queue should (must!) be empty, so just poke our time value */
 	state->EventQ[0].Time = nowtime+MAX_CYCLES_INTO_FUTURE;

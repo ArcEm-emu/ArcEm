@@ -11,7 +11,7 @@
 /* It's actually decremented once every POLLGAP - that is called
    with the ARMul scheduler */
 
-#define AUTOREFRESHPOLL 2500
+#define AUTOREFRESHPOLL 700 /* About 60fps on an Iyonix */
 
 #include <stdio.h>
 #include <limits.h>
@@ -28,6 +28,9 @@
 #include "DispKbd.h"
 #include "archio.h"
 #include "hdc63463.h"
+#ifdef SOUND_SUPPORT
+#include "arch/sound.h"
+#endif
 
 
 #include "ControlPane.h"
@@ -438,8 +441,8 @@ static void
 RefreshDisplay(ARMul_State *state,CycleCount nowtime)
 {
   EventQ_RescheduleHead(state,nowtime+POLLGAP*AUTOREFRESHPOLL,RefreshDisplay);
-  ioc.IRQStatus|=8; /* VSync */
-  ioc.IRQStatus |= 0x20; /* Sound - just an experiment */
+  ioc.IRQStatus|=IRQA_VFLYBK; /* VSync */
+  ioc.IRQStatus |= IRQA_TM0; /* This seems to be required for RO to boot? */
   IO_UpdateNirq(state);
 
   DC.miny=MonitorHeight-1;
@@ -734,6 +737,9 @@ void VIDC_PutVal(ARMul_State *state,ARMword address, ARMword data,int bNw) {
       fprintf(stderr,"VIDC stereo image reg write val=0x%x\n",val);
 #endif
       VIDC.StereoImageReg[(addr==0x60)?7:((addr-0x64)/4)]=val & 7;
+#ifdef SOUND_SUPPORT
+      Sound_StereoUpdated(state);
+#endif
       break;
 
     case 0x80:
@@ -872,6 +878,9 @@ void VIDC_PutVal(ARMul_State *state,ARMword address, ARMword data,int bNw) {
       fprintf(stderr,"VIDC Sound freq register val=%d\n",val);
 #endif
       VIDC.SoundFreq=val & 0xff;
+#ifdef SOUND_SUPPORT
+      Sound_SoundFreqUpdated(state);
+#endif
       break;
 
     case 0xe0:

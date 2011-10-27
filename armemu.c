@@ -970,7 +970,35 @@ done:
 
 
 /***************************************************************************\
-*                             EMULATION of ARM6                             *
+*                               EmuRate code                                *
+\***************************************************************************/
+
+static CycleCount EmuRate_LastUpdateCycle;
+static clock_t EmuRate_LastUpdateTime;
+unsigned long ARMul_EmuRate = 1000000; /* Start with safe value of 1MHz */
+
+static void EmuRate_Update(ARMul_State *state,CycleCount nowcycle)
+{
+  CycleDiff cycles = nowcycle-EmuRate_LastUpdateCycle;
+  clock_t nowtime = clock();
+  clock_t timediff = nowtime-EmuRate_LastUpdateTime;
+  if(timediff)
+  {
+    unsigned long newrate = (unsigned long) ((((double)cycles)*CLOCKS_PER_SEC)/timediff);
+    /* Clamp to a sensible minimum value, just in case something crazy happens */
+    if(newrate < 1000000)
+      newrate = 1000000;
+    /* Smooth the value a bit, in case of sudden jumps, and to cope with systems with poor clock() granularity */
+    ARMul_EmuRate = (ARMul_EmuRate*7+newrate)>>3;
+    EmuRate_LastUpdateCycle = nowcycle;
+    EmuRate_LastUpdateTime = nowtime;
+//    printf("EmuRate %d\n",ARMul_EmuRate);
+  }
+  EventQ_RescheduleHead(state,nowcycle+(ARMul_EmuRate>>3),EmuRate_Update); /* Update 8 times per second? */
+}
+
+/***************************************************************************\
+*                             EMULATION of ARM2/3                           *
 \***************************************************************************/
 
 #define EMFUNCDECL26(name) ARMul_Emulate26_ ## name
@@ -1018,6 +1046,14 @@ ARMul_Emulate26(ARMul_State *state)
   PipelineEntry pipe[PIPESIZE];   /* Instruction pipeline */
   ARMword pc = 0;          /* The address of the current instruction */
   int pipeidx = 0; /* Index of instruction to run */
+
+  /* Reset the EmuRate code */
+  int idx = EventQ_Find(state,EmuRate_Update);
+  if(idx != -1)
+    EventQ_Remove(state,idx);
+  EmuRate_LastUpdateCycle = ARMul_Time;
+  EmuRate_LastUpdateTime = clock();
+  EventQ_Insert(state,ARMul_Time+100000,EmuRate_Update);
 
   /**************************************************************************\
    *                        Execute the next instruction                    *
@@ -1255,6 +1291,13 @@ ARMul_Emulate26(ARMul_State *state)
         Prof_EndFunc(pipe[2].func);
       }
 
+#ifdef MILLION_INSTRUCTIONS
+      if(!--icount)
+      {
+        kill_emulator = 1;
+        break;
+      }
+#endif
 /* pipeidx = 2 */
       Prof_Begin("Fetch/decode");
       switch (state->NextInstr) {
@@ -1323,6 +1366,13 @@ ARMul_Emulate26(ARMul_State *state)
         Prof_EndFunc(pipe[0].func);
       }
 
+#ifdef MILLION_INSTRUCTIONS
+      if(!--icount)
+      {
+        kill_emulator = 1;
+        break;
+      }
+#endif
 #endif
     } /* for loop */
 

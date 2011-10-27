@@ -91,7 +91,7 @@ SRCS = armcopro.c armemu.c arminit.c arch/armarc.c \
 	$(SYSTEM)/DispKbd.c arch/i2c.c arch/archio.c \
 	arch/fdc1772.c $(SYSTEM)/ControlPane.c arch/hdc63463.c \
 	arch/ReadConfig.c arch/keyboard.c $(SYSTEM)/filecalls.c \
-	arch/DispKbdShared.c arch/ArcemConfig.c arch/cp15.c
+	arch/DispKbdShared.c arch/ArcemConfig.c arch/cp15.c arch/newsound.c
 
 INCS = armdefs.h armemu.h $(SYSTEM)/KeyTable.h \
   arch/i2c.h arch/archio.h arch/fdc1772.h arch/ControlPane.h \
@@ -133,9 +133,16 @@ TARGET=!ArcEm/arcem
 endif
 
 ifeq (${SYSTEM},riscos-single)
-EXTNROM_SUPPORT=yes
+# HostFS
 HOSTFS_SUPPORT=yes
+HOSTFS_OBJS = riscos-single/hostfs.o
+# Sound
+SOUND_SUPPORT=yes
+SOUND_PTHREAD=no
+OBJS += riscos-single/soundbuf.o
+# General
 DIRECT_DISPLAY=yes
+EXTNROM_SUPPORT=yes
 CFLAGS += -I@ -DSYSTEM_riscos_single -Iriscos-single -mtune=xscale -march=armv5te -mthrowback
 LDFLAGS += -static
 # Disable stack limit checks. -ffixed-sl required to prevent sl being used as temp storage, breaking unixlib and any other code that does do stack checks
@@ -143,11 +150,10 @@ LDFLAGS += -static
 # No function name poking for a bit extra speed
 CFLAGS += -mno-poke-function-name
 # Debug options
-#CFLAGS += -save-temps -mpoke-function-name
+CFLAGS += -save-temps -mpoke-function-name
 # Profiling
 #CFLAGS += -mpoke-function-name -DPROFILE_ENABLED
 OBJS += prof.o
-HOSTFS_OBJS = riscos-single/hostfs.o
 TARGET=!ArcEm/arcem
 endif
 
@@ -170,7 +176,7 @@ endif
 
 ifeq (${SOUND_SUPPORT},yes)
 CFLAGS += -DSOUND_SUPPORT
-OBJS += $(SYSTEM)/sound.o
+OBJS += $(SYSTEM)/sound.o arch/newsound.o
 INCS += arch/sound.h
 ifeq (${SOUND_PTHREAD},yes)
 LIBS += -lpthread
@@ -251,6 +257,9 @@ armemu.o: armemu.c armdefs.h armemu.h armemuinstr.c armemudec.c
 prof.o: prof.s
 	$(CC) -x assembler-with-cpp prof.s -c
 
+riscos-single/soundbuf.o: riscos-single/soundbuf.s
+	$(CC) -x assembler-with-cpp riscos-single/soundbuf.s -c -o $@
+
 arminit.o: arminit.c armdefs.h armemu.h
 	$(CC) $(CFLAGS) -c $*.c
 
@@ -295,6 +304,9 @@ arch/ReadConfig.o: arch/ReadConfig.c arch/ReadConfig.h arch/DispKbd.h \
 
 arch/keyboard.o: arch/keyboard.c arch/keyboard.h
 	$(CC) $(CFLAGS) -c $*.c -o arch/keyboard.o
+
+arch/newsound.o: arch/newsound.c arch/sound.h
+	$(CC) $(CFLAGS) -c $*.c -o arch/newsound.o
 
 win/gui.o: win/gui.rc win/gui.h win/arc.ico
 	windres $*.rc -o win/gui.o

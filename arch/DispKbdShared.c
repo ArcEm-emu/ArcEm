@@ -17,9 +17,6 @@
 #include "arch/armarc.h"
 #include "arch/hdc63463.h"
 #include "arch/keyboard.h"
-#ifdef SOUND_SUPPORT
-#include "arch/sound.h"
-#endif
 
 #define DC DISPLAYCONTROL
 
@@ -197,14 +194,6 @@ static void Keyboard_Poll(ARMul_State *state,CycleCount nowtime)
   }
 }
 
-#ifdef SOUND_SUPPORT
-static void Sound_Poll(ARMul_State *state,CycleCount nowtime)
-{
-  EventQ_RescheduleHead(state,nowtime+POLLGAP,Sound_Poll);
-  sound_poll(state);
-}
-#endif
-
 void
 DisplayKbd_Init(ARMul_State *state)
 {
@@ -231,21 +220,9 @@ DisplayKbd_Init(ARMul_State *state)
   memset(DC.UpdateFlags, 0,
          ((512 * 1024) / UPDATEBLOCKSIZE) * sizeof(unsigned));
 
-#ifdef SOUND_SUPPORT
-  /* Initialise the Sound output */
-  if (sound_init()) {
-    /* There was an error of some sort - it will already have been reported */
-    fprintf(stderr, "Could not initialise sound output - exiting\n");
-    exit(EXIT_FAILURE);
-  }
-#endif
-
   /* Schedule update events */
 #ifndef SYSTEM_gp2x
   EventQ_Insert(state,ARMul_Time+POLLGAP*2,FDCHDC_Poll);
-#endif
-#ifdef SOUND_SUPPORT
-  EventQ_Insert(state,ARMul_Time+POLLGAP,Sound_Poll);
 #endif
   EventQ_Insert(state,ARMul_Time+POLLGAP*100,Keyboard_Poll);
 } /* DisplayKbd_Init */

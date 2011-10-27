@@ -1430,7 +1430,7 @@ void VIDC_PutVal(ARMul_State *state,ARMword address, ARMword data,int bNw) {
 #endif
       VIDC.StereoImageReg[(addr==0x60)?7:((addr-0x64)/4)]=val & 7;
 #ifdef SOUND_SUPPORT
-      SoundUpdateStereoImage();
+      SoundUpdateStereoImage(state);
 #endif
       break;
 
@@ -1566,7 +1566,7 @@ void VIDC_PutVal(ARMul_State *state,ARMword address, ARMword data,int bNw) {
 #endif
       VIDC.SoundFreq=val & 0xff;
 #ifdef SOUND_SUPPORT
-      SoundUpdateSampleRate();
+      SoundUpdateSampleRate(state);
 #endif
       break;
 
