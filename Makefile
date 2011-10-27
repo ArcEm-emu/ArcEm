@@ -68,7 +68,7 @@ endif
 endif
 
 CFLAGS += \
-    -D$(ENDIAN) $(CFL) -DNOOS -DNOFPE $(WARN) \
+    -D$(ENDIAN) $(CFL) $(WARN) \
     -I$(SYSTEM) -Iarch -I.
 
 prefix=/usr/local
@@ -80,15 +80,14 @@ INSTALL=cp
 # Everything else should be ok as it is.
 
 OBJS = armcopro.o armemu.o arminit.o \
-	armsupp.o main.o dagstandalone.o \
+	armsupp.o main.o dagstandalone.o eventq.o \
 		$(SYSTEM)/DispKbd.o arch/i2c.o arch/archio.o \
     arch/fdc1772.o $(SYSTEM)/ControlPane.o arch/hdc63463.o arch/ReadConfig.o \
     arch/keyboard.o $(SYSTEM)/filecalls.o arch/DispKbdShared.o \
     arch/ArcemConfig.o arch/cp15.o
 
 SRCS = armcopro.c armemu.c arminit.c arch/armarc.c \
-	armsupp.c main.c dagstandalone.c  \
-	arm-support.s conditions.s rhs.s \
+	armsupp.c main.c dagstandalone.c eventq.c \
 	$(SYSTEM)/DispKbd.c arch/i2c.c arch/archio.c \
 	arch/fdc1772.c $(SYSTEM)/ControlPane.c arch/hdc63463.c \
 	arch/ReadConfig.c arch/keyboard.c $(SYSTEM)/filecalls.c \
@@ -137,14 +136,15 @@ ifeq (${SYSTEM},riscos-single)
 EXTNROM_SUPPORT=notyet
 DIRECT_DISPLAY=yes
 CFLAGS += -I@ -DSYSTEM_riscos_single -Iriscos-single -mtune=xscale -march=armv5te -mthrowback
+LDFLAGS += -static
 # Disable stack limit checks. -ffixed-sl required to prevent sl being used as temp storage, breaking unixlib and any other code that does do stack checks
 CFLAGS += -mno-apcs-stack-check -ffixed-sl
 # No function name poking for a bit extra speed
 CFLAGS += -mno-poke-function-name
 # Debug options
-CFLAGS += -save-temps # -mpoke-function-name
-LDFLAGS += -static
-#OBJS += arm-support.o rhs.o
+#CFLAGS += -save-temps -mpoke-function-name
+# Profiling
+#CFLAGS += -mpoke-function-name -DPROFILE_ENABLED
 OBJS += prof.o
 TARGET=!ArcEm/arcem
 endif
@@ -245,28 +245,8 @@ armcopro.o: armcopro.c armdefs.h
 armemu.o: armemu.c armdefs.h armemu.h armemuinstr.c armemudec.c
 	$(CC) $(CFLAGS) -o armemu.o -c armemu.c
 
-arm-support.o: arm-support.s instructions
-	$(CC) -x assembler-with-cpp arm-support.s -c -I@
-
-rhs.o: rhs.s
-	$(CC) rhs.s -c
-
 prof.o: prof.s
 	$(CC) -x assembler-with-cpp prof.s -c
-
-instructions: armsuppmov.s armsuppmovs.s armsuppmvn.s armsuppmvns.s
-
-armsuppmov.s: conditions.s
-	sed s#ARMINS#Mov# <conditions.s >armsuppmov.s
-
-armsuppmovs.s: conditions.s
-	sed s#ARMINS#Movs# <conditions.s >armsuppmovs.s
-
-armsuppmvn.s: conditions.s
-	sed s#ARMINS#Mvn# <conditions.s >armsuppmvn.s
-
-armsuppmvns.s: conditions.s
-	sed s#ARMINS#Mvns# <conditions.s >armsuppmvns.s
 
 arminit.o: arminit.c armdefs.h armemu.h
 	$(CC) $(CFLAGS) -c $*.c
@@ -278,6 +258,9 @@ dagstandalone.o: dagstandalone.c armdefs.h
 	$(CC) $(CFLAGS) -c $*.c
 
 main.o: main.c armdefs.h
+	$(CC) $(CFLAGS) -c $*.c
+
+eventq.o: eventq.c eventq.h
 	$(CC) $(CFLAGS) -c $*.c
 
 $(SYSTEM)/DispKbd.o: $(SYSTEM)/DispKbd.c arch/DispKbd.h $(SYSTEM)/KeyTable.h \

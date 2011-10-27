@@ -605,15 +605,15 @@ static void RefreshDisplay_TrueColor_8bpp(ARMul_State *state, int DisplayWidth, 
 } /* RefreshDisplay_TrueColor_8bpp */
 
 void
-RefreshDisplay(ARMul_State *state)
+RefreshDisplay(ARMul_State *state,CycleCount nowtime)
 {
+  EventQ_RescheduleHead(state,nowtime+POLLGAP*AUTOREFRESHPOLL,RefreshDisplay);
 	if(!window) return;
 	if(!friend.BitMap) return;
 
   int DisplayHeight = VIDC.Vert_DisplayEnd - VIDC.Vert_DisplayStart;
   int DisplayWidth  = (VIDC.Horiz_DisplayEnd - VIDC.Horiz_DisplayStart) * 2;
 
-  DC.AutoRefresh=AUTOREFRESHPOLL;
   ioc.IRQStatus|=8; /* VSync */
   ioc.IRQStatus |= 0x20; /* Sound - just an experiment */
   IO_UpdateNirq(state);
@@ -808,6 +808,7 @@ DisplayKbd_InitHost(ARMul_State *state)
   HD.green_shift = 16;
   HD.blue_shift  = 24;
 
+  EventQ_Insert(state,ARMul_Time+POLLGAP*AUTOREFRESHPOLL,RefreshDisplay);
 }
 
 void VIDC_PutVal(ARMul_State *state,ARMword address, ARMword data,int bNw)

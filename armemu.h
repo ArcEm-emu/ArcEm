@@ -307,11 +307,6 @@ static inline ARMword inlLHS(ARMul_State *state,ARMword r)
 #define STOREMULT(instr,address,wb) StoreMult(state,instr,address,wb)
 #define STORESMULT(instr,address,wb) StoreSMult(state,instr,address,wb)
 
-#define POSBRANCH ((instr & 0x7fffff) << 2)
-/* DAG: NOTE! Constant in Negbranch was 0xff000000! - obviously wrong -
-   corrupts top two bits of the branch offset */
-#define NEGBRANCH (0xfc000000 | ((instr & 0xffffff) << 2))
-
 /***************************************************************************\
 *                      Stuff that is shared across modes                    *
 \***************************************************************************/
@@ -327,8 +322,6 @@ extern char ARMul_BitList[];       /* Number of bits in a byte table */
 extern unsigned int ARMul_CCTable[16];
 #define ARMul_CCCheck(instr,psr) (ARMul_CCTable[instr>>28] & (1<<(psr>>28)))
 
-void ARMul_Abort26(ARMul_State *state, ARMword);
-void ARMul_Abort32(ARMul_State *state, ARMword);
 unsigned ARMul_NthReg(ARMword instr,unsigned number);
 void ARMul_R15Altered(ARMul_State *state);
 ARMword ARMul_SwitchMode(ARMul_State *state,ARMword oldmode, ARMword newmode);

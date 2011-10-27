@@ -8,6 +8,7 @@
 #include <signal.h>
 
 #include "../armdefs.h"
+#include "../armemu.h"
 
 #include "dbugsys.h"
 
@@ -22,6 +23,8 @@
 /*#define IOC_TRACE*/
 
 struct IOCStruct ioc;
+
+static void UpdateTimerRegisters_Event(ARMul_State *state,CycleCount time);
 
 /*-----------------------------------------------------------------------------*/
 void
@@ -42,7 +45,8 @@ IO_Init(ARMul_State *state)
   ioc.TimerInputLatch[3] = 0xffff;
   ioc.Timer0CanInt = ioc.Timer1CanInt = 1;
   ioc.TimersLastUpdated = -1;
-  ioc.NextTimerTrigger = 0;
+  ioc.NextTimerTrigger = ARMul_Time;
+  EventQ_Insert(state,ARMul_Time,UpdateTimerRegisters_Event);
 
   IO_UpdateNirq(state);
   IO_UpdateNfiq(state);
@@ -56,11 +60,11 @@ IO_Init(ARMul_State *state)
 void
 IO_UpdateNfiq(ARMul_State *state)
 {
-  register unsigned int tmp = state->Exception & ~2;
+  register unsigned int tmp = state->Exception & ~Exception_FIQ;
 
   if (ioc.FIRQStatus & ioc.FIRQMask) {
     /* Cause FIQ */
-    tmp |= 2;
+    tmp |= Exception_FIQ;
   }
 
   state->Exception = tmp;
@@ -70,11 +74,11 @@ IO_UpdateNfiq(ARMul_State *state)
 void
 IO_UpdateNirq(ARMul_State *state)
 {
-  register unsigned int tmp = state->Exception & ~1;
+  register unsigned int tmp = state->Exception & ~Exception_IRQ;
 
   if (ioc.IRQStatus & ioc.IRQMask) {
     /* Cause interrupt! */
-    tmp |= 1;
+    tmp |= Exception_IRQ;
   }
 
   state->Exception = tmp;
@@ -123,14 +127,13 @@ GetCurrentTimerVal(ARMul_State *state,int toget)
 
 
 /*------------------------------------------------------------------------------*/
-void
-UpdateTimerRegisters(ARMul_State *state)
+static void UpdateTimerRegisters_Internal(ARMul_State *state,CycleCount nowtime,int idx)
 {
-  long timeSinceLastUpdate = ARMul_Time - ioc.TimersLastUpdated;
-  long scaledTimeSlip = timeSinceLastUpdate / TIMERSCALE;
+  CycleDiff timeSinceLastUpdate = nowtime - ioc.TimersLastUpdated;
+  CycleDiff scaledTimeSlip = timeSinceLastUpdate / TIMERSCALE;
   unsigned long tmpL;
 
-  ioc.NextTimerTrigger = ARMul_Time + 8192; /* Doesn't let things wrap */
+  CycleDiff nextTrigger = MAX_CYCLES_INTO_FUTURE;
 
   /* ----------------------------------------------------------------- */
   tmpL = ioc.TimerInputLatch[0];
@@ -145,8 +148,8 @@ UpdateTimerRegisters(ARMul_State *state)
   if (ioc.TimerCount[0] < 0) ioc.TimerCount[0] += tmpL;
 
   if (ioc.Timer0CanInt) {
-    tmpL = (ioc.TimerCount[0] * TIMERSCALE) + ARMul_Time;
-    if (tmpL < ioc.NextTimerTrigger) ioc.NextTimerTrigger = tmpL;
+    tmpL = (ioc.TimerCount[0] * TIMERSCALE);
+    if (tmpL < nextTrigger) nextTrigger = tmpL;
   }
 
   /* ----------------------------------------------------------------- */
@@ -161,8 +164,8 @@ UpdateTimerRegisters(ARMul_State *state)
   if (ioc.TimerCount[1] < 0) ioc.TimerCount[1] += tmpL;
 
   if (ioc.Timer1CanInt) {
-    tmpL = (ioc.TimerCount[1] * TIMERSCALE) + ARMul_Time;
-    if (tmpL < ioc.NextTimerTrigger) ioc.NextTimerTrigger = tmpL;
+    tmpL = (ioc.TimerCount[1] * TIMERSCALE);
+    if (tmpL < nextTrigger) nextTrigger = tmpL;
   }
 
   /* ----------------------------------------------------------------- */
@@ -175,7 +178,22 @@ UpdateTimerRegisters(ARMul_State *state)
     ioc.TimerCount[3] -= (scaledTimeSlip % ioc.TimerInputLatch[3]);
   }
 
-  ioc.TimersLastUpdated = ARMul_Time;
+  ioc.TimersLastUpdated = nowtime;
+
+  ioc.NextTimerTrigger = nowtime + nextTrigger;
+  EventQ_Reschedule(state,nowtime + nextTrigger,UpdateTimerRegisters_Event,idx);
+}
+
+void
+UpdateTimerRegisters(ARMul_State *state)
+{
+  UpdateTimerRegisters_Internal(state,ARMul_Time,EventQ_Find(state,UpdateTimerRegisters_Event));
+}
+
+void
+UpdateTimerRegisters_Event(ARMul_State *state,CycleCount nowtime)
+{
+  UpdateTimerRegisters_Internal(state,nowtime,0);
 }
 
 /** Called when there has been a write to the IOC control register - this

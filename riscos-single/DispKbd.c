@@ -434,10 +434,10 @@ static void RefreshDisplay_PseudoColor_8bpp(ARMul_State *state) {
 /*----------------------------------------------------------------------------*/
 #endif
 
-void
-RefreshDisplay(ARMul_State *state)
+static void
+RefreshDisplay(ARMul_State *state,CycleCount nowtime)
 {
-  DC.AutoRefresh=AUTOREFRESHPOLL;
+  EventQ_RescheduleHead(state,nowtime+POLLGAP*AUTOREFRESHPOLL,RefreshDisplay);
   ioc.IRQStatus|=8; /* VSync */
   ioc.IRQStatus |= 0x20; /* Sound - just an experiment */
   IO_UpdateNirq(state);
@@ -485,14 +485,14 @@ RefreshDisplay(ARMul_State *state)
 #if 1
   static clock_t oldtime;
   static ARMword oldcycles;
-  clock_t nowtime = clock();
-  if((nowtime-oldtime) > CLOCKS_PER_SEC)
+  clock_t nowtime2 = clock();
+  if((nowtime2-oldtime) > CLOCKS_PER_SEC)
   {
     const float scale = ((float)CLOCKS_PER_SEC)/1000000.0f;
-    float mhz = scale*((float)(ARMul_Time-oldcycles))/((float)(nowtime-oldtime));
+    float mhz = scale*((float)(ARMul_Time-oldcycles))/((float)(nowtime2-oldtime));
     printf("\x1e%.2fMHz\n",mhz);
     oldcycles = ARMul_Time;
-    oldtime = nowtime;
+    oldtime = nowtime2;
   }
 #endif
 
@@ -518,6 +518,7 @@ DisplayKbd_InitHost(ARMul_State *state)
   _swi(OS_WriteI+99, 0);
   _swi(OS_WriteI+64, 0);
 #endif
+  EventQ_Insert(state,ARMul_Time+POLLGAP*AUTOREFRESHPOLL,RefreshDisplay);
 } /* DisplayKbd_InitHost */
 
 

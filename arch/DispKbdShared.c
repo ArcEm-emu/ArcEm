@@ -168,13 +168,49 @@ void CopyScreenRAM(ARMul_State *state, unsigned int offset, int len, char *Buffe
 #endif
 }
 
+#ifndef SYSTEM_gp2x
+static void FDCHDC_Poll(ARMul_State *state,CycleCount nowtime)
+{
+  /* HDC & FDC want calling every 250 cycles, apparently */
+  EventQ_RescheduleHead(state,nowtime+POLLGAP*2,FDCHDC_Poll);
+  FDC_Regular(state);
+  HDC_Regular(state);
+}
+#endif
+
+static void Keyboard_Poll(ARMul_State *state,CycleCount nowtime)
+{
+  EventQ_RescheduleHead(state,nowtime+POLLGAP*100,Keyboard_Poll);
+  /* Call host-specific routine */
+  DisplayKbd_PollHost(state);
+  /* Keyboard check */
+  int KbdSerialVal = IOC_ReadKbdTx(state);
+  if (KbdSerialVal != -1) {
+    Kbd_CodeFromHost(state, (unsigned char) KbdSerialVal);
+  } else {
+    if (KBD.TimerIntHasHappened > 2) {
+      KBD.TimerIntHasHappened = 0;
+      if (KBD.KbdState == KbdState_Idle) {
+        Kbd_StartToHost(state);
+      }
+    }
+  }
+}
+
+#ifdef SOUND_SUPPORT
+static void Sound_Poll(ARMul_State *state,CycleCount nowtime)
+{
+  EventQ_RescheduleHead(state,nowtime+POLLGAP,Sound_Poll);
+  sound_poll(state);
+}
+#endif
+
 void
 DisplayKbd_Init(ARMul_State *state)
 {
   /* Call Host-specific routine */
   DisplayKbd_InitHost(state);
 
-  DC.PollCount            = 0; /* Seems to never be used */
   KBD.KbdState            = KbdState_JustStarted;
   KBD.MouseTransEnable    = 0;
   KBD.KeyScanEnable       = 0;
@@ -204,56 +240,12 @@ DisplayKbd_Init(ARMul_State *state)
   }
 #endif
 
-  state->Now = ARMul_Time + POLLGAP;
-} /* DisplayKbd_Init */
-
-/* Called using an ARM_ScheduleEvent - it also sets itself up to be called
-   again.                                                                     */
-
-unsigned
-DisplayKbd_Poll(void *data)
-{
-  ARMul_State *state = data;
-  int KbdSerialVal;
-  static int KbdPollInt = 0;
-  static int discconttog = 0;
-
-#ifdef SOUND_SUPPORT
-  sound_poll(state);
-#endif
-
+  /* Schedule update events */
 #ifndef SYSTEM_gp2x
-  /* Our POLLGAP runs at 125 cycles, HDC (and fdc) want callback at 250 */
-  if (discconttog) {
-    FDC_Regular(state);
-    HDC_Regular(state);
-  }
-  discconttog ^= 1;
+  EventQ_Insert(state,ARMul_Time+POLLGAP*2,FDCHDC_Poll);
 #endif
-
-  if ((KbdPollInt++) > 100) {
-    KbdPollInt = 0;
-    /* Call host-specific routine */
-    DisplayKbd_PollHost(state);
-    /* Keyboard check */
-    KbdSerialVal = IOC_ReadKbdTx(state);
-    if (KbdSerialVal != -1) {
-      Kbd_CodeFromHost(state, (unsigned char) KbdSerialVal);
-    } else {
-      if (KBD.TimerIntHasHappened > 2) {
-        KBD.TimerIntHasHappened = 0;
-        if (KBD.KbdState == KbdState_Idle) {
-          Kbd_StartToHost(state);
-        }
-      }
-    }
-  }
-
-  if (--(DC.AutoRefresh) < 0) {
-    RefreshDisplay(state);
-  }
-
-  state->Now = ARMul_Time + POLLGAP;
-
-  return 0;
-} /* DisplayKbd_Poll */
+#ifdef SOUND_SUPPORT
+  EventQ_Insert(state,ARMul_Time+POLLGAP,Sound_Poll);
+#endif
+  EventQ_Insert(state,ARMul_Time+POLLGAP*100,Keyboard_Poll);
+} /* DisplayKbd_Init */

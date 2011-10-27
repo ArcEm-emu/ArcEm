@@ -107,9 +107,8 @@ ARMul_State *ARMul_NewState(void)
 
  state->Display = NULL;
 
- state->Now = 0;
-
  ARMul_Reset(state);
+ EventQ_Init(state);
  return(state);
  }
 

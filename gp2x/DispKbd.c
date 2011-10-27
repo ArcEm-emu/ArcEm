@@ -371,9 +371,9 @@ static void RefreshMouse(ARMul_State *state) {
 
 
 void
-RefreshDisplay(ARMul_State *state)
+RefreshDisplay(ARMul_State *state,CycleCount nowtime)
 {
-  DC.AutoRefresh=AUTOREFRESHPOLL;
+  EventQ_RescheduleHead(state,nowtime+POLLGAP*AUTOREFRESHPOLL,RefreshDisplay);
   ioc.IRQStatus|=8; /* VSync */
   ioc.IRQStatus |= 0x20; /* Sound - just an experiment */
   IO_UpdateNirq(state);
@@ -462,6 +462,7 @@ DisplayKbd_InitHost(ARMul_State *state)
   SelectScreenMode(320, 240, 3);
 
   openJoypad();
+  EventQ_Insert(state,ARMul_Time+POLLGAP*AUTOREFRESHPOLL,RefreshDisplay);
 } /* DisplayKbd_InitHost */
 
 /*-----------------------------------------------------------------------------*/

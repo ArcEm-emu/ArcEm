@@ -490,8 +490,9 @@ static void refresh_truecolour_display_nbpp(ARMul_State *state,
 
 /*----------------------------------------------------------------------------*/
 void
-RefreshDisplay(ARMul_State *state)
+RefreshDisplay(ARMul_State *state,CycleCount nowtime)
 {
+  EventQ_RescheduleHead(state,nowtime+POLLGAP*AUTOREFRESHPOLL,RefreshDisplay);
     static struct {
         void (*set_border_map)(ARMul_State *state);
         void (*set_cursor_map)(ARMul_State *state);
@@ -512,7 +513,6 @@ RefreshDisplay(ARMul_State *state)
   int DisplayWidth  = (VIDC.Horiz_DisplayEnd - VIDC.Horiz_DisplayStart) * 2;
     int vi;
 
-  DC.AutoRefresh  = AUTOREFRESHPOLL;
   ioc.IRQStatus  |= IRQA_VFLYBK; /* VSync */
   ioc.IRQStatus  |= IRQA_TM0; /* Sound - just an experiment */
   IO_UpdateNirq(state);
@@ -1020,6 +1020,7 @@ DisplayKbd_InitHost(ARMul_State *state)
   XMapSubwindows(HD.disp,HD.MainPane);
 
   ControlPane_Init(state);
+  EventQ_Insert(state,ARMul_Time+POLLGAP*AUTOREFRESHPOLL,RefreshDisplay);
 } /* DisplayKbd_InitHost */
 
 
@@ -1230,13 +1231,11 @@ static void MainPane_Event(ARMul_State *state,XEvent *e) {
     case EnterNotify:
       /*fprintf(stderr,"MainPane: Enter notify!\n"); */
         hostdisplay_change_focus(TRUE);
-      DC.PollCount=0;
       break;
 
     case LeaveNotify:
       /*fprintf(stderr,"MainPane: Leave notify!\n"); */
         hostdisplay_change_focus(FALSE);
-      DC.PollCount=0;
       break;
 
     case Expose:
@@ -1285,7 +1284,6 @@ static void CursorPane_Event(ARMul_State *state,XEvent *e) {
     case LeaveNotify:
       fprintf(stderr,"CursorPane: Leave notify!\n");
         hostdisplay_change_focus(FALSE);
-      DC.PollCount=0;
       break;
 
     case Expose:

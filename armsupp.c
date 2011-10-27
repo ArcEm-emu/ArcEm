@@ -348,17 +348,16 @@ void ARMul_UndefInstr(ARMul_State *state,ARMword instr)
 
 unsigned IntPending(ARMul_State *state)
 {
- if (state->Exception) { /* Any exceptions */
-   if ((state->Exception & 2) && !FFLAG) {
-     ARMul_Abort(state,ARMul_FIQV);
-     return(TRUE);
-   }
-   else if ((state->Exception & 1) && !IFLAG) {
-     ARMul_Abort(state,ARMul_IRQV);
-     return(TRUE);
-   }
+ ARMword excep = state->Exception & ~state->Reg[15];
+ if(!excep) { /* anything? */
+   return(FALSE);
+ } else if(excep & Exception_FIQ) { /* FIQ? */
+   ARMul_Abort(state,ARMul_FIQV);
+   return(TRUE);
+ } else { /* Must be IRQ */
+   ARMul_Abort(state,ARMul_IRQV);
+   return(TRUE);
  }
- return(FALSE);
 }
 
 /***************************************************************************\

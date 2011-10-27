@@ -21,6 +21,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 
 typedef unsigned int ARMword; /* must be 32 bits wide */
 
@@ -139,6 +140,41 @@ typedef struct {
 } FastMapEntry;
 
 /***************************************************************************\
+*                               Event queue                                 *
+\***************************************************************************/
+
+/* The event queue is a simple priority queue used for all time-based events
+   external to the CPU. Updating IOC timers, frontend screen output, etc.
+
+   The CPU cycle counter is the timer used to trigger the events.
+   
+   When an event is triggered, it must either remove itself (via EventQ_Remove)
+   or reschedule itself for a different time (EventQ_RescheduleHead). Failure
+   to do either of those will result in an infinite loop where the same event
+   is repeatedly triggered without the CPU emulation advancing.
+
+   It's also acceptable for an event to remove itself and schedule several
+   other events, in its place. Just be careful about the order events are
+   inserted, otherwise when you call Remove(0) or RescheduleHead() the head
+   may not be the same as before. Also be wary of timer overflows; any event
+   scheduled for more than MAX_CYCLES_INTO_FUTURE cycles into the future will
+   be considered as having already been triggered and will fire immediately.
+ */
+
+typedef unsigned long CycleCount;
+typedef signed long CycleDiff;
+#define MAX_CYCLES_INTO_FUTURE LONG_MAX
+
+typedef void (*EventQ_Func)(ARMul_State *state,CycleCount nowtime);
+
+typedef struct {
+  CycleCount Time;  /* When to trigger the event */
+  EventQ_Func Func;    /* Function to call */
+} EventQ_Entry;
+
+#define EVENTQ_SIZE 8
+
+/***************************************************************************\
 *                          Main emulator state                              *
 \***************************************************************************/
 
@@ -163,20 +199,26 @@ typedef enum ARMStartIns {
 
 typedef struct DisplayInfo DisplayInfo;
 
+#define Exception_IRQ R15IBIT
+#define Exception_FIQ R15FBIT
+
 struct ARMul_State {
    /* Most common stuff, current register file first to ease indexing */
    ARMword Reg[16];           /* the current register file */
-   unsigned long NumCycles;   /* Number of cycles */
+   CycleCount NumCycles;      /* Number of cycles */
    enum ARMStartIns NextInstr;/* Pipeline state */
    unsigned abortSig;         /* Abort state */
    ARMword Aborted;           /* sticky flag for aborts */
    ARMword AbortAddr;         /* to keep track of Prefetch aborts */
-   unsigned Exception;        /* IRQ & FIQ pins */
-   unsigned long Now;         /* time next event should be triggered */
+   ARMword Exception;         /* IRQ & FIQ pins */
    DisplayInfo *Display;      /* VIDC/DisplayInfo struct */
    ARMword Bank;              /* the current register bank */
    unsigned NtransSig;        /* MEMC USR/SVC flag, somewhat redundant with FastMapMode */
    ARMword Base;              /* extra hand for base writeback */
+
+   /* Event queue */
+   EventQ_Entry EventQ[EVENTQ_SIZE];
+   unsigned char NumEvents;
 
    /* Fastmap stuff */
    FastMapUInt FastMapMode;   /* Current access mode flags */
@@ -283,5 +325,6 @@ pascal void SpinCursor(short increment);        /* copied from CursorCtl.h */
 
 #include "arch/archio.h"
 #include "arch/armarc.h"
+#include "eventq.h"
 
 #endif

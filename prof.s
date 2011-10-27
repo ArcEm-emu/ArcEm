@@ -55,6 +55,8 @@ prof_fmt_str:
 #define OS_LeaveOS 0x7c
 #define OS_Hardware 0x7a
 
+//#define cortex
+
 #ifdef cortex
 #define read_timer(out) mrc	p15, 0, out, c9, c13, 0 @ counts up
 #else
@@ -96,7 +98,7 @@ Prof_Init:
 	mcr	p15, 0, a1, c9, c14, 0 @ enable user access to perf counters
 	mvn	a1, #0
 	mcr	p15, 0, a1, c9, c12, 2 @ disable counters
-	mcr	p15, 0, a1, c9, a14, 2 @ disable interrupts
+	mcr	p15, 0, a1, c9, c14, 2 @ disable interrupts
 	mov	a1, #0x80000000
 	mcr	p15, 0, a1, c9, c12, 1 @ enable cycle count
 	mov	a1, #7

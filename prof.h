@@ -1,8 +1,6 @@
 #ifndef prof_h
 #define prof_h
 
-#define PROFILE_ENABLED
-
 #ifdef PROFILE_ENABLED
 
 extern void Prof_Init(void);
