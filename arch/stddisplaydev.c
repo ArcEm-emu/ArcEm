@@ -347,7 +347,7 @@ static int SDD_Name(RowFunc1bpp1X)(ARMul_State *state,int row,SDD_Row drow,int f
   unsigned int Vptr = DC.Vptr;
   unsigned int Vstart = MEMC.Vstart<<7;
   unsigned int Vend = (MEMC.Vend+1)<<7; /* Point to pixel after end */
-  const unsigned char *RAM = (unsigned char *) MEMC.PhysRam;
+  const ARMword *RAM = MEMC.PhysRam;
   int Remaining = DC.LastHostWidth;
 
   /* Sanity checks to avoid looping forever */
@@ -375,17 +375,18 @@ static int SDD_Name(RowFunc1bpp1X)(ARMul_State *state,int row,SDD_Row drow,int f
       flags |= ROWFUNC_UPDATED;
       /* Process the pixels in this region, stopping at end of row/update block/Vend */
       SDD_Name(Host_BeginUpdate)(state,&drow,Available);
-      const unsigned char *In = RAM+(Vptr>>3);
-      unsigned int Bit = 1<<(Vptr & 7);
+      const ARMword *In = RAM+(Vptr>>5);
+      ARMword Bit = 1<<(Vptr & 31);
+      ARMword Data = *In++;
       for(i=0;i<Available;i++)
       {
-        int idx = (*In & Bit)?1:0;
+        int idx = (Data & Bit)?1:0;
         SDD_Name(Host_WritePixel)(state,&drow,Palette[idx]);
         Bit <<= 1;
-        if(Bit == 256)
+        if(!Bit)
         {
           Bit = 1;
-          In++;
+          Data = *In++;
         }
       }
       SDD_Name(Host_EndUpdate)(state,&drow);
@@ -432,7 +433,7 @@ static int SDD_Name(RowFunc2bpp1X)(ARMul_State *state,int row,SDD_Row drow,int f
   unsigned int Vptr = DC.Vptr;
   unsigned int Vstart = MEMC.Vstart<<7;
   unsigned int Vend = (MEMC.Vend+1)<<7; /* Point to pixel after end */
-  const unsigned char *RAM = (unsigned char *) MEMC.PhysRam;
+  const ARMword *RAM = MEMC.PhysRam;
   int Remaining = DC.LastHostWidth*2; /* Scale up to account for everything else counting in bits */
 
   /* Sanity checks to avoid looping forever */
@@ -461,17 +462,18 @@ static int SDD_Name(RowFunc2bpp1X)(ARMul_State *state,int row,SDD_Row drow,int f
       flags |= ROWFUNC_UPDATED;
       /* Process the pixels in this region, stopping at end of row/update block/Vend */
       SDD_Name(Host_BeginUpdate)(state,&drow,Available>>1);
-      const unsigned char *In = RAM+(Vptr>>3);
-      unsigned int Shift = (Vptr & 7);
+      const ARMword *In = RAM+(Vptr>>5);
+      unsigned int Shift = (Vptr & 31);
+      ARMword Data = (*In++) >> Shift;
       for(i=0;i<Available;i+=2)
       {
-        int idx = (*In >> Shift) & 3;
-        SDD_Name(Host_WritePixel)(state,&drow,Palette[idx]);
+        SDD_Name(Host_WritePixel)(state,&drow,Palette[Data & 3]);
+        Data >>= 2;
         Shift += 2;
-        if(Shift == 8)
+        if(Shift == 32)
         {
           Shift = 0;
-          In++;
+          Data = *In++;
         }
       }
       SDD_Name(Host_EndUpdate)(state,&drow);
@@ -519,7 +521,7 @@ static int SDD_Name(RowFunc4bpp1X)(ARMul_State *state,int row,SDD_Row drow,int f
   unsigned int Vptr = DC.Vptr;
   unsigned int Vstart = MEMC.Vstart<<7;
   unsigned int Vend = (MEMC.Vend+1)<<7; /* Point to pixel after end */
-  const unsigned char *RAM = (unsigned char *) MEMC.PhysRam;
+  const ARMword *RAM = MEMC.PhysRam;
   int Remaining = DC.LastHostWidth*4; /* Scale up to account for everything else counting in bits */
 
   /* Sanity checks to avoid looping forever */
@@ -550,12 +552,21 @@ static int SDD_Name(RowFunc4bpp1X)(ARMul_State *state,int row,SDD_Row drow,int f
       SDD_Name(Host_BeginUpdate)(state,&drow,Available>>2);
 
       /* Display will always be a multiple of 2 pixels wide, so we can simplify things a bit compared to 1/2bpp case */
-      const unsigned char *In = RAM+(Vptr>>3);      
+      const ARMword *In = RAM+(Vptr>>5);      
+      unsigned int Shift = (Vptr & 31);
+      ARMword Data = (*In++) >> Shift;
       for(i=0;i<Available;i+=8)
       {
-        unsigned char Pixel = *In++;
-        SDD_Name(Host_WritePixel)(state,&drow,Palette[Pixel & 0xf]);
-        SDD_Name(Host_WritePixel)(state,&drow,Palette[Pixel>>4]);
+        SDD_Name(Host_WritePixel)(state,&drow,Palette[Data & 0xf]);
+        Data >>= 4;
+        SDD_Name(Host_WritePixel)(state,&drow,Palette[Data & 0xf]);
+        Data >>= 4;
+        Shift += 8;
+        if(Shift == 32)
+        {
+          Shift = 0;
+          Data = *In++;
+        }        
       }
       SDD_Name(Host_EndUpdate)(state,&drow);
     }
@@ -601,7 +612,7 @@ static int SDD_Name(RowFunc8bpp1X)(ARMul_State *state,int row,SDD_Row drow,int f
   unsigned int Vptr = DC.Vptr;
   unsigned int Vstart = MEMC.Vstart<<7;
   unsigned int Vend = (MEMC.Vend+1)<<7; /* Point to pixel after end */
-  const unsigned char *RAM = (unsigned char *) MEMC.PhysRam;
+  const ARMword *RAM = MEMC.PhysRam;
   int Remaining = DC.LastHostWidth*8; /* Scale up to account for everything else counting in bits */
 
   /* Sanity checks to avoid looping forever */
@@ -632,11 +643,24 @@ static int SDD_Name(RowFunc8bpp1X)(ARMul_State *state,int row,SDD_Row drow,int f
       SDD_Name(Host_BeginUpdate)(state,&drow,Available>>3);
 
       /* Display will always be a multiple of 2 pixels wide, so we can simplify things a bit compared to 1/2bpp case */
-      const unsigned char *In = RAM+(Vptr>>3);      
+      const ARMword *In = RAM+(Vptr>>5);
+      unsigned int Shift = (Vptr & 31);
+      ARMword Data = (*In++) >> Shift;
       for(i=0;i<Available;i+=16)
       {
-        SDD_Name(Host_WritePixel)(state,&drow,Palette[*In++]);
-        SDD_Name(Host_WritePixel)(state,&drow,Palette[*In++]);
+        SDD_Name(Host_WritePixel)(state,&drow,Palette[Data & 0xff]);
+        Data >>= 8;
+        SDD_Name(Host_WritePixel)(state,&drow,Palette[Data & 0xff]);
+        if(Shift)
+        {
+          Shift = 0;
+          Data = *In++;
+        }
+        else
+        {
+          Shift = 16;
+          Data >>= 8;
+        }
       }
       SDD_Name(Host_EndUpdate)(state,&drow);
     }
@@ -688,7 +712,7 @@ static int SDD_Name(RowFunc1bpp2X)(ARMul_State *state,int row,SDD_Row drow,int f
   unsigned int Vptr = DC.Vptr;
   unsigned int Vstart = MEMC.Vstart<<7;
   unsigned int Vend = (MEMC.Vend+1)<<7; /* Point to pixel after end */
-  const unsigned char *RAM = (unsigned char *) MEMC.PhysRam;
+  const ARMword *RAM = MEMC.PhysRam;
   int Remaining = DC.LastHostWidth;
 
   /* Sanity checks to avoid looping forever */
@@ -716,17 +740,18 @@ static int SDD_Name(RowFunc1bpp2X)(ARMul_State *state,int row,SDD_Row drow,int f
       flags |= ROWFUNC_UPDATED;
       /* Process the pixels in this region, stopping at end of row/update block/Vend */
       SDD_Name(Host_BeginUpdate)(state,&drow,Available<<1);
-      const unsigned char *In = RAM+(Vptr>>3);
-      unsigned int Bit = 1<<(Vptr & 7);
+      const ARMword *In = RAM+(Vptr>>5);
+      ARMword Bit = 1<<(Vptr & 31);
+      ARMword Data = *In++;
       for(i=0;i<Available;i++)
       {
-        int idx = (*In & Bit)?1:0;
+        int idx = (Data & Bit)?1:0;
         SDD_Name(Host_WritePixels)(state,&drow,Palette[idx],2);
         Bit <<= 1;
-        if(Bit == 256)
+        if(!Bit)
         {
           Bit = 1;
-          In++;
+          Data = *In++;
         }
       }
       SDD_Name(Host_EndUpdate)(state,&drow);
@@ -773,7 +798,7 @@ static int SDD_Name(RowFunc2bpp2X)(ARMul_State *state,int row,SDD_Row drow,int f
   unsigned int Vptr = DC.Vptr;
   unsigned int Vstart = MEMC.Vstart<<7;
   unsigned int Vend = (MEMC.Vend+1)<<7; /* Point to pixel after end */
-  const unsigned char *RAM = (unsigned char *) MEMC.PhysRam;
+  const ARMword *RAM = MEMC.PhysRam;
   int Remaining = DC.LastHostWidth*2; /* Scale up to account for everything else counting in bits */
 
   /* Sanity checks to avoid looping forever */
@@ -802,17 +827,18 @@ static int SDD_Name(RowFunc2bpp2X)(ARMul_State *state,int row,SDD_Row drow,int f
       flags |= ROWFUNC_UPDATED;
       /* Process the pixels in this region, stopping at end of row/update block/Vend */
       SDD_Name(Host_BeginUpdate)(state,&drow,Available);
-      const unsigned char *In = RAM+(Vptr>>3);
-      unsigned int Shift = (Vptr & 7);
+      const ARMword *In = RAM+(Vptr>>5);
+      unsigned int Shift = (Vptr & 31);
+      ARMword Data = (*In++) >> Shift;
       for(i=0;i<Available;i+=2)
       {
-        int idx = (*In >> Shift) & 3;
-        SDD_Name(Host_WritePixels)(state,&drow,Palette[idx],2);
+        SDD_Name(Host_WritePixels)(state,&drow,Palette[Data & 3],2);
+        Data >>= 2;
         Shift += 2;
-        if(Shift == 8)
+        if(Shift == 32)
         {
           Shift = 0;
-          In++;
+          Data = *In++;
         }
       }
       SDD_Name(Host_EndUpdate)(state,&drow);
@@ -860,7 +886,7 @@ static int SDD_Name(RowFunc4bpp2X)(ARMul_State *state,int row,SDD_Row drow,int f
   unsigned int Vptr = DC.Vptr;
   unsigned int Vstart = MEMC.Vstart<<7;
   unsigned int Vend = (MEMC.Vend+1)<<7; /* Point to pixel after end */
-  const unsigned char *RAM = (unsigned char *) MEMC.PhysRam;
+  const ARMword *RAM = MEMC.PhysRam;
   int Remaining = DC.LastHostWidth*4; /* Scale up to account for everything else counting in bits */
 
   /* Sanity checks to avoid looping forever */
@@ -891,12 +917,21 @@ static int SDD_Name(RowFunc4bpp2X)(ARMul_State *state,int row,SDD_Row drow,int f
       SDD_Name(Host_BeginUpdate)(state,&drow,Available>>1);
 
       /* Display will always be a multiple of 2 pixels wide, so we can simplify things a bit compared to 1/2bpp case */
-      const unsigned char *In = RAM+(Vptr>>3);      
+      const ARMword *In = RAM+(Vptr>>5);      
+      unsigned int Shift = (Vptr & 31);
+      ARMword Data = (*In++) >> Shift;
       for(i=0;i<Available;i+=8)
       {
-        unsigned char Pixel = *In++;
-        SDD_Name(Host_WritePixels)(state,&drow,Palette[Pixel & 0xf],2);
-        SDD_Name(Host_WritePixels)(state,&drow,Palette[Pixel>>4],2);
+        SDD_Name(Host_WritePixels)(state,&drow,Palette[Data & 0xf],2);
+        Data >>= 4;
+        SDD_Name(Host_WritePixels)(state,&drow,Palette[Data & 0xf],2);
+        Data >>= 4;
+        Shift += 8;
+        if(Shift == 32)
+        {
+          Shift = 0;
+          Data = *In++;
+        }        
       }
       SDD_Name(Host_EndUpdate)(state,&drow);
     }
@@ -942,7 +977,7 @@ static int SDD_Name(RowFunc8bpp2X)(ARMul_State *state,int row,SDD_Row drow,int f
   unsigned int Vptr = DC.Vptr;
   unsigned int Vstart = MEMC.Vstart<<7;
   unsigned int Vend = (MEMC.Vend+1)<<7; /* Point to pixel after end */
-  const unsigned char *RAM = (unsigned char *) MEMC.PhysRam;
+  const ARMword *RAM = MEMC.PhysRam;
   int Remaining = DC.LastHostWidth*8; /* Scale up to account for everything else counting in bits */
 
   /* Sanity checks to avoid looping forever */
@@ -973,11 +1008,24 @@ static int SDD_Name(RowFunc8bpp2X)(ARMul_State *state,int row,SDD_Row drow,int f
       SDD_Name(Host_BeginUpdate)(state,&drow,Available>>2);
 
       /* Display will always be a multiple of 2 pixels wide, so we can simplify things a bit compared to 1/2bpp case */
-      const unsigned char *In = RAM+(Vptr>>3);      
+      const ARMword *In = RAM+(Vptr>>5);
+      unsigned int Shift = (Vptr & 31);
+      ARMword Data = (*In++) >> Shift;
       for(i=0;i<Available;i+=16)
       {
-        SDD_Name(Host_WritePixels)(state,&drow,Palette[*In++],2);
-        SDD_Name(Host_WritePixels)(state,&drow,Palette[*In++],2);
+        SDD_Name(Host_WritePixels)(state,&drow,Palette[Data & 0xff],2);
+        Data >>= 8;
+        SDD_Name(Host_WritePixels)(state,&drow,Palette[Data & 0xff],2);
+        if(Shift)
+        {
+          Shift = 0;
+          Data = *In++;
+        }
+        else
+        {
+          Shift = 16;
+          Data >>= 8;
+        }
       }
       SDD_Name(Host_EndUpdate)(state,&drow);
     }

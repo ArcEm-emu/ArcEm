@@ -130,7 +130,7 @@ typedef unsigned int FastMapUInt;
 #define FASTMAP_MODE_MBO FASTMAP_FLAG(0x80) /* Must be one! */
 
 #define FASTMAP_ACCESSFUNC_WRITE       0x01UL
-#define FASTMAP_ACCESSFUNC_BYTE        0x02UL
+#define FASTMAP_ACCESSFUNC_BYTE        0x02UL /* Only relevant for writes */
 #define FASTMAP_ACCESSFUNC_STATECHANGE 0x04UL /* Only relevant for writes */
 
 #define FASTMAP_CLOBBEREDFUNC 0 /* Value written when a func gets clobbered */

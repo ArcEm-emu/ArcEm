@@ -49,6 +49,9 @@ struct Vidc_Regs {
 #define VIDC (*(state->Display))
 
 extern const DisplayDev *DisplayDev_Current; /* Pointer to current display device */
+extern int DisplayDev_UseUpdateFlags; /* Global flag for whether the current device is using ARMul_State.UpdateFlags */
+
+extern int DisplayDev_AutoUpdateFlags; /* Automatically select whether to use UpdateFlags or not */
 
 extern int DisplayDev_Set(ARMul_State *state,const DisplayDev *dev); /* Switch to indicated display device, returns nonzero on failure */
 
@@ -61,6 +64,35 @@ extern void DisplayDev_GetCursorPos(ARMul_State *state,int *x,int *y);
 extern unsigned long DisplayDev_GetVIDCClockIn(void); /* Get VIDC source clock rate (affected by IOEB CR) */
 
 extern void DisplayDev_VSync(ARMul_State *state); /* Trigger VSync interrupt & update ARMul_EmuRate. Note: Manipulates event queue! */
+
+/* General endian swapping/endian-aware memcpy functions */
+
+#ifdef HOST_BIGENDIAN
+static inline ARMword EndianSwap(const ARMword a)
+{
+  return (a>>24) | (a<<24) | ((a>>8) & 0xff00) | ((a<<8) & 0xff0000);
+}
+
+static inline void EndianWordCpy(ARMword *dest,const ARMword *src,size_t count)
+{
+  while(count)
+  {
+    *dest++ = EndianSwap(*src++);
+    count--;
+  }
+}
+
+/* src = little-endian emu memory, dest = big-endian host memory */
+extern void ByteCopy(char *dest,const char *src,int size);
+
+/* src = big-endian host memory, dest = little-endian emu memory */
+extern void InvByteCopy(char *dest,const char *src,int size);
+#else
+#define EndianSwap(X) (X)
+#define EndianWordCpy(A,B,C) memcpy(A,B,(C)<<2)
+#define ByteCopy(A,B,C) memcpy(A,B,C)
+#define InvByteCopy(A,B,C) memcpy(A,B,C)
+#endif
 
 /* Helper functions for display devices */
 

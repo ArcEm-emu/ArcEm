@@ -10,6 +10,7 @@
 
 #include "ArcemConfig.h"
 #include "platform.h"
+#include "displaydev.h"
 
 void wblaunch(struct WBStartup *);
 void closewblibs(void);
@@ -133,6 +134,17 @@ void gettooltypes(struct WBArg *wbarg)
 		}
 
 		if(IIcon->FindToolType(toolarray,"FORCE8BIT")) force8bit=1;
+
+		if(IIcon->FindToolType(toolarray, "USEUPDATEFLAGS"))
+			DisplayDev_UseUpdateFlags = 1;
+
+		if(s = (char *)IIcon->FindToolType(toolarray, "FRAMESKIP"))
+			PDD_FrameSkip = atoi(s);
+		else PDD_FrameSkip = 0;
+
+		if(IIcon->FindToolType(toolarray, "AUTOUPDATEFLAGS"))
+			DisplayDev_AutoUpdateFlags = 1;
+
 
 		/* This code implements ReadConfig.c via tooltypes - it searches for
 			ST506DISC, but it will only support 1 line atm.

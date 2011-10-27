@@ -144,7 +144,7 @@ copyloop:
 
 nodata:
 	CMP R14,#0
-	LDMNEFD R14!,{R0-R8,PC} @ No source data, and mixing in, therefore no work to do
+	LDMNEFD R13!,{R0-R8,PC} @ No source data, and mixing in, therefore no work to do
 	@ Else must fill buffer with zeros
 	MOV R3,#0 @ Note: Alternate entry points should have R3 as zero already
 zeroloop:

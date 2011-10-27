@@ -79,7 +79,7 @@ OBJS = armcopro.o armemu.o arminit.o \
 	armsupp.o main.o dagstandalone.o eventq.o \
 		$(SYSTEM)/DispKbd.o arch/i2c.o arch/archio.o \
     arch/fdc1772.o $(SYSTEM)/ControlPane.o arch/hdc63463.o arch/ReadConfig.o \
-    arch/keyboard.o $(SYSTEM)/filecalls.o \
+    arch/keyboard.o $(SYSTEM)/filecalls.o arch/filecommon.o \
     arch/ArcemConfig.o arch/cp15.o arch/newsound.o arch/displaydev.o
 
 SRCS = armcopro.c armemu.c arminit.c arch/armarc.c \
@@ -88,7 +88,7 @@ SRCS = armcopro.c armemu.c arminit.c arch/armarc.c \
 	arch/fdc1772.c $(SYSTEM)/ControlPane.c arch/hdc63463.c \
 	arch/ReadConfig.c arch/keyboard.c $(SYSTEM)/filecalls.c \
 	arch/ArcemConfig.c arch/cp15.c arch/newsound.c \
-	arch/displaydev.c
+	arch/displaydev.c arch/filecommon.c
 
 INCS = armdefs.h armemu.h $(SYSTEM)/KeyTable.h \
   arch/i2c.h arch/archio.h arch/fdc1772.h arch/ControlPane.h \
@@ -104,7 +104,7 @@ SOUND_SUPPORT=yes
 SOUND_PTHREAD=no
 SRCS += amiga/wb.c amiga/arexx.c
 OBJS += amiga/wb.o amiga/arexx.o
-CFLAGS += -mcrt=newlib
+CFLAGS += -mcrt=newlib -D__LARGE64_FILES
 LDFLAGS += -mcrt=newlib
 # The following two lines are for Altivec support via libfreevec
 # Uncomment them if you are using a G4 or other PPC with Altivec
@@ -125,19 +125,17 @@ endif
 ifeq (${SYSTEM},riscos-single)
 # HostFS
 HOSTFS_SUPPORT=yes
-HOSTFS_OBJS = riscos-single/hostfs.o
 # Sound
 SOUND_SUPPORT=yes
 SOUND_PTHREAD=no
 OBJS += riscos-single/soundbuf.o
 # General
 EXTNROM_SUPPORT=yes
-CFLAGS += -I@ -DSYSTEM_riscos_single -Iriscos-single -mtune=xscale -march=armv5te -mthrowback
+CFLAGS += -I@ -DSYSTEM_riscos_single -Iriscos-single -mtune=xscale -march=armv5te -mthrowback -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
 LDFLAGS += -static
 # Disable stack limit checks. -ffixed-sl required to prevent sl being used as temp storage, breaking unixlib and any other code that does do stack checks
-# Note - Currently won't work - we need to set up a big stack frame on entry to
-# avoid things like HostFS causing stack overflows
-#CFLAGS += -mno-apcs-stack-check -ffixed-sl
+CFLAGS += -mno-apcs-stack-check -ffixed-sl -DUSE_FAKEMAIN
+OBJS += riscos-single/realmain.o
 # No function name poking for a bit extra speed
 CFLAGS += -mno-poke-function-name
 # Debug options
@@ -149,7 +147,7 @@ TARGET=!ArcEm/arcem
 endif
 
 ifeq (${SYSTEM},X)
-CFLAGS += -DSYSTEM_X -I/usr/X11R6/include
+CFLAGS += -DSYSTEM_X -I/usr/X11R6/include -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
 LIBS += -L/usr/X11R6/lib -lXext -lX11
 OBJS += X/true.o X/pseudo.o
 #SOUND_SUPPORT = yes
@@ -161,10 +159,6 @@ OBJS += win/gui.o win/win.o
 LIBS += -luser32 -lgdi32 -mno-cygwin
 # Comment the following line to have a console window
 LIBS += -mwindows
-endif
-
-ifeq (${DIRECT_DISPLAY},yes)
-CFLAGS += -DDIRECT_DISPLAY
 endif
 
 ifeq (${SOUND_SUPPORT},yes)
@@ -252,6 +246,9 @@ riscos-single/prof.o: riscos-single/prof.s
 
 riscos-single/soundbuf.o: riscos-single/soundbuf.s
 	$(CC) -x assembler-with-cpp riscos-single/soundbuf.s -c -o $@
+
+riscos-single/realmain.o: riscos-single/realmain.s
+	$(CC) -x assembler-with-cpp riscos-single/realmain.s -c -o $@
 
 arminit.o: arminit.c armdefs.h armemu.h
 	$(CC) $(CFLAGS) -c $*.c

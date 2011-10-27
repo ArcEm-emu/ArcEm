@@ -83,6 +83,7 @@ typedef struct ArcemConfig_s {
   int bRedBlueSwap; /* Red/blue swap 16bpp output */
   int bAspectRatioCorrection; /* Apply H/V scaling for aspect ratio correction */
   int bUpscale; /* Allow upscaling to fill screen */
+  int bNoLowColour; /* Disable 1/2/4bpp modes */
   int iMinResX,iMinResY;
   int iLCDResX,iLCDResY;
 #endif

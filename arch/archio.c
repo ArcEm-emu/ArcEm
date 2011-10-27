@@ -666,24 +666,8 @@ PutValIO(ARMul_State *state, ARMword address, ARMword data, int byteNotword)
     } /* Bank switch */
   } else {
     /* IO-address space unused on Arc hardware */
-    /* Use it as general-purpose memory-mapped IO space */
-    ARMword application = (address >> 12) & 0x1ff;
-    ARMword operation   = (address & 0xfff);
-
-    switch (application) {
-    case 0x000: /* ArcEm internal */
-      break;
-#ifdef HOSTFS_SUPPORT
-    case 0x001: /* HostFS */
-      hostfs(state, operation);
-      /* hostfs operation may have taken a while; update EmuRate to try and mitigate any audio buffering issues */
-      EmuRate_Update(state);
-      break;
-#endif
-    default:
-      fprintf(stderr, "Write to non-IOC IO space (addr=0x%x app=0x%03x op=0x%03x data=0x%08x\n",
-              address, application, operation, data);
-    }
+    fprintf(stderr, "Write to non-IOC IO space (addr=0x%x data=0x%08x\n",
+              address, data);
   }
 } /* PutValIO */
 

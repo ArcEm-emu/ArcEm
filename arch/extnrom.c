@@ -20,8 +20,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "filecalls.h"
 #include "../armdefs.h"
+#include "filecalls.h"
 #include "extnrom.h"
 #include "ArcemConfig.h"
 
@@ -94,7 +94,7 @@ get_32bit_le(const void *address)
   return result;
 }
 
-/* TODO: Make this a no-op on a little-endian host */
+#ifdef HOST_BIGENDIAN
 static void
 extnrom_endian_correct(ARMword *start_addr, unsigned size)
 {
@@ -110,6 +110,9 @@ extnrom_endian_correct(ARMword *start_addr, unsigned size)
     start_addr[word_num] = word;                /* Write host-endian */
   }
 }
+#else
+#define extnrom_endian_correct(A,B) ((void)0)
+#endif
 
 static unsigned
 extnrom_calculate_checksum(const ARMword *start_addr, unsigned size)

@@ -19,6 +19,7 @@
 #include "armdefs.h"
 #include "armemu.h"
 #include "armarc.h"
+#include "hostfs.h"
 
 /***************************************************************************\
 *                 Definitions for the emulator architecture                 *
@@ -171,9 +172,6 @@ void ARMul_Abort(ARMul_State *state, ARMword vector) {
                (unsigned int)(state->Reg[14])); */
        break;
 
-#define ARCEM_SWI_CHUNK 0x56ac0
-#define ARCEM_SWI_SHUTDOWN (ARCEM_SWI_CHUNK + 0)
-#define ARCEM_SWI_DEBUG    (ARCEM_SWI_CHUNK + 2)
     case ARMul_SWIV: /* Software Interrupt */
        {
          ARMword addr = ARMul_GetPC(state)-8;
@@ -191,14 +189,21 @@ void ARMul_Abort(ARMul_State *state, ARMword vector) {
          else
            instr = 0; /* This should never happen! */
          if ((instr & 0xfdffc0) == ARCEM_SWI_CHUNK) {
-           switch (instr & 0xfdffff) {
-           case ARCEM_SWI_SHUTDOWN:
+           switch (instr & 0x3f) {
+           case ARCEM_SWI_SHUTDOWN-ARCEM_SWI_CHUNK:
 #ifdef AMIGA
              cleanup();
 #endif
              exit(state->Reg[0] & 0xff);
              break;
-           case ARCEM_SWI_DEBUG:
+#ifdef HOSTFS_SUPPORT
+           case ARCEM_SWI_HOSTFS-ARCEM_SWI_CHUNK:
+             hostfs(state);
+             /* hostfs operation may have taken a while; update EmuRate to try and mitigate any audio buffering issues */
+             EmuRate_Update(state);
+             return;
+#endif
+           case ARCEM_SWI_DEBUG-ARCEM_SWI_CHUNK:
              fprintf(stderr, "r0 = %08x  r4 = %08x  r8  = %08x  r12 = %08x\n"
                              "r1 = %08x  r5 = %08x  r9  = %08x  sp  = %08x\n"
                              "r2 = %08x  r6 = %08x  r10 = %08x  lr  = %08x\n"

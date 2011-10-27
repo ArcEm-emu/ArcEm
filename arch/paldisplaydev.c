@@ -44,9 +44,14 @@
       of the symbol. e.g.
       "#define PDD_Name(x) MyPDD_##x"
 
-   PDD_FrameSkip
-    - Reload value for the frameskip counter. 0 disables frameskip.
-    - Note that this also affects the rate at which Host_PollDisplay is called.
+   int PDD_FrameSkip
+    - If DisplayDev_UseUpdateFlags is 1, this is the reload value for the
+      frameskip counter. 0 disables frameskip.
+      - Note that this also affects the rate at which Host_PollDisplay is
+        called.
+    - However if DisplayDev_UseUpdateFlags is 0, this is the maximum number of
+      frames that can pass before a forced redraw occurs.
+    - Updated automatically if DisplayDev_AutoUpdateFlags is 1
 
    void PDD_Name(Host_PollDisplay)(ARMul_State *state)
     - Function that gets called after rendering each frame
@@ -149,6 +154,11 @@ struct PDD_Name(DisplayInfo) {
     unsigned int VIDC_CR; /* Control register value in use for this frame */
     unsigned int Vptr; /* DMA pointer, in bits, as offset from start of phys RAM */
     int FrameSkip; /* Current frame skip counter */
+
+    /* DisplayDev_AutoUpdateFlags logic */
+
+    int Auto_FrameCount; /* How many frames have passed */
+    int Auto_ForceRefresh; /* How many frames caused a forced refresh */
   } Control;
 
   struct {
@@ -210,6 +220,8 @@ struct PDD_Name(DisplayInfo) {
 /*
 
   Row output for 1X horizontal scaling to same-depth display buffer
+
+  Version for DisplayDev_UseUpdateFlags == 1
 
 */
 
@@ -280,7 +292,7 @@ static inline int PDD_Name(RowFunc1XSameByteAligned)(ARMul_State *state,PDD_Row 
       /* Process the pixels in this region, stopping at end of row/update block/Vend */
       int outoffset;
       ARMword *out = PDD_Name(Host_BeginUpdate)(state,&drow,Available<<3,&outoffset);
-      memcpy(((char *)out)+(outoffset>>3),RAM+Vptr,Available);
+      ByteCopy(((char *)out)+(outoffset>>3),RAM+Vptr,Available);
       PDD_Name(Host_EndUpdate)(state,&drow);
     }
     PDD_Name(Host_AdvanceRow)(state,&drow,Available<<3);
@@ -298,6 +310,8 @@ static inline int PDD_Name(RowFunc1XSameByteAligned)(ARMul_State *state,PDD_Row 
 /*
 
   Row output via ExpandTable
+
+  Version for DisplayDev_UseUpdateFlags == 1
 
 */
 
@@ -342,6 +356,127 @@ static inline int PDD_Name(RowFuncExpandTable)(ARMul_State *state,PDD_Row drow,i
   return (flags & ROWFUNC_UPDATED);
 }
 
+/*
+
+  Row output for 1X horizontal scaling to same-depth display buffer
+
+  Version for DisplayDev_UseUpdateFlags == 0
+
+*/
+
+static inline void PDD_Name(RowFunc1XSameBitAlignedNoFlags)(ARMul_State *state,PDD_Row drow)
+{
+  unsigned int Vptr = DC.Vptr;
+  unsigned int Vstart = MEMC.Vstart<<7;
+  unsigned int Vend = (MEMC.Vend+1)<<7; /* Point to pixel after end */
+  const ARMword *RAM = MEMC.PhysRam;
+  int Remaining = DC.BitWidth;
+
+  /* Sanity checks to avoid looping forever */
+  if((Vptr >= Vend) || (Vstart >= Vend))
+    return;
+  if(Vptr >= Vend)
+    Vptr = Vstart;
+
+  /* Process the row */
+  while(Remaining > 0)
+  {
+    int Available = MIN(Remaining,Vend-Vptr);
+
+    /* Process the pixels in this region, stopping at end of row/Vend */
+    int outoffset;
+    ARMword *out = PDD_Name(Host_BeginUpdate)(state,&drow,Available,&outoffset);
+    BitCopy(out,outoffset,RAM+(Vptr>>5),Vptr&0x1f,Available);
+    PDD_Name(Host_EndUpdate)(state,&drow);
+
+    PDD_Name(Host_AdvanceRow)(state,&drow,Available);
+    Vptr += Available;
+    Remaining -= Available;
+    if(Vptr >= Vend)
+      Vptr = Vstart;
+  }
+
+  DC.Vptr = Vptr;
+}
+
+static inline void PDD_Name(RowFunc1XSameByteAlignedNoFlags)(ARMul_State *state,PDD_Row drow)
+{
+  unsigned int Vptr = DC.Vptr>>3;
+  unsigned int Vstart = MEMC.Vstart<<4;
+  unsigned int Vend = (MEMC.Vend+1)<<4; /* Point to pixel after end */
+  const char *RAM = (char *) MEMC.PhysRam;
+  int Remaining = DC.BitWidth>>3;
+
+  /* Sanity checks to avoid looping forever */
+  if((Vptr >= Vend) || (Vstart >= Vend))
+    return;
+  if(Vptr >= Vend)
+    Vptr = Vstart;
+
+  /* Process the row */
+  while(Remaining > 0)
+  {
+    int Available = MIN(Remaining,Vend-Vptr);
+
+    /* Process the pixels in this region, stopping at end of row/update block/Vend */
+    int outoffset;
+    ARMword *out = PDD_Name(Host_BeginUpdate)(state,&drow,Available<<3,&outoffset);
+    ByteCopy(((char *)out)+(outoffset>>3),RAM+Vptr,Available);
+    PDD_Name(Host_EndUpdate)(state,&drow);
+
+    PDD_Name(Host_AdvanceRow)(state,&drow,Available<<3);
+    Vptr += Available;
+    Remaining -= Available;
+    if(Vptr >= Vend)
+      Vptr = Vstart;
+  }
+
+  DC.Vptr = Vptr<<3;
+}
+
+/*
+
+  Row output via ExpandTable
+
+  Version for DisplayDev_UseUpdateFlags == 0
+
+*/
+
+static inline void PDD_Name(RowFuncExpandTableNoFlags)(ARMul_State *state,PDD_Row drow)
+{
+  unsigned int Vptr = DC.Vptr;
+  unsigned int Vstart = MEMC.Vstart<<7;
+  unsigned int Vend = (MEMC.Vend+1)<<7; /* Point to pixel after end */
+  const ARMword *RAM = MEMC.PhysRam;
+  int Remaining = DC.BitWidth;
+
+  /* Sanity checks to avoid looping forever */
+  if((Vptr >= Vend) || (Vstart >= Vend))
+    return;
+  if(Vptr >= Vend)
+    Vptr = Vstart;
+
+  /* Process the row */
+  while(Remaining > 0)
+  {
+    int Available = MIN(Remaining,Vend-Vptr);
+
+    /* Process the pixels in this region, stopping at end of row/update block/Vend */
+    int outoffset;
+    ARMword *out = PDD_Name(Host_BeginUpdate)(state,&drow,Available<<HD.ExpandFactor,&outoffset);
+    BitCopyExpand(out,outoffset,RAM+(Vptr>>5),Vptr&0x1f,Available,HD.ExpandTable,1<<DC.LastHostDepth,HD.ExpandFactor);
+    PDD_Name(Host_EndUpdate)(state,&drow);
+
+    PDD_Name(Host_AdvanceRow)(state,&drow,Available<<HD.ExpandFactor);
+    Vptr += Available;
+    Remaining -= Available;
+    if(Vptr >= Vend)
+      Vptr = Vstart;
+  }
+
+  DC.Vptr = Vptr;
+}
+
 
 /*
 
@@ -374,12 +509,15 @@ static void PDD_Name(EventFunc)(ARMul_State *state,CycleCount nowtime)
   framelength = MAX(framelength,1000);
   EventQ_Reschedule(state,nowtime+framelength,PDD_Name(EventFunc),EventQ_Find(state,PDD_Name(EventFunc)));
 
-  /* Handle frame skip */
-  if(DC.FrameSkip--)
+  if(DisplayDev_UseUpdateFlags)
   {
-    return;
+    /* Handle frame skip */
+    if(DC.FrameSkip--)
+    {
+      return;
+    }
+    DC.FrameSkip = PDD_FrameSkip;
   }
-  DC.FrameSkip = PDD_FrameSkip;
 
   /* Ensure mode changes if pixel clock changed */
   DC.ModeChanged |= (DC.VIDC_CR & 3) != (NewCR & 3);
@@ -447,6 +585,58 @@ static void PDD_Name(EventFunc)(ARMul_State *state,CycleCount nowtime)
     DC.DirtyPalette = -1;
   }
 
+  /* Update AutoUpdateFlags */
+  if(DisplayDev_AutoUpdateFlags)
+  {
+    DC.Auto_FrameCount++;
+    if(DC.ForceRefresh)
+      DC.Auto_ForceRefresh++;
+    if(DisplayDev_UseUpdateFlags)
+    {
+      /* Assuming refresh rate of 50Hz, disable UpdateFlags if we've been
+         running at >=5fps for the last 5 seconds. 5fps is a bit low, but it
+         allows slow games like Wolf 3D to be detected (assuming you're on a
+         slow host machine!) */
+      if(DC.Auto_FrameCount >= 250)
+      {
+        if(DC.Auto_ForceRefresh >= 25)
+        {
+          /* Disable */
+          DisplayDev_UseUpdateFlags = 0;
+          PDD_FrameSkip = DC.Auto_FrameCount/DC.Auto_ForceRefresh;
+          ARMul_RebuildFastMap();
+        }
+        DC.Auto_FrameCount = 0;
+        DC.Auto_ForceRefresh = 0;
+      }
+    }
+    else
+    {
+      /* Assuming refresh rate of 50Hz, enable UpdateFlags if we've been
+         running at <5fps for the last second. */
+      if(DC.Auto_FrameCount >= 50)
+      {
+        if(DC.Auto_ForceRefresh < 5)
+        {
+          /* Enable */        
+          DisplayDev_UseUpdateFlags = 1;
+          PDD_FrameSkip = 0;
+          ARMul_RebuildFastMap();
+          /* Ensure the updateflags get reset */
+          DC.ForceRefresh = 1;
+          DC.FrameSkip = 0;
+        }
+        else
+        {
+          /* Adjust frameskip value */
+          PDD_FrameSkip = DC.Auto_FrameCount/DC.Auto_ForceRefresh;
+        }
+        DC.Auto_FrameCount = 0;
+        DC.Auto_ForceRefresh = 0;
+      }
+    }
+  }
+
   /* Update host palette */
   if(DC.DirtyPalette & 0x10000)
   {
@@ -504,49 +694,94 @@ static void PDD_Name(EventFunc)(ARMul_State *state,CycleCount nowtime)
     if((DC.Vptr & 0x7) || ((Width*BPP)&0x7))
       flags |= ROWFUNC_UNALIGNED;
 
-    for(i=0;i<Height;i++)
+    if(DisplayDev_UseUpdateFlags)
     {
-      int hoststart = i*HD.YScale+HD.YOffset;
-      int hostend = hoststart+HD.YScale;
-      if(hoststart < 0)
-        hoststart = 0;
-      if(hostend > HD.Height)
-        hostend = HD.Height;
-      ARMword Vptr = DC.Vptr;
-      while(hoststart < hostend)
+      for(i=0;i<Height;i++)
       {
-        DC.Vptr = Vptr;
-        int alignment;
-        int updated;
-        PDD_Row hrow = PDD_Name(Host_BeginRow)(state,hoststart++,HD.XOffset,&alignment);
-        if(HD.ExpandTable)
+        int hoststart = i*HD.YScale+HD.YOffset;
+        int hostend = hoststart+HD.YScale;
+        if(hoststart < 0)
+          hoststart = 0;
+        if(hostend > HD.Height)
+          hostend = HD.Height;
+        ARMword Vptr = DC.Vptr;
+        while(hoststart < hostend)
         {
-          updated = PDD_Name(RowFuncExpandTable)(state,hrow,flags);
+          DC.Vptr = Vptr;
+          int alignment;
+          int updated;
+          PDD_Row hrow = PDD_Name(Host_BeginRow)(state,hoststart++,HD.XOffset,&alignment);
+          if(HD.ExpandTable)
+          {
+            updated = PDD_Name(RowFuncExpandTable)(state,hrow,flags);
+          }
+          else if(!(flags & ROWFUNC_UNALIGNED) && !(alignment & 0x7))
+          {
+            updated = PDD_Name(RowFunc1XSameByteAligned)(state,hrow,flags);
+          }
+          else
+          {
+            updated = PDD_Name(RowFunc1XSameBitAligned)(state,hrow,flags);
+          }
+          PDD_Name(Host_EndRow)(state,&hrow);
+          if(updated)
+            flags |= ROWFUNC_UPDATED;
+          else
+            break;
         }
-        else if(!(flags & ROWFUNC_UNALIGNED) && !(alignment & 0x7))
-        {
-          updated = PDD_Name(RowFunc1XSameByteAligned)(state,hrow,flags);
-        }
-        else
-        {
-          updated = PDD_Name(RowFunc1XSameBitAligned)(state,hrow,flags);
-        }
-        PDD_Name(Host_EndRow)(state,&hrow);
-        if(updated)
-          flags |= ROWFUNC_UPDATED;
-        else
-          break;
+      }
+    
+      /* Update UpdateFlags */
+      if(flags & ROWFUNC_UPDATED)
+      {
+        /* Only need to update between MIN(Vinit,Vstart) and Vend */
+        int start = MIN(MEMC.Vinit,MEMC.Vstart)/(UPDATEBLOCKSIZE/16);
+        int end = (MEMC.Vend/(UPDATEBLOCKSIZE/16))+1;
+        memcpy(HD.UpdateFlags+start,MEMC.UpdateFlags+start,(end-start)*sizeof(unsigned int));
       }
     }
-  
-    /* Update UpdateFlags */
-    if(flags & ROWFUNC_UPDATED)
+    else
     {
-      /* Only need to update between MIN(Vinit,Vstart) and Vend */
-      int start = MIN(MEMC.Vinit,MEMC.Vstart)/(UPDATEBLOCKSIZE/16);
-      int end = (MEMC.Vend/(UPDATEBLOCKSIZE/16))+1;
-      memcpy(HD.UpdateFlags+start,MEMC.UpdateFlags+start,(end-start)*sizeof(unsigned int));
-    }  
+      /* Only update if forced, or frameskip has run out */
+      if((flags & ROWFUNC_FORCE) || (!DC.FrameSkip))
+      {
+        DC.FrameSkip = PDD_FrameSkip;
+
+        for(i=0;i<Height;i++)
+        {
+          int hoststart = i*HD.YScale+HD.YOffset;
+          int hostend = hoststart+HD.YScale;
+          if(hoststart < 0)
+            hoststart = 0;
+          if(hostend > HD.Height)
+            hostend = HD.Height;
+          ARMword Vptr = DC.Vptr;
+          while(hoststart < hostend)
+          {
+            DC.Vptr = Vptr;
+            int alignment;
+            PDD_Row hrow = PDD_Name(Host_BeginRow)(state,hoststart++,HD.XOffset,&alignment);
+            if(HD.ExpandTable)
+            {
+              PDD_Name(RowFuncExpandTableNoFlags)(state,hrow);
+            }
+            else if(!(flags & ROWFUNC_UNALIGNED) && !(alignment & 0x7))
+            {
+              PDD_Name(RowFunc1XSameByteAlignedNoFlags)(state,hrow);
+            }
+            else
+            {
+              PDD_Name(RowFunc1XSameBitAlignedNoFlags)(state,hrow);
+            }
+            PDD_Name(Host_EndRow)(state,&hrow);
+          }
+        }
+      }
+      else
+      {
+        DC.FrameSkip--;
+      }
+    }
   }
   else if(DMAToggle)
   {

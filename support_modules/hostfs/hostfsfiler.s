@@ -1,94 +1,106 @@
-	@
-	@ $Id$
-	@
-	@ HostFS Filer
-	@
+        @
+        @ $Id$
+        @
+        @ HostFS Filer
+        @
 
-	@ ARM constants
-	VBIT = 1 << 28
+        @ Register naming
+        wp .req r12
 
-	@ RISC OS constants
-	XOS_CLI               = 0x20005
-	XOS_Exit              = 0x20011
-	XOS_Module            = 0x2001e
-	XOS_ReadModeVariable  = 0x20035
-	XOS_ReadMonotonicTime = 0x20042
-	XWimp_Initialise = 0x600c0
-	XWimp_CreateIcon = 0x600c2
-	XWimp_CloseDown  = 0x600dd
-	XWimp_PollIdle   = 0x600e1
-	XWimp_SpriteOp   = 0x600e9
+        @ ARM constants
+        VBIT = 1 << 28
+        CBIT = 1 << 29
+        ZBIT = 1 << 30
+        NBIT = 1 << 31
 
-	Module_Enter = 2
-	Module_Claim = 6
-	Module_Free  = 7
+        @ RISC OS constants
+        XOS_CLI               = 0x20005
+        XOS_Exit              = 0x20011
+        XOS_Module            = 0x2001e
+        XOS_ReadModeVariable  = 0x20035
+        XOS_ReadMonotonicTime = 0x20042
+        XWimp_Initialise = 0x600c0
+        XWimp_CreateIcon = 0x600c2
+        XWimp_CloseDown  = 0x600dd
+        XWimp_PollIdle   = 0x600e1
+        XWimp_SpriteOp   = 0x600e9
 
-	Message_Quit = 0
+        Module_Enter = 2
+        Module_Claim = 6
+        Module_Free  = 7
 
-	Service_Reset             = 0x27
-	Service_StartFiler        = 0x4b
-	Service_StartedFiler      = 0x4c
-	Service_FilerDying        = 0x4f
+        Message_Quit = 0
 
-	SpriteOp_ReadSpriteInfo = 40
+        Service_Reset             = 0x27
+        Service_StartFiler        = 0x4b
+        Service_StartedFiler      = 0x4c
+        Service_FilerDying        = 0x4f
 
-	ModeVariable_YEig = 5
+        SpriteOp_ReadSpriteInfo = 40
 
-	WIMP_VERSION = 300
+        ModeVariable_YEig = 5
 
-	WIMP_POLL_MASK = 0x00000031	@ no Null, Pointer Entering or Pointer Leaving events
+        WIMP_VERSION = 300
 
-	WORKSPACE_SIZE = 512
+        WIMP_POLL_MASK = 0x00000031     @ no Null, Pointer Entering or Pointer Leaving events
 
-	WS_MY_TASK_HANDLE      = 0
-	WS_FILER_TASK_HANDLE   = 4
-	WS_WIMP_VERSION        = 8
-	WS_ICON_BAR_BLOCK      = 12
-	WS_WIMP_BLOCK          = 48 @ must be last
+        WORKSPACE_SIZE = 512
+
+        WS_MY_TASK_HANDLE      = 0
+        WS_FILER_TASK_HANDLE   = 4
+        WS_WIMP_VERSION        = 8
+        WS_ICON_BAR_BLOCK      = 12
+        WS_WIMP_BLOCK          = 48 @ must be last
 
 
 
-	.global	_start
+        .global _start
 
 _start:
 
-	.int	start		@ Start
-	.int	init		@ Initialisation
-	.int	final		@ Finalisation
-	.int	service		@ Service Call
-	.int	title		@ Title String
-	.int	help		@ Help String
-	.int	table		@ Help and Command keyword table
-	.int	0		@ SWI Chunk base
-	.int	0		@ SWI handler code
-	.int	0		@ SWI decoding table
-	.int	0		@ SWI decoding code
+module_start:
 
+        .int	start           @ Start
+        .int	init            @ Initialisation
+        .int	final           @ Finalisation
+        .int    service_pre     @ Service Call
+        .int	modtitle        @ Title String
+        .int	help            @ Help String
+        .int	table           @ Help and Command keyword table
+        .int	0               @ SWI Chunk base
+        .int	0               @ SWI handler code
+        .int	0               @ SWI decoding table
+        .int	0               @ SWI decoding code
+        .int    0               @ Message File
+        .int    modflags        @ Module Flags
 
-title:
-	.string	"ArcEmHostFSFiler"
+modflags:
+        .int    1               @ 32 bit compatible
+
+modtitle:
+        .string	"RPCEmuHostFSFiler"
 
 help:
-	.string	"HostFSFiler\t0.02 (24 Mar 2006)"
-	.align
+        .string	"HostFSFiler\t0.03 (08 Dec 2006)"
+        .align
 
 
-	@ Help and Command keyword table
+        @ Help and Command keyword table
 table:
 desktop_hostfsfiler:
-	.string	"Desktop_HostFSFiler"
-	.align
-	.int	command_desktop_hostfsfiler
-	.int	0x00070000
-	.int	0
-	.int	command_desktop_hostfsfiler_help
+        .string "Desktop_HostFSFiler"
+        .align
+        .int    command_desktop_hostfsfiler
+        .int    0x00070000
+        .int    0
+        .int    command_desktop_hostfsfiler_help
 
-	.byte	0	@ Table terminator
+        .byte   0       @ Table terminator
 
 command_desktop_hostfsfiler_help:
-	.string	"The HostFSFiler provides the HostFS icons on the icon bar, and uses the Filer to display HostFS directories.\rDo not use *Desktop_HostFSFiler, use *Desktop instead."
+        .string	"The HostFSFiler provides the HostFS icons on the icon bar, and uses the Filer to display HostFS directories.\rDo not use *Desktop_HostFSFiler, use *Desktop instead."
 
-	.align
+        .align
 
 
 
@@ -104,16 +116,15 @@ init:
 	mov	r0, #Module_Claim
 	mov	r3, #WORKSPACE_SIZE
 	swi	XOS_Module
-	ldmvsfd	sp!, {lr}
-	orrvss	pc, lr, #VBIT
-
+	ldmvsfd	sp!, {pc}       @ no memory claimed then refuse to initialise
+	
 	str	r2, [r12]
 1:
-	ldr	r12, [r12]
+	ldr	wp, [r12]
 
 	@ Initialise the workspace
 	mov	r0, #0
-	str	r0, [r12, #WS_MY_TASK_HANDLE]
+	str	r0, [wp, #WS_MY_TASK_HANDLE]
 
 	ldmfd	sp!, {pc}
 
@@ -122,10 +133,10 @@ init:
 final:
 	stmfd	sp!, {lr}
 
-	ldr	r12, [r12]
+	ldr	wp, [r12]
 
 	@ Close Wimp task if active
-	ldr	r0, [r12, #WS_MY_TASK_HANDLE]
+	ldr	r0, [wp, #WS_MY_TASK_HANDLE]
 	cmp	r0, #0
 	ldrgt	r1, TASK
 	swigt	XWimp_CloseDown
@@ -135,90 +146,104 @@ final:
 	mov	r2, r12
 	swi	XOS_Module
 
-	ldmfd	sp!, {pc}^
+        @ Clear V flag (26/32 bit safe) so our module will die
+        cmp     pc, #0          @ Clears V (also clears N, Z, and sets C)
+	ldmfd	sp!, {pc}
 
 
 
-service:
-	teq	r1, #Service_Reset
-	teqne	r1, #Service_StartFiler
-	teqne	r1, #Service_StartedFiler
-	teqne	r1, #Service_FilerDying
-	movnes	pc, lr
+         @ RISC OS 4 Service codetable
+service_codetable:
+        .int    0               @ no special flags enabled
+        .int    service_main
+        .int    Service_Reset
+        .int    Service_StartFiler
+        .int    Service_StartedFiler
+        .int    Service_FilerDying
+        .int    0               @ table terminator
+        .int    service_codetable
+service_pre:
+        mov     r0, r0          @ magic instruction, pointer to service table at service_pre-4
+        teq     r1, #Service_Reset
+        teqne   r1, #Service_StartFiler
+        teqne   r1, #Service_StartedFiler
+        teqne   r1, #Service_FilerDying
+        movne   pc, lr
 
-	stmfd	sp!, {lr}
+service_main:
+        stmfd   sp!, {lr}
 
-	ldr	r12, [r12]
+        ldr     wp, [r12]
 
-	teq	r1, #Service_Reset
-	beq	service_reset
-	teq	r1, #Service_StartFiler
-	beq	service_startfiler
-	teq	r1, #Service_StartedFiler
-	beq	service_startedfiler
-	teq	r1, #Service_FilerDying
-	beq	service_filerdying
+        teq     r1, #Service_Reset
+        beq     service_reset
+        teq     r1, #Service_StartFiler
+        beq     service_startfiler
+        teq     r1, #Service_StartedFiler
+        beq     service_startedfiler
+        teq     r1, #Service_FilerDying
+        beq     service_filerdying
 
-	@ Should never reach here
-	ldmfd	sp!, {pc}^
+        @ Should never reach here
+        ldmfd   sp!, {pc}
 
 
 
 service_reset:
 	@ Zero the Task Handle
-	mov	lr, #0
-	str	lr, [r12, #WS_MY_TASK_HANDLE]
-	ldmfd	sp!, {pc}^
+	mov	r14, #0
+	str	r14, [wp, #WS_MY_TASK_HANDLE]
+	ldmfd	sp!, {pc}
 
 
 
 service_startfiler:
-	ldr	lr, [r12, #WS_MY_TASK_HANDLE]
-	teq	lr, #0			@ Am I already active?
-	moveq	lr, #-1			@ No, so set handle to -1
-	streq	lr, [r12, #WS_MY_TASK_HANDLE]
-	streq	r1, [r12, #WS_FILER_TASK_HANDLE]	@ store Filer's task handle
-	adreq	r0, desktop_hostfsfiler	@ r0 points to command to start task
-	moveq	r1, #0			@ claim the service
-	ldmfd	sp!, {pc}^
+	ldr	r14, [wp, #WS_MY_TASK_HANDLE]
+	teq	r14, #0                                 @ Am I already active?
+	moveq	r14, #-1                                @ No, so set handle to -1
+	streq	r14, [wp, #WS_MY_TASK_HANDLE]
+	streq	r1,  [wp, #WS_FILER_TASK_HANDLE]        @ store Filer's task handle
+	adreq	r0,  desktop_hostfsfiler                @ r0 points to command to start task
+	moveq	r1,  #0                                 @ claim the service
+	ldmfd	sp!, {pc}
 
 
 
 service_startedfiler:
 	@ Zero the Task Handle if it is -1
-	ldr	lr, [r12, #WS_MY_TASK_HANDLE]
-	cmp	lr, #-1
-	moveq	lr, #0
-	streq	lr, [r12, #WS_MY_TASK_HANDLE]
-	ldmfd	sp!, {pc}^
+	ldr	r14, [wp, #WS_MY_TASK_HANDLE]
+	cmp	r14, #-1
+	moveq	r14, #0
+	streq	r14, [wp, #WS_MY_TASK_HANDLE]
+	ldmfd	sp!, {pc}
 
 
 
 service_filerdying:
-	@ Shut down task if active
+        @ Shut down task if active
 
-	stmfd	sp!, {r0-r1}
+        stmfd	sp!, {r0-r1}
 
-	ldr	r0, [r12, #WS_MY_TASK_HANDLE]
-	cmp	r0, #0
+        ldr	r0, [wp, #WS_MY_TASK_HANDLE]
+        cmp	r0, #0
 
-	@ Zero the Task Handle if non-zero
-	movne	lr, #0
-	strne	lr, [r12, #WS_MY_TASK_HANDLE]
+        @ Zero the Task Handle if non-zero
+        movne	r14, #0
+        strne	r14, [wp, #WS_MY_TASK_HANDLE]
 
-	@ Shut down task if Task Handle was positive
-	ldrgt	r1, TASK
-	swigt	XWimp_CloseDown
+        @ Shut down task if Task Handle was positive
+        ldrgt	r1, TASK
+        swigt	XWimp_CloseDown
 
-	ldmfd	sp!, {r0-r1}
-	ldmfd	sp!, {pc}^
+        ldmfd	sp!, {r0-r1}
+        ldmfd	sp!, {pc}
 
 
 
 command_desktop_hostfsfiler:
 	stmfd	sp!, {lr}
 	mov	r2, r0
-	adr	r1, title
+	adr	r1, modtitle
 	mov	r0, #Module_Enter
 	swi	XOS_Module
 	ldmfd	sp!, {pc}
@@ -228,7 +253,7 @@ command_desktop_hostfsfiler:
 TASK:
 	.ascii	"TASK"
 
-task_title:
+task_modtitle:
 	.string	"HostFS Filer"
 	.align
 
@@ -259,27 +284,29 @@ icon_bar_icon_name:
 	@ Entered in User Mode
 	@ Therefore no need to preserve link register before calling SWIs
 start:
-	ldr	r12, [r12]		@ Get workspace pointer
-	ldr	r0, [r12, #WS_MY_TASK_HANDLE]
-	cmp	r0, #0			@ Am I already active?
-	ldrgt	r1, TASK		@ Yes, so close down first
-	swigt	XWimp_CloseDown
-	movgt	r0, #0			@ Mark as inactive
-	strgt	r0, [r12, #WS_MY_TASK_HANDLE]
+        ldr     wp, [r12]               @ Get workspace pointer
+        ldr     r0, [wp, #WS_MY_TASK_HANDLE]
+        cmp     r0, #0                  @ Am I already active?
+        ble     start_skipclosedown     @ No then skip following instructions
+        ldr     r1, TASK                @ Yes, so close down first
+        swi     XWimp_CloseDown
+        mov     r0, #0                  @ Mark as inactive
+        str     r0, [wp, #WS_MY_TASK_HANDLE]
 
+start_skipclosedown:
 	ldr	r0, = WIMP_VERSION	@ (re)start the task
 	ldr	r1, TASK
-	adr	r2, task_title
+	adr	r2, task_modtitle
 	swi	XWimp_Initialise
 	swivs	XOS_Exit		@ Exit if error
 
-	str	r0, [r12, #WS_WIMP_VERSION]	@ store Wimp version
-	str	r1, [r12, #WS_MY_TASK_HANDLE]	@ store Task handle
+	str	r0, [wp, #WS_WIMP_VERSION]	@ store Wimp version
+	str	r1, [wp, #WS_MY_TASK_HANDLE]	@ store Task handle
 
 
 	@ Prepare block for Icon Bar icon
 	adr	r0, icon_bar_block
-	add	r1, r12, #WS_ICON_BAR_BLOCK
+	add	r1, wp, #WS_ICON_BAR_BLOCK
 
 	ldmia	r0, {r2-r10}
 	adr	r8, icon_bar_text		@ Fill in pointers
@@ -301,8 +328,8 @@ start:
 	str	r0, [r12, #WS_ICON_BAR_BLOCK + 16]
 
 	@ Create Icon on Icon Bar
-	mov	r0, #0x78000000		@ Priority higher than ADFS Hard Disc
-	add	r1, r12, #WS_ICON_BAR_BLOCK
+	mov	r0, #0x71000000		@ Priority higher than ADFS Hard Disc but lower than CD-ROM discs
+	add	r1, wp, #WS_ICON_BAR_BLOCK
 	swi	XWimp_CreateIcon
 	bvs	close_down
 
@@ -312,7 +339,7 @@ re_poll:
 	swi	XOS_ReadMonotonicTime	@ returns time in r0
 	add	r2, r0, #100		@ poll no sooner than 1 sec unless event
 	ldr	r0, = WIMP_POLL_MASK
-	add	r1, r12, #WS_WIMP_BLOCK	@ point to Wimp block within workspace
+	add	r1, wp, #WS_WIMP_BLOCK	@ point to Wimp block within workspace
 	swi	XWimp_PollIdle
 	bvs	close_down
 
@@ -351,12 +378,12 @@ user_message:
 					@ otherwise continue to...
 close_down:
 	@ Close down Wimp task
-	ldr	r0, [r12, #WS_MY_TASK_HANDLE]
+	ldr	r0, [wp, #WS_MY_TASK_HANDLE]
 	ldr	r1, TASK
 	swi	XWimp_CloseDown
 
 	@ Zero the Task Handle
 	mov	r0, #0
-	str	r0, [r12, #WS_MY_TASK_HANDLE]
+	str	r0, [wp, #WS_MY_TASK_HANDLE]
 
 	swi	XOS_Exit

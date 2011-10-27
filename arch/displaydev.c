@@ -16,6 +16,9 @@
 
 const DisplayDev *DisplayDev_Current = NULL;
 
+int DisplayDev_UseUpdateFlags = 1;
+int DisplayDev_AutoUpdateFlags = 0;
+
 int DisplayDev_Set(ARMul_State *state,const DisplayDev *dev)
 {
   struct Vidc_Regs Vidc;
@@ -62,6 +65,138 @@ void DisplayDev_VSync(ARMul_State *state)
   EmuRate_Update(state);
 }
 
+
+/*
+
+  Endian swapping
+
+  Note that ArcEm stores each ARMword of memory in host endianness. Manual
+  endian swapping is only performed on the addresses used for byte reads/writes.
+
+  This means that when we load an ARMword of memory containing pixels '00',
+  '11', '22', '33', we get the value 0x33221100, the same as if we were on a
+  little-endian system. This means the only endian swapping that's required is
+  when we read/write to the host display buffer.
+
+*/
+
+#ifdef HOST_BIGENDIAN
+/*
+
+  Routine to copy bytes from one byte-aligned location to another
+
+  Note that the byte alignment of 'src' is wrong, because src points to
+  little-endian data instead of big-endian. So to reduce the chance of
+  confusion, this routine works by endian swapping the source data/addresses
+  (instead of just endian swapping the destination, as suggested above)
+
+*/
+void ByteCopy(char *dest,const char *src,int size)
+{
+  if(!size)
+    return;
+  /* Align source */
+  int srcalign = ((int) src) & 3;
+  if(srcalign)
+  {
+    src -= srcalign;
+    srcalign ^= 3; /* Byte swap the source address offset */
+    while((srcalign+1) && size)
+    {
+      *dest++ = src[srcalign];
+      srcalign--;
+      size--;
+    }
+    src += 4;
+  }    
+  /* Examine alignment */
+  int destalign = ((int) dest) & 3;
+  /* Word aligned? */
+  if(!destalign && (size >= 4))
+  {
+    EndianWordCpy((ARMword *) dest,(const ARMword *) src,size>>2);
+    dest += (size & ~3);
+    src += (size & ~3);
+    size &= 3;
+  }
+  else
+  {
+    /* Source is word aligned, but destination isn't. Copy data one byte at a time. */
+    while(size >= 4)
+    {
+      dest[0] = src[3];
+      dest[1] = src[2];
+      dest[2] = src[1];
+      dest[3] = src[0];
+      dest += 4;
+      src += 4;
+      size -= 4;
+    }
+  }
+  /* Any remaining bytes? */
+  while(size--)
+  {
+    dest[size] = src[size ^ 3];
+  }
+}
+
+/*
+
+  Routine to copy bytes from one byte-aligned location to another
+
+  This time we need to do endian swapping on the destination address
+
+*/
+void InvByteCopy(char *dest,const char *src,int size)
+{
+  if(!size)
+    return;
+  /* Align destination */
+  int destalign = ((int) dest) & 3;
+  if(destalign)
+  {
+    dest -= destalign;
+    destalign ^= 3; /* Byte swap the dest address offset */
+    while((destalign+1) && size)
+    {
+      dest[destalign] = *src++;
+      destalign--;
+      size--;
+    }
+    dest += 4;
+  }    
+  /* Examine alignment */
+  int srcalign = ((int) src) & 3;
+  /* Word aligned? */
+  if(!srcalign && (size >= 4))
+  {
+    EndianWordCpy((ARMword *) dest,(const ARMword *) src,size>>2);
+    dest += (size & ~3);
+    src += (size & ~3);
+    size &= 3;
+  }
+  else
+  {
+    /* Destination is word aligned, but source isn't. Copy data one byte at a time. */
+    while(size >= 4)
+    {
+      dest[0] = src[3];
+      dest[1] = src[2];
+      dest[2] = src[1];
+      dest[3] = src[0];
+      dest += 4;
+      src += 4;
+      size -= 4;
+    }
+  }
+  /* Any remaining bytes? */
+  while(size--)
+  {
+    dest[size ^ 3] = src[size];
+  }
+}
+#endif
+
 /*
 
   Routine to copy a bitstream from one bit-aligned location to another
@@ -81,7 +216,7 @@ void BitCopy(ARMword *dest,int destalign,const ARMword *src,int srcalign,int cou
   ARMword tempsrc2 = *src++;
   if(destalign)
   {
-    ARMword tempdest = *dest;
+    ARMword tempdest = EndianSwap(*dest);
 
     ARMword mask = (count<=invdestalign?(1<<count):0)-1;
     mask = mask<<destalign;
@@ -90,7 +225,7 @@ void BitCopy(ARMword *dest,int destalign,const ARMword *src,int srcalign,int cou
     if(srcalign)
       tempsrc3 |= (tempsrc2<<invsrcalign);
     tempdest |= (tempsrc1<<destalign) & mask;
-    *dest++ = tempdest;
+    *dest++ = EndianSwap(tempdest);
 
     count -= invdestalign;
     
@@ -113,14 +248,14 @@ void BitCopy(ARMword *dest,int destalign,const ARMword *src,int srcalign,int cou
   {
     /* Matching alignment, memcpy up to the end */
     int temp = count>>5;
-    memcpy(dest,src-2,temp<<2);
+    EndianWordCpy(dest,src-2,temp);
     dest += temp;
     tempsrc1 = src[temp-2];
     count &= 0x1f;
   }
   else while(count >= 32)
   {
-    *dest++ = (tempsrc1>>srcalign) | (tempsrc2<<invsrcalign);
+    *dest++ = EndianSwap((tempsrc1>>srcalign) | (tempsrc2<<invsrcalign));
     tempsrc1 = tempsrc2;
     tempsrc2 = *src++;
     count -= 32;
@@ -128,14 +263,14 @@ void BitCopy(ARMword *dest,int destalign,const ARMword *src,int srcalign,int cou
   if(count)
   {
     /* End bits */
-    ARMword tempdest = *dest;
+    ARMword tempdest = EndianSwap(*dest);
     ARMword mask = 0xffffffff<<count;
     tempdest &= mask;
     tempsrc1 = (tempsrc1>>srcalign);
     if(srcalign)
       tempsrc1 |= (tempsrc2<<invsrcalign);
     tempdest |= tempsrc1 &~ mask;
-    *dest = tempdest;
+    *dest = EndianSwap(tempdest);
   }
 }
 
@@ -224,7 +359,7 @@ void BitCopyExpand(ARMword *dest,int destalign,const ARMword *src,int srcalign,i
   ARMword tempsrc2 = *src++;
   if(destalign)
   {
-    ARMword tempdest = *dest;
+    ARMword tempdest = EndianSwap(*dest);
     ARMword destmask = (count<=invdestalign?(1<<count):0)-1;
     destmask = destmask<<destalign;
     tempdest &= ~destmask;
@@ -240,7 +375,7 @@ void BitCopyExpand(ARMword *dest,int destalign,const ARMword *src,int srcalign,i
       tempsrc3 >>= srcbpp;
       count -= srcbpp;
     }
-    *dest++ = tempdest;
+    *dest++ = EndianSwap(tempdest);
     if(srcalign >= 32)
     {
       srcalign &= 0x1f;
@@ -266,7 +401,7 @@ void BitCopyExpand(ARMword *dest,int destalign,const ARMword *src,int srcalign,i
       outshift += destbits;
       if(outshift >= 32)
       {
-        *dest++ = tempdest;
+        *dest++ = EndianSwap(tempdest);
         tempdest = 0;
         outshift = 0;
       }
@@ -299,7 +434,7 @@ void BitCopyExpand(ARMword *dest,int destalign,const ARMword *src,int srcalign,i
     int remaining = 32;
     while(count >= srcbits)
     {
-      *dest++ = expandtable[tempsrc3 & srcmask];
+      *dest++ = EndianSwap(expandtable[tempsrc3 & srcmask]);
       tempsrc3 >>= srcbits;
       remaining -= srcbits;
       count -= srcbits;
@@ -323,7 +458,7 @@ void BitCopyExpand(ARMword *dest,int destalign,const ARMword *src,int srcalign,i
   if(count)
   {
     /* End bits */
-    ARMword tempdest = *dest;
+    ARMword tempdest = EndianSwap(*dest);
     ARMword destmask = 0xffffffff<<(count<<factor);
     tempdest &= destmask;
     ARMword tempsrc3 = (tempsrc1>>srcalign);
@@ -339,6 +474,6 @@ void BitCopyExpand(ARMword *dest,int destalign,const ARMword *src,int srcalign,i
       tempsrc3 >>= srcbpp;
       count -= srcbpp;
     }
-    *dest = tempdest;
+    *dest = EndianSwap(tempdest);
   }
 }

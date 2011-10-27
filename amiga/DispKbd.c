@@ -376,9 +376,6 @@ static int BorderPalEntry;
 #define MAX_DISPLAY_WIDTH 2048
 static ARMword RowBuffer[MAX_DISPLAY_WIDTH/4];
 
-/* TODO - Allow this to be configured */
-static int PDD_FrameSkip = 0;
-
 typedef struct {
 	int x,y; /* Current coordinates in pixels */
 	int width; /* Width of area being updated */
@@ -388,9 +385,10 @@ static void PDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,in
 
 static void PDD_Name(Host_SetPaletteEntry)(ARMul_State *state,int i,unsigned int phys)
 {
-	int r = (phys & 0xf)*0x11;
-	int g = ((phys>>4) & 0xf)*0x11;
-	int b = ((phys>>8) & 0xf)*0x11;
+	ULONG r = (phys & 0xf)*0x11111111;
+	ULONG g = ((phys>>4) & 0xf)*0x11111111;
+	ULONG b = ((phys>>8) & 0xf)*0x11111111;
+
 	IGraphics->SetRGB32(&screen->ViewPort,i,r,g,b);
 }
 
@@ -399,9 +397,10 @@ static void PDD_Name(Host_SetBorderColour)(ARMul_State *state,unsigned int phys)
 	/* Set border palette entry */
 	if(BorderPalEntry != 256)
 	{
-		int r = (phys & 0xf)*0x11;
-		int g = ((phys>>4) & 0xf)*0x11;
-		int b = ((phys>>8) & 0xf)*0x11;
+		ULONG r = (phys & 0xf)*0x11111111;
+		ULONG g = ((phys>>4) & 0xf)*0x11111111;
+		ULONG b = ((phys>>8) & 0xf)*0x11111111;
+
 		IGraphics->SetRGB32(&screen->ViewPort,BorderPalEntry,r,g,b);
 	}
 }
@@ -514,6 +513,17 @@ static void pdd_refreshmouse(ARMul_State *state) {
 	if(!screen) return;
 
 	if(!mouse_bm) return;
+
+	/* Set up cursor palette */
+	int i;
+	for(i=1;i<4;i++)
+	{
+		int phys = VIDC.CursorPalette[i-1];
+		ULONG r = (phys & 0xf)*0x11111111;
+		ULONG g = ((phys>>4) & 0xf)*0x11111111;
+		ULONG b = ((phys>>8) & 0xf)*0x11111111;
+		IGraphics->SetRGB32(&screen->ViewPort,col_reg+i,r,g,b);
+	}
 
  offset=0;
   memptr=MEMC.Cinit*16;

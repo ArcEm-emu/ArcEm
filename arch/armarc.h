@@ -54,6 +54,8 @@ struct MEMCStruct {
                      hasn't done an access to ROM space, so in 1 & 2 accesses
                      to  low mem access ROM */
 
+  ARMword DRAMPageSize; /* Page size we pretend our DRAM is */ 
+
   unsigned int UpdateFlags[(512*1024)/UPDATEBLOCKSIZE]; /* One flag for
                                                            each block of DMAble RAM
                                                            incremented on a write */
@@ -190,11 +192,7 @@ int ArmArc_ReadKbdTx(ARMul_State *state);
    still full.                                                                  */
 int ArmArc_WriteKbdRx(ARMul_State *state, unsigned char value);
 
-#ifdef SOUND_SUPPORT
-int SoundDMAFetch(SoundData *buffer, ARMul_State *state);
-void SoundUpdateStereoImage(ARMul_State *state);
-void SoundUpdateSampleRate(ARMul_State *state);
-#endif
 
+void ARMul_RebuildFastMap(void);
 
 #endif

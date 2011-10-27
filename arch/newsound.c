@@ -200,12 +200,42 @@ void Sound_SoundFreqUpdated(ARMul_State *state)
   /* Do nothing for now */
 }
 
-static void Sound_Log2Lin(unsigned char *in,SoundData *out,int avail)
+static void Sound_Log2Lin(const unsigned char *in,SoundData *out,int avail)
 {
   /* Convert the source log data to linear. Note that no mixing is done here. */
   avail *= 2;
   while(avail--)
   {
+#ifdef HOST_BIGENDIAN
+    /* Byte accesses must be endian swapped.
+       This makes sure the stereo positions are correct, and that the samples
+       come through in the right order for the mixing algorithm to work. */
+    SoundData val0 = soundTable[in[3]];
+    SoundData val1 = soundTable[in[2]];
+    SoundData val2 = soundTable[in[1]];
+    SoundData val3 = soundTable[in[0]];
+    *out++ = (channelAmount[0][0] * val0)>>16;
+    *out++ = (channelAmount[0][1] * val0)>>16;
+    *out++ = (channelAmount[1][0] * val1)>>16;
+    *out++ = (channelAmount[1][1] * val1)>>16;
+    *out++ = (channelAmount[2][0] * val2)>>16;
+    *out++ = (channelAmount[2][1] * val2)>>16;
+    *out++ = (channelAmount[3][0] * val3)>>16;
+    *out++ = (channelAmount[3][1] * val3)>>16;
+    val0 = soundTable[in[7]];
+    val1 = soundTable[in[6]];
+    val2 = soundTable[in[5]];
+    val3 = soundTable[in[4]];
+    *out++ = (channelAmount[4][0] * val0)>>16;
+    *out++ = (channelAmount[4][1] * val0)>>16;
+    *out++ = (channelAmount[5][0] * val1)>>16;
+    *out++ = (channelAmount[5][1] * val1)>>16;
+    *out++ = (channelAmount[6][0] * val2)>>16;
+    *out++ = (channelAmount[6][1] * val2)>>16;
+    *out++ = (channelAmount[7][0] * val3)>>16;
+    *out++ = (channelAmount[7][1] * val3)>>16;
+    in += 8;
+#else
     int i;
     for(i=0;i<8;i++)
     {
@@ -213,6 +243,7 @@ static void Sound_Log2Lin(unsigned char *in,SoundData *out,int avail)
       *out++ = (channelAmount[i][0] * val)>>16;
       *out++ = (channelAmount[i][1] * val)>>16;
     }
+#endif
   }
 }
 

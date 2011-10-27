@@ -34,4 +34,5 @@ extern void cleanup(void);
 extern void sound_exit(void);
 
 int force8bit;
+static int PDD_FrameSkip;
 #endif
