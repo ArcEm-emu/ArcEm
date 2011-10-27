@@ -11,8 +11,6 @@
 #include "ArcemConfig.h"
 #include "platform.h"
 
-int force8bit=0;
-
 void wblaunch(struct WBStartup *);
 void closewblibs(void);
 void gettooltypes(struct WBArg *);

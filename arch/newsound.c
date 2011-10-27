@@ -30,7 +30,7 @@
 
 #define MAX_BATCH_SIZE 1024
 
-int Sound_BatchSize = 1; /* How many DMA fetches to try to do at once */
+int Sound_BatchSize = 1; /* How many 16*2 sample batches to try to do at once */
 unsigned long Sound_DMARate; /* How many cycles between DMA fetches */
 Sound_StereoSense eSound_StereoSense = Stereo_LeftRight;
 int Sound_FudgeRate = 0;
@@ -114,7 +114,7 @@ SoundInitTable(void)
               stepSize = (64 * scale) / 16;
               break;
       case 7: chordBase = 127*scale;
-              stepSize = (120 * scale) / 16;
+              stepSize = (128 * scale) / 16;
               break;
       /* End of chord 7 is 247 * scale. */
 
@@ -129,9 +129,6 @@ SoundInitTable(void)
       soundTable[i] = ~(sample - 1);
     } else {
       soundTable[i] = sample;
-    }
-    if (i == 128) {
-      soundTable[i] = 0xFFFF;
     }
   }
 }
@@ -208,7 +205,7 @@ void Sound_StereoUpdated(ARMul_State *state)
               break;
 
       /* Right 100% */
-      case 5: channelAmount[i][1] = (ARMword) (1.0*65536);
+      case 7: channelAmount[i][1] = (ARMword) (1.0*65536);
               channelAmount[i][0] = (ARMword) (0.0*65536);
               break;
       /* Right 83% */
@@ -216,7 +213,7 @@ void Sound_StereoUpdated(ARMul_State *state)
               channelAmount[i][0] = (ARMword) (0.17*65536);
               break;
       /* Right 67% */
-      case 7: channelAmount[i][1] = (ARMword) (0.67*65536);
+      case 5: channelAmount[i][1] = (ARMword) (0.67*65536);
               channelAmount[i][0] = (ARMword) (0.33*65536);
               break;
 
@@ -330,13 +327,36 @@ static void Sound_DMAEvent(ARMul_State *state,CycleCount nowtime)
   /* How many DMA fetches are possible? */
   int avail = 0;
   if(MEMC.ControlReg & (1 << 11))
+  {
+    /* Trigger any pending buffer swap */
+    if(MEMC.Sptr > MEMC.SendC)
+    {
+      /* Have the next buffer addresses been written? */
+      if (MEMC.NextSoundBufferValid == 1) {
+        /* Yes, so change to the next buffer */
+        ARMword swap;
+  
+        MEMC.Sptr = MEMC.Sstart;
+        MEMC.SstartC = MEMC.Sstart;
+  
+        swap = MEMC.SendC;
+        MEMC.SendC = MEMC.SendN;
+        MEMC.SendN = swap;
+  
+        ioc.IRQStatus |= IRQB_SIRQ; /* Take sound interrupt on */
+        IO_UpdateNirq(state);
+  
+        MEMC.NextSoundBufferValid = 0;
+      } else {
+        /* Otherwise wrap to the beginning of the buffer */
+        MEMC.Sptr = MEMC.SstartC;
+      }
+    }
     avail = ((MEMC.SendC+16)-MEMC.Sptr)>>4;
-  if(avail > Sound_BatchSize)
-    avail = Sound_BatchSize;
-  /* Work out when to reschedule the event
-     This is slightly wrong, since we time it based around how long it takes
-     to process this data, but if we finish a buffer we trigger the swap
-     immediately instead of at the start of the next event */
+    if(avail > Sound_BatchSize<<log2numchan)
+      avail = Sound_BatchSize<<log2numchan;
+  }
+  /* Work out when to reschedule the event */
   int next = Sound_DMARate*(avail?avail:Sound_BatchSize)+Sound_FudgeRate;
   /* Clamp to a safe minimum value */
   if(next < 100)
@@ -352,29 +372,6 @@ static void Sound_DMAEvent(ARMul_State *state,CycleCount nowtime)
 #endif
   /* Update DMA stuff */
   MEMC.Sptr += avail<<4;
-  if(MEMC.Sptr > MEMC.SendC)
-  {
-    /* Have the next buffer addresses been written? */
-    if (MEMC.NextSoundBufferValid == 1) {
-      /* Yes, so change to the next buffer */
-      ARMword swap;
-
-      MEMC.Sptr = MEMC.Sstart;
-      MEMC.SstartC = MEMC.Sstart;
-
-      swap = MEMC.SendC;
-      MEMC.SendC = MEMC.SendN;
-      MEMC.SendN = swap;
-
-      ioc.IRQStatus |= IRQB_SIRQ; /* Take sound interrupt on */
-      IO_UpdateNirq(state);
-
-      MEMC.NextSoundBufferValid = 0;
-    } else {
-      /* Otherwise wrap to the beginning of the buffer */
-      MEMC.Sptr = MEMC.SstartC;
-    }
-  }
 }
 
 int Sound_Init(ARMul_State *state)

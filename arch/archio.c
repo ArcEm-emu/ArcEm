@@ -21,6 +21,7 @@
 #endif
 #include "keyboard.h"
 #include "displaydev.h"
+#include "sound.h"
 
 /*#define IOC_TRACE*/
 
@@ -139,12 +140,11 @@ static int
 GetCurrentTimerVal(ARMul_State *state,int toget)
 {
   long timeSinceLastUpdate = ARMul_Time - ioc.TimersLastUpdated;
-  long scaledTimeSlip = (((unsigned long long) timeSinceLastUpdate) * ioc.IOCRate)>>16;
+  long scaledTimeSlip = (((unsigned long long) timeSinceLastUpdate) * ioc.IOCRate + ioc.TimerFracBit)>>16;
   long tmpL;
   int result;
 
-  tmpL = ioc.TimerInputLatch[toget];
-  if (tmpL == 0) tmpL = 1;
+  tmpL = ioc.TimerInputLatch[toget]+1;
   result = ioc.TimerCount[toget] - (scaledTimeSlip % tmpL);
   if (result < 0) result += tmpL;
 
@@ -171,9 +171,8 @@ static void UpdateTimerRegisters_Internal(ARMul_State *state,CycleCount nowtime,
   CycleDiff nextTrigger = ioc.InvIOCRate; /* a.k.a. 65536 IOC cycles from now */
 
   /* ----------------------------------------------------------------- */
-  tmpL = ioc.TimerInputLatch[0];
-  if (tmpL == 0) tmpL = 1;
-  if (ioc.TimerCount[0] <= scaledTimeSlip) {
+  tmpL = ioc.TimerInputLatch[0]+1;
+  if (ioc.TimerCount[0] < scaledTimeSlip) {
     KBD.TimerIntHasHappened++;
     ioc.IRQStatus |= IRQA_TM0;
     IO_UpdateNirq(state);
@@ -183,14 +182,13 @@ static void UpdateTimerRegisters_Internal(ARMul_State *state,CycleCount nowtime,
   if (ioc.TimerCount[0] < 0) ioc.TimerCount[0] += tmpL;
 
   if (ioc.Timer0CanInt) {
-    tmpL = (((unsigned long long) ioc.TimerCount[0]) * ioc.InvIOCRate) >> 16;
+    tmpL = (((unsigned long long) (ioc.TimerCount[0]+1)) * ioc.InvIOCRate) >> 16;
     if (tmpL < nextTrigger) nextTrigger = tmpL;
   }
 
   /* ----------------------------------------------------------------- */
-  tmpL = ioc.TimerInputLatch[1];
-  if (tmpL == 0) tmpL = 1;
-  if (ioc.TimerCount[1] <= scaledTimeSlip) {
+  tmpL = ioc.TimerInputLatch[1]+1;
+  if (ioc.TimerCount[1] < scaledTimeSlip) {
     ioc.IRQStatus |= IRQA_TM1;
     IO_UpdateNirq(state);
     ioc.Timer1CanInt = 0; /* Because its just caused one which hasn't cleared yet */
@@ -199,20 +197,22 @@ static void UpdateTimerRegisters_Internal(ARMul_State *state,CycleCount nowtime,
   if (ioc.TimerCount[1] < 0) ioc.TimerCount[1] += tmpL;
 
   if (ioc.Timer1CanInt) {
-    tmpL = (((unsigned long long) ioc.TimerCount[1]) * ioc.InvIOCRate) >> 16;
+    tmpL = (((unsigned long long) (ioc.TimerCount[1]+1)) * ioc.InvIOCRate) >> 16;
     if (tmpL < nextTrigger) nextTrigger = tmpL;
   }
 
   /* ----------------------------------------------------------------- */
   if (ioc.TimerInputLatch[2]) {
-    ioc.TimerCount[2] -= (scaledTimeSlip % ioc.TimerInputLatch[2]);
-    if(ioc.TimerCount[2] < 0) ioc.TimerCount[2] += ioc.TimerInputLatch[2];
+    tmpL = ioc.TimerInputLatch[2]+1;
+    ioc.TimerCount[2] -= (scaledTimeSlip % tmpL);
+    if(ioc.TimerCount[2] < 0) ioc.TimerCount[2] += tmpL;
   }
 
   /* ----------------------------------------------------------------- */
   if (ioc.TimerInputLatch[3]) {
-    ioc.TimerCount[3] -= (scaledTimeSlip % ioc.TimerInputLatch[3]);
-    if(ioc.TimerCount[3] < 0) ioc.TimerCount[3] += ioc.TimerInputLatch[3];
+    tmpL = ioc.TimerInputLatch[3]+1;
+    ioc.TimerCount[3] -= (scaledTimeSlip % tmpL);
+    if(ioc.TimerCount[3] < 0) ioc.TimerCount[3] += tmpL;
   }
 
   ioc.TimersLastUpdated = nowtime;
@@ -524,8 +524,14 @@ GetWord_IO(ARMul_State *state, ARMword address)
         break;
 
       case 5:
-        /*dbug_ioc("HDC read: address=0x%x speed=%d\n",address,speed); */
-        return HDC_Read(state, offset);
+        /* HDC reads should be medium speed, ignore all other speeds to avoid
+           confusion with IOEB registers */
+        if(speed == 1)
+        {
+          /*dbug_ioc("HDC read: address=0x%x speed=%d\n",address,speed); */
+          return HDC_Read(state, offset);
+        }
+        break;
 
       case 6:
         dbug_ioc("Read from Bank 6 (addr=0x%x speed=0x%x offset=0x%x)\n",
@@ -609,53 +615,42 @@ PutValIO(ARMul_State *state, ARMword address, ARMword data, int byteNotword)
 
       case 5:
         /* It's either Latch A/B, printer DATA  or the HDC */
-        switch (offset & 0x7c) {
-          case 0x00:
-          case 0x04:
-          case 0x08:
-          case 0x0c:
-            /*fprintf(stderr,"HDC write: address=0x%x speed=%u\n", address, speed); */
-            HDC_Write(state, offset, data);
-
-          case 0x10:
-          case 0x14: /* Is it right for this to be 8 bytes wide? */
-            dbug_ioc("Write to Printer data latch offset=0x%x data=0x%x\n",
-                     offset, data);
-            break;
-
-          case 0x18:
-          case 0x1c: /* Is it right for this to be 8 bytes wide? */
-            dbug_ioc("Write to Latch B offset=0x%x data=0x%x\n",
-                     offset, data);
-            ioc.LatchB = data & 0xff;
-            FDC_LatchBChange(state);
-            ioc.LatchBold = data & 0xff;
-            break;
-
-          case 0x40:
-          case 0x44: /* Is it right for this to be 8 bytes wide? */
-            dbug_ioc("Write to Latch A offset=0x%x data=0x%x\n",
-                     offset, data);
-            ioc.LatchA = data & 0xff;
-            FDC_LatchAChange(state);
-            ioc.LatchAold = data & 0xff;
-            break;
-
-          case 0x48:
-            dbug_ioc("Write to IOEB CR offset=0x%x data=0x%x\n",
-                     offset, data);
-            data &= 0xf;
-            if(ioc.IOEBControlReg != data)
-            {
-              ioc.IOEBControlReg = data;
-              (DisplayDev_Current->IOEBCRWrite)(state,data);
-            }
-            break;
-
-          default:
-            dbug_ioc("Writing to non-defined bank 5 address offset=0x%x data=0x%x\n",
-                     offset, data);
-            break;
+        if(speed == 1)
+        {
+          /* Medium speed, assume HDC */
+          /*fprintf(stderr,"HDC write: address=0x%x speed=%u\n", address, speed); */
+          HDC_Write(state, offset, data);
+        }
+        else if(speed == 2)
+        {
+          /* Fast speed */
+          switch(offset & ~3) {
+            case 0x10:
+              dbug_ioc("Write to Printer data latch offset=0x%x data=0x%x\n",
+                       offset, data);
+              break;
+  
+            case 0x18:
+              dbug_ioc("Write to Latch B offset=0x%x data=0x%x\n",
+                       offset, data);
+              ioc.LatchB = data & 0xff;
+              FDC_LatchBChange(state);
+              ioc.LatchBold = data & 0xff;
+              break;
+  
+            case 0x40:
+              dbug_ioc("Write to Latch A offset=0x%x data=0x%x\n",
+                       offset, data);
+              ioc.LatchA = data & 0xff;
+              FDC_LatchAChange(state);
+              ioc.LatchAold = data & 0xff;
+              break;
+  
+            default:
+              dbug_ioc("Writing to non-defined bank 5 address offset=0x%x data=0x%x\n",
+                       offset, data);
+              break;
+          }
         }
         break;
 

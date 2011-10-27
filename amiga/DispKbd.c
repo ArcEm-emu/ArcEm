@@ -2,6 +2,7 @@
 /* Some code based on DispKbd.c for other platforms                              */
 
 #include <string.h>
+#include <limits.h>
 
 #include "../armdefs.h"
 #include "armarc.h"
@@ -45,6 +46,9 @@ ULONG oldlog2bpp = 0;
 static ULONG OldMouseX = 0;
 static ULONG OldMouseY = 0;
 
+static int redraw_miny = INT_MAX;
+static int redraw_maxy = 0; 
+
 
 void writepixel(struct RastPort *,ULONG,ULONG,ULONG);
 void ChangeDisplayMode(ARMul_State *,long,long,int);
@@ -52,6 +56,8 @@ void CloseDisplay(void);
 
 int ChangeMode(int width,int height,int log2bpp,int *xscale,int *yscale)
 {
+	ULONG id = INVALID_ID;
+
 	printf("New display mode: %d x %d x %d ",width,height,1<<log2bpp);
 
 	if(width == oldwidth && height == oldheight && log2bpp == oldlog2bpp)
@@ -219,12 +225,12 @@ static inline void SDD_Name(Host_EndRow)(ARMul_State *state,SDD_Row *row)
 
 static inline void SDD_Name(Host_BeginUpdate)(ARMul_State *state,SDD_Row *row,unsigned int count)
 {
-#error TODO - This is called when we're about to write to 'count' pixels
+#error TODO -' This is called when we're about to write to 'count' pixels
 }
 
 static inline void SDD_Name(Host_EndUpdate)(ARMul_State *state,SDD_Row *row)
 {
-#error TODO - This is called once we've finished writing to the pixels
+#error TODO -' This is called once we've finished writing to the pixels
 }
 
 static inline void SDD_Name(Host_SkipPixels)(ARMul_State *state,SDD_Row *row,unsigned int count)
@@ -413,8 +419,10 @@ static inline void PDD_Name(Host_EndRow)(ARMul_State *state,PDD_Row *row) { /* n
 
 static inline ARMword *PDD_Name(Host_BeginUpdate)(ARMul_State *state,PDD_Row *row,unsigned int count,int *outoffset)
 {
-	drow.width = count>>3;
+	row->width = count>>3;
 	*outoffset = 0;
+	redraw_miny = MIN(redraw_miny,row->y);
+	redraw_maxy = MAX(redraw_maxy,row->y);
 	return RowBuffer;
 }
 
@@ -425,7 +433,7 @@ static inline void PDD_Name(Host_EndUpdate)(ARMul_State *state,PDD_Row *row)
 
 static inline void PDD_Name(Host_AdvanceRow)(ARMul_State *state,PDD_Row *row,unsigned int count)
 {
-	drow.x += count>>3;
+	row->x += count>>3;
 }
 
 static void
@@ -490,7 +498,7 @@ void PDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,int depth
 /*-----------------------------------------------------------------------------*/
 /* Refresh the mouse pointer image                                                */
 static void pdd_refreshmouse(ARMul_State *state) {
-  int x,y,height,offset;
+  int x,y,offset;
   int memptr;
   int HorizPos;
   int height = (int)VIDC.Vert_CursorEnd - (int)VIDC.Vert_CursorStart;
@@ -582,6 +590,15 @@ static void pdd_refreshmouse(ARMul_State *state) {
 static void
 PDD_Name(Host_PollDisplay)(ARMul_State *state)
 {
+	if(redraw_miny <= redraw_maxy)
+	{
+		IGraphics->BltBitMap(friend.BitMap,0,redraw_miny,
+				window->RPort->BitMap,0,redraw_miny,
+				HD.Width,(redraw_maxy-redraw_miny)+1,0x0C0,0xff,NULL);
+		redraw_miny = INT_MAX;
+		redraw_maxy = 0;
+	}
+
 	pdd_refreshmouse(state);
 }
 

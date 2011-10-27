@@ -62,7 +62,7 @@ FASTMAP_FUNC ARMword ARMul_LoadByte(ARMul_State *state,ARMword address)
 	}
 	else if(FASTMAP_RESULT_FUNC(res))
 	{
-		return FastMap_LoadFunc(entry,state,address&~3)>>((address&3)<<3);
+		return (FastMap_LoadFunc(entry,state,address&~3)>>((address&3)<<3)) & 0xff;
 	}
 	else
 	{
@@ -217,7 +217,7 @@ FASTMAP_FUNC ARMword ARMul_SwapByte(ARMul_State *state, ARMword address, ARMword
 	else if(FASTMAP_RESULT_FUNC(res))
 	{
 		/* Assume we aren't trying to SWP ROM and use the read/write func regardless of whether we can perform a read via Log2Phy */
-		temp = FastMap_LoadFunc(entry,state,address)>>((address&3)<<3);
+		temp = (FastMap_LoadFunc(entry,state,address)>>((address&3)<<3)) & 0xff;
 		FastMap_StoreFunc(entry,state,address,data,FASTMAP_ACCESSFUNC_STATECHANGE | FASTMAP_ACCESSFUNC_BYTE);
 		return temp;
 	}

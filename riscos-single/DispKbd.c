@@ -191,7 +191,7 @@ static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,in
 
   /* Search the mode list for the best match */
   int aspect;
-  if(width*2 <= height)
+  if(width <= height)
     aspect = 1;
   else if(width >= height*2)
     aspect = 4;
@@ -321,7 +321,7 @@ void PDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,int depth
 
   /* Search the mode list for the best match */
   int aspect;
-  if(width*2 <= height)
+  if(width <= height)
     aspect = 1;
   else if(width >= height*2)
     aspect = 4;
@@ -829,7 +829,7 @@ static void InitModeTable(void)
     ModeList[NumModes].w = mode[2];
     ModeList[NumModes].h = mode[3];
     ModeList[NumModes].depths = 1<<mode[4];
-    if(mode[2]*2 <= mode[3])
+    if(mode[2] <= mode[3])
       ModeList[NumModes].aspect = 1;
     else if(mode[2] >= mode[3]*2)
       ModeList[NumModes].aspect = 4;

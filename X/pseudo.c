@@ -89,7 +89,7 @@ static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,in
     HD.YScale = 2;
     height *= 2;
   }
-  else if((height >= width*2) && (width*2 <= MaxVideoWidth))
+  else if((height >= width) && (width*2 <= MaxVideoWidth))
   {
     HD.XScale = 2;
     width *= 2;

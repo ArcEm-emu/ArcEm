@@ -4,7 +4,7 @@
 /* TODO Needs to be made 16 bit on any platform. */
 typedef unsigned short int SoundData;
 
-extern int Sound_BatchSize; /* How many DMA fetches to attempt to do at once */
+extern int Sound_BatchSize; /* How many 16*2 sample batches to attempt to deliver to the platform code at once */
 extern unsigned long Sound_DMARate; /* How many cycles between DMA fetches */
 extern int Sound_FudgeRate; /* Extra fudge factor applied to Sound_DMARate */
 

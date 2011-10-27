@@ -1,3 +1,6 @@
+#ifndef AMIGA_PLATFORM_H
+#define AMIGA_PLATFORM_H 1
+
 #include <intuition/intuition.h>
 #include <proto/icon.h>
 #include <proto/exec.h>
@@ -29,3 +32,6 @@ struct UtilityIFace *IUtility;
 
 extern void cleanup(void);
 extern void sound_exit(void);
+
+int force8bit;
+#endif

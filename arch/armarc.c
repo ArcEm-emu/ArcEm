@@ -53,28 +53,125 @@ static void ARMul_RebuildFastMap(void);
 /*------------------------------------------------------------------------------*/
 /* OK - this is getting treated as an odds/sods engine - just hook up anything
    you need to do occasionally! */
-static void DumpHandler(ARMul_State *state,int sig) {
+static void DumpHandler(int sig) {
+  ARMul_State *state = &statestr;
   FILE *res;
+  int i;
 
-  exit(0);
-
-  fprintf(stderr,"SIGUSR2 at PC=0x%x R[15]=0x%x\n",(unsigned int)state->pc,
-                                            (unsigned int)state->Reg[15]);
+  fprintf(stderr,"SIGUSR2 at PC=0x%x\n",ARMul_GetPC(state));
 #ifndef WIN32
   signal(SIGUSR2,DumpHandler);
 #endif
+  /* Register dump */
+  fprintf(stderr, "Current registers:\n"
+                  "r0  = %08x  r1  = %08x  r2  = %08x  r3  = %08x\n"
+                  "r4  = %08x  r5  = %08x  r6  = %08x  r7  = %08x\n"
+                  "r8  = %08x  r9  = %08x  r10 = %08x  r11 = %08x\n"
+                  "r12 = %08x  r13 = %08x  r14 = %08x  r15 = %08x\n",
+    state->Reg[0], state->Reg[1], state->Reg[2], state->Reg[3],
+    state->Reg[4], state->Reg[5], state->Reg[6], state->Reg[7],
+    state->Reg[8], state->Reg[9], state->Reg[10], state->Reg[11],
+    state->Reg[12], state->Reg[13], state->Reg[14], state->Reg[15]);
+  if(state->Bank == FIQBANK)
+  {
+    fprintf(stderr,"USR registers:\n"
+                   "r8  = %08x  r9  = %08x  r10 = %08x  r11 = %08x\n"
+                   "r12 = %08x  r13 = %08x  r14 = %08x\n",
+      state->RegBank[USERBANK][8], state->RegBank[USERBANK][9],
+      state->RegBank[USERBANK][10], state->RegBank[USERBANK][11],
+      state->RegBank[USERBANK][12],
+      state->RegBank[USERBANK][13], state->RegBank[USERBANK][14]);
+  }
+  else if(state->Bank != USERBANK)
+  {
+    fprintf(stderr,"USR registers:  r13 = %08x  r14 = %08x\n",
+      state->RegBank[USERBANK][13], state->RegBank[USERBANK][14]);
+  }
+  if(state->Bank != FIQBANK)
+  {
+    fprintf(stderr,"FIQ registers:\n"
+                   "r8  = %08x  r9  = %08x  r10 = %08x  r11 = %08x\n"
+                   "r12 = %08x  r13 = %08x  r14 = %08x\n",
+      state->RegBank[FIQBANK][8], state->RegBank[FIQBANK][9],
+      state->RegBank[FIQBANK][10], state->RegBank[FIQBANK][11],
+      state->RegBank[FIQBANK][12],
+      state->RegBank[FIQBANK][13], state->RegBank[FIQBANK][14]);
+  }
+  if(state->Bank != IRQBANK)
+  {
+    fprintf(stderr,"IRQ registers:  r13 = %08x  r14 = %08x\n",
+      state->RegBank[IRQBANK][13], state->RegBank[IRQBANK][14]);
+  }  
+  if(state->Bank != SVCBANK)
+  {
+    fprintf(stderr,"SVC registers:  r13 = %08x  r14 = %08x\n",
+      state->RegBank[SVCBANK][13], state->RegBank[SVCBANK][14]);
+  }  
 
-  exit(0);
+  /* IOC timers */
+  for(i=0;i<4;i++)
+    fprintf(stderr,"Timer%d Count %08x Latch %08x\n",i,ioc.TimerCount[i],ioc.TimerInputLatch[i]);
+
+  /* Memory map */
+  fprintf(stderr,"MEMC using %dKB page size\n",4<<MEMC.PageSizeFlags);
+  ARMword size=1<<(12+MEMC.PageSizeFlags);
+  int idx;
+  for(idx=0;idx<512;idx++)
+  {
+    int pt = MEMC.PageTable[idx];
+    if(pt>0)
+    {
+      ARMword logadr,phys;
+      /* Assume MEMC isn't in OS mode */
+      static const char *prot[4] = {"USR R/W","USR R","SVC only","SVC only"};
+      switch(MEMC.PageSizeFlags) {
+        case MEMC_PAGESIZE_O_4K:
+          phys = pt & 127;
+          logadr = (pt & 0x7ff000)
+                | ((pt & 0x000c00)<<13);
+          break;
+        case MEMC_PAGESIZE_1_8K:
+          phys = ((pt>>1) & 0x3f) | ((pt & 1) << 6);
+          logadr = (pt & 0x7fe000)
+                | ((pt & 0x000c00)<<13);
+          break;
+        case MEMC_PAGESIZE_2_16K:
+          phys = ((pt>>2) & 0x1f) | ((pt & 3) << 5);
+          logadr = (pt & 0x7fc000)
+                | ((pt & 0x000c00)<<13);
+          break;
+        case MEMC_PAGESIZE_3_32K:
+          phys = ((pt>>3) & 0xf) | ((pt&1)<<4) | ((pt&2)<<5) | ((pt&4)<<3) | (pt&0x80) | ((pt>>4)&0x100);
+          logadr = (pt & 0x7f8000)
+                | ((pt & 0x000c00)<<13);
+          break;
+      }
+      phys *= size;
+      fprintf(stderr,"log %08x -> phy %08x prot %s\n",logadr,phys,prot[(pt>>8)&3]);
+    }
+  }
+
+  /* Physical RAM dump */
+#ifdef __riscos__
+  res=fopen("<arcem$dir>.memdump","wb");
+#else
   res=fopen("memdump","wb");
+#endif
 
   if (res==NULL) {
     fprintf(stderr,"Could not open memory dump file\n");
     return;
   };
 
-  fwrite(MEMC.PhysRam,1,/*MEMC.RAMSize*/ 512*1024,res);
+  fwrite(MEMC.PhysRam,1,MEMC.RAMSize,res);
 
   fclose(res);
+
+#ifdef __riscos__
+  __write_backtrace(sig);
+#endif
+
+  exit(0);
 } /* DumpHandler */
 
 /**

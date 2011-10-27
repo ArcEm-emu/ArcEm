@@ -97,7 +97,7 @@ Sound_InitHost(ARMul_State *state)
 
 void sound_exit(void)
 {
-	IExec->FreeVec(buffer);
+//	IExec->FreeVec(buffer);
 	IDOS->Close(audioh);
 
 	if(IUtility)

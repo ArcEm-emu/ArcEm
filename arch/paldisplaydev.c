@@ -624,10 +624,15 @@ static void PDD_Name(VIDCPutVal)(ARMul_State *state,ARMword address, ARMword dat
 #ifdef DEBUG_VIDCREGS
       fprintf(stderr,"VIDC stereo image reg write val=0x%x\n",val);
 #endif
-      VIDC.StereoImageReg[(addr==0x60)?7:((addr-0x64)/4)]=val & 7;
+      val &= 7;
+      addr = ((addr-0x64)>>2)&0x7;
+      if(VIDC.StereoImageReg[addr] != val)
+      {
+        VIDC.StereoImageReg[addr] = val;
 #ifdef SOUND_SUPPORT
-      Sound_StereoUpdated(state);
+        Sound_StereoUpdated(state);
 #endif
+      }
       break;
 
     case 0x80:
@@ -746,10 +751,14 @@ static void PDD_Name(VIDCPutVal)(ARMul_State *state,ARMword address, ARMword dat
 #ifdef DEBUG_VIDCREGS
       fprintf(stderr,"VIDC Sound freq register val=%d\n",val);
 #endif
-      VIDC.SoundFreq=val & 0xff;
+      val &= 0xff;
+      if(VIDC.SoundFreq != val)
+      {
+        VIDC.SoundFreq=val;
 #ifdef SOUND_SUPPORT
-      Sound_SoundFreqUpdated(state);
+        Sound_SoundFreqUpdated(state);
 #endif
+      }
       break;
 
     case 0xe0:

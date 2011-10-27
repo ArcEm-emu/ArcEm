@@ -45,7 +45,7 @@ void DisplayDev_GetCursorPos(ARMul_State *state,int *x,int *y)
   *y = VIDC.Vert_CursorStart-VIDC.Vert_DisplayStart;
 }
 
-static const unsigned long vidcclocks[4] = {24000000,25000000,36000000,24000000};
+static const unsigned long vidcclocks[4] = {24000000,25175000,36000000,24000000};
 
 unsigned long DisplayDev_GetVIDCClockIn(void)
 {
