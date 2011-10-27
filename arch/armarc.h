@@ -25,63 +25,9 @@
 /* Erm - this has to be 256....*/
 #define UPDATEBLOCKSIZE 256
 
-typedef void (*ARMWriteFunc)(ARMul_State* state, ARMword addr, ARMword data, int bNw);
-typedef ARMword (*ARMReadFunc)(ARMul_State* state, ARMword addr);
 typedef void (*ARMEmuFunc)(ARMul_State *state, ARMword instr, ARMword pc);
 
 ARMEmuFunc ARMul_Emulate_DecodeInstr(ARMword instr);
-
-/* The fast map encodes the page access flags, memory pointer, and read/write function pointers into just two words of data (8 bytes on 32bit platforms, 16 bytes on 64bit)
-   The first word contains the access flags and memory pointer
-   The second word contains the read/write func pointer (combined function under the assumption that MMIO read/write will be infrequent)
-*/
-
-#ifndef FASTMAP_64
-#ifdef __LP64__
-#define FASTMAP_64
-#endif
-#endif
-
-#ifdef FASTMAP_64
-typedef signed long int FastMapInt;
-typedef unsigned long int FastMapUInt;
-#define FASTMAP_FLAG(X) (((FastMapUInt)(X))<<56) /* Shift a byte to the top byte of the word */
-#else
-typedef signed int FastMapInt;
-typedef unsigned int FastMapUInt;
-#define FASTMAP_FLAG(X) (((FastMapUInt)(X))<<24) /* Shift a byte to the top byte of the word */
-#endif
-
-#define FASTMAP_SIZE (0x4000000/4096)
-
-#define FASTMAP_R_FUNC FASTMAP_FLAG(0x80) /* Use function for reading */
-#define FASTMAP_W_FUNC FASTMAP_FLAG(0x40) /* Use function for writing */
-#define FASTMAP_R_SVC  FASTMAP_FLAG(0x20) /* Page has SVC read access */
-#define FASTMAP_W_SVC  FASTMAP_FLAG(0x10) /* Page has SVC write access */
-#define FASTMAP_R_OS   FASTMAP_FLAG(0x08) /* Page has OS read access */
-#define FASTMAP_W_OS   FASTMAP_FLAG(0x04) /* Page has OS write access */
-#define FASTMAP_R_USR  FASTMAP_FLAG(0x02) /* Page has USR read access */
-#define FASTMAP_W_USR  FASTMAP_FLAG(0x01) /* Page has USR write access */
-
-#define FASTMAP_MODE_USR FASTMAP_FLAG(0x02) /* We are in user mode */
-#define FASTMAP_MODE_OS  FASTMAP_FLAG(0x08) /* The OS flag is set in the control register */
-#define FASTMAP_MODE_SVC FASTMAP_FLAG(0x20) /* We are in SVC mode */
-#define FASTMAP_MODE_MBO FASTMAP_FLAG(0x80) /* Must be one! */
-
-#define FASTMAP_ACCESSFUNC_WRITE       0x01UL
-#define FASTMAP_ACCESSFUNC_BYTE        0x02UL
-#define FASTMAP_ACCESSFUNC_STATECHANGE 0x04UL /* Only relevant for writes */
-
-#define FASTMAP_CLOBBEREDFUNC 0 /* Value written when a func gets clobbered */
-
-typedef FastMapInt FastMapRes; /* Result of a DecodeRead/DecodeWrite function */
-
-typedef ARMword (*FastMapAccessFunc)(ARMul_State *state,ARMword addr,ARMword data,ARMword flags);
-
-typedef struct {
-  FastMapUInt FlagsAndData;
-  FastMapAccessFunc AccessFunc;
-} FastMapEntry;
 
 struct MEMCStruct {
   ARMword *ROMHigh;           /* ROM high and low are to seperate rom areas */
@@ -116,9 +62,7 @@ struct MEMCStruct {
                                                            each block of DMAble RAM
                                                            incremented on a write */
 
-  FastMapUInt FastMapMode; /* Current access mode flags */
-  FastMapUInt FastMapInstrFuncOfs; /* Offset between the RAM/ROM data and the ARMEmuFunc data */
-  FastMapEntry FastMap[FASTMAP_SIZE];
+  /* Fastmap memory block pointers */
   void *ROMRAMChunk;
   void *EmuFuncChunk;
 };
@@ -126,35 +70,29 @@ struct MEMCStruct {
 
 extern struct MEMCStruct memc;
 
-
-typedef struct {
-  DisplayInfo Display;
-} PrivateDataType;
-
-#define PRIVD ((PrivateDataType *)state->MemDataPtr)
 #define MEMC (memc)
 
 /* ------------------- inlined FastMap functions ------------------------------ */
-static FastMapEntry *FastMap_GetEntry(ARMword addr);
-static FastMapEntry *FastMap_GetEntryNoWrap(ARMword addr);
+static FastMapEntry *FastMap_GetEntry(ARMul_State *state,ARMword addr);
+static FastMapEntry *FastMap_GetEntryNoWrap(ARMul_State *state,ARMword addr);
 static FastMapRes FastMap_DecodeRead(const FastMapEntry *entry,ARMword mode);
 static FastMapRes FastMap_DecodeWrite(const FastMapEntry *entry,ARMword mode);
 static ARMword *FastMap_Log2Phy(const FastMapEntry *entry,ARMword addr);
-static ARMEmuFunc *FastMap_Phy2Func(ARMword *addr);
+static ARMEmuFunc *FastMap_Phy2Func(ARMul_State *state,ARMword *addr);
 static ARMword FastMap_LoadFunc(const FastMapEntry *entry,ARMul_State *state,ARMword addr);
 static void FastMap_StoreFunc(const FastMapEntry *entry,ARMul_State *state,ARMword addr,ARMword data,ARMword flags);
 static void FastMap_RebuildMapMode(ARMul_State *state);
 
-static inline FastMapEntry *FastMap_GetEntry(ARMword addr)
+static inline FastMapEntry *FastMap_GetEntry(ARMul_State *state,ARMword addr)
 {
 	/* Return FastMapEntry corresponding to this address */
-	return &MEMC.FastMap[(addr&~0xFC000000UL)>>12];
+	return &state->FastMap[(addr&~0xFC000000UL)>>12];
 }
 
-static inline FastMapEntry *FastMap_GetEntryNoWrap(ARMword addr)
+static inline FastMapEntry *FastMap_GetEntryNoWrap(ARMul_State *state,ARMword addr)
 {
 	/* Return FastMapEntry corresponding to this address, without performing address wrapping (use with caution!) */
-	return &MEMC.FastMap[addr>>12];
+	return &state->FastMap[addr>>12];
 }
 
 static inline FastMapRes FastMap_DecodeRead(const FastMapEntry *entry,ARMword mode)
@@ -175,10 +113,10 @@ static inline ARMword *FastMap_Log2Phy(const FastMapEntry *entry,ARMword addr)
 	return (ARMword*)(((FastMapUInt)addr)+(entry->FlagsAndData<<8));
 }
 
-static inline ARMEmuFunc *FastMap_Phy2Func(ARMword *addr)
+static inline ARMEmuFunc *FastMap_Phy2Func(ARMul_State *state,ARMword *addr)
 {
 	/* Return ARMEmuFunc * for an address returned by Log2Phy */
-	return (ARMEmuFunc*)(((FastMapUInt)addr)+MEMC.FastMapInstrFuncOfs);
+	return (ARMEmuFunc*)(((FastMapUInt)addr)+state->FastMapInstrFuncOfs);
 }
 
 static inline ARMword FastMap_LoadFunc(const FastMapEntry *entry,ARMul_State *state,ARMword addr)
@@ -195,7 +133,7 @@ static inline void FastMap_StoreFunc(const FastMapEntry *entry,ARMul_State *stat
 
 static inline void FastMap_RebuildMapMode(ARMul_State *state)
 {
-	MEMC.FastMapMode = (state->NtransSig?FASTMAP_MODE_MBO|FASTMAP_MODE_SVC:(MEMC.ControlReg&(1<<12))?FASTMAP_MODE_MBO|FASTMAP_MODE_OS:FASTMAP_MODE_MBO|FASTMAP_MODE_USR);
+	state->FastMapMode = (state->NtransSig?FASTMAP_MODE_MBO|FASTMAP_MODE_SVC:(MEMC.ControlReg&(1<<12))?FASTMAP_MODE_MBO|FASTMAP_MODE_OS:FASTMAP_MODE_MBO|FASTMAP_MODE_USR);
 }
 
 /* Macros to evaluate DecodeRead/DecodeWrite results

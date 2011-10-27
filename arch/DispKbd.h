@@ -33,7 +33,7 @@ typedef enum {
   KbdState_Idle
 } KbdStates;
 
-typedef struct {
+struct DisplayInfo {
   struct {
     int MustRedraw;       /* Set to 1 by emulator if something major changes */
 #if defined(SYSTEM_X)
@@ -120,12 +120,12 @@ typedef struct {
     int BuffOcc;
     int TimerIntHasHappened;
   } Kbd;
-} DisplayInfo;
+};
 
 
-#define DISPLAYINFO (PRIVD->Display)
+#define DISPLAYINFO (*(state->Display))
 #define VIDC (DISPLAYINFO.Vidc)
-/* Use this in gdb: ((PrivateDataType *)state->MemDataPtr)->Display->HostDisplay */
+/* Use this in gdb: state->Display->HostDisplay */
 #define HOSTDISPLAY (DISPLAYINFO.HostDisplay)
 #define DISPLAYCONTROL (DISPLAYINFO.Control)
 #define KBD (DISPLAYINFO.Kbd)

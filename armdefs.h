@@ -22,82 +22,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define FALSE 0
-#define TRUE 1
-#define LOW 0
-#define HIGH 1
-#define LOWHIGH 1
-#define HIGHLOW 2
-
-#ifndef __STDC__
-typedef char * VoidStar;
-#endif
-
 typedef unsigned int ARMword; /* must be 32 bits wide */
 
 typedef struct ARMul_State ARMul_State;
 extern ARMul_State statestr;
 
-typedef unsigned ARMul_CPInits(ARMul_State *state);
-typedef unsigned ARMul_CPExits(ARMul_State *state);
-typedef unsigned ARMul_LDCs(ARMul_State *state, unsigned type, ARMword instr, ARMword value);
-typedef unsigned ARMul_STCs(ARMul_State *state, unsigned type, ARMword instr, ARMword *value);
-typedef unsigned ARMul_MRCs(ARMul_State *state, unsigned type, ARMword instr, ARMword *value);
-typedef unsigned ARMul_MCRs(ARMul_State *state, unsigned type, ARMword instr, ARMword value);
-typedef unsigned ARMul_CDPs(ARMul_State *state, unsigned type, ARMword instr);
-typedef unsigned ARMul_CPReads(ARMul_State *state, unsigned reg, ARMword *value);
-typedef unsigned ARMul_CPWrites(ARMul_State *state, unsigned reg, ARMword value);
+#define FALSE 0
+#define TRUE 1
+#define LOW 0
+#define HIGH 1
 
-
-typedef enum ARMStartIns {
-  SEQ           = 0,
-  NONSEQ        = 1,
-  PCINCEDSEQ    = 2,
-  PCINCEDNONSEQ = 3,
-  PRIMEPIPE     = 4,
-  RESUME        = 8
-} ARMStartIns;
-
-
-struct ARMul_State {
-   /* Most common stuff, current register file first to ease indexing */
-   ARMword Reg[16];           /* the current register file */
-   unsigned long NumCycles;   /* Number of cycles */
-   enum ARMStartIns NextInstr;/* Pipeline state */
-#ifdef MEMC_IN_STATE
-   struct MEMCStruct *MEMCPtr;/* MEMC */
-#endif
-   unsigned abortSig;         /* Abort state */
-   ARMword Aborted;           /* sticky flag for aborts */
-   ARMword AbortAddr;         /* to keep track of Prefetch aborts */
-   unsigned Exception;        /* IRQ & FIQ pins */
-   unsigned long Now;         /* time next event should be triggered */
-   void *MemDataPtr;          /* VIDC/DisplayInfo struct */
-   ARMword Bank;              /* the current register bank */
-   unsigned NtransSig;        /* MEMC USR/SVC flag, somewhat redundant with FastMapMode */
-   ARMword Base;              /* extra hand for base writeback */
-
-   /* Less common stuff */   
-   ARMword RegBank[4][16];    /* all the registers */
-   ARMword instr, pc, temp;   /* saved register state */
-   ARMword loaded, decoded;   /* saved pipeline state */
-
-   /* Rare stuff */
-   ARMul_CPInits *CPInit[16]; /* coprocessor initialisers */
-   ARMul_CPExits *CPExit[16]; /* coprocessor finalisers */
-   ARMul_LDCs *LDC[16];       /* LDC instruction */
-   ARMul_STCs *STC[16];       /* STC instruction */
-   ARMul_MRCs *MRC[16];       /* MRC instruction */
-   ARMul_MCRs *MCR[16];       /* MCR instruction */
-   ARMul_CDPs *CDP[16];       /* CDP instruction */
-   ARMul_CPReads *CPRead[16]; /* Read CP register */
-   ARMul_CPWrites *CPWrite[16]; /* Write CP register */
-   unsigned char *CPData[16]; /* Coprocessor data */
-
- };
-
-#define LATEABTSIG LOW
-
+#define LATEABTSIG LOW /* TODO - is this correct? */
 
 /***************************************************************************\
 *                   Macros to extract instruction fields                    *
@@ -145,6 +80,130 @@ struct ARMul_State {
 #define SVCBANK SVC26MODE
 
 /***************************************************************************\
+*                          Fastmap definitions                              *
+\***************************************************************************/
+
+/* The fast map encodes the page access flags, memory pointer, and read/write
+   function pointers into just two words of data (8 bytes on 32bit platforms,
+   16 bytes on 64bit)
+   The first word contains the access flags and memory pointer
+   The second word contains the read/write func pointer (combined function
+   under the assumption that MMIO read/write will be infrequent) 
+*/
+
+#ifndef FASTMAP_64
+#ifdef __LP64__
+#define FASTMAP_64
+#endif
+#endif
+
+#ifdef FASTMAP_64
+typedef signed long int FastMapInt;
+typedef unsigned long int FastMapUInt;
+#define FASTMAP_FLAG(X) (((FastMapUInt)(X))<<56) /* Shift a byte to the top byte of the word */
+#else
+typedef signed int FastMapInt;
+typedef unsigned int FastMapUInt;
+#define FASTMAP_FLAG(X) (((FastMapUInt)(X))<<24) /* Shift a byte to the top byte of the word */
+#endif
+
+#define FASTMAP_SIZE (0x4000000/4096)
+
+#define FASTMAP_R_FUNC FASTMAP_FLAG(0x80) /* Use function for reading */
+#define FASTMAP_W_FUNC FASTMAP_FLAG(0x40) /* Use function for writing */
+#define FASTMAP_R_SVC  FASTMAP_FLAG(0x20) /* Page has SVC read access */
+#define FASTMAP_W_SVC  FASTMAP_FLAG(0x10) /* Page has SVC write access */
+#define FASTMAP_R_OS   FASTMAP_FLAG(0x08) /* Page has OS read access */
+#define FASTMAP_W_OS   FASTMAP_FLAG(0x04) /* Page has OS write access */
+#define FASTMAP_R_USR  FASTMAP_FLAG(0x02) /* Page has USR read access */
+#define FASTMAP_W_USR  FASTMAP_FLAG(0x01) /* Page has USR write access */
+
+#define FASTMAP_MODE_USR FASTMAP_FLAG(0x02) /* We are in user mode */
+#define FASTMAP_MODE_OS  FASTMAP_FLAG(0x08) /* The OS flag is set in the control register */
+#define FASTMAP_MODE_SVC FASTMAP_FLAG(0x20) /* We are in SVC mode */
+#define FASTMAP_MODE_MBO FASTMAP_FLAG(0x80) /* Must be one! */
+
+#define FASTMAP_ACCESSFUNC_WRITE       0x01UL
+#define FASTMAP_ACCESSFUNC_BYTE        0x02UL
+#define FASTMAP_ACCESSFUNC_STATECHANGE 0x04UL /* Only relevant for writes */
+
+#define FASTMAP_CLOBBEREDFUNC 0 /* Value written when a func gets clobbered */
+
+typedef FastMapInt FastMapRes; /* Result of a DecodeRead/DecodeWrite function */
+
+typedef ARMword (*FastMapAccessFunc)(ARMul_State *state,ARMword addr,ARMword data,ARMword flags);
+
+typedef struct {
+  FastMapUInt FlagsAndData;
+  FastMapAccessFunc AccessFunc;
+} FastMapEntry;
+
+/***************************************************************************\
+*                          Main emulator state                              *
+\***************************************************************************/
+
+typedef unsigned ARMul_CPInits(ARMul_State *state);
+typedef unsigned ARMul_CPExits(ARMul_State *state);
+typedef unsigned ARMul_LDCs(ARMul_State *state, unsigned type, ARMword instr, ARMword value);
+typedef unsigned ARMul_STCs(ARMul_State *state, unsigned type, ARMword instr, ARMword *value);
+typedef unsigned ARMul_MRCs(ARMul_State *state, unsigned type, ARMword instr, ARMword *value);
+typedef unsigned ARMul_MCRs(ARMul_State *state, unsigned type, ARMword instr, ARMword value);
+typedef unsigned ARMul_CDPs(ARMul_State *state, unsigned type, ARMword instr);
+typedef unsigned ARMul_CPReads(ARMul_State *state, unsigned reg, ARMword *value);
+typedef unsigned ARMul_CPWrites(ARMul_State *state, unsigned reg, ARMword value);
+
+typedef enum ARMStartIns {
+  SEQ           = 0,
+  NONSEQ        = 1,
+  PCINCEDSEQ    = 2,
+  PCINCEDNONSEQ = 3,
+  PRIMEPIPE     = 4,
+  RESUME        = 8
+} ARMStartIns;
+
+typedef struct DisplayInfo DisplayInfo;
+
+struct ARMul_State {
+   /* Most common stuff, current register file first to ease indexing */
+   ARMword Reg[16];           /* the current register file */
+   unsigned long NumCycles;   /* Number of cycles */
+   enum ARMStartIns NextInstr;/* Pipeline state */
+   unsigned abortSig;         /* Abort state */
+   ARMword Aborted;           /* sticky flag for aborts */
+   ARMword AbortAddr;         /* to keep track of Prefetch aborts */
+   unsigned Exception;        /* IRQ & FIQ pins */
+   unsigned long Now;         /* time next event should be triggered */
+   DisplayInfo *Display;      /* VIDC/DisplayInfo struct */
+   ARMword Bank;              /* the current register bank */
+   unsigned NtransSig;        /* MEMC USR/SVC flag, somewhat redundant with FastMapMode */
+   ARMword Base;              /* extra hand for base writeback */
+
+   /* Fastmap stuff */
+   FastMapUInt FastMapMode;   /* Current access mode flags */
+   FastMapUInt FastMapInstrFuncOfs; /* Offset between the RAM/ROM data and the ARMEmuFunc data */
+   FastMapEntry FastMap[FASTMAP_SIZE];
+
+   /* Less common stuff */   
+   ARMword RegBank[4][16];    /* all the registers */
+   ARMword instr, pc, temp;   /* saved register state */
+   ARMword loaded, decoded;   /* saved pipeline state */
+
+   /* Rare stuff */
+   ARMul_CPInits *CPInit[16]; /* coprocessor initialisers */
+   ARMul_CPExits *CPExit[16]; /* coprocessor finalisers */
+   ARMul_LDCs *LDC[16];       /* LDC instruction */
+   ARMul_STCs *STC[16];       /* STC instruction */
+   ARMul_MRCs *MRC[16];       /* MRC instruction */
+   ARMul_MCRs *MCR[16];       /* MCR instruction */
+   ARMul_CDPs *CDP[16];       /* CDP instruction */
+   ARMul_CPReads *CPRead[16]; /* Read CP register */
+   ARMul_CPWrites *CPWrite[16]; /* Write CP register */
+   unsigned char *CPData[16]; /* Coprocessor data */
+
+ };
+
+
+/***************************************************************************\
 *                  Definitons of things in the emulator                     *
 \***************************************************************************/
 
@@ -188,22 +247,6 @@ extern void ARMul_Abort(ARMul_State *state, ARMword address);
 
 extern unsigned ARMul_MemoryInit(ARMul_State *state);
 extern void ARMul_MemoryExit(ARMul_State *state);
-
-#if 0
-extern ARMword ARMul_LoadWordS(ARMul_State *state,ARMword address);
-extern ARMword ARMul_LoadWordN(ARMul_State *state,ARMword address);
-extern ARMword ARMul_LoadByte(ARMul_State *state,ARMword address);
-
-extern void ARMul_StoreWordS(ARMul_State *state,ARMword address, ARMword data);
-extern void ARMul_StoreWordN(ARMul_State *state,ARMword address, ARMword data);
-extern void ARMul_StoreByte(ARMul_State *state,ARMword address, ARMword data);
-
-extern ARMword ARMul_SwapWord(ARMul_State *state,ARMword address, ARMword data);
-extern ARMword ARMul_SwapByte(ARMul_State *state,ARMword address, ARMword data);
-
-extern ARMword ARMul_MemAccess(ARMul_State *state,ARMword,ARMword,ARMword,
-                  ARMword,ARMword,ARMword,ARMword,ARMword,ARMword,ARMword);
-#endif
 
 /***************************************************************************\
 *            Definitons of things in the co-processor interface             *

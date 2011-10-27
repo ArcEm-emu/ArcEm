@@ -105,7 +105,7 @@ ARMul_State *ARMul_NewState(void)
 
  state->Aborted = FALSE;
 
- state->MemDataPtr = NULL;
+ state->Display = NULL;
 
  state->Now = 0;
 
@@ -178,8 +178,8 @@ void ARMul_Abort(ARMul_State *state, ARMword vector) {
     case ARMul_SWIV: /* Software Interrupt */
        {
          ARMword addr = ARMul_GetPC(state)-8;
-         FastMapEntry *entry = FastMap_GetEntryNoWrap(addr);
-         FastMapRes res = FastMap_DecodeRead(entry,MEMC.FastMapMode);
+         FastMapEntry *entry = FastMap_GetEntryNoWrap(state,addr);
+         FastMapRes res = FastMap_DecodeRead(entry,state->FastMapMode);
          ARMword instr;
          if(FASTMAP_RESULT_DIRECT(res))
          {

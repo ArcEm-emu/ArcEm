@@ -136,7 +136,13 @@ endif
 ifeq (${SYSTEM},riscos-single)
 EXTNROM_SUPPORT=notyet
 DIRECT_DISPLAY=yes
-CFLAGS += -I@ -DSYSTEM_riscos_single -Iriscos-single -mpoke-function-name -mtune=xscale -march=armv5te -mthrowback -save-temps
+CFLAGS += -I@ -DSYSTEM_riscos_single -Iriscos-single -mtune=xscale -march=armv5te -mthrowback
+# Disable stack limit checks. -ffixed-sl required to prevent sl being used as temp storage, breaking unixlib and any other code that does do stack checks
+CFLAGS += -mno-apcs-stack-check -ffixed-sl
+# No function name poking for a bit extra speed
+CFLAGS += -mno-poke-function-name
+# Debug options
+CFLAGS += -save-temps # -mpoke-function-name
 LDFLAGS += -static
 #OBJS += arm-support.o rhs.o
 OBJS += prof.o

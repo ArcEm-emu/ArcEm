@@ -45,14 +45,14 @@ ARMul_LoadInstr(ARMul_State *state,ARMword addr, PipelineEntry *p)
 
   ARMul_CLEARABORT;
   
-  FastMapEntry *entry = FastMap_GetEntryNoWrap(addr);
-  FastMapRes res = FastMap_DecodeRead(entry,MEMC.FastMapMode);
+  FastMapEntry *entry = FastMap_GetEntryNoWrap(state,addr);
+  FastMapRes res = FastMap_DecodeRead(entry,state->FastMapMode);
 //  fprintf(stderr,"LoadInstr: %08x maps to entry %08x res %08x (mode %08x pc %08x)\n",addr,entry,res,MEMC.FastMapMode,state->Reg[15]);
   if(FASTMAP_RESULT_DIRECT(res))
   {
     ARMword *data = FastMap_Log2Phy(entry,addr);
     ARMword instr = p->instr = *data;
-    ARMEmuFunc *pfunc = FastMap_Phy2Func(data);
+    ARMEmuFunc *pfunc = FastMap_Phy2Func(state,data);
     ARMEmuFunc temp = *pfunc;
     if(temp == FASTMAP_CLOBBEREDFUNC)
     {
@@ -100,12 +100,12 @@ ARMul_LoadInstrTriplet(ARMul_State *state,ARMword addr,PipelineEntry *p)
 
   ARMul_CLEARABORT;
   
-  FastMapEntry *entry = FastMap_GetEntryNoWrap(addr);
-  FastMapRes res = FastMap_DecodeRead(entry,MEMC.FastMapMode);
+  FastMapEntry *entry = FastMap_GetEntryNoWrap(state,addr);
+  FastMapRes res = FastMap_DecodeRead(entry,state->FastMapMode);
   if(FASTMAP_RESULT_DIRECT(res))
   {
     ARMword *data = FastMap_Log2Phy(entry,addr);
-    ARMEmuFunc *pfunc = FastMap_Phy2Func(data);
+    ARMEmuFunc *pfunc = FastMap_Phy2Func(state,data);
     int i;
     for(i=0;i<3;i++)
     {
@@ -657,8 +657,8 @@ static void LoadMult(ARMul_State *state, ARMword instr,
     /* Check if we can use the fastmap */
     if(((address<<20) <= 0xfc000000) && !state->Aborted)
     {
-       FastMapEntry *entry = FastMap_GetEntry(address);
-       FastMapRes res = FastMap_DecodeRead(entry,MEMC.FastMapMode);
+       FastMapEntry *entry = FastMap_GetEntry(state,address);
+       FastMapRes res = FastMap_DecodeRead(entry,state->FastMapMode);
        if(FASTMAP_RESULT_DIRECT(res))
        {
           /* Do it fast
@@ -747,8 +747,8 @@ static void LoadSMult(ARMul_State *state, ARMword instr,
     /* Check if we can use the fastmap */
     if(((address<<20) <= 0xfc000000) && !state->Aborted)
     {
-       FastMapEntry *entry = FastMap_GetEntry(address);
-       FastMapRes res = FastMap_DecodeRead(entry,MEMC.FastMapMode);
+       FastMapEntry *entry = FastMap_GetEntry(state,address);
+       FastMapRes res = FastMap_DecodeRead(entry,state->FastMapMode);
        if(FASTMAP_RESULT_DIRECT(res))
        {
           /* Do it fast
@@ -835,15 +835,15 @@ static void StoreMult(ARMul_State *state, ARMword instr,
     /* Check if we can use the fastmap */
     if(((address<<20) <= 0xfc000000) && !state->Aborted)
     {
-       FastMapEntry *entry = FastMap_GetEntry(address);
-       FastMapRes res = FastMap_DecodeWrite(entry,MEMC.FastMapMode);
+       FastMapEntry *entry = FastMap_GetEntry(state,address);
+       FastMapRes res = FastMap_DecodeWrite(entry,state->FastMapMode);
        if(FASTMAP_RESULT_DIRECT(res))
        {
           /* Do it fast
              This assumes we don't differentiate between N & S cycles */
           ARMul_CLEARABORT;
           ARMword *data = FastMap_Log2Phy(entry,address&~3);
-          ARMEmuFunc *pfunc = FastMap_Phy2Func(data);
+          ARMEmuFunc *pfunc = FastMap_Phy2Func(state,data);
           ARMword count=1;
           *(data++) = state->Reg[temp++];
           *(pfunc++) = FASTMAP_CLOBBEREDFUNC;
@@ -922,15 +922,15 @@ static void StoreSMult(ARMul_State *state, ARMword instr,
     /* Check if we can use the fastmap */
     if(((address<<20) <= 0xfc000000) && !state->Aborted)
     {
-       FastMapEntry *entry = FastMap_GetEntry(address);
-       FastMapRes res = FastMap_DecodeWrite(entry,MEMC.FastMapMode);
+       FastMapEntry *entry = FastMap_GetEntry(state,address);
+       FastMapRes res = FastMap_DecodeWrite(entry,state->FastMapMode);
        if(FASTMAP_RESULT_DIRECT(res))
        {
           /* Do it fast
              This assumes we don't differentiate between N & S cycles */
           ARMul_CLEARABORT;
           ARMword *data = FastMap_Log2Phy(entry,address&~3);
-          ARMEmuFunc *pfunc = FastMap_Phy2Func(data);
+          ARMEmuFunc *pfunc = FastMap_Phy2Func(state,data);
           ARMword count=1;
           *(data++) = state->Reg[temp++];
           *(pfunc++) = FASTMAP_CLOBBEREDFUNC;

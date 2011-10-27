@@ -5,8 +5,8 @@
 
 #ifdef PROFILE_ENABLED
 
-extern void Prof_Init();
-extern void Prof_Dump();
+extern void Prof_Init(void);
+extern void Prof_Dump(void);
 extern void Prof_BeginFunc(const void *);
 extern void Prof_EndFunc(const void *);
 extern void Prof_Begin(const char *);
