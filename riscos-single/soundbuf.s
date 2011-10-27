@@ -45,6 +45,7 @@ buffer_fill:
 	@ R7 = LR volume (ignored)
 	@ R8 = Pointer to fill code (ignored)
 
+#if 0
 	@ First, check if we need to clear the buffer or add to it
 	TST R3,#1
 	ORR R3,R3,#1
@@ -88,6 +89,73 @@ endloop:
 	STR R7,frac_step
 	STR R4,[R3]
 	LDMFD R13!,{R0-R10,PC}
+#else
+	@ New version for the new sound mixer
+	@ sound_rate just acts as a pause flag, since the data should be at the correct rate already
+	TST R3,#1
+	ORR R3,R3,#1
+	STMFD R13!,{R0-R8,R14}
+	MOVEQ R14,#0 @ R14 becomes mix flag
+	@ Get our params
+	ADR R0,routine_params
+	LDMIA R0,{R0,R3-R6}
+	LDR R3,[R3]
+	LDR R4,[R4]
+	LDR R5,[R5]
+	LDR R6,[R6]
+	CMP R3,#0
+	BEQ nodata
+	SUBS R3,R3,R4 @ Number of samples available
+	BLE nodata @ No more input data
+	CMP R14,#0
+	BEQ copyloop
+mixloop:
+	AND R8,R4,R6 @ Pos to read from
+	LDR R14,[R1] @ dest data
+	ADD R4,R4,#4 @ Increment out pos
+	LDR R7,[R0,R8,LSL #1] @ Get input pair
+	SUBS R3,R3,#2
+	ADD R14,R14,R7 @ Mix in (no overflow checks!)
+	STR R14,[R1],#2
+	@ Check for buffer ends
+	BLE mix_done
+	CMP R1,R2
+	BLT mixloop
+mix_done:
+	@ Store back updated values
+	LDR R3,buffer_out_ptr
+	STR R4,[R3]
+	LDMFD R13!,{R0-R8,PC}
+
+copyloop:
+	AND R8,R4,R6 @ Pos to read from
+	LDR R9,[R0,R8,LSL #1] @ Get input pair
+	ADD R4,R4,#2 @ Increment out pos
+	STR R9,[R1],#4
+	@ Check for buffer ends
+	SUBS R3,R3,#2
+	BLE zeroloop
+	CMP R1,R2
+	BLT copyloop
+	@ Store back updated values
+	LDR R3,buffer_out_ptr
+	STR R4,[R3]
+	LDMFD R13!,{R0-R8,PC}
+
+nodata:
+	CMP R14,#0
+	LDMNEFD R14!,{R0-R8,PC} @ No source data, and mixing in, therefore no work to do
+	@ Else must fill buffer with zeros
+	MOV R3,#0 @ Note: Alternate entry points should have R3 as zero already
+zeroloop:
+	CMP R1,R2
+	STRLT R3,[R1],#4
+	BLT zeroloop
+	@ Store back updated values
+	LDR R3,buffer_out_ptr
+	STR R4,[R3]
+	LDMFD R13!,{R0-R8,PC}
+#endif
 
 error_handler:
 	STMFD R13!,{R0-R2,R14}

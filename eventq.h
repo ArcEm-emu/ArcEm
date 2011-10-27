@@ -89,4 +89,13 @@ static inline int EventQ_Find(ARMul_State *state,EventQ_Func func)
 	return idx;
 }
 
+/* Return index of given event func, searching forward. Func must exist! */
+static inline int EventQ_Find2(ARMul_State *state,EventQ_Func func)
+{
+	int idx = 0;
+	while(state->EventQ[idx].Func != func)
+		idx++;
+	return idx;
+}
+
 #endif

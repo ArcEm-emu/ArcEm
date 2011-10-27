@@ -676,6 +676,8 @@ PutValIO(ARMul_State *state, ARMword address, ARMword data, int byteNotword)
 #ifdef HOSTFS_SUPPORT
     case 0x001: /* HostFS */
       hostfs(state, operation);
+      /* hostfs operation may have taken a while; update EmuRate to try and mitigate any audio buffering issues */
+      EmuRate_Update(state);
       break;
 #endif
     default:

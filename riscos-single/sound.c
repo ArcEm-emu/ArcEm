@@ -35,13 +35,15 @@
 
 int sound_handler_id=0; /* ID of our sound handler (0 if uninstalled) */
 
-#define BUFFER_SAMPLES (16384) /* 8K stereo pairs */
+#define BUFFER_SAMPLES (32768) /* 16K stereo pairs */
 
 SoundData sound_buffer[BUFFER_SAMPLES];
 volatile int sound_buffer_in=BUFFER_SAMPLES; /* Number of samples we've placed in the buffer */
 volatile int sound_buffer_out=0; /* Number of samples read out by the IRQ routine */
-int sound_rate=0; /* 8.24 fixed point value for how fast we should step through the data */
 int sound_buff_mask=BUFFER_SAMPLES-1; /* For benefit of assembler code */
+int sound_rate = 1<<24; /* Fixed output rate! */
+static int buffer_threshold; /* Threshold value used to control desired buffer level; chosen based around the output sample rate & buffer_seconds */
+static float buffer_seconds = 0.2f; /* How much audio we want to try and keep buffered */ 
 
 extern void buffer_fill(void); /* Assembler function for performing the buffer fills */
 extern void error_handler(void); /* Assembler function attached to ErrorV */
@@ -147,6 +149,18 @@ static int init_sharedsound(void)
 	regs.r[2] = 0;
 	_kernel_swi(OS_Claim,&regs,&regs);
 #endif
+	/* Get our sample rate */
+	_swix(SharedSound_SampleRate,_INR(0,1)|_OUT(1),sound_handler_id,0,&Sound_HostRate);
+	/* Calculate the buffer threshold value
+	   This is the low threshold value, so we divide by 512 to get the desired level, then by two again to get the low level */
+	buffer_threshold = ((int)(buffer_seconds*((float)Sound_HostRate)))>>10;
+	/* Low thresholds may cause issues */
+	if(buffer_threshold<Sound_BatchSize*4)
+		buffer_threshold = Sound_BatchSize*4;
+	/* Big thresholds will cause problems too! */
+	if(buffer_threshold*4 > BUFFER_SAMPLES)
+		buffer_threshold = BUFFER_SAMPLES>>2;
+	fprintf(stderr,"Host audio rate %dHz, using buffer threshold %d\n",Sound_HostRate>>10,buffer_threshold);
 	return 0;
 }                           
 
@@ -169,80 +183,80 @@ static void shutdown_sharedsound(void)
 
 int Sound_InitHost(ARMul_State *state)
 {
-  if (init_sharedsound())
-  {
-    printf("Error: Couldn't register sound handler\n");
-    return -1;
-  }
-
   /* We want the right channel first */
   eSound_StereoSense = Stereo_RightLeft;
 
-  /* Use a decent batch size
-     We'll receive a max of 8*16*2=256 samples */
-  Sound_BatchSize = 8;
+  /* Use a decent batch size */
+  Sound_BatchSize = 256;
+
+  /* Default 20833Hz sample rate if no SharedSound? */
+  Sound_HostRate = (1000000<<10)/48;
+
+#ifndef PROFILE_ENABLED
+  if (init_sharedsound())
+  {
+    fprintf(stderr,"Error: Couldn't register sound handler\n");
+    return -1;
+  }
+#endif
 
   return 0;
 }
 
-void Sound_HandleData(const SoundData *buffer,int numSamples,int samplePeriod)
+SoundData *Sound_GetHostBuffer(long *destavail)
+{
+  /* Work out how much space is available until next wrap point, or we start overwriting data */
+  if(!sound_handler_id)
+  {
+    *destavail = BUFFER_SAMPLES>>1;
+    return sound_buffer;
+  }
+  int used = sound_buffer_in-sound_buffer_out;
+  int ofs = sound_buffer_in & sound_buff_mask;
+  int buffree = BUFFER_SAMPLES-MAX(ofs,used);
+  *destavail = buffree>>1;
+  return sound_buffer + ofs;
+}
+
+void Sound_HostBuffered(SoundData *buffer,long numSamples)
 {
   if(!sound_handler_id)
     return;
-  numSamples *= 2;
-  static int oldperiod = -1;
-  static unsigned long oldclockin = 0;
-  unsigned long clockin = DisplayDev_GetVIDCClockIn(); 
-  if((samplePeriod != oldperiod) || (clockin != oldclockin))
-  {
-    oldperiod = samplePeriod;
-    oldclockin = clockin;
-    /* Calculate sample rate in 1/1024Hz */
-    int sampleRate = ((unsigned long long) clockin)*1024/(24*samplePeriod);
-    fprintf(stderr,"New sample period %d (VIDC %dMHz) -> rate %d\n",samplePeriod,clockin/1000000,sampleRate>>10);
-    /* Convert to step rate */
-    _swix(SharedSound_SampleRate,_INR(0,1)|_OUT(3),sound_handler_id,sampleRate,&sound_rate);
-    fprintf(stderr,"-> step %08x\n",sound_rate);
-  }
+
   int used = sound_buffer_in-sound_buffer_out;
   int buffree = BUFFER_SAMPLES-used;
-  /* Adjust fudge rate
-     TODO - Need to be able to instruct the core not to give us so much data that we overflow */
-  if(numSamples > buffree)
+
+  numSamples <<= 1;
+
+  sound_buffer_in += numSamples;
+
+  if(buffree == numSamples)
   {
-    fprintf(stderr,"*** sound overflow! %d ***\n",numSamples-buffree);
-    numSamples = buffree;
-    Sound_FudgeRate+=10;
+    fprintf(stderr,"*** sound overflow! ***\n");
+    if(Sound_FudgeRate < -10)
+      Sound_FudgeRate = Sound_FudgeRate/2;
+    else
+      Sound_FudgeRate+=10;
   }
   else if(!used)
   {
     fprintf(stderr,"*** sound underflow! ***\n");
-    Sound_FudgeRate-=10;
+    if(Sound_FudgeRate > 10)
+      Sound_FudgeRate = Sound_FudgeRate/2;
+    else
+      Sound_FudgeRate-=10;
   }
-  else if(used < BUFFER_SAMPLES/4)
+  else if(used < buffer_threshold)
   {
-    Sound_FudgeRate--;
+    Sound_FudgeRate-=3;
   }
-  else if(buffree < BUFFER_SAMPLES/4)
+  else if(used < buffer_threshold*3)
   {
-    Sound_FudgeRate++;
+    Sound_FudgeRate+=3;
   }
   else if(Sound_FudgeRate)
   {
     /* Bring the fudge value back towards 0 until we go out of the comfort zone */
     Sound_FudgeRate += (Sound_FudgeRate>0?-1:1);
   }
-  /* Fill buffer */
-  int ofs = sound_buffer_in & sound_buff_mask;
-  if(ofs + numSamples > BUFFER_SAMPLES)
-  {
-    /* Wrap */
-    memcpy(sound_buffer+ofs,buffer,(BUFFER_SAMPLES-ofs)*sizeof(SoundData));
-    buffer += BUFFER_SAMPLES-ofs;
-    sound_buffer_in += BUFFER_SAMPLES-ofs;
-    numSamples -= BUFFER_SAMPLES-ofs;
-    ofs = 0;
-  }
-  memcpy(sound_buffer+ofs,buffer,numSamples*sizeof(SoundData));
-  sound_buffer_in += numSamples;
 }

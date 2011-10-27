@@ -51,6 +51,7 @@ prof_fmt_str:
 .global	Prof_EndFunc
 .global	Prof_End
 .global	Prof_Dump
+.global	Prof_Reset
 
 Prof_Init:
 	mov	ip, sp
@@ -99,6 +100,12 @@ Prof_Init:
 #endif
 	ldmea	fp, {v5-v6, fp, sp, pc}
 
+Prof_Reset:
+	ldr	a1, prof_buffer_ptr
+	mov	a2, #0
+	ldr	a3, prof_buffer_size
+	b	memset
+
 Prof_BeginFunc:
 	@ a1 = name-poked func ptr
 	ldrb	a2, [a1, #-4]!
@@ -137,21 +144,24 @@ Prof_End:
 
 Prof_Dump:
 	mov	ip, sp
-	stmfd	sp!, {v1-v3,fp,ip,lr,pc}
+	stmfd	sp!, {a1,v1-v3,fp,ip,lr,pc}
 	sub	fp, ip, #4
+	sub	sp, sp, #4
 	ldr	v1, prof_buffer_ptr
 	ldr	v2, prof_buffer_size
 	ldr	v3, prof_buffer_offset
 	add	v2, v1, v2
 	add	v3, v3, #8
 .loop:
-	ldr	a3, [v1], #4
-	cmp	a3, #0
-	beq	.skip
 	ldr	a4, [v1], #4
-	sub	a2, v1, v3
-	adr	a1, prof_fmt_str
-	bl	printf
+	cmp	a4, #0
+	beq	.skip
+	ldr	ip, [v1], #4
+	str	ip, [sp]
+	sub	a3, v1, v3
+	adr	a2, prof_fmt_str
+	ldr	a1, [sp, #4]
+	bl	fprintf
 .skip:
 	cmp	v1, v2
 	blo	.loop

@@ -78,9 +78,6 @@ void IOC_DoIntCheck(ARMul_State *state);
 /*-----------------------------------------------------------------------------*/
 void IO_Init(ARMul_State *state);
 
-/*------------------------------------------------------------------------------*/
-void IOC_UpdateTimers(void);
-
 /*-----------------------------------------------------------------------------*/
 ARMword GetWord_IO(ARMul_State *state, ARMword address);
 

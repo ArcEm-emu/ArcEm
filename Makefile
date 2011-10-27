@@ -144,7 +144,7 @@ CFLAGS += -mno-poke-function-name
 #CFLAGS += -save-temps -mpoke-function-name
 # Profiling
 #CFLAGS += -mpoke-function-name -DPROFILE_ENABLED
-#OBJS += prof.o
+#OBJS += riscos-single/prof.o
 TARGET=!ArcEm/arcem
 endif
 
@@ -247,8 +247,8 @@ armcopro.o: armcopro.c armdefs.h
 armemu.o: armemu.c armdefs.h armemu.h armemuinstr.c armemudec.c
 	$(CC) $(CFLAGS) -o armemu.o -c armemu.c
 
-prof.o: prof.s
-	$(CC) -x assembler-with-cpp prof.s -c
+riscos-single/prof.o: riscos-single/prof.s
+	$(CC) -x assembler-with-cpp riscos-single/prof.s -c -o $@
 
 riscos-single/soundbuf.o: riscos-single/soundbuf.s
 	$(CC) -x assembler-with-cpp riscos-single/soundbuf.s -c -o $@

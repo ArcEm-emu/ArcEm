@@ -361,6 +361,9 @@ static void PDD_Name(EventFunc)(ARMul_State *state,CycleCount nowtime)
     2, /* 1/1      ->  24.0MHz     25.0MHz      36.0MHz */
   };
 
+  /* Trigger VSync interrupt */
+  DisplayDev_VSync(state);
+
   const unsigned int NewCR = VIDC.ControlReg;
   const unsigned long ClockIn = 2*DisplayDev_GetVIDCClockIn();
   const unsigned char ClockDivider = ClockDividers[NewCR&3]; 
@@ -369,11 +372,7 @@ static void PDD_Name(EventFunc)(ARMul_State *state,CycleCount nowtime)
   long FramePeriod = (VIDC.Horiz_Cycle*2+2)*(VIDC.Vert_Cycle+1);
   CycleCount framelength = (((unsigned long long) ARMul_EmuRate)*FramePeriod)*ClockDivider/ClockIn;
   framelength = MAX(framelength,1000);
-  EventQ_RescheduleHead(state,nowtime+framelength,PDD_Name(EventFunc));
-
-  /* Trigger VSync interrupt */
-  ioc.IRQStatus|=IRQA_VFLYBK;
-  IO_UpdateNirq(state);
+  EventQ_Reschedule(state,nowtime+framelength,PDD_Name(EventFunc),EventQ_Find(state,PDD_Name(EventFunc)));
 
   /* Handle frame skip */
   if(DC.FrameSkip--)

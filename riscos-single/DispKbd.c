@@ -20,6 +20,7 @@
 #include "../armemu.h"
 #include "arch/displaydev.h"
 #include "arch/ArcemConfig.h"
+#include "../prof.h"
 
 #include "ControlPane.h"
 
@@ -30,6 +31,10 @@
 static int enable_screenshots = 0;
 static int enable_stats = 0;
 static int do_screenshot = 0;
+#ifdef PROFILE_ENABLED
+static int enable_profile = 0;
+extern void Keyboard_Poll(ARMul_State *state,CycleCount nowtime);
+#endif
 
 static void GoMenu(void);
 #endif
@@ -942,6 +947,9 @@ static const menu_item items[] =
   {"2X upscaling",values_bool,&hArcemConfig.bUpscale},
   {"Take screenshots on Print Screen",values_bool,&enable_screenshots},
   {"Show stats",values_bool,&enable_stats},
+#ifdef PROFILE_ENABLED
+  {"Profiling",values_bool,&enable_profile},
+#endif
   {"Resume",NULL,NULL},
   {"Quit",NULL,NULL},
 };
@@ -966,6 +974,15 @@ static void DrawMenu(void)
 
 static void GoMenu(void)
 {
+#ifdef PROFILE_ENABLED
+  /* Stop here */
+  Prof_EndFunc(Keyboard_Poll);
+  if(enable_profile)
+  {
+    /* And dump */
+    Prof_Dump(stderr);
+  }
+#endif
   /* Switch to a known-good screen mode. Just use the first in the list. */
   ChangeMode(ModeList,3);
   /* Make sure palette is correct (we may not have changed mode above!) */
@@ -1002,5 +1019,13 @@ static void GoMenu(void)
   while(_swi (ArcEmKey_GetKey, _RETURN(0))) {};
   /* Reset EmuRate */
   EmuRate_Reset(&statestr);
+#ifdef PROFILE_ENABLED
+  if(enable_profile)
+  {
+    /* Start profiling */
+    Prof_Reset();
+  }
+  Prof_BeginFunc(Keyboard_Poll);
+#endif
 }
 #endif

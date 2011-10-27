@@ -978,38 +978,54 @@ static CycleCount EmuRate_LastUpdateCycle;
 static clock_t EmuRate_LastUpdateTime;
 unsigned long ARMul_EmuRate = 1000000; /* Start with safe value of 1MHz */
 
-static void EmuRate_Update(ARMul_State *state,CycleCount nowcycle)
-{
-  CycleDiff cycles = nowcycle-EmuRate_LastUpdateCycle;
-  clock_t nowtime = clock();
-  clock_t timediff = nowtime-EmuRate_LastUpdateTime;
-  if(timediff)
-  {
-    unsigned long newrate = (unsigned long) ((((double)cycles)*CLOCKS_PER_SEC)/timediff);
-    /* Clamp to a sensible minimum value, just in case something crazy happens */
-    if(newrate < 1000000)
-      newrate = 1000000;
-    /* Smooth the value a bit, in case of sudden jumps, and to cope with systems with poor clock() granularity */
-    ARMul_EmuRate = (ARMul_EmuRate*7+newrate)>>3;
-    EmuRate_LastUpdateCycle = nowcycle;
-    EmuRate_LastUpdateTime = nowtime;
-    /* Recalculate IOC rates */
-    ioc.InvIOCRate = (((unsigned long long) ARMul_EmuRate)<<16)/2000000;
-    ioc.IOCRate = (((unsigned long long) 2000000)<<16)/ARMul_EmuRate;
-    //fprintf(stderr,"EmuRate %d IOC %.4f InvIOC %.4f\n",ARMul_EmuRate,((float)ioc.IOCRate)/65536,((float)ioc.InvIOCRate)/65536);
-  }
-  EventQ_RescheduleHead(state,nowcycle+(ARMul_EmuRate>>3),EmuRate_Update); /* Update 8 times per second? */
-}
-
 void EmuRate_Reset(ARMul_State *state)
 {
   /* Reset the EmuRate code */
-  int idx = EventQ_Find(state,EmuRate_Update);
-  if(idx != -1)
-    EventQ_Remove(state,idx);
   EmuRate_LastUpdateCycle = ARMul_Time;
   EmuRate_LastUpdateTime = clock();
-  EventQ_Insert(state,ARMul_Time+100000,EmuRate_Update);
+}
+
+void EmuRate_Update(ARMul_State *state)
+{
+  CycleCount nowcycle = ARMul_Time;
+  CycleDiff cycles = nowcycle-EmuRate_LastUpdateCycle;
+  /* Ignore if not much time has passed */
+  if(cycles < 40000)
+    return;
+  clock_t nowtime = clock();
+  clock_t timediff = nowtime-EmuRate_LastUpdateTime;
+  if(timediff < 10)
+    return;
+
+  EmuRate_LastUpdateCycle = nowcycle;
+  EmuRate_LastUpdateTime = nowtime;
+
+  /* Update IOC timers before we calculate the new value */
+  UpdateTimerRegisters(state);
+
+  /* Calculate new rate */
+  
+#ifdef PROFILE_ENABLED
+  /* Force 8MHz when profiling is on */
+  ARMul_EmuRate = 8000000;
+#else
+  unsigned long newrate = (unsigned long) ((((double)cycles)*CLOCKS_PER_SEC)/timediff);
+  /* Clamp to a sensible minimum value, just in case something crazy happens */
+  if(newrate < 1000000)
+    newrate = 1000000;
+  /* Smooth the value a bit, in case of sudden jumps, and to cope with systems with poor clock() granularity */
+  ARMul_EmuRate = (ARMul_EmuRate*3+newrate)>>2;
+#endif
+
+  /* Recalculate IOC rates */
+
+  ioc.InvIOCRate = (((unsigned long long) ARMul_EmuRate)<<16)/2000000;
+  ioc.IOCRate = (((unsigned long long) 2000000)<<16)/ARMul_EmuRate;
+
+  /* Update IOC timers again, to ensure the next interrupt occurs at the right time */
+  UpdateTimerRegisters(state);
+
+  //fprintf(stderr,"EmuRate %d IOC %.4f InvIOC %.4f\n",ARMul_EmuRate,((float)ioc.IOCRate)/65536,((float)ioc.InvIOCRate)/65536);  
 }
 
 /***************************************************************************\
@@ -1049,12 +1065,6 @@ PipelineEntry abortpipe = {
 #define PIPESIZE 4 /* 3 or 4. 4 seems to be slightly faster? */
 #endif
 
-#ifdef PROFILE_ENABLED
-#define MILLION_INSTRUCTIONS 30
-#else
-//#define MILLION_INSTRUCTIONS 50
-#endif
-
 void
 ARMul_Emulate26(ARMul_State *state)
 {
@@ -1067,10 +1077,6 @@ ARMul_Emulate26(ARMul_State *state)
   /**************************************************************************\
    *                        Execute the next instruction                    *
   \**************************************************************************/
-#ifdef MILLION_INSTRUCTIONS
-  clock_t start = clock();
-  int icount=MILLION_INSTRUCTIONS*1000000;
-#endif
   kill_emulator = 0;
   while (kill_emulator == 0) {
     Prof_Begin("ARMul_Emulate26 prime");
@@ -1091,9 +1097,8 @@ ARMul_Emulate26(ARMul_State *state)
 #ifndef FLATPIPE
       Prof_Begin("Fetch/decode");
       switch (state->NextInstr) {
-        case NONSEQ:
-        case SEQ:
-          SETPC(state->Reg[15]+4); /* Advance the pipeline, and an S cycle */
+        case NORMAL:
+          INCPCAMT(4); /* Advance the pipeline, and an S cycle */
           pc += 4;
 
 #if PIPESIZE == 3
@@ -1105,8 +1110,7 @@ ARMul_Emulate26(ARMul_State *state)
 #endif
           break;
 
-        case PCINCEDSEQ:
-        case PCINCEDNONSEQ:
+        case PCINCED:
           /* DAG: R15 already advanced? */
           pc += 4; /* Program counter advanced, and an S cycle */
 #if PIPESIZE == 3
@@ -1126,7 +1130,7 @@ ARMul_Emulate26(ARMul_State *state)
           printf("PC ch pc=0x%x (O 0x%x\n", state->Reg[15], pc);
 #endif
           pc = PC;
-          SETPC(pc+8);
+          INCPCAMT(8);
           state->Aborted = 0;
           pipeidx=0;
           ARMul_LoadInstrTriplet(state, pc, pipe);
@@ -1184,36 +1188,17 @@ ARMul_Emulate26(ARMul_State *state)
         (pipe[pipeidx].func)(state, instr, pc);
         Prof_EndFunc(pipe[pipeidx].func);
       }
-
-#ifdef MILLION_INSTRUCTIONS
-      if(!--icount)
-      {
-        kill_emulator = 1;
-        break;
-      }
-#endif
 #else
 /* pipeidx = 0 */
       Prof_Begin("Fetch/decode");
       switch (state->NextInstr) {
-        case NONSEQ:
-        case SEQ:
-          SETPC(state->Reg[15]+4); /* Advance the pipeline, and an S cycle */
+        case NORMAL: /* Advance the pipeline, and an S cycle */
+          INCPCAMT(4);
+        case PCINCED: /* Program counter advanced, and an S cycle */
           pc += 4;
-
-          ARMul_LoadInstr(state, pc + 8, &pipe[0]);
-          break;
-
-        case PCINCEDSEQ:
-        case PCINCEDNONSEQ:
-          /* DAG: R15 already advanced? */
-          pc += 4; /* Program counter advanced, and an S cycle */
           ARMul_LoadInstr(state, pc + 8, &pipe[0]);
           NORMALCYCLE;
           break;
-
-        /* DAG - resume was here! */
-
         default: /* The program counter has been changed */
           goto reset_pipe;
       }
@@ -1228,7 +1213,8 @@ ARMul_Emulate26(ARMul_State *state)
         Prof_EndFunc(func);
       }
 
-      ARMword excep = state->Exception &~state->Reg[15];
+      ARMword r15 = state->Reg[15];
+      ARMword excep = state->Exception &~r15;
       if (excep) { /* Any exceptions */
         pipeidx = 1;
         if (excep & Exception_FIQ) {
@@ -1245,41 +1231,23 @@ ARMul_Emulate26(ARMul_State *state)
 
       ARMword instr = pipe[1].instr;
       /*fprintf(stderr, "exec: pc=0x%08x instr=0x%08x\n", pc, instr);*/
-      if(ARMul_CCCheck(instr,ECC))
+      if(ARMul_CCCheck(instr,(r15 & CCBITS)))
       {
         Prof_BeginFunc(pipe[1].func);
         (pipe[1].func)(state, instr, pc);
         Prof_EndFunc(pipe[1].func);
       }
 
-#ifdef MILLION_INSTRUCTIONS
-      if(!--icount)
-      {
-        kill_emulator = 1;
-        break;
-      }
-#endif
 /* pipeidx = 1 */
       Prof_Begin("Fetch/decode");
       switch (state->NextInstr) {
-        case NONSEQ:
-        case SEQ:
-          SETPC(state->Reg[15]+4); /* Advance the pipeline, and an S cycle */
+        case NORMAL: /* Advance the pipeline, and an S cycle */
+          INCPCAMT(4);
+        case PCINCED: /* Program counter advanced, and an S cycle */
           pc += 4;
-
-          ARMul_LoadInstr(state, pc + 8, &pipe[1]);
-          break;
-
-        case PCINCEDSEQ:
-        case PCINCEDNONSEQ:
-          /* DAG: R15 already advanced? */
-          pc += 4; /* Program counter advanced, and an S cycle */
           ARMul_LoadInstr(state, pc + 8, &pipe[1]);
           NORMALCYCLE;
           break;
-
-        /* DAG - resume was here! */
-
         default: /* The program counter has been changed */
           goto reset_pipe;
       }
@@ -1294,7 +1262,8 @@ ARMul_Emulate26(ARMul_State *state)
         Prof_EndFunc(func);
       }
 
-      excep = state->Exception &~state->Reg[15];
+      r15 = state->Reg[15];
+      excep = state->Exception &~r15;
       if (excep) { /* Any exceptions */
         pipeidx = 2;
         if (excep & Exception_FIQ) {
@@ -1311,53 +1280,34 @@ ARMul_Emulate26(ARMul_State *state)
 
       instr = pipe[2].instr;
       /*fprintf(stderr, "exec: pc=0x%08x instr=0x%08x\n", pc, instr);*/
-      if(ARMul_CCCheck(instr,ECC))
+      if(ARMul_CCCheck(instr,(r15 & CCBITS)))
       {
         Prof_BeginFunc(pipe[2].func);
         (pipe[2].func)(state, instr, pc);
         Prof_EndFunc(pipe[2].func);
       }
 
-#ifdef MILLION_INSTRUCTIONS
-      if(!--icount)
-      {
-        kill_emulator = 1;
-        break;
-      }
-#endif
 /* pipeidx = 2 */
       Prof_Begin("Fetch/decode");
       switch (state->NextInstr) {
-        case NONSEQ:
-        case SEQ:
-          SETPC(state->Reg[15]+4); /* Advance the pipeline, and an S cycle */
+        case NORMAL: /* Advance the pipeline, and an S cycle */
+          INCPCAMT(4);
+        case PCINCED: /* Program counter advanced, and an S cycle */
           pc += 4;
-
           ARMul_LoadInstr(state, pc + 8, &pipe[2]);
           break;
-
-        case PCINCEDSEQ:
-        case PCINCEDNONSEQ:
-          /* DAG: R15 already advanced? */
-          pc += 4; /* Program counter advanced, and an S cycle */
-          ARMul_LoadInstr(state, pc + 8, &pipe[2]);
-          NORMALCYCLE;
-          break;
-
-        /* DAG - resume was here! */
-
         default: /* The program counter has been changed */
         reset_pipe:
 #ifdef DEBUG
           printf("PC ch pc=0x%x (O 0x%x\n", state->Reg[15], pc);
 #endif
           pc = PC;
-          SETPC(pc+8);
+          INCPCAMT(8);
           state->Aborted = 0;
           ARMul_LoadInstrTriplet(state, pc, pipe);
-          NORMALCYCLE;
           break;
       }
+      NORMALCYCLE;
       Prof_End("Fetch/decode");
 
       local_time = ARMul_Time;
@@ -1369,7 +1319,8 @@ ARMul_Emulate26(ARMul_State *state)
         Prof_EndFunc(func);
       }
 
-      excep = state->Exception &~state->Reg[15];
+      r15 = state->Reg[15];
+      excep = state->Exception &~r15;
       if (excep) { /* Any exceptions */
         pipeidx = 0;
         if (excep & Exception_FIQ) {
@@ -1386,20 +1337,12 @@ ARMul_Emulate26(ARMul_State *state)
 
       instr = pipe[0].instr;
       /*fprintf(stderr, "exec: pc=0x%08x instr=0x%08x\n", pc, instr);*/
-      if(ARMul_CCCheck(instr,ECC))
+      if(ARMul_CCCheck(instr,(r15 & CCBITS)))
       {
         Prof_BeginFunc(pipe[0].func);
         (pipe[0].func)(state, instr, pc);
         Prof_EndFunc(pipe[0].func);
       }
-
-#ifdef MILLION_INSTRUCTIONS
-      if(!--icount)
-      {
-        kill_emulator = 1;
-        break;
-      }
-#endif
 #endif
     } /* for loop */
 
@@ -1407,8 +1350,4 @@ ARMul_Emulate26(ARMul_State *state)
     state->loaded = pipe[(pipeidx+2)%PIPESIZE].instr;
     state->pc = pc;
   }
-#ifdef MILLION_INSTRUCTIONS
-  int t = clock()-start;
-  printf("%d, %.3f MIPS\n",t,((float)(MILLION_INSTRUCTIONS*CLOCKS_PER_SEC))/t);
-#endif
 } /* Emulate 26 in instruction based mode */

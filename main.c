@@ -62,8 +62,6 @@ int main(int argc, char *argv[])
 
   dagstandalone();
 
-  Prof_Dump();
-
   return EXIT_SUCCESS;
 }
 

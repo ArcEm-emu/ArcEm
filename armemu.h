@@ -157,6 +157,19 @@ static inline void inlASSIGN(ARMul_State *state,ARMword res,ARMword bit)
 #define SETABORT(i,m) state->Reg[15] = (state->Reg[15]&~R15MODEBITS) | (i) | (m)
 #define SETPC(pc) state->Reg[15] = (state->Reg[15]&~R15PCBITS)|((pc)&R15PCBITS)
 
+/* Assumed that 'amt' is a multiple of 4 */
+#ifdef ARMUL_USE_IMMEDTABLE
+/* Simple implementation for platforms without a rotate left/right instruction */
+#define INCPCAMT(amt) SETPC(state->Reg[15]+(amt))
+#else
+/* Using ROTATER should reduce the instruction count a bit */
+#define INCPCAMT(amt) do { \
+                        ARMword temp=state->Reg[15]; \
+                        temp = ROTATER(temp,26)+((amt)<<6); \
+                        state->Reg[15] = ROTATER(temp,6); \
+                      } while(0)
+#endif
+
 #define LEGALADDR 0x03ffffff
 #define ADDREXCEPT(address) (address >= (LEGALADDR+1))
 
@@ -178,14 +191,14 @@ static inline void inlASSIGN(ARMul_State *state,ARMword res,ARMword bit)
 *               Different ways to start the next instruction                *
 \***************************************************************************/
 
-#define NORMALCYCLE state->NextInstr = SEQ
-#define BUSUSEDN state->NextInstr |= NONSEQ /* the next fetch will be an N cycle */
+#define NORMALCYCLE state->NextInstr = NORMAL
+#define BUSUSEDN ((void)0) /* the next fetch will be an N cycle */
 #define BUSUSEDINCPCS state->Reg[15] += 4; /* a standard PC inc and an S cycle */ \
-                      state->NextInstr |= PCINCEDSEQ
+                      state->NextInstr |= PCINCED
 #define BUSUSEDINCPCN state->Reg[15] += 4; /* a standard PC inc and an N cycle */ \
-                      state->NextInstr |= PCINCEDNONSEQ
+                      state->NextInstr |= PCINCED
 #define INCPC state->Reg[15] += 4; /* a standard PC inc */ \
-                      state->NextInstr |=  PCINCEDSEQ
+                      state->NextInstr |= PCINCED
 #define FLUSHPIPE state->NextInstr |= PRIMEPIPE
 
 /***************************************************************************\
@@ -346,6 +359,9 @@ extern unsigned long ARMul_EmuRate;
 
 /* Reset the EmuRate code, to cope with situations where the emulator has just been resumed after being suspended for a period of time (i.e. > 1 second) */
 void EmuRate_Reset(ARMul_State *state);
+
+/* Update the EmuRate value. Note: Manipulates event queue! */
+void EmuRate_Update(ARMul_State *state);
 
 /***************************************************************************\
 *                      Macros to scrutinise instructions                    *

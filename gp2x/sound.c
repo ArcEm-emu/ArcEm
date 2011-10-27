@@ -12,6 +12,7 @@
 #include "../armdefs.h"
 #include "../arch/sound.h"
 #include "../arch/displaydev.h"
+#include "../armemu.h"
 
 static unsigned long format = AFMT_S16_LE;
 static unsigned long channels = 2;
@@ -19,7 +20,7 @@ static unsigned long sampleRate = 44100;
 
 static int soundDevice;
 
-/* Threadng currently doesn't work very well - no priority control is in place, so the sound thread hardly ever gets any CPU time */
+/* Threading currently doesn't work very well - no priority control is in place, so the sound thread hardly ever gets any CPU time */
 //#define SOUND_THREAD
 
 #ifdef SOUND_THREAD
@@ -33,53 +34,56 @@ SoundData sound_buffer[BUFFER_SAMPLES];
 volatile int sound_buffer_in=BUFFER_SAMPLES; /* Number of samples we've placed in the buffer */
 volatile int sound_buffer_out=0; /* Number of samples read out by the sound thread */
 static const int sound_buff_mask=BUFFER_SAMPLES-1;
+#else
+SoundData sound_buffer[256*2]; /* Must be >= 2*Sound_BatchSize! */
 #endif
 
-void Sound_HandleData(const SoundData *buffer,int numSamples,int samplePeriod)
+SoundData *Sound_GetHostBuffer(long *destavail)
 {
-  static int oldperiod = -1;
-  static unsigned long oldclockin = 0;
-  unsigned long clockin = DisplayDev_GetVIDCClockIn(); 
+#ifdef SOUND_THREAD
+  /* Work out how much space is available until next wrap point, or we start overwriting data */
+  pthread_mutex_lock(&mut);
+  int local_buffer_in = sound_buffer_in;
+  int used = local_buffer_in-sound_buffer_out;
+  pthread_mutex_unlock(&mut);
+  int ofs = local_buffer_in & sound_buff_mask;
+  int buffree = BUFFER_SAMPLES-MAX(ofs,used);
+  *destavail = buffree>>1;
+  return sound_buffer + ofs;
+#else
+  /* Just assume we always have enough space for the max batch size */
+  *destavail = sizeof(sound_buffer)/(sizeof(SoundData)*2);
+  return sound_buffer;
+#endif
+}
 
-  numSamples *= 2;
-  
-  if((samplePeriod != oldperiod) || (clockin != oldclockin))
-  {
-    oldperiod = samplePeriod;
-    oldclockin = clockin;
-    
-    if (samplePeriod != 0) {
-      sampleRate = clockin / (24*samplePeriod);
-    } else {
-      sampleRate = 44100;
-    }
-  
-    printf("asked to set sample rate to %lu\n", sampleRate);
-    ioctl(soundDevice, SOUND_PCM_WRITE_RATE, &sampleRate);
-    ioctl(soundDevice, SOUND_PCM_READ_RATE, &sampleRate);
-    printf("set sample rate to %lu\n", sampleRate);
-    /* TODO - Cope properly with situations where we can't get the desired rate */
-  }
-
+void Sound_HostBuffered(SoundData *buffer,long numSamples)
+{
+  numSamples <<= 1;
 #ifdef SOUND_THREAD
   pthread_mutex_lock(&mut);
   int local_buffer_in = sound_buffer_in;
   int used = local_buffer_in-sound_buffer_out;
   pthread_mutex_unlock(&mut);
+  int ofs = local_buffer_in & sound_buff_mask;
+
+  local_buffer_in += numSamples;
   
-  int buffree = BUFFER_SAMPLES-used;
-  /* Adjust fudge rate
-     TODO - Need to be able to instruct the core not to give us so much data that we overflow */
-  if(numSamples > buffree)
+  if(buffree == numSamples)
   {
-    fprintf(stderr,"*** sound overflow! %d ***\n",numSamples-buffree);
-    numSamples = buffree;
-    Sound_FudgeRate+=10;
+    fprintf(stderr,"*** sound overflow! ***\n");
+    if(Sound_FudgeRate < -10)
+      Sound_FudgeRate = Sound_FudgeRate/2;
+    else
+      Sound_FudgeRate+=10;
   }
   else if(!used)
   {
     fprintf(stderr,"*** sound underflow! ***\n");
-    Sound_FudgeRate-=10;
+    if(Sound_FudgeRate > 10)
+      Sound_FudgeRate = Sound_FudgeRate/2;
+    else
+      Sound_FudgeRate-=10;
   }
   else if(used < BUFFER_SAMPLES/4)
   {
@@ -94,19 +98,6 @@ void Sound_HandleData(const SoundData *buffer,int numSamples,int samplePeriod)
     /* Bring the fudge value back towards 0 until we go out of the comfort zone */
     Sound_FudgeRate += (Sound_FudgeRate>0?-1:1);
   }
-  /* Fill buffer */
-  int ofs = local_buffer_in & sound_buff_mask;
-  if(ofs + numSamples > BUFFER_SAMPLES)
-  {
-    /* Wrap */
-    memcpy(sound_buffer+ofs,buffer,(BUFFER_SAMPLES-ofs)*sizeof(SoundData));
-    buffer += BUFFER_SAMPLES-ofs;
-    local_buffer_in += BUFFER_SAMPLES-ofs;
-    numSamples -= BUFFER_SAMPLES-ofs;
-    ofs = 0;
-  }
-  memcpy(sound_buffer+ofs,buffer,numSamples*sizeof(SoundData));
-  local_buffer_in += numSamples;
 
   pthread_mutex_lock(&mut);
   sound_buffer_in = local_buffer_in;
@@ -121,28 +112,35 @@ void Sound_HandleData(const SoundData *buffer,int numSamples,int samplePeriod)
        We aim for the buffer to be somewhere between 1/4 and 3/4 full, but don't
        explicitly set the buffer size, so we're at the mercy of the sound system
        in terms of how much lag there'll be */
-    int bufsize = buf.fragsize*buf.fragstotal;
-    int buffree = buf.bytes/sizeof(SoundData);
-    int used = (bufsize-buf.bytes)/sizeof(SoundData);
+    long bufsize = buf.fragsize*buf.fragstotal;
+    long buffree = buf.bytes/sizeof(SoundData);
+    long used = (bufsize-buf.bytes)/sizeof(SoundData);
+    long stepsize = Sound_DMARate>>2;
     bufsize /= sizeof(SoundData);
     if(numSamples > buffree)
     {
-      fprintf(stderr,"*** sound overflow! %d ***\n",numSamples-buffree);
+      fprintf(stderr,"*** sound overflow! %d %d %d %d ***\n",numSamples-buffree,ARMul_EmuRate,Sound_FudgeRate,Sound_DMARate);
       numSamples = buffree; /* We could block until space is available, but I'm woried we'd get stuck blocking forever because the FudgeRate increase wouldn't compensate for the ARMul cycles lost due to blocking */
-      Sound_FudgeRate+=10;
+      if(Sound_FudgeRate < -stepsize)
+        Sound_FudgeRate = Sound_FudgeRate/2;
+      else
+        Sound_FudgeRate+=stepsize;
     }
     else if(!used)
     {
-      fprintf(stderr,"*** sound underflow! ***\n");
-      Sound_FudgeRate-=10;
+      fprintf(stderr,"*** sound underflow! %d %d %d ***\n",ARMul_EmuRate,Sound_FudgeRate,Sound_DMARate);
+      if(Sound_FudgeRate > stepsize)
+        Sound_FudgeRate = Sound_FudgeRate/2;
+      else
+        Sound_FudgeRate-=stepsize;
     }
     else if(used < bufsize/4)
     {
-      Sound_FudgeRate--;
+      Sound_FudgeRate-=stepsize>>4;
     }
     else if(buffree < bufsize/4)
     {
-      Sound_FudgeRate++;
+      Sound_FudgeRate+=stepsize>>4;
     }
     else if(Sound_FudgeRate)
     {
@@ -221,7 +219,12 @@ Sound_InitHost(ARMul_State *state)
   }
 
   if (ioctl(soundDevice, SOUND_PCM_WRITE_RATE, &sampleRate) == -1) {
-    fprintf(stderr, "Could not set initial sample rate\n");
+    fprintf(stderr, "Could not set sample rate\n");
+    return -1;
+  }
+
+  if (ioctl(soundDevice, SOUND_PCM_READ_RATE, &sampleRate) == -1) {
+    fprintf(stderr, "Could not read sample rate\n");
     return -1;
   }
 
@@ -235,9 +238,10 @@ Sound_InitHost(ARMul_State *state)
 
   eSound_StereoSense = Stereo_LeftRight;
 
-  /* Use a decent batch size
-     We'll receive a max of 8*16*2=256 samples */
-  Sound_BatchSize = 8;
+  /* Use a decent batch size */
+  Sound_BatchSize = 256;
+
+  Sound_HostRate = sampleRate<<10;
 
 #ifdef SOUND_THREAD
   pthread_create(&thread, NULL, sound_writeThread, 0);

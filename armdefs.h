@@ -177,19 +177,18 @@ typedef struct {
   EventQ_Func Func;    /* Function to call */
 } EventQ_Entry;
 
-#define EVENTQ_SIZE 10
+#define EVENTQ_SIZE 8
 
 /* NOTE - For speed reasons there aren't any overflow checks in the eventq
           code, so be aware of how many systems are using the queue. At the
           moment, these are:
 
           arch/newsound.c - One entry for sound DMA fetches
-          arch/stddisplaydev.c - One entry for screen updates
+          arch/XXXdisplaydev.c - One entry for screen updates
           arch/keyboard.c - One entry for keyboard/mouse polling
           arch/archio.c - One entry for IOC timers
           arch/archio.c - One entry for FDC & HDC updates
-          arch/armemu.c - One entry for updating ARMul_EmuRate
-        = 6 total
+        = 5 total
 */
 
 /***************************************************************************\
@@ -207,12 +206,10 @@ typedef unsigned ARMul_CPReads(ARMul_State *state, unsigned reg, ARMword *value)
 typedef unsigned ARMul_CPWrites(ARMul_State *state, unsigned reg, ARMword value);
 
 typedef enum ARMStartIns {
-  SEQ           = 0,
-  NONSEQ        = 1,
-  PCINCEDSEQ    = 2,
-  PCINCEDNONSEQ = 3,
-  PRIMEPIPE     = 4,
-  RESUME        = 8
+  NORMAL        = 0,
+  PCINCED       = 1,
+  PRIMEPIPE     = 2,
+  RESUME        = 4
 } ARMStartIns;
 
 typedef struct arch_keyboard arch_keyboard;

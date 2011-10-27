@@ -1159,19 +1159,48 @@ static void SDD_Name(Flyback)(ARMul_State *state)
   if(DC.FLYBK)
     return;
 
-  /* Trigger VSync interrupt */
+  CycleCount oldrate = ARMul_EmuRate;
+
+  /* Trigger VSync */
   DC.FLYBK = 1;
-  ioc.IRQStatus|=IRQA_VFLYBK;
-  IO_UpdateNirq(state);
+  DisplayDev_VSync(state);
+
+  /* If EmuRate has just changed, recalculate the line rate now to try and keep things in sync */
+  if(oldrate != ARMul_EmuRate)
+  {
+    static const unsigned char ClockDividers[4] = {
+    /* Source rates:     24.0MHz     25.0MHz      36.0MHz */
+      6, /* 1/3      ->   8.0MHz      8.3MHz      12.0MHz */
+      4, /* 1/2      ->  12.0MHz     12.5MHz      18.0MHz */
+      3, /* 2/3      ->  16.0MHz     16.6MHz      24.0MHz */
+      2, /* 1/1      ->  24.0MHz     25.0MHz      36.0MHz */
+    };
+  
+    const unsigned int NewCR = VIDC.ControlReg;
+    const unsigned long ClockIn = 2*DisplayDev_GetVIDCClockIn();
+    const unsigned char ClockDivider = ClockDividers[NewCR&3]; 
+  
+    /* Calculate new line rate */
+    DC.LineRate = (((unsigned long long) ARMul_EmuRate)*(VIDC.Horiz_Cycle*2+2))*ClockDivider/ClockIn;
+    if(DC.LineRate < 100)
+      DC.LineRate = 100; /* Clamp to safe minimum value */
+  }
 }
 
-static void SDD_Name(Reschedule)(ARMul_State *state,CycleCount nowtime,EventQ_Func func,int row)
+static void SDD_Name(Reschedule)(ARMul_State *state,CycleCount nowtime,EventQ_Func func,int row,int flybk)
 {
+  int idx=0;
   /* Force frame end just in case registers have been poked mid-frame */
   if(row >= VIDC.Vert_Cycle+1)
   {
     func = SDD_Name(FrameEnd);
+    flybk = 1;
+  }
+  if(flybk)
+  {
+    EventQ_Func oldfunc = state->EventQ[0].Func;
     SDD_Name(Flyback)(state);
+    idx = EventQ_Find2(state,oldfunc);
   }
   int rows = row-DC.NextRow;
   if(rows < 1)
@@ -1179,7 +1208,7 @@ static void SDD_Name(Reschedule)(ARMul_State *state,CycleCount nowtime,EventQ_Fu
   DC.LastRow = DC.NextRow;
   DC.NextRow = row;
   nowtime = state->EventQ[0].Time; /* Ignore the supplied time and use the time the event was last scheduled for - should eliminate any slip/skew */
-  EventQ_RescheduleHead(state,nowtime+rows*DC.LineRate,func);
+  EventQ_Reschedule(state,nowtime+rows*DC.LineRate,func,idx);
 }
 
 static void SDD_Name(FrameStart)(ARMul_State *state,CycleCount nowtime)
@@ -1266,7 +1295,7 @@ static void SDD_Name(FrameStart)(ARMul_State *state,CycleCount nowtime)
       if((Width < 1) || (Height < 1))
       {
         /* Bad mode; skip straight to FrameEnd state */
-        SDD_Name(Reschedule)(state,nowtime,SDD_Name(FrameEnd),(VIDC.Vert_Cycle+1));
+        SDD_Name(Reschedule)(state,nowtime,SDD_Name(FrameEnd),(VIDC.Vert_Cycle+1),0);
         return;
       }
       
@@ -1292,7 +1321,7 @@ static void SDD_Name(FrameStart)(ARMul_State *state,CycleCount nowtime)
   DC.Vptr = MEMC.Vinit<<7;
 
   /* Schedule for first border row */
-  SDD_Name(Reschedule)(state,nowtime,SDD_Name(RowStart),VIDC.Vert_BorderStart+1);
+  SDD_Name(Reschedule)(state,nowtime,SDD_Name(RowStart),VIDC.Vert_BorderStart+1,0);
   
   /* Update host */
   SDD_Name(Host_PollDisplay)(state);
@@ -1308,7 +1337,7 @@ static void SDD_Name(FrameEnd)(ARMul_State *state,CycleCount nowtime)
   DC.LastRow = 0;
   DC.NextRow = VIDC.Vert_SyncWidth+1;
   nowtime = state->EventQ[0].Time; /* Ignore the supplied time and use the time the event was last scheduled for - should eliminate any slip/skew */
-  EventQ_RescheduleHead(state,nowtime+DC.NextRow*DC.LineRate,SDD_Name(FrameStart));
+  EventQ_Reschedule(state,nowtime+DC.NextRow*DC.LineRate,SDD_Name(FrameStart),EventQ_Find2(state,SDD_Name(FrameEnd)));
 }
 
 static void SDD_Name(RowStart)(ARMul_State *state,CycleCount nowtime)
@@ -1318,6 +1347,7 @@ static void SDD_Name(RowStart)(ARMul_State *state,CycleCount nowtime)
     row = VIDC.Vert_BorderStart+1; /* Skip pre-border rows */
   int stop = DC.NextRow;
   int dmaen = DC.DMAEn;
+  int flybk = 0;
   while(row < stop)
   {
     if(row < (VIDC.Vert_DisplayStart+1))
@@ -1333,13 +1363,13 @@ static void SDD_Name(RowStart)(ARMul_State *state,CycleCount nowtime)
     else if(row < (VIDC.Vert_BorderEnd+1))
     {
       /* Border again */
-      SDD_Name(Flyback)(state);
+      flybk = 1;
       SDD_Name(BorderRow)(state,row);
     }
     else
     {
       /* Reached end of screen */
-      SDD_Name(Reschedule)(state,nowtime,SDD_Name(FrameEnd),VIDC.Vert_Cycle+1);
+      SDD_Name(Reschedule)(state,nowtime,SDD_Name(FrameEnd),VIDC.Vert_Cycle+1,flybk);
       return;
     }
     VIDEO_STAT(DisplayRows,1,1);
@@ -1348,13 +1378,13 @@ static void SDD_Name(RowStart)(ARMul_State *state,CycleCount nowtime)
   /* If we've just drawn the last display row, it's time for a vsync */
   if((stop >= (VIDC.Vert_DisplayStart+1)) && (stop >= (VIDC.Vert_DisplayEnd+1)))
   {
-    SDD_Name(Flyback)(state);
+    flybk = 1;
   }
   /* Skip ahead to next row */
   int nextrow = row+SDD_RowsAtOnce;
   if((SDD_RowsAtOnce > 1) && (row <= VIDC.Vert_Cycle) && (nextrow > VIDC.Vert_Cycle+1))
     nextrow = VIDC.Vert_Cycle+1;
-  SDD_Name(Reschedule)(state,nowtime,SDD_Name(RowStart),nextrow);
+  SDD_Name(Reschedule)(state,nowtime,SDD_Name(RowStart),nextrow,flybk);
 }
 
 /*

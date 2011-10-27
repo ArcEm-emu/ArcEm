@@ -14,6 +14,8 @@ BPTR audioh = 0;
 
 static unsigned long sampleRate = 44100;
 
+SoundData sound_buffer[256*2]; /* Must be >= 2*Sound_BatchSize! */
+
 int openaudio(void)
 {
 	STRPTR audiof = NULL;
@@ -36,32 +38,16 @@ int openaudio(void)
 	return 0;
 }
 
-void Sound_HandleData(const SoundData *buffer,int numSamples,int samplePeriod)
+SoundData *Sound_GetHostBuffer(long *destavail)
 {
-	static int oldperiod = -1;
-	static unsigned long oldclockin = 0;
-	unsigned long clockin = DisplayDev_GetVIDCClockIn(); 
+	/* Just assume we always have enough space for the max batch size */
+	*destavail = sizeof(sound_buffer)/(sizeof(SoundData)*2);
+	return sound_buffer;
+}
 
+void Sound_HostBuffered(SoundData *buffer,long numSamples)
+{
 	numSamples *= 2;
-
-	if((samplePeriod != oldperiod) || (clockin != oldclockin))
-	{
-		oldperiod = samplePeriod;
-		oldclockin = clockin;
-
-		if (samplePeriod != 0) {
-			sampleRate = clockin / (24*samplePeriod);
-		} else {
-			sampleRate = 44100;
-		}
-
-		printf("asked to set sample rate to %lu\n", sampleRate);
-
-		IDOS->Close(audioh);
-		openaudio();
-
-		printf("set sample rate to %lu\n", sampleRate);
-	}
 
 	/* TODO - Adjust Sound_FudgeRate to fine-tune how often we receive new data */
 
@@ -89,8 +75,9 @@ Sound_InitHost(ARMul_State *state)
 	/* TODO - Tweak these as necessary */
 	eSound_StereoSense = Stereo_LeftRight;
 
-	/* We'll receive a max of 8*16*2=256 samples per call to HandleData */
-	Sound_BatchSize = 8;
+	Sound_BatchSize = 256;
+
+	Sound_HostRate = sampleRate<<10;
 
 	return 0;
 }

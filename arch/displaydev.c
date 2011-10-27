@@ -12,6 +12,7 @@
 #include "armdefs.h"
 #include "displaydev.h"
 #include "archio.h"
+#include "armemu.h"
 
 const DisplayDev *DisplayDev_Current = NULL;
 
@@ -50,6 +51,15 @@ static const unsigned long vidcclocks[4] = {24000000,25175000,36000000,24000000}
 unsigned long DisplayDev_GetVIDCClockIn(void)
 {
   return vidcclocks[ioc.IOEBControlReg & IOEB_CR_VIDC_MASK];
+}
+
+void DisplayDev_VSync(ARMul_State *state)
+{
+  /* Trigger VSync */
+  ioc.IRQStatus|=IRQA_VFLYBK;
+  IO_UpdateNirq(state);
+  /* Update ARMul_EmuRate */
+  EmuRate_Update(state);
 }
 
 /*

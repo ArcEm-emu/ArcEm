@@ -3,8 +3,8 @@
 /* ################################################################################## */
 static void EMFUNCDECL26(Branch) (ARMul_State *state, ARMword instr, ARMword pc) {
   EMFUNC_CONDTEST
-  /* Note that the upper bits of instr (those that don't form the branch offset) get masked out by SETPC */
-  SETPC(pc + 8 + (instr<<2));
+  /* Note that the upper bits of instr (those that don't form the branch offset) get masked out by INCPC */
+  INCPCAMT(instr<<2);
   FLUSHPIPE;
 } /* EMFUNCDECL26(Branch */
 
@@ -12,8 +12,8 @@ static void EMFUNCDECL26(BranchLink) (ARMul_State *state, ARMword instr, ARMword
   EMFUNC_CONDTEST
   if(instr & (1<<24))
     state->Reg[14] = (pc + 4) | R15CCINTMODE;
-  /* Note that the upper bits of instr (those that don't form the branch offset) get masked out by SETPC */
-  SETPC(pc + 8 + (instr<<2));
+  /* Note that the upper bits of instr (those that don't form the branch offset) get masked out by INCPC */
+  INCPCAMT(instr<<2);
   FLUSHPIPE;
 } /* EMFUNCDECL26(BranchLink */
 
