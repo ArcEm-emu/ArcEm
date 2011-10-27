@@ -21,40 +21,20 @@
 
 #include "armarc.h"
 #include "archio.h"
-#include "DispKbd.h"
 #include "archio.h"
 #include "fdc1772.h"
 #include "ReadConfig.h"
 #include "Version.h"
 #include "extnrom.h"
 #include "ArcemConfig.h"
-#ifdef SOUND_SUPPORT
 #include "sound.h"
-#endif
+#include "displaydev.h"
 
 
 #ifdef MACOSX
 #include <unistd.h>
 extern char arcemDir[256];
 void arcem_exit(char* msg);
-#endif
-
-#ifdef __riscos__
-#include "kernel.h"
-#include "swis.h"
-#endif
-
-#ifdef DIRECT_DISPLAY
-
-extern int *DirectScreenMemory;
-extern int DirectScreenExtent;
-
-extern int MonitorBpp;
-
-int Vstartold;
-int Vinitold;
-int Vendold;
-
 #endif
 
 /* Page size flags */
@@ -152,12 +132,6 @@ ARMul_MemoryInit(ARMul_State *state)
       exit(EXIT_FAILURE);
   }
 
-  state->Display = calloc(sizeof(DisplayInfo), 1);
-  if (state->Display == NULL) {
-    fprintf(stderr,"ARMul_MemoryInit: malloc of DisplayInfo failed\n");
-    exit(3);
-  }
-
   dbug("Reading config file....\n");
   ReadConfigFile(state);
 
@@ -191,7 +165,7 @@ ARMul_MemoryInit(ARMul_State *state)
   if (ROMFile = fopen(hArcemConfig.sRomImageName, "rb"), ROMFile == NULL) {
 #endif
     fprintf(stderr, "Couldn't open ROM file\n");
-    exit(EXIT_FAILURE);
+    exit(2);
   }
 #endif
 
@@ -274,15 +248,18 @@ ARMul_MemoryInit(ARMul_State *state)
   dbug(" ..Done\n ");
 
   IO_Init(state);
-  DisplayKbd_Init(state);
 
-#ifdef SOUND_SUPPORT
+  if (DisplayDev_Init(state)) {
+    /* There was an error of some sort - it will already have been reported */
+    fprintf(stderr, "Could not initialise display - exiting\n");
+    exit(EXIT_FAILURE);
+  }
+
   if (Sound_Init(state)) {
     /* There was an error of some sort - it will already have been reported */
     fprintf(stderr, "Could not initialise sound output - exiting\n");
     exit(EXIT_FAILURE);
   }
-#endif
 
   for (i = 0; i < 512 * 1024 / UPDATEBLOCKSIZE; i++) {
     MEMC.UpdateFlags[i] = 1;
@@ -413,93 +390,27 @@ static void ARMul_PurgeFastMapPTIdx(ARMword idx)
 static void FastMap_DMAAbleWrite(ARMword address,ARMword data)
 {
   MEMC.UpdateFlags[address/UPDATEBLOCKSIZE]++;
-#ifdef DIRECT_DISPLAY
-#ifdef __riscos__
-  if (MEMC.Vstart!=Vstartold || MEMC.Vend!=Vendold)
-  {
-    int size=_swi(OS_ReadDynamicArea, _IN(0)|_RETURN(1), 2);
-    int size_wanted=(MEMC.Vend+1-MEMC.Vstart)*16;
-
-    printf("Size wanted: %d, Old size: %d\n",size_wanted,size);
-
-    size_wanted >>= (3-MonitorBpp);
-
-    _swix(OS_ChangeDynamicArea, _INR(0,1), 2, size_wanted - size);
-
-    size = _swi(OS_ReadDynamicArea, _IN(0) | _RETURN(1), 2);
-
-    printf("Size wanted: %d, New size: %d\n", size_wanted, size);
-
-    {
-      int block[3];
-
-      block[0]=148;
-      block[1]=150;
-      block[2]=-1;
-
-      _swi(OS_ReadVduVariables, _INR(0,1), &block, &block);
-
-      DirectScreenMemory = (int *)block[0];
-      DirectScreenExtent = block[1];
-    }
-
-    Vstartold=MEMC.Vstart;
-    Vendold=MEMC.Vend;
-  }
-#endif
-
-  if (MEMC.Vinit!=Vinitold)
-  {
-    unsigned int offset=(MEMC.Vinit-MEMC.Vstart)*16;
-
-    offset >>= (3-MonitorBpp);
-
-#ifdef __riscos__
-    {
-        char block[5];
-        block[0]=(1<<1)+(1<<0);
-        block[1]=(offset & 0x000000ff);
-        block[2]=(offset & 0x0000ff00) >> 8;
-        block[3]=(offset & 0x00ff0000) >> 16;
-        block[4]=(offset & 0xff000000) >> 24;
-
-        _swi(OS_Word, _INR(0,1), 22, &block);
-    }
-#endif
-#ifdef SYSTEM_gp2x
-    {
-        extern void gp2xScreenOffset(int);
-        gp2xScreenOffset(offset);
-    }
-#endif
-
-    Vinitold=MEMC.Vinit;
-  }
-
-  if (address < DirectScreenExtent) {
-//    extern void ScreenWrite(int *address, ARMword data);
-
-//    ScreenWrite(DirectScreenMemory + address / 4, data);
-    DirectScreenMemory[address/4] = data;
-  }
-#endif
 }
 
 static ARMword FastMap_LogRamFunc(ARMul_State *state, ARMword addr,ARMword data,ARMword flags)
 {
   /* Write to DMAAble log RAM, kinda crappy */
   ARMword *phy = FastMap_Log2Phy(FastMap_GetEntry(state,addr),addr&~3);
+  ARMword orig = *phy;
   if(flags & FASTMAP_ACCESSFUNC_BYTE)
   {
     ARMword shift = ((addr&3)<<3);
     data = (data&0xff)<<shift;
-    data |= (*phy) &~ (0xff<<shift);
+    data |= orig &~ (0xff<<shift);
   }
-  *phy = data;
-  *(FastMap_Phy2Func(state,phy)) = FASTMAP_CLOBBEREDFUNC;
-  /* Convert pointer to physical addr, then update DMA flags */
-  addr = (ARMword) (((FastMapUInt)phy)-((FastMapUInt)MEMC.PhysRam));
-  FastMap_DMAAbleWrite(addr,data);
+  if(orig != data)
+  {
+    *phy = data;
+    *(FastMap_Phy2Func(state,phy)) = FASTMAP_CLOBBEREDFUNC;
+    /* Convert pointer to physical addr, then update DMA flags */
+    addr = (ARMword) (((FastMapUInt)phy)-((FastMapUInt)MEMC.PhysRam));
+    FastMap_DMAAbleWrite(addr,data);
+  }
 } 
 
 static void ARMul_RebuildFastMapPTIdx(ARMword idx)
@@ -568,19 +479,35 @@ static void DMA_PutVal(ARMul_State *state,ARMword address)
 
     switch (RegNum) {
       case 0: /* Vinit */
-        VideoRelUpdateAndForce(DISPLAYCONTROL.MustRedraw, MEMC.Vinit, RegVal);
+        if(MEMC.Vinit != RegVal)
+        {
+          MEMC.Vinit = RegVal;
+          (DisplayDev_Current->DAGWrite)(state,RegNum,RegVal);
+        }
         break;
 
       case 1: /* Vstart */
-        VideoRelUpdateAndForce(DISPLAYCONTROL.MustRedraw, MEMC.Vstart, RegVal);
+        if(MEMC.Vstart != RegVal)
+        {
+          MEMC.Vstart = RegVal;
+          (DisplayDev_Current->DAGWrite)(state,RegNum,RegVal);
+        }
         break;
 
       case 2: /* Vend */
-        VideoRelUpdateAndForce(DISPLAYCONTROL.MustRedraw, MEMC.Vend, RegVal);
+        if(MEMC.Vend != RegVal)
+        {
+          MEMC.Vend = RegVal;
+          (DisplayDev_Current->DAGWrite)(state,RegNum,RegVal);
+        }
         break;
 
       case 3: /* Cinit */
-        MEMC.Cinit = RegVal;
+        if(MEMC.Cinit != RegVal)
+        {
+          MEMC.Cinit = RegVal;
+          (DisplayDev_Current->DAGWrite)(state,RegNum,RegVal);
+        }
         break;
 
       case 4: /* Sstart */
@@ -731,7 +658,7 @@ static ARMword FastMap_VIDCFunc(ARMul_State *state, ARMword addr,ARMword data,AR
   }
   if(flags & FASTMAP_ACCESSFUNC_WRITE)
   {
-    VIDC_PutVal(state,addr,data,flags&FASTMAP_ACCESSFUNC_BYTE);
+    (DisplayDev_Current->VIDCPutVal)(state,addr,data,flags&FASTMAP_ACCESSFUNC_BYTE);
     return 0;
   }
   if(MEMC.ROMLow)

@@ -73,6 +73,13 @@ typedef struct ArcemConfig_s {
   /* Shapes of the MFM ST506 drives as set in the config file */
   struct HDCshape aST506DiskShapes[4];
 
+  /* Platform-specific bits */
+#if defined(SYSTEM_riscos_single)
+  int bRedBlueSwap;
+  int iMinResX,iMinResY;
+  int iLCDResX,iLCDResY;
+#endif
+
 } ArcemConfig;
 
 extern ArcemConfig hArcemConfig;

@@ -10,6 +10,7 @@ struct IOCStruct {
   unsigned char ControlRegInputData;
   unsigned char SerialRxData;
   unsigned char SerialTxData;
+  unsigned char IOEBControlReg;
   unsigned int IRQStatus,IRQMask;
   unsigned int FIRQStatus,FIRQMask;
   int TimerCount[4];
@@ -29,8 +30,12 @@ struct IOCStruct {
 
   unsigned long TimersLastUpdated;
   unsigned long NextTimerTrigger;
+  unsigned int TimerFracBit;
   unsigned int Timer0CanInt;
   unsigned int Timer1CanInt;
+
+  unsigned long IOCRate; /* Number of IOC clock ticks per emu cycle, in 16.16 fixed-point format */
+  unsigned long InvIOCRate; /* Inverse IOC rate, 16.16 */
 };
 
 extern struct IOCStruct ioc;
@@ -58,8 +63,14 @@ extern struct IOCStruct ioc;
 #define FIQ_FORCE   (1U << 7)   /* Software generated FIQ */
 
 
-#define TIMERSCALE 3
-#define IOCTIMERSTEP 1
+/* IOEB control reg bits */
+#define IOEB_CR_VIDC_MASK   (0x3)
+#define IOEB_CR_VIDC_24MHz  (0x0)
+#define IOEB_CR_VIDC_25MHz  (0x1)
+#define IOEB_CR_VIDC_36MHz  (0x2)
+#define IOEB_CR_VIDC_24MHzB (0x3) /* Two settings will produce a 24MHz clock */
+#define IOEB_CR_EORH        (0x4)
+#define IOEB_CR_EORV        (0x8)
 
 /*------------------------------------------------------------------------------*/
 void IOC_DoIntCheck(ARMul_State *state);

@@ -3,7 +3,6 @@
 /* (c) David Alan Gilbert 1995-1998 - see Readme file for copying info */
 
 #include "../armdefs.h"
-#include "DispKbd.h"
 #include "archio.h"
 #include "fdc1772.h"
 #ifdef SOUND_SUPPORT
@@ -21,9 +20,6 @@
 
 #define MEMORY_0x2000000_RAM_PHYS     0x2000000
 
-
-/* Erm - this has to be 256....*/
-#define UPDATEBLOCKSIZE 256
 
 typedef void (*ARMEmuFunc)(ARMul_State *state, ARMword instr, ARMword pc);
 

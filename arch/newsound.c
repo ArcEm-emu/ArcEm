@@ -1,4 +1,22 @@
-/* Common sound code */
+/*
+  arch/newsound.c
+
+  (c) 2011 Jeffrey Lee <me@phlamethrower.co.uk>
+  Based on original sound code by Daniel Clarke
+
+  Part of Arcem released under the GNU GPL, see file COPYING
+  for details.
+
+  This is the core of the sound system and is used to drive the platform-specifc
+  frontend code. At invtervals approximating the correct DMA interval, data is
+  fetched from memory and converted from the Arc multi-channel 8-bit log format
+  to signed linear 16-bit stereo. The converted data is then fed to the platform
+  code for output to the sound hardware.
+
+  Even if SOUND_SUPPORT is disabled, this code will still request data from the
+  core at the correct intervals, so emulated code that relies on sound IRQs
+  should run correctly.
+*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,6 +26,7 @@
 #include "arch/armarc.h"
 #include "arch/sound.h"
 #include "../armemu.h"
+#include "displaydev.h"
 
 #define MAX_BATCH_SIZE 1024
 
@@ -16,31 +35,38 @@ unsigned long Sound_DMARate; /* How many cycles between DMA fetches */
 Sound_StereoSense eSound_StereoSense = Stereo_LeftRight;
 int Sound_FudgeRate = 0;
 
+#ifdef SOUND_SUPPORT
 static SoundData soundTable[256];
 static ARMword channelAmount[8][2];
 unsigned int log2numchan = 0;
 
 static SoundData soundBuffer[16*2*MAX_BATCH_SIZE];
+#endif
 
 void Sound_UpdateDMARate(ARMul_State *state)
 {
   /* Calculate a new value for how often we should trigger a sound DMA fetch
      Relies on:
      VIDC.SoundFreq - the rate of the sound system we're trying to emulate
-     ARMul_EmuRate - roughly how many EventQ clock cycles occur per second */
+     ARMul_EmuRate - roughly how many EventQ clock cycles occur per second
+     ioc.IOEBControlReg - the VIDC clock source */
   static unsigned int oldsoundfreq = 0;
   static unsigned long oldemurate = 0;
-  if((VIDC.SoundFreq == oldsoundfreq) && (ARMul_EmuRate == oldemurate))
+  static unsigned char oldioebcr = 0;
+  if((VIDC.SoundFreq == oldsoundfreq) && (ARMul_EmuRate == oldemurate) && (ioc.IOEBControlReg == oldioebcr))
     return;
   oldsoundfreq = VIDC.SoundFreq;
   oldemurate = ARMul_EmuRate;
-  /* DMA fetches 16 bytes, at a rate of 1000000/(16*(VIDC.SoundFreq+2)) Hz */
-  unsigned long DMArate = 1000000/(16*(VIDC.SoundFreq+2));
-  /* Now calculate how many EventQ cycles this is */
-  Sound_DMARate = ARMul_EmuRate/DMArate;
+  oldioebcr = ioc.IOEBControlReg;
+  /* DMA fetches 16 bytes, at a rate of 1000000/(16*(VIDC.SoundFreq+2)) Hz, for a 24MHz VIDC clock
+     So for a variable clock, and taking into account ARMul_EmuRate, we get:
+     Sound_DMARate = ARMul_EmuRate*16*(VIDC.SoundFreq+2)*24/VIDC_clk
+ */
+  Sound_DMARate = (((unsigned long long) ARMul_EmuRate)*(16*24)*(VIDC.SoundFreq+2))/DisplayDev_GetVIDCClockIn();
 //  printf("UpdateDMARate: f %d r %u -> %u\n",VIDC.SoundFreq,ARMul_EmuRate,Sound_DMARate);
 }
 
+#ifdef SOUND_SUPPORT
 static void
 SoundInitTable(void)
 {
@@ -157,10 +183,6 @@ void Sound_StereoUpdated(ARMul_State *state)
   else {
     log2numchan = 3;
   }
-
-//  /* fudge */
-//  if(1000000/((VIDC.SoundFreq+2)<<log2numchan) > 50000)
-//    log2numchan = 3;
 
   for (i = 0; i < 8; i++) {
     int reg = VIDC.StereoImageReg[i];
@@ -300,6 +322,7 @@ static const Sound_ProcessFunc processfuncs[4] =
     Sound_Process4Channel,
     Sound_Process8Channel
   };
+#endif /* SOUND_SUPPORT */
 
 static void Sound_DMAEvent(ARMul_State *state,CycleCount nowtime)
 {
@@ -321,10 +344,12 @@ static void Sound_DMAEvent(ARMul_State *state,CycleCount nowtime)
   EventQ_RescheduleHead(state,nowtime+next,Sound_DMAEvent);
   if(avail < 1)
     return;
+#ifdef SOUND_SUPPORT
   /* Process the data */
   (processfuncs[log2numchan])(((unsigned char *) MEMC.PhysRam) + MEMC.Sptr,soundBuffer,avail);
   /* Pass it to the host */
   Sound_HandleData(soundBuffer,(avail*16)>>log2numchan,(VIDC.SoundFreq+2)<<log2numchan);
+#endif
   /* Update DMA stuff */
   MEMC.Sptr += avail<<4;
   if(MEMC.Sptr > MEMC.SendC)
@@ -354,8 +379,14 @@ static void Sound_DMAEvent(ARMul_State *state,CycleCount nowtime)
 
 int Sound_Init(ARMul_State *state)
 {
+#ifdef SOUND_SUPPORT
   SoundInitTable();
   Sound_UpdateDMARate(state);
   EventQ_Insert(state,ARMul_Time+Sound_DMARate,Sound_DMAEvent);
   return Sound_InitHost(state);
+#else
+  Sound_UpdateDMARate(state);
+  EventQ_Insert(state,ARMul_Time+Sound_DMARate,Sound_DMAEvent);
+  return 0;
+#endif
 }

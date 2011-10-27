@@ -1,3 +1,13 @@
+/*
+  riscos-single/sound.c
+
+  (c) 2011 Jeffrey Lee <me@phlamethrower.co.uk>
+
+  Basic SharedSound sound driver for ArcEm, based in part on my SharedSound
+  tutorial from http://www.iconbar.com/forums/viewthread.php?threadid=10778
+
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -12,6 +22,8 @@
 
 #include "../armdefs.h"
 #include "../arch/sound.h"
+#include "../arch/archio.h"
+#include "../arch/displaydev.h"
 
 #include "kernel.h"
 #include "swis.h"
@@ -34,14 +46,47 @@ int sound_buff_mask=BUFFER_SAMPLES-1; /* For benefit of assembler code */
 extern void buffer_fill(void); /* Assembler function for performing the buffer fills */
 extern void error_handler(void); /* Assembler function attached to ErrorV */
 
-void shutdown_sharedsound(void);
+static void shutdown_sharedsound(void);
 
-void sigfunc(int sig)
+extern void __write_backtrace(int signo);
+static void sigfunc(int sig)
 {
+	shutdown_sharedsound();
+#if 0
+	/* Dump some emulator state */
+	ARMul_State *state = &statestr;
+	fprintf(stderr, "r0 = %08x  r4 = %08x  r8  = %08x  r12 = %08x\n"
+	                "r1 = %08x  r5 = %08x  r9  = %08x  sp  = %08x\n"
+	                "r2 = %08x  r6 = %08x  r10 = %08x  lr  = %08x\n"
+	                "r3 = %08x  r7 = %08x  r11 = %08x  pc  = %08x\n"
+	              "\n",
+	  state->Reg[0], state->Reg[4], state->Reg[8], state->Reg[12],
+	  state->Reg[1], state->Reg[5], state->Reg[9], state->Reg[13],
+	  state->Reg[2], state->Reg[6], state->Reg[10], state->Reg[14],
+	  state->Reg[3], state->Reg[7], state->Reg[11], state->Reg[15]);
+	int i;
+	for(i=0;i<4;i++)
+	  fprintf(stderr,"Timer%d Count %08x Latch %08x\n",i,ioc.TimerCount[i],ioc.TimerInputLatch[i]);
+	FILE *f = fopen("$.dump","wb");
+	if(f)
+	{
+		for(i=0;i<1024*1024;i+=4)
+		{
+			ARMword word = ARMul_LoadWordS(state,i);
+			if(state->abortSig)
+				break;
+			fwrite(&word,4,1,f);
+		}
+		fclose(f);
+	}
+#endif
+
+	/* Now dump a backtrace of ourself */
+	__write_backtrace(sig);
 	exit(0);
 }
 
-int init_sharedsound(void)
+static int init_sharedsound(void)
 {
 	/* Try to register sharedsound handler, return nonzero on failure */
 	_kernel_swi_regs regs;
@@ -54,8 +99,8 @@ int init_sharedsound(void)
 	regs.r[1] = (int) "SharedSound";
 	if ((err = _kernel_swi(OS_Module,&regs,&regs)))
 	{
-		printf("Error: SharedSound module not loaded, and not in System:Modules!\n");
-		return 1;
+		fprintf(stderr,"Warning: SharedSound module not loaded, and not in System:Modules!\n");
+		return 0;
 	}
 	/* Now we can register our handler */
 	regs.r[0] = (int) buffer_fill;
@@ -65,21 +110,47 @@ int init_sharedsound(void)
 	regs.r[4] = 0;
 	if ((err = _kernel_swi(SharedSound_InstallHandler,&regs,&regs)))
 	{
-		printf("Error: SharedSound_InstallHandler returned error %d, %s\n",err->errnum,err->errmess);
-		return 1;
+		fprintf(stderr,"Warning: SharedSound_InstallHandler returned error %d, %s\n",err->errnum,err->errmess);
+		return 0;
 	}
 	sound_handler_id = regs.r[0];
-	/* Install error handlers */
+	/* Install error handlers so we don't crash on exit */
 	atexit(shutdown_sharedsound);
+#ifdef __TARGET_UNIXLIB__
+	/* With UnixLib we need to use signal handlers to catch any errors.
+	   UnixLib doesn't make it very easy to get user code to run when
+	   something bad happens :( */
+	signal(SIGHUP,sigfunc);
 	signal(SIGINT,sigfunc);
+	signal(SIGQUIT,sigfunc);
+	signal(SIGILL,sigfunc);
+	signal(SIGABRT,sigfunc);
+	signal(SIGTRAP,sigfunc);
+	signal(SIGEMT,sigfunc);
+	signal(SIGFPE,sigfunc);
+	signal(SIGKILL,sigfunc);
+	signal(SIGBUS,sigfunc);
+	signal(SIGSEGV,sigfunc);
+	signal(SIGSYS,sigfunc);
+	signal(SIGPIPE,sigfunc);
+	signal(SIGALRM,sigfunc);
+	signal(SIGTERM,sigfunc);
+	signal(SIGSTOP,sigfunc);
+	signal(SIGTSTP,sigfunc);
+	signal(SIGTTIN,sigfunc);
+	signal(SIGTTOU,sigfunc);
+	signal(SIGOSERROR,sigfunc);
+#else
+	/* With SCL a simple error handler seems to do the trick */
 	regs.r[0] = 1;
 	regs.r[1] = (int) error_handler;
 	regs.r[2] = 0;
 	_kernel_swi(OS_Claim,&regs,&regs);
+#endif
 	return 0;
 }                           
 
-void shutdown_sharedsound(void)
+static void shutdown_sharedsound(void)
 {
 	_kernel_swi_regs regs;
 	/* Deregister sharedsound handler */
@@ -116,30 +187,36 @@ int Sound_InitHost(ARMul_State *state)
 
 void Sound_HandleData(const SoundData *buffer,int numSamples,int samplePeriod)
 {
+  if(!sound_handler_id)
+    return;
   numSamples *= 2;
   static int oldperiod = -1;
-  if(samplePeriod != oldperiod)
+  static unsigned long oldclockin = 0;
+  unsigned long clockin = DisplayDev_GetVIDCClockIn(); 
+  if((samplePeriod != oldperiod) || (clockin != oldclockin))
   {
     oldperiod = samplePeriod;
-    int sampleRate = 1024000000/samplePeriod;
-    printf("New sample period %d -> rate %d\n",samplePeriod,sampleRate>>10);
+    oldclockin = clockin;
+    /* Calculate sample rate in 1/1024Hz */
+    int sampleRate = ((unsigned long long) clockin)*1024/(24*samplePeriod);
+    fprintf(stderr,"New sample period %d (VIDC %dMHz) -> rate %d\n",samplePeriod,clockin/1000000,sampleRate>>10);
     /* Convert to step rate */
     _swix(SharedSound_SampleRate,_INR(0,1)|_OUT(3),sound_handler_id,sampleRate,&sound_rate);
-    printf("-> step %08x\n",sound_rate);
+    fprintf(stderr,"-> step %08x\n",sound_rate);
   }
   int used = sound_buffer_in-sound_buffer_out;
   int buffree = BUFFER_SAMPLES-used;
   /* Adjust fudge rate
-     TODO - Need to be able to instruct the core not to give us so much data that we overflow? */
+     TODO - Need to be able to instruct the core not to give us so much data that we overflow */
   if(numSamples > buffree)
   {
-    printf("*** sound overflow! %d ***\n",numSamples-buffree);
+    fprintf(stderr,"*** sound overflow! %d ***\n",numSamples-buffree);
     numSamples = buffree;
     Sound_FudgeRate+=10;
   }
   else if(!used)
   {
-    printf("*** sound underflow! ***\n");
+    fprintf(stderr,"*** sound underflow! ***\n");
     Sound_FudgeRate-=10;
   }
   else if(used < BUFFER_SAMPLES/4)

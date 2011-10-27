@@ -8,35 +8,11 @@
 #include "platform.h"
 #include "../armdefs.h"
 #include "../arch/sound.h"
+#include "../arch/displaydev.h"
 
 BPTR audioh = 0;
 
 static unsigned long sampleRate = 44100;
-static unsigned long bufferSize = 64;
-
-/* This is the size of the gap between sound_poll doing something. */
-static unsigned long delayTotal = 5; // 100
-static unsigned long delayProgress = 0;
-
-static SoundData *buffer = NULL;
-
-void
-sound_poll(ARMul_State *state)
-{
-  delayProgress++;
-  if (delayProgress >= delayTotal)
-	{
-	    delayProgress = 0;
-
-	      if (SoundDMAFetch(buffer, state) == 1)
-			{
-        		return;
-      		}
-
-		IDOS->Write(audioh,buffer,64);
-
-    }
-}
 
 int openaudio(void)
 {
@@ -46,8 +22,8 @@ int openaudio(void)
 	{
 		if(!(audioh = IDOS->Open(audiof,MODE_NEWFILE)))
 		{
-    		fprintf(stderr, "Could not open audio: device\n");
-    		return -1;
+			fprintf(stderr, "Could not open audio: device\n");
+			return -1;
 		}
 		IExec->FreeVec(audiof);
 	}
@@ -60,8 +36,40 @@ int openaudio(void)
 	return 0;
 }
 
+void Sound_HandleData(const SoundData *buffer,int numSamples,int samplePeriod)
+{
+	static int oldperiod = -1;
+	static unsigned long oldclockin = 0;
+	unsigned long clockin = DisplayDev_GetVIDCClockIn(); 
+
+	numSamples *= 2;
+
+	if((samplePeriod != oldperiod) || (clockin != oldclockin))
+	{
+		oldperiod = samplePeriod;
+		oldclockin = clockin;
+
+		if (samplePeriod != 0) {
+			sampleRate = clockin / (24*samplePeriod);
+		} else {
+			sampleRate = 44100;
+		}
+
+		printf("asked to set sample rate to %lu\n", sampleRate);
+
+		IDOS->Close(audioh);
+		openaudio();
+
+		printf("set sample rate to %lu\n", sampleRate);
+	}
+
+	/* TODO - Adjust Sound_FudgeRate to fine-tune how often we receive new data */
+
+	IDOS->Write(audioh,buffer,numSamples*sizeof(SoundData));
+}
+
 int
-sound_init(void)
+Sound_InitHost(ARMul_State *state)
 {
 //	We only need utility.library in the sound routine, so opening it here.
 
@@ -78,40 +86,13 @@ sound_init(void)
 	if(openaudio() == -1)
 		return -1;
 
-  buffer = IExec->AllocVec(bufferSize,MEMF_CLEAR);
-  if (!buffer) {
-    fprintf(stderr, "sound_init(): Out of memory\n");
-    exit(EXIT_FAILURE);
-  }
+	/* TODO - Tweak these as necessary */
+	eSound_StereoSense = Stereo_LeftRight;
 
-  return 0;
-}
+	/* We'll receive a max of 8*16*2=256 samples per call to HandleData */
+	Sound_BatchSize = 8;
 
-/**
- * sound_setSampleRate
- *
- * Set the sample rate of sound, using
- * the period specified in microseconds.
- *
- * @param period period of sample in microseconds
- */
-void
-sound_setSampleRate(unsigned long period)
-{
-  /* freq = 1 / (period * 10^-6) */
-
-  if (period != 0) {
-    sampleRate = 1000000 / period;
-  } else {
-    sampleRate = 44100;
-  }
-
-  printf("asked to set sample rate to %lu\n", sampleRate);
-
-	IDOS->Close(audioh);	
-	openaudio();
-
-  printf("set sample rate to %lu\n", sampleRate);
+	return 0;
 }
 
 void sound_exit(void)

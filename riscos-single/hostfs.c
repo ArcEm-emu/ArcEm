@@ -1,10 +1,16 @@
 /*
- * $Id$
- *
- * HostFS implementation for RISC OS hosts
- * Basically the same as the standard one, but without all the filename/type
- * fiddling
- */
+  riscos-single/hostfs.c
+
+  (c) 2011 Jeffrey Lee <me@phlamethrower.co.uk>
+  Based on original hostfs code by Matthew Howkins, Peter Naulls, et al
+
+  Part of Arcem released under the GNU GPL, see file COPYING
+  for details.
+
+  This is a RISC OS specific version of the hostfs code, to get rid of all the
+  unnecessary filename & attribute translation.
+
+*/
 
 #include <assert.h>
 #include <ctype.h>
@@ -28,7 +34,7 @@
 #include "hostfs.h"
 #include "arch/ArcemConfig.h"
 
-#ifdef __TARGET_UNIXLIB__ /* Set by GCC */
+#ifdef __TARGET_UNIXLIB__ /* Set by GCC if we're using unixlib */
 #include <unixlib/local.h>
 int __riscosify_control = 0;
 #endif
@@ -85,8 +91,6 @@ typedef struct {
 
 #define STREQ(x,y)     (strcmp(x,y) == 0)
 #define STRCASEEQ(x,y) (strcasecmp(x,y) == 0)
-
-#define MIN(x,y) (((x) < (y)) ? (x) : (y))
 
 #define MAX_OPEN_FILES 255
 

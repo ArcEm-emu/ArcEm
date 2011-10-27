@@ -1,3 +1,18 @@
+/*
+  eventq.h
+
+  (c) 2011 Jeffrey Lee <me@phlamethrower.co.uk>
+
+  Part of Arcem released under the GNU GPL, see file COPYING
+  for details.
+
+  Basic priority queue implementation for managing all CPU-external events.
+  Events are scheduled using the cycle counter (ARMul_Time) as the time base,
+  so real-time events will need an extra helping hand (e.g. ARMul_EmuRate)
+
+  See also armdefs.h for more docs
+*/
+
 #ifndef EVENTQ_H
 #define EVENTQ_H
 

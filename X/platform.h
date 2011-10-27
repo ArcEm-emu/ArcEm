@@ -5,8 +5,17 @@
 #ifndef _PLATFORM_H_
 #define _PLATFORM_H_
 
+/* An upper limit on how big to support monitor size, used for
+   allocating a scanline buffer and bounds checking. It's much
+   more than a VIDC1 can handle, and should be pushing the RPC/A7000
+   VIDC too, if we ever get around to supporting that. */
+#define MaxVideoWidth 2048
+#define MaxVideoHeight 1536
 
-struct host_display {
+/* The size of the border surrounding the video data. */
+#define VIDC_BORDER 10
+
+struct plat_display {
   Window RootWindow,BackingWindow,MainPane,ControlPane,CursorPane;
   Display *disp;
   Screen *xScreen;
@@ -25,16 +34,25 @@ struct host_display {
   Pixmap shape_mask; /* window shape */
   int ShapeEnabled;      /* Yep - we are using shapes */
   char *ShapePixmapData; /* This is what we use to create the pixmap */
-  unsigned long pixelMap[256]; /* Map from host memory contents to 'pixel' value for putpixel */
-  unsigned long border_map;
-  unsigned long cursorPixelMap[4]; /* Map from host memory contents to 'pixel' value for putpixel in cursor*/
   int red_shift,red_prec;
   int green_shift,green_prec;
   int blue_shift,blue_prec;
+
+  int DoingMouseFollow;
 //  } HostDisplay;
 };
 
-extern struct host_display HD;
+extern struct plat_display PD;
 
+extern void Resize_Window(ARMul_State *state,int x,int y);
+
+extern unsigned int vidc_col_to_x_col(unsigned int col);
+
+extern void hostdisplay_change_focus(int focus);
+
+extern void UpdateCursorPos(ARMul_State *state,int xscale,int xoffset,int yscale,int yoffset);
+
+extern const DisplayDev true_DisplayDev;
+extern const DisplayDev pseudo_DisplayDev;
 
 #endif /* _PLATFORM_H_ */

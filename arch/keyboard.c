@@ -1,7 +1,6 @@
 /* arch/keyboard.c -- a model of the Archimedes keyboard. */
 
 #include "armarc.h"
-#include "DispKbd.h"
 #include "keyboard.h"
 
 #define DEBUG_KEYBOARD 0
@@ -318,3 +317,45 @@ void Kbd_CodeFromHost(ARMul_State *state, unsigned char FromHost)
 
   return;
 }
+
+static void Keyboard_Poll(ARMul_State *state,CycleCount nowtime)
+{
+  EventQ_RescheduleHead(state,nowtime+12500,Keyboard_Poll); /* TODO - Should probably be realtime */
+  /* Call host-specific routine */
+  Kbd_PollHostKbd(state);
+  /* Keyboard check */
+  int KbdSerialVal = IOC_ReadKbdTx(state);
+  if (KbdSerialVal != -1) {
+    Kbd_CodeFromHost(state, (unsigned char) KbdSerialVal);
+  } else {
+    if (KBD.TimerIntHasHappened > 2) {
+      KBD.TimerIntHasHappened = 0;
+      if (KBD.KbdState == KbdState_Idle) {
+        Kbd_StartToHost(state);
+      }
+    }
+  }
+}
+
+void Kbd_Init(ARMul_State *state)
+{
+  static arch_keyboard kbd;
+  state->Kbd = &kbd;
+
+  KBD.KbdState            = KbdState_JustStarted;
+  KBD.MouseTransEnable    = 0;
+  KBD.KeyScanEnable       = 0;
+  KBD.KeyColToSend        = -1;
+  KBD.KeyRowToSend        = -1;
+  KBD.MouseXCount         = 0;
+  KBD.MouseYCount         = 0;
+  KBD.KeyUpNDown          = 0; /* When 0 it means the key to be sent is a key down event, 1 is up */
+  KBD.HostCommand         = 0;
+  KBD.BuffOcc             = 0;
+  KBD.TimerIntHasHappened = 0; /* If using AutoKey should be 2 Otherwise it never reinitialises the event routines */
+  KBD.Leds                = 0;
+  KBD.leds_changed        = NULL;
+
+  EventQ_Insert(state,ARMul_Time+12500,Keyboard_Poll);
+}
+

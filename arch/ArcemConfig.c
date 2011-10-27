@@ -81,6 +81,14 @@ void ArcemConfig_SetupDefaults(void)
   /* Default for ST506 drive details is all NULL/zeros */
   memset(hArcemConfig.aST506DiskShapes, 0, sizeof(struct HDCshape) * 4);
 
+
+#if defined(SYSTEM_riscos_single)
+  hArcemConfig.bRedBlueSwap = 0;
+  hArcemConfig.iMinResX = 0;
+  hArcemConfig.iMinResY = 0;
+  hArcemConfig.iLCDResX = 0;
+  hArcemConfig.iLCDResY = 0;
+#endif
 }
 
 /**
@@ -113,7 +121,14 @@ void ArcemConfig_ParseCommandLine(int argc, char *argv[])
     "     Where value is one of '256K', '512K', '1M', '2M', '4M',\n"
     "     '8M', '12M' or '16M'\n"
     "  --processor <value> - Set the emulated CPU\n"
-    "     Where value is one of 'ARM2', 'ARM250', 'ARM3'\n";
+    "     Where value is one of 'ARM2', 'ARM250', 'ARM3'\n"
+#if defined(SYSTEM_riscos_single)
+    "  --rbswap - Swap red & blue (e.g. for Iyonix with GeForce FX card)\n"
+    "  --minres <x> <y> - Specify dimensions of smallest screen mode to use\n"
+    "  --lcdres <x> <y> - Specify native resolution of your monitor (to avoid using\n"
+    "     modes that won't scale well on an LCD)\n"
+#endif /* SYSTEM_riscos_single */
+    ;
 
   // No commandline arguments?
   if(0 == argc) {
@@ -292,6 +307,30 @@ void ArcemConfig_ParseCommandLine(int argc, char *argv[])
         exit(EXIT_FAILURE);
       }
     }
+#if defined(SYSTEM_riscos_single)
+    else if(0 == strcmp("--rbswap",argv[iArgument])) {
+      hArcemConfig.bRedBlueSwap = 1;
+      iArgument += 1;
+    } else if(0 == strcmp("--minres",argv[iArgument])) {
+      if(iArgument+2 < argc) {
+        hArcemConfig.iMinResX = atoi(argv[iArgument+1]);
+        hArcemConfig.iMinResY = atoi(argv[iArgument+2]);
+        iArgument += 3;
+      } else {
+        fprintf(stderr, "Not enough arguments following the --minres option\n");
+        exit(EXIT_FAILURE);
+      }
+    } else if(0 == strcmp("--lcdres",argv[iArgument])) {
+      if(iArgument+2 < argc) {
+        hArcemConfig.iLCDResX = atoi(argv[iArgument+1]);
+        hArcemConfig.iLCDResY = atoi(argv[iArgument+2]);
+        iArgument += 3;
+      } else {
+        fprintf(stderr, "Not enough arguments following the --lcdres option\n");
+        exit(EXIT_FAILURE);
+      }
+    }
+#endif /* SYSTEM_riscos_single */
     else {
       fprintf(stderr, "Unrecognised option '%s', try --help\n", argv[iArgument]);
 

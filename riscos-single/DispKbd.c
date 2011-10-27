@@ -1,21 +1,13 @@
-/* (c) David Alan Gilbert 1995-1999 - see Readme file for copying info */
+/* (c) David Alan Gilbert 1995-1999 - see Readme file for copying info
+   Hacked about with for new display driver interface by Jeffrey Lee, 2011 */
 /* Display and keyboard interface for the Arc emulator */
 
-// #define MOUSEKEY XK_KP_Add
-
-#define KEYREENABLEDELAY 1000
-
 /*#define DEBUG_VIDCREGS*/
-/* NOTE: Can't use ARMul's refresh function because it has a small
-   limit on the time delay from posting the event to it executing   */
-/* It's actually decremented once every POLLGAP - that is called
-   with the ARMul scheduler */
-
-#define AUTOREFRESHPOLL 700 /* About 60fps on an Iyonix */
 
 #include <stdio.h>
 #include <limits.h>
 #include <time.h>
+#include <math.h>
 
 #include "kernel.h"
 #include "swis.h"
@@ -25,136 +17,144 @@
 #include "../armdefs.h"
 #include "armarc.h"
 #include "arch/keyboard.h"
-#include "DispKbd.h"
 #include "archio.h"
 #include "hdc63463.h"
-#ifdef SOUND_SUPPORT
-#include "arch/sound.h"
-#endif
-
+#include "../armemu.h"
+#include "arch/displaydev.h"
+#include "arch/ArcemConfig.h"
 
 #include "ControlPane.h"
 
-#define ControlHeight 30
-#define CURSORCOLBASE 250
-
-/* HOSTDISPLAY is too verbose here - but HD could be hard disc somewhere else! */
-/*#define HD HOSTDISPLAY*/
-#define DC DISPLAYCONTROL
-
 static void UpdateCursorPos(ARMul_State *state);
-static void SelectROScreenMode(int x, int y, int bpp);
+static void InitModeTable(void);
 
 static void set_cursor_palette(unsigned int *pal);
 
-static int MonitorWidth;
-static int MonitorHeight;
-int MonitorBpp;
+typedef struct {
+  int w;
+  int h;
+  int aspect; /* Aspect ratio: 1 = wide pixels, 2 = square pixels, 4 = tall pixels */
+} HostMode;
+HostMode *ModeList;
+int NumModes;
 
-#ifdef DIRECT_DISPLAY
-int *DirectScreenMemory;
-int DirectScreenExtent;
+static HostMode *SelectROScreenMode(int x, int y, int aspect, int *outxscale, int *outyscale);
+
+#ifndef PROFILE_ENABLED /* Profiling code uses a nasty hack to estimate program size, which will only work if we're using the wimpslot for our heap */
+const char * const __dynamic_da_name = "ArcEm Heap";
 #endif
 
+#define MODE_VAR_WIDTH 0
+#define MODE_VAR_HEIGHT 1
+#define MODE_VAR_BPL 2
+#define MODE_VAR_ADDR 3
+#define MODE_VAR_XEIG 4
+#define MODE_VAR_YEIG 5
 
-const char * const __dynamic_da_name = "ArcEm Heap";
+static const ARMword ModeVarsIn[] = {
+ 11, /* Width-1 */
+ 12, /* Height-1 */
+ 6, /* Bytes per line */
+ 148, /* Address */
+ 4, /* XEig */
+ 5, /* YEig */
+ -1,
+};
 
+static ARMword ModeVarsOut[6];
 
-/*-----------------------------------------------------------------------------*/
-/* Configure the colourmap for the standard 1 bpp modes                        */
-static void DoColourMap_2(ARMul_State *state) {
-  //XColor tmp;
-  int c;
+static int CursorXOffset=0; /* How many columns were skipped from the left edge of the cursor image */
 
-  if (!(DC.MustRedraw || DC.MustResetPalette)) return;
+/* ------------------------------------------------------------------ */
 
-  for(c=0;c<2;c++) {
-    _swi(OS_WriteI+19, 0);
-    _swi(OS_WriteI+c, 0);
-    _swi(OS_WriteI+16, 0);
-    _swi(OS_WriteC, _IN(0), (VIDC.Palette[c] & 15)*17);
-    _swi(OS_WriteC, _IN(0), ((VIDC.Palette[c] >> 4) & 15) * 17);
-    _swi(OS_WriteC, _IN(0), ((VIDC.Palette[c] >> 8) & 15) * 17);
-  };
+/* Standard display device */
 
-    set_cursor_palette(VIDC.CursorPalette);
-
-  DC.MustResetPalette=0;
-}; /* DoColourMap_2 */
-
-
-/*-----------------------------------------------------------------------------*/
-/* Configure the colourmap for the standard 2 bpp modes                        */
-static void DoColourMap_4(ARMul_State *state) {
-  //XColor tmp;
-  int c;
-
-  if (!(DC.MustRedraw || DC.MustResetPalette)) return;
-
-  for(c=0;c<4;c++) {
-    _swi(OS_WriteI+19, 0);
-    _swi(OS_WriteI+c, 0);
-    _swi(OS_WriteI+16, 0);
-    _swi(OS_WriteC, _IN(0), (VIDC.Palette[c] & 15)*17);
-    _swi(OS_WriteC, _IN(0), ((VIDC.Palette[c]>>4) & 15)*17);
-    _swi(OS_WriteC, _IN(0), ((VIDC.Palette[c]>>8) & 15)*17);
-  };
-
-    set_cursor_palette(VIDC.CursorPalette);
-
-  DC.MustResetPalette=0;
-}; /* DoColourMap_4 */
+typedef unsigned short SDD_HostColour;
+#define SDD_Name(x) sdd_##x
+static const int SDD_RowsAtOnce = 1;
+typedef SDD_HostColour *SDD_Row;
 
 
-/*-----------------------------------------------------------------------------*/
-/* Configure the colourmap for the standard 4 bpp modes                        */
-static void DoColourMap_16(ARMul_State *state) {
-  //XColor tmp;
-  int c;
+static SDD_HostColour SDD_Name(Host_GetColour)(ARMul_State *state,unsigned int col)
+{
+  /* Convert to 5-bit component values */
+  int r = (col & 0x00f) << 1;
+  int g = (col & 0x0f0) >> 3;
+  int b = (col & 0xf00) >> 7;
+  /* May want to tweak this a bit at some point? */
+  r |= r>>4;
+  g |= g>>4;
+  b |= b>>4;
+  if(hArcemConfig.bRedBlueSwap)
+    return (r<<10) | (g<<5) | (b);
+  else
+    return (r) | (g<<5) | (b<<10);
+}  
 
-  if (!(DC.MustRedraw || DC.MustResetPalette)) return;
+static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,int hz);
 
-  for(c=0;c<16;c++) {
-    _swi(OS_WriteI+19, 0);
-    _swi(OS_WriteI+c, 0);
-    _swi(OS_WriteI+16, 0);
-    _swi(OS_WriteC, _IN(0), (VIDC.Palette[c] & 15)*17);
-    _swi(OS_WriteC, _IN(0), ((VIDC.Palette[c]>>4) & 15)*17);
-    _swi(OS_WriteC, _IN(0), ((VIDC.Palette[c]>>8) & 15)*17);
-  };
+static inline SDD_Row SDD_Name(Host_BeginRow)(ARMul_State *state,int row,int offset)
+{
+  return ((SDD_Row) (ModeVarsOut[MODE_VAR_ADDR] + ModeVarsOut[MODE_VAR_BPL]*row))+offset;
+}
 
-    set_cursor_palette(VIDC.CursorPalette);
+static inline void SDD_Name(Host_EndRow)(ARMul_State *state,SDD_Row *row) { /* nothing */ };
 
-  DC.MustResetPalette=0;
-}; /* DoColourMap_16 */
+static inline void SDD_Name(Host_BeginUpdate)(ARMul_State *state,SDD_Row *row,unsigned int count) { /* nothing */ };
 
+static inline void SDD_Name(Host_EndUpdate)(ARMul_State *state,SDD_Row *row) { /* nothing */ };
 
-/*-----------------------------------------------------------------------------*/
-/* Configure the colourmap for the 8bpp modes                                  */
-static void DoColourMap_256(ARMul_State *state) {
-//  XColor tmp;
-  int c;
+static inline void SDD_Name(Host_SkipPixels)(ARMul_State *state,SDD_Row *row,unsigned int count) { (*row) += count; }
 
-  if (!(DC.MustRedraw || DC.MustResetPalette)) return;
+static inline void SDD_Name(Host_WritePixel)(ARMul_State *state,SDD_Row *row,SDD_HostColour pix) { *(*row)++ = pix; }
 
-  for(c=0;c<256;c++) {
-    int palentry=c &15;
-    int L4=(c>>4) &1;
-    int L65=(c>>5) &3;
-    int L7=(c>>7) &1;
+static inline void SDD_Name(Host_WritePixels)(ARMul_State *state,SDD_Row *row,SDD_HostColour pix,unsigned int count) { while(count--) *(*row)++ = pix; }
 
-    _swi(OS_WriteI+19, 0);
-    _swi(OS_WriteI+c, 0);
-    _swi(OS_WriteI+16, 0);
-    _swi(OS_WriteC, _IN(0), ((VIDC.Palette[palentry] & 7) | (L4<<3))*17);
-    _swi(OS_WriteC, _IN(0), (((VIDC.Palette[palentry] >> 4) & 3) | (L65<<2))*17);
-    _swi(OS_WriteC, _IN(0), (((VIDC.Palette[palentry] >> 8) & 7) | (L7<<3))*17);
+void SDD_Name(Host_PollDisplay)(ARMul_State *state);
+
+#include "../arch/stddisplaydev.c"
+
+static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,int hz)
+{
+  /* Search the mode list for the best match */
+  int aspect;
+  if(width*2 <= height)
+    aspect = 1;
+  else if(width >= height*2)
+    aspect = 4;
+  else
+    aspect = 2;
+
+  HostMode *mode = SelectROScreenMode(width,height,aspect,&HD.XScale,&HD.YScale);
+  static HostMode *current_mode=NULL;
+  if(mode != current_mode)
+  {
+    /* Change mode */
+    int block[6];
+    block[0] = 1;
+    block[1] = mode->w;
+    block[2] = mode->h;
+    block[3] = 4;
+    block[4] = -1;
+    block[5] = -1;
+    _swi(OS_ScreenMode, _INR(0,1), 0, &block);
+  
+    /* Remove text cursor from real RO */
+    _swi(OS_RemoveCursors,0);
+
+    current_mode = mode;
   }
+  
+  _swi(OS_ReadVduVariables,_INR(0,1),ModeVarsIn,ModeVarsOut);
+  HD.Width = ModeVarsOut[MODE_VAR_WIDTH]+1; /* Should match mode->w, mode->h, but use these just to make sure */
+  HD.Height = ModeVarsOut[MODE_VAR_HEIGHT]+1;
+  
+  fprintf(stderr,"Emu mode %dx%d aspect %.1f mapped to real mode %dx%d aspect %.1f, with scale factors %dx%d\n",width,height,((float)aspect)/2.0f,mode->w,mode->h,((float)mode->aspect)/2.0f,HD.XScale,HD.YScale);
 
-    set_cursor_palette(VIDC.CursorPalette);
+  /* Screen is expected to be cleared */
+  _swi(OS_WriteC,_IN(0),12);
+}
 
-  DC.MustResetPalette=0;
-}; /* DoColourMap_Standard */
 
 /* ------------------------------------------------------------------ */
 
@@ -181,7 +181,53 @@ static void RefreshMouse(ARMul_State *state) {
   int height;
   ARMword *pointer_data = MEMC.PhysRam + ((MEMC.Cinit * 16)/4);
 
-  height = (VIDC.Vert_CursorEnd - VIDC.Vert_CursorStart) + 1;
+  height = VIDC.Vert_CursorEnd - VIDC.Vert_CursorStart;
+
+  if(height && (height <= 16) && (HOSTDISPLAY.YScale >= 2))
+  {
+    /* line-double the cursor image */
+    static ARMword double_data[2*32];
+    int i;
+    for(i=0;i<height;i++)
+    {
+      double_data[i*4+0] = double_data[i*4+2] = pointer_data[i*2];
+      double_data[i*4+1] = double_data[i*4+3] = pointer_data[i*2+1];
+    }
+    height *= 2;
+    pointer_data = double_data;
+  }
+  CursorXOffset = 0;
+  if(height && (height <= 32) && (HOSTDISPLAY.XScale >= 2))
+  {
+    /* Double the width of the image; might not work too well */
+    static ARMword double_data[2*32];
+    int x,y;
+    char *src = (char *) pointer_data;
+    char *dest = (char *) double_data;
+    /* RISC OS tends to store the image in the right half of the buffer, so shift the image left as far as possible to avoid losing any columns
+       Note that we're only doing it 4 columns at a time here to keep the code simple */
+    for(CursorXOffset=0;CursorXOffset<16;CursorXOffset += 4)
+    {
+      for(y=0;y<height;y++)
+        if(src[y*8])
+          break;
+      if(y!=height)
+        break;
+      src++;
+    }
+    for(y=0;y<height;y++)
+    {
+      for(x=0;x<4;x++)
+      {
+        char c = *src;
+        *dest++ = ((c&0x3)*0x5) | (((c&0xc)>>2)*0x50);
+        *dest++ = (((c&0x30)>>4)*0x5) | (((c&0xc0)>>6)*0x50);
+        src++;
+      }
+      src += 4;
+    }
+    pointer_data = double_data;
+  }
 
   {
     char block[10];
@@ -196,294 +242,21 @@ static void RefreshMouse(ARMul_State *state) {
     block[7] = (((int) pointer_data) & 0x0000FF00)>>8;
     block[8] = (((int) pointer_data) & 0x00FF0000)>>16;
     block[9] = (((int) pointer_data) & 0xFF000000)>>24;
+
     _swi(OS_Word,_INR(0,1), 21, &block);
   }
 
   _swi(OS_Byte, _INR(0,1), 106, 2+(1<<7));
 
   UpdateCursorPos(state);
+  set_cursor_palette(VIDC.CursorPalette);
 }; /* RefreshMouse */
 
 
-#ifndef DIRECT_DISPLAY
-/*----------------------------------------------------------------------------*/
-static void RefreshDisplay_PseudoColor_1bpp(ARMul_State *state) {
-  int DisplayHeight = VIDC.Vert_DisplayEnd - VIDC.Vert_DisplayStart;
-  int DisplayWidth  = (VIDC.Horiz_DisplayEnd - VIDC.Horiz_DisplayStart) * 2;
-  int x, y, memoffset;
-  int VisibleDisplayWidth;
-  char Buffer[MonitorWidth / 8];
-  char *ImgPtr;
-  int block[2];
-
-  block[0] = 148;
-  block[1] = -1;
-
-  _swi(OS_ReadVduVariables, _INR(0,1), &block, &block);
-
-  ImgPtr = (char *)block[0];
-
-  /* First configure the colourmap */
-   DoColourMap_2(state);
-
-  if (DisplayHeight <= 0) {
-    fprintf(stderr,"RefreshDisplay_PseudoColor_1bpp: 0 or -ve display height\n");
-    return;
-  };
-
-  if (DisplayWidth <= 0) {
-    fprintf(stderr,"RefreshDisplay_PseudoColor_1bpp: 0 or -ve display width\n");
-    return;
-  };
-
-  /* Cope with screwy display widths/height */
-  if (DisplayHeight>MonitorHeight) DisplayHeight=MonitorHeight;
-  if (DisplayWidth>MonitorWidth)
-    VisibleDisplayWidth=MonitorWidth;
-  else
-    VisibleDisplayWidth=DisplayWidth;
-
-/* Redraw of 1bpp modes go here */
-
-  for(y=0,memoffset=0;y<DisplayHeight;
-                      y++,memoffset+=DisplayWidth/8,ImgPtr+=MonitorWidth) {
-    if ((DC.MustRedraw) || (QueryRamChange(state,memoffset,VisibleDisplayWidth/8))) {
-      if (y<DC.miny) DC.miny=y;
-      if (y>DC.maxy) DC.maxy=y;
-      CopyScreenRAM(state,memoffset,VisibleDisplayWidth/8, Buffer);
-
-      for(x=0;x<VisibleDisplayWidth;x+=8) {
-        int bit;
-        /* We are now running along the scan line */
-        /* we'll get this a bit more efficient when it works! */
-        for(bit=0;bit<=8;bit++) {
-          ImgPtr[x+bit]=(Buffer[x/8]>>bit) &1;
-        }; /* bit */
-      }; /* x */
-    }; /* Refresh test */
-  }; /* y */
-  DC.MustRedraw=0;
-  MarkAsUpdated(state,memoffset);
-}; /* RefreshDisplay_PseudoColor_1bpp */
-
-/*-----------------------------------------------------------------------------*/
-static void RefreshDisplay_PseudoColor_2bpp(ARMul_State *state) {
-  int DisplayHeight=VIDC.Vert_DisplayEnd-VIDC.Vert_DisplayStart;
-  int DisplayWidth=(VIDC.Horiz_DisplayEnd-VIDC.Horiz_DisplayStart)*2;
-  int x,y,memoffset;
-  int VisibleDisplayWidth;
-  char Buffer[MonitorWidth/4];
-  char *ImgPtr;
-  int block[2];
-
-  block[0]=148;
-  block[1]=-1;
-
-  _swi(OS_ReadVduVariables, _INR(0,1), &block, &block);
-
-  ImgPtr=(char *) block[0];
-
-  /* First configure the colourmap */
-  DoColourMap_4(state);
-
-  if (DisplayHeight<=0) {
-    fprintf(stderr,"RefreshDisplay_PseudoColor_2bpp: 0 or -ve display height\n");
-    return;
-  };
-
-  if (DisplayWidth<=0) {
-    fprintf(stderr,"RefreshDisplay_PseudoColor_2bpp: 0 or -ve display width\n");
-    return;
-  };
-
-  /* Cope with screwy display widths/height */
-  if (DisplayHeight>MonitorHeight) DisplayHeight=MonitorHeight;
-  if (DisplayWidth>MonitorWidth)
-    VisibleDisplayWidth=MonitorWidth;
-  else
-    VisibleDisplayWidth=DisplayWidth;
-
-
-  for(y=0,memoffset=0;y<DisplayHeight;
-                      y++,memoffset+=DisplayWidth/4,ImgPtr+=MonitorWidth) {
-    if ((DC.MustRedraw) || (QueryRamChange(state,memoffset,VisibleDisplayWidth/4))) {
-      if (y<DC.miny) DC.miny=y;
-      if (y>DC.maxy) DC.maxy=y;
-      CopyScreenRAM(state,memoffset,VisibleDisplayWidth/4, Buffer);
-
-      for(x=0;x<VisibleDisplayWidth;x+=4) {
-        int pixel;
-        /* We are now running along the scan line */
-        /* we'll get this a bit more efficient when it works! */
-        for(pixel=0;pixel<4;pixel++) {
-          ImgPtr[x+pixel]=(Buffer[x/4]>>(pixel*2)) &3;
-        }; /* pixel */
-      }; /* x */
-    }; /* Update test */
-  }; /* y */
-  DC.MustRedraw=0;
-  MarkAsUpdated(state,memoffset);
-}; /* RefreshDisplay_PseudoColor_2bpp */
-
-/*-----------------------------------------------------------------------------*/
-static void RefreshDisplay_PseudoColor_4bpp(ARMul_State *state) {
-  int DisplayHeight=VIDC.Vert_DisplayEnd-VIDC.Vert_DisplayStart;
-  int DisplayWidth=(VIDC.Horiz_DisplayEnd-VIDC.Horiz_DisplayStart)*2;
-  int x,y,memoffset;
-  int VisibleDisplayWidth;
-  char Buffer[MonitorWidth/2];
-  char *ImgPtr;
-  int block[2];
-
-  block[0]=148;
-  block[1]=-1;
-
-  _swi(OS_ReadVduVariables, _INR(0,1), &block, &block);
-
-  ImgPtr=(char *) block[0];
-
-  /* First configure the colourmap */
-  DoColourMap_16(state);
-
-  if (DisplayHeight<=0) {
-    fprintf(stderr,"RefreshDisplay_PseudoColor_4bpp: 0 or -ve display height\n");
-    return;
-  };
-
-  if (DisplayWidth<=0) {
-    fprintf(stderr,"RefreshDisplay_PseudoColor_4bpp: 0 or -ve display width\n");
-    return;
-  };
-
-  //fprintf(stderr,"RefreshDisplay_PseudoColor_4bpp: DisplayWidth=%d DisplayHeight=%d\n",
-  //        DisplayWidth,DisplayHeight);
-
-  /* Cope with screwy display widths/height */
-  if (DisplayHeight>MonitorHeight) DisplayHeight=MonitorHeight;
-  if (DisplayWidth>MonitorWidth)
-    VisibleDisplayWidth=MonitorWidth;
-  else
-    VisibleDisplayWidth=DisplayWidth;
-
-  for(y=0,memoffset=0;y<DisplayHeight;
-                      y++,memoffset+=(DisplayWidth/2),ImgPtr+=MonitorWidth) {
-    if ((DC.MustRedraw) || (QueryRamChange(state,memoffset,VisibleDisplayWidth/2))) {
-      if (y<DC.miny) DC.miny=y;
-      if (y>DC.maxy) DC.maxy=y;
-      CopyScreenRAM(state,memoffset,VisibleDisplayWidth/2, Buffer);
-
-      for(x=0;x<VisibleDisplayWidth;x+=2) {
-        int pixel;
-        /* We are now running along the scan line */
-        /* we'll get this a bit more efficient when it works! */
-        for(pixel=0;pixel<2;pixel++) {
-          ImgPtr[x+pixel]=(Buffer[x/2]>>(pixel*4)) &15;
-        }; /* pixel */
-      }; /* x */
-    }; /* Refresh test */
-  }; /* y */
-  DC.MustRedraw=0;
-  MarkAsUpdated(state,memoffset);
-}; /* RefreshDisplay_PseudoColor_4bpp */
-
-/*-----------------------------------------------------------------------------*/
-static void RefreshDisplay_PseudoColor_8bpp(ARMul_State *state) {
-  int DisplayHeight=VIDC.Vert_DisplayEnd-VIDC.Vert_DisplayStart;
-  int DisplayWidth=(VIDC.Horiz_DisplayEnd-VIDC.Horiz_DisplayStart)*2;
-  int y,memoffset;
-  int VisibleDisplayWidth;
-  char *ImgPtr;
-  int block[2];
-
-  block[0]=148;
-  block[1]=-1;
-
-  _swi(OS_ReadVduVariables, _INR(0,1), &block, &block);
-
-  ImgPtr=(char *) block[0];
-
-  /* First configure the colourmap */
-  DoColourMap_256(state);
-
-  if (DisplayHeight<=0) {
-    fprintf(stderr,"RefreshDisplay_PseudoColor_8bpp: 0 or -ve display height\n");
-    return;
-  };
-
-  if (DisplayWidth<=0) {
-    fprintf(stderr,"RefreshDisplay_PseudoColor_8bpp: 0 or -ve display width\n");
-    return;
-  };
-
-  /* Cope with screwy display widths/height */
-  if (DisplayHeight>MonitorHeight) DisplayHeight=MonitorHeight;
-  if (DisplayWidth>MonitorWidth)
-    VisibleDisplayWidth=MonitorWidth;
-  else
-    VisibleDisplayWidth=DisplayWidth;
-
-  for(y=0,memoffset=0;y<DisplayHeight;
-                      y++,memoffset+=DisplayWidth,ImgPtr+=MonitorWidth) {
-    if ((DC.MustRedraw) || (QueryRamChange(state,memoffset,VisibleDisplayWidth))) {
-      if (y<DC.miny) DC.miny=y;
-      if (y>DC.maxy) DC.maxy=y;
-      CopyScreenRAM(state,memoffset,VisibleDisplayWidth, ImgPtr);
-    }; /* Refresh test */
-  }; /* y */
-  DC.MustRedraw=0;
-  MarkAsUpdated(state,memoffset);
-}; /* RefreshDisplay_PseudoColor_8bpp */
-
-/*----------------------------------------------------------------------------*/
-#endif
-
-static void
-RefreshDisplay(ARMul_State *state,CycleCount nowtime)
+void
+SDD_Name(Host_PollDisplay)(ARMul_State *state)
 {
-  EventQ_RescheduleHead(state,nowtime+POLLGAP*AUTOREFRESHPOLL,RefreshDisplay);
-  ioc.IRQStatus|=IRQA_VFLYBK; /* VSync */
-  ioc.IRQStatus |= IRQA_TM0; /* This seems to be required for RO to boot? */
-  IO_UpdateNirq(state);
-
-  DC.miny=MonitorHeight-1;
-  DC.maxy=0;
-
   RefreshMouse(state);
-
-#ifndef DIRECT_DISPLAY
-  /* First figure out number of BPP */
-    switch ((VIDC.ControlReg & 0xc)>>2) {
-      case 0: /* 1bpp */
-        RefreshDisplay_PseudoColor_1bpp(state);
-        break;
-      case 1: /* 2bpp */
-        RefreshDisplay_PseudoColor_2bpp(state);
-        break;
-      case 2: /* 4bpp */
-        RefreshDisplay_PseudoColor_4bpp(state);
-        break;
-      case 3: /* 8bpp */
-        RefreshDisplay_PseudoColor_8bpp(state);
-        break;
-    };
-#else
-  /* Figure out number of BPP */
-  switch ((VIDC.ControlReg & 0xc)>>2)
-  {
-    case 0:
-      DoColourMap_2(state);
-      break;
-    case 1:
-      DoColourMap_4(state);
-      break;
-    case 2:
-      DoColourMap_16(state);
-      break;
-    case 3:
-      DoColourMap_256(state);
-      break;
-  }
-#endif
 
 #if 1
   static clock_t oldtime;
@@ -498,30 +271,49 @@ RefreshDisplay(ARMul_State *state,CycleCount nowtime)
     oldtime = nowtime2;
   }
 #endif
-
-  /*fprintf(stderr,"RefreshDisplay: Refreshed %d-%d\n",DC.miny,DC.maxy); */
-
-}; /* RefreshDisplay */
+}; /* DisplayKbd_PollHostDisplay */
 
 /*-----------------------------------------------------------------------------*/
-void
-DisplayKbd_InitHost(ARMul_State *state)
-{
-#ifndef DIRECT_DISPLAY
-  SelectROScreenMode(800, 600, 3);
-#else
-  SelectROScreenMode(640, 480, 2);
-#endif
 
-#ifndef DIRECT_DISPLAY
-  /* Make messages just go in bottom of screen? */
-  _swi(OS_WriteI+28, 0);
-  _swi(OS_WriteI+0,  0);
-  _swi(OS_WriteI+74, 0);
-  _swi(OS_WriteI+99, 0);
-  _swi(OS_WriteI+64, 0);
-#endif
-  EventQ_Insert(state,ARMul_Time+POLLGAP*AUTOREFRESHPOLL,RefreshDisplay);
+static void leds_changed(unsigned int leds)
+{
+  int newstate = 0;
+  if(!(leds & KBD_LED_CAPSLOCK))
+    newstate |= 1<<4;
+  if(!(leds & KBD_LED_NUMLOCK))
+    newstate |= 1<<2;
+  if(leds & KBD_LED_SCROLLLOCK)
+    newstate |= 1<<1;
+  _swix(OS_Byte,_INR(0,2),202,newstate,0xe9);
+  _swix(OS_Byte,_IN(0),118);
+}
+
+/*-----------------------------------------------------------------------------*/
+
+static int old_escape,old_break;
+
+static void restorebreak(void)
+{
+  /* Restore escape & break actions */
+  _swix(OS_Byte,_INR(0,2),200,old_escape,0);
+  _swix(OS_Byte,_INR(0,2),247,old_break,0);
+}
+
+/*-----------------------------------------------------------------------------*/
+int
+DisplayDev_Init(ARMul_State *state)
+{
+  KBD.leds_changed = leds_changed;
+  leds_changed(KBD.Leds);
+
+  InitModeTable();
+
+  /* Disable escape & break. Have to use alt-break, or ArcEm_Shutdown, to quit the emulator. */
+  _swi(OS_Byte,_INR(0,2)|_OUT(1),200,1,0xfe,&old_escape);
+  _swi(OS_Byte,_INR(0,2)|_OUT(1),247,0xaa,0,&old_break);
+  atexit(restorebreak);
+
+  return DisplayDev_Set(state,&SDD_DisplayDev);
 } /* DisplayKbd_InitHost */
 
 
@@ -546,20 +338,22 @@ static void ProcessKey(ARMul_State *state, int key, int transition) {
 static void UpdateCursorPos(ARMul_State *state) {
   int internal_x, internal_y;
   char block[5];
-  int xeig=_swi(OS_ReadModeVariable,_INR(0,1)|_RETURN(2),-1,4);
-  int yeig=_swi(OS_ReadModeVariable,_INR(0,1)|_RETURN(2),-1,5);
 
-  internal_x=VIDC.Horiz_CursorStart-(VIDC.Horiz_DisplayStart*2);
-  internal_y=VIDC.Vert_CursorStart-VIDC.Vert_DisplayStart;
+  /* Calculate correct cursor position, relative to the display start */
+  DisplayDev_GetCursorPos(state,&internal_x,&internal_y);
+  /* Convert to our screen space */
+  internal_x+=CursorXOffset;
+  internal_x=internal_x*HOSTDISPLAY.XScale+HOSTDISPLAY.XOffset;
+  internal_y=internal_y*HOSTDISPLAY.YScale+HOSTDISPLAY.YOffset;
 
   block[0]=5;
   {
-    short x = internal_x << xeig;
+    short x = internal_x << ModeVarsOut[MODE_VAR_XEIG];
     block[1] = x & 255;
     block[2] = x >> 8;
   }
   {
-    short y = (MonitorHeight-internal_y) << yeig;
+    short y = (HD.Height-internal_y) << ModeVarsOut[MODE_VAR_YEIG];
     block[3] = y & 255;
     block[4] = y >> 8;
   }
@@ -572,24 +366,20 @@ static void UpdateCursorPos(ARMul_State *state) {
 /* Called on an X motion event */
 static void MouseMoved(ARMul_State *state, int mousex, int mousey/*,XMotionEvent *xmotion*/) {
   int xdiff,ydiff;
-  /* Well the coordinates of the mouse cursor are now in xmotion->x and
-    xmotion->y, I'm going to compare those against the cursor position
-    and transmit the difference.  This can't possibly take care of the OS's
-    hotspot offsets */
 
   /* We are now only using differences from the reference position */
-  if ((mousex==MonitorWidth/2) && (mousey==MonitorHeight/2)) return;
+  if ((mousex==HD.Width/2) && (mousey==HD.Height/2)) return;
 
   {
     char block[5];
-    int x=MonitorWidth/2;
-    int y=MonitorHeight/2;
+    int x=HD.Width/2;
+    int y=HD.Height/2;
 
     block[0]=3;
-    block[1]=x % 256;
-    block[2]=x / 256;
-    block[3]=y % 256;
-    block[4]=y / 256;
+    block[1]=x & 255;
+    block[2]=(x>>8) & 255;
+    block[3]=y & 255;
+    block[4]=(y>>8) & 255;
 
     _swi(OS_Word, _INR(0,1), 21, &block);
   }
@@ -598,7 +388,7 @@ static void MouseMoved(ARMul_State *state, int mousex, int mousey/*,XMotionEvent
   fprintf(stderr,"MouseMoved: CursorStart=%d xmotion->x=%d\n",
           VIDC.Horiz_CursorStart,mousex);
 #endif
-  xdiff=mousex-MonitorWidth/2;
+  xdiff=mousex-HD.Width/2;
   if (KBD.MouseXCount!=0) {
     if (KBD.MouseXCount & 64) {
       signed char tmpC;
@@ -614,7 +404,7 @@ static void MouseMoved(ARMul_State *state, int mousex, int mousey/*,XMotionEvent
   if (xdiff>63) xdiff=63;
   if (xdiff<-63) xdiff=-63;
 
-  ydiff=mousey-MonitorHeight/2;
+  ydiff=mousey-HD.Height/2;
   if (KBD.MouseYCount & 64) {
     signed char tmpC;
     tmpC=KBD.MouseYCount | 128; /* Sign extend */
@@ -635,7 +425,7 @@ static void MouseMoved(ARMul_State *state, int mousex, int mousey/*,XMotionEvent
 
 /*----------------------------------------------------------------------------*/
 int
-DisplayKbd_PollHost(ARMul_State *state)
+Kbd_PollHostKbd(ARMul_State *state)
 {
   /* Keyboard handling */
   {
@@ -657,300 +447,145 @@ DisplayKbd_PollHost(ARMul_State *state)
 
     MouseMoved(state, mousex, mousey);
   }
+
   return 0;
-} /* DisplayKbd_PollHost */
-
-
-#ifdef DIRECT_DISPLAY
-static void UpdateROScreenFromVIDC(ARMul_State *state)
-{
-  SelectROScreenMode((VIDC.Horiz_DisplayEnd - VIDC.Horiz_DisplayStart) * 2,
-                      VIDC.Vert_DisplayEnd -  VIDC.Vert_DisplayStart,
-                     (VIDC.ControlReg & 0xc) >> 2);
-}
-#endif
-
+} /* DisplayKbd_PollHostKbd */
 
 /*-----------------------------------------------------------------------------*/
-void VIDC_PutVal(ARMul_State *state,ARMword address, ARMword data,int bNw) {
-  unsigned int addr, val;
 
-  addr=(data>>24) & 255;
-  val=data & 0xffffff;
-
-  if (!(addr & 0xc0)) {
-    int Log, Sup,Red,Green,Blue;
-
-    /* This lot presumes it's not 8bpp mode! */
-    Log=(addr>>2) & 15;
-    Sup=(val >> 12) & 1;
-    Blue=(val >> 8) & 15;
-    Green=(val >> 4) & 15;
-    Red=val & 15;
-#ifdef DEBUG_VIDCREGS
-    fprintf(stderr,"VIDC Palette write: Logical=%d Physical=(%d,%d,%d,%d)\n",
-      Log,Sup,Red,Green,Blue);
-#endif
-    VideoRelUpdateAndForce(DC.MustResetPalette,VIDC.Palette[Log],(val & 0x1fff));
-    return;
-  };
-
-  addr&=~3;
-  switch (addr) {
-    case 0x40: /* Border col */
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC border colour write val=0x%x\n",val);
-#endif
-      VideoRelUpdateAndForce(DC.MustResetPalette,VIDC.BorderCol,(val & 0x1fff));
-      break;
-
-    case 0x44: /* Cursor palette log col 1 */
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC cursor log col 1 write val=0x%x\n",val);
-#endif
-      VideoRelUpdateAndForce(DC.MustResetPalette,VIDC.CursorPalette[0],(val & 0x1fff));
-      break;
-
-    case 0x48: /* Cursor palette log col 2 */
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC cursor log col 2 write val=0x%x\n",val);
-#endif
-      VideoRelUpdateAndForce(DC.MustResetPalette,VIDC.CursorPalette[1],(val & 0x1fff));
-      break;
-
-    case 0x4c: /* Cursor palette log col 3 */
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC cursor log col 3 write val=0x%x\n",val);
-#endif
-      VideoRelUpdateAndForce(DC.MustResetPalette,VIDC.CursorPalette[2],(val & 0x1fff));
-      break;
-
-    case 0x60: /* Stereo image reg 7 */
-    case 0x64: /* Stereo image reg 0 */
-    case 0x68: /* Stereo image reg 1 */
-    case 0x6c: /* Stereo image reg 2 */
-    case 0x70: /* Stereo image reg 3 */
-    case 0x74: /* Stereo image reg 4 */
-    case 0x78: /* Stereo image reg 5 */
-    case 0x7c: /* Stereo image reg 6 */
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC stereo image reg write val=0x%x\n",val);
-#endif
-      VIDC.StereoImageReg[(addr==0x60)?7:((addr-0x64)/4)]=val & 7;
-#ifdef SOUND_SUPPORT
-      Sound_StereoUpdated(state);
-#endif
-      break;
-
-    case 0x80:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Horiz cycle register val=%d\n",val>>14);
-#endif
-      VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Horiz_Cycle,(val>>14) & 0x3ff);
-      break;
-
-    case 0x84:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Horiz sync width register val=%d\n",val>>14);
-#endif
-      VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Horiz_SyncWidth,(val>>14) & 0x3ff);
-      break;
-
-    case 0x88:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Horiz border start register val=%d\n",val>>14);
-#endif
-      VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Horiz_BorderStart,(val>>14) & 0x3ff);
-      break;
-
-    case 0x8c:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Horiz display start register val=%d\n",val>>14);
-#endif
-      VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Horiz_DisplayStart,(val>>14) & 0x3ff);
-#ifdef DIRECT_DISPLAY
-      //if (DC.MustRedraw)
-        UpdateROScreenFromVIDC(state);
-#endif
-      break;
-
-    case 0x90:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Horiz display end register val=%d\n",val>>14);
-#endif
-      VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Horiz_DisplayEnd,(val>>14) & 0x3ff);
-#ifdef DIRECT_DISPLAY
-      //if (DC.MustRedraw)
-        UpdateROScreenFromVIDC(state);
-#endif
-      break;
-
-    case 0x94:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC horizontal border end register val=%d\n",val>>14);
-#endif
-      VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Horiz_BorderEnd,(val>>14) & 0x3ff);
-      break;
-
-    case 0x98:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC horiz cursor start register val=%d\n",val>>13);
-#endif
-      VIDC.Horiz_CursorStart=(val>>13) & 0x7ff;
-      UpdateCursorPos(state);
-      break;
-
-    case 0x9c:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC horiz interlace register val=%d\n",val>>14);
-#endif
-      VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Horiz_Interlace,(val>>14) & 0x3ff);
-      break;
-
-    case 0xa0:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Vert cycle register val=%d\n",val>>14);
-#endif
-      VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Vert_Cycle,(val>>14) & 0x3ff);
-      break;
-
-    case 0xa4:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Vert sync width register val=%d\n",val>>14);
-#endif
-      VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Vert_SyncWidth,(val>>14) & 0x3ff);
-      break;
-
-    case 0xa8:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Vert border start register val=%d\n",val>>14);
-#endif
-      VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Vert_BorderStart,(val>>14) & 0x3ff);
-      break;
-
-    case 0xac:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Vert disp start register val=%d\n",val>>14);
-#endif
-      VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Vert_DisplayStart,((val>>14) & 0x3ff));
-#ifdef DIRECT_DISPLAY
-      //if (DC.MustRedraw)
-        UpdateROScreenFromVIDC(state);
-#endif
-      break;
-
-    case 0xb0:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Vert disp end register val=%d\n",val>>14);
-#endif
-      VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Vert_DisplayEnd,(val>>14) & 0x3ff);
-#ifdef DIRECT_DISPLAY
-      //if (DC.MustRedraw)
-        UpdateROScreenFromVIDC(state);
-#endif
-      break;
-
-    case 0xb4:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Vert Border end register val=%d\n",val>>14);
-#endif
-      VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Vert_BorderEnd,(val>>14) & 0x3ff);
-      break;
-
-    case 0xb8:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Vert cursor start register val=%d\n",val>>14);
-#endif
-      VIDC.Vert_CursorStart=(val>>14) & 0x3ff;
-      UpdateCursorPos(state);
-      break;
-
-    case 0xbc:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Vert cursor end register val=%d\n",val>>14);
-#endif
-      VIDC.Vert_CursorEnd=(val>>14) & 0x3ff;
-      UpdateCursorPos(state);
-      break;
-
-    case 0xc0:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Sound freq register val=%d\n",val);
-#endif
-      VIDC.SoundFreq=val & 0xff;
-#ifdef SOUND_SUPPORT
-      Sound_SoundFreqUpdated(state);
-#endif
-      break;
-
-    case 0xe0:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Control register val=0x%x\n",val);
-#endif
-      VideoRelUpdateAndForce(DC.MustRedraw,VIDC.ControlReg,val & 0xffff);
-#ifdef DIRECT_DISPLAY
-      //if (DC.MustRedraw)
-        UpdateROScreenFromVIDC(state);
-#endif
-      break;
-
-    default:
-      fprintf(stderr,"Write to unknown VIDC register reg=0x%x val=0x%x\n",addr,val);
-      break;
-
-  }; /* Register switch */
-}; /* PutValVIDC */
-
-static void SelectROScreenMode(int x, int y, int bpp)
+static void InitModeTable(void)
 {
-  int block[8];
-
-  if (x<0 || x>1024 || y<0 || y>768 || bpp<0 || bpp>3)
-    return;
-
-  if (x==MonitorWidth && y==MonitorHeight && bpp==MonitorBpp)
-    return;
-
-  printf("setting screen mode to %dx%d at %d bpp\n",x, y, bpp);
-
-  MonitorWidth  = x;
-  MonitorHeight = y;
-  MonitorBpp    = bpp;
-
-  block[0] = 1;
-  block[1] = x;
-  block[2] = y;
-  block[3] = bpp;
-  block[4] = -1;
-
-  switch (bpp)
+  int *mode_list;
+  int count;
+  int size;
+  _swi(OS_ScreenMode,_IN(0)|_IN(2)|_INR(6,7)|_OUT(7),2,0,0,0,&size);
+  size = -size;
+  mode_list = (int *) malloc(size);
+  if(!mode_list)
   {
-    case 3:
-      block[5] = 3;
-      block[6] = 255;
-      break;
-
-    default:
-      block[5] =-1;
-      break;
+    fprintf(stderr,"Failed to get memory for mode list\n");
+    exit(EXIT_FAILURE);
   }
+  _swi(OS_ScreenMode,_IN(0)|_IN(2)|_INR(6,7)|_OUT(2),2,0,mode_list,size,&count);
+  count = -count;
+  ModeList = (HostMode *) malloc(sizeof(HostMode)*count);
+  NumModes = 0;
+  int *mode = mode_list;
+  /* Convert the OS mode list into one in our own format */
+  while(count--)
+  {
+    /* Too small? */
+    if((mode[2] < hArcemConfig.iMinResX) || (mode[3] < hArcemConfig.iMinResY))
+      goto next;
+    /* Wrong colour depth? */
+    if(mode[4] != 4)
+      goto next;
+    /* Not exact scale for an LCD? */
+    if(hArcemConfig.iLCDResX)
+    {
+      /* Simply too big? */
+      if((hArcemConfig.iLCDResX < mode[2]) || (hArcemConfig.iLCDResY < mode[3]))
+        goto next;
+      /* Assume the monitor will scale it up while maintaining the aspect ratio
+         Therefore, work out how much it can scale it before it reaches an edge, and check that value */
+      float xscale = ((float)hArcemConfig.iLCDResX)/mode[2];
+      float yscale = ((float)hArcemConfig.iLCDResY)/mode[3];
+      xscale = MIN(xscale,yscale);
+      if(floor(xscale) != xscale)
+        goto next;
+    }
+    /* Already got this entry? (i.e. due to multiple framerates) */
+    int i;
+    for(i=NumModes-1;i>=0;i--)
+      if((ModeList[i].w == mode[2]) && (ModeList[i].h == mode[3]))
+        goto next;
+    /* Add it to our list */
+    ModeList[NumModes].w = mode[2];
+    ModeList[NumModes].h = mode[3];
+    if(mode[2]*2 <= mode[3])
+      ModeList[NumModes].aspect = 1;
+    else if(mode[2] >= mode[3]*2)
+      ModeList[NumModes].aspect = 4;
+    else
+      ModeList[NumModes].aspect = 2;
+    fprintf(stderr,"Added mode %dx%d aspect %.1f\n",ModeList[NumModes].w,ModeList[NumModes].h,((float)ModeList[NumModes].aspect)/2.0f);
+    NumModes++;
 
-  block[7] = -1;
-  _swix(OS_ScreenMode, _INR(0,1), 0, &block);
-
-  /* Remove text cursor from real RO */
-  _swi(OS_RemoveCursors, 0);
-
-#ifdef DIRECT_DISPLAY
-  block[0] = 148;
-  block[1] = 150;
-  block[2] = -1;
-
-  _swi(OS_ReadVduVariables, _INR(0,1), &block, &block);
-
-  DirectScreenMemory = (int *)block[0];
-  DirectScreenExtent = block[1];
-#endif
+  next:
+    mode += mode[0]/4;
+  }
+  free(mode_list);
 }
 
+static float ComputeFit(HostMode *mode,int x,int y,int aspect,int *outxscale,int *outyscale)
+{
+  /* Work out how best to fit the given screen into the given mode */
+  int xscale=1;
+  int yscale=1;
 
+  /* Use aspect ratios to work out right scale factors */
+  if(aspect > mode->aspect)
+  {
+    /* Emulator pixels are taller, apply Y scaling */
+    yscale = aspect/mode->aspect;
+  }
+  else if(aspect < mode->aspect)
+  {
+    /* Emulator pixels are wider, apply X scaling */
+    xscale = mode->aspect/aspect;
+    if(xscale > 2)
+    {
+      return -1.0f; /* Too much X scaling */
+    }
+  }
+
+  if((x*xscale > mode->w) || (y*yscale > mode->h))
+    return -1.0f; /* Mode not big enough */
+
+  /* Apply global 2* scaling if possible */
+  if((x*xscale*2 <= mode->w) && (y*yscale*2 <= mode->h) && (xscale < 2))
+  {
+    xscale*=2;
+    yscale*=2;
+  }
+
+  *outxscale = xscale;
+  *outyscale = yscale;
+
+  /* Work out the proportion of the screen we'll fill */
+  return ((float)(x*xscale*y*yscale))/(mode->w*mode->h);
+}
+
+static float ScaleCost(int xscale,int yscale)
+{
+  /* Estimate how much extra processing this scale factor causes */
+  return (((((float)yscale)-1.0f)*1.5f)+1.0f)*xscale; /* Y scaling (probably) has a higher cost than X scaling */
+}
+
+static HostMode *SelectROScreenMode(int x, int y, int aspect, int *outxscale,int *outyscale)
+{
+  HostMode *bestmode=NULL;
+  int bestxscale=1,bestyscale=1;
+  float bestscore=0.0f;
+  int i;
+  for(i=0;i<NumModes;i++)
+  {
+    int xscale=1,yscale=1;
+    float score = ComputeFit(&ModeList[i],x,y,aspect,&xscale,&yscale);
+    if((score > bestscore) || ((score == bestscore) && (ScaleCost(xscale,yscale) < ScaleCost(bestxscale,bestyscale))))
+    {
+      bestmode = &ModeList[i];
+      bestxscale = xscale;
+      bestyscale = yscale;
+      bestscore = score;
+    }
+  }
+  if(!bestmode)
+  {
+    fprintf(stderr,"Failed to find suitable screen mode for %dx%d, aspect %.1f\n",x,y,((float)aspect)/2.0f);
+    exit(EXIT_FAILURE);
+  }
+  *outxscale = bestxscale;
+  *outyscale = bestyscale;
+  return bestmode;
+}

@@ -1,3 +1,16 @@
+/*
+  prof.h
+
+  (c) 2011 Jeffrey Lee <me@phlamethrower.co.uk>
+
+  Part of Arcem released under the GNU GPL, see file COPYING
+  for details.
+
+  Basic profiling interface; vanishes to nothingness if profiling is disabled.
+  See prof.s for the true horror show.
+
+*/
+
 #ifndef prof_h
 #define prof_h
 

@@ -1,43 +1,25 @@
-@ r0	RN	0
-@ r1	RN	1
-@ r2	RN	2
-@ r3	RN	3
-@ r4	RN	4
-@ r5	RN	5
-@ r6	RN	6
-@ r7	RN	7
-@ r8	RN	8
-@ r9	RN	9
-@ r10	RN	10
-@ r11	RN	11
-@ r12	RN	12
-@ r13	RN	13
-@ r14	RN	14
-@ r15	RN	15
-@ a1	RN	0
-@ a2	RN	1
-@ a3	RN	2
-@ a4	RN	3
-@ v1	RN	4
-@ v2	RN	5
-@ v3	RN	6
-@ v4	RN	7
-@ v5	RN	8
-@ v6	RN	9
-@ sl	RN	10
-@ fp	RN	11
-@ ip	RN	12
-@ sp	RN	13
-@ lr	RN	14
-@ pc	RN	15
-@ f0	FN	0
-@ f1	FN	1
-@ f2	FN	2
-@ f3	FN	3
-@ f4	FN	4
-@ f5	FN	5
-@ f6	FN	6
-@ f7	FN	7
+@
+@ prof.s
+@
+@ (c) 2011 Jeffrey Lee <me@phlamethrower.co.uk>
+@
+@ Part of Arcem released under the GNU GPL, see file COPYING
+@ for details.
+@
+@ Very nasty CPU profiling code for RISC OS hosts running on Iyonix or
+@ Cortex-A8 machines. This code relies upon the following:
+@
+@ * Function name poking (-mpoke-function-names) being enabled
+@ * 'cortex' #define being set correctly for whether IOP321 or Cortex-A8 code
+@   should be used
+@ * On IOP321, HAL timer 1 must be free. This also means the results will be in
+@   200MHz clock ticks instead of CPU cycles.
+@ * On Cortex-A8, the cycle count performance counter must be free
+@ * C heap allocations must come from application space, not a dynamic area (a
+@   simple malloc is used to estimate how large the program is by looking at the
+@   allocation address). This requirement is currently enforced by
+@   riscos-single/DispKbd.c
+@
 
 .text
 
@@ -69,10 +51,6 @@ prof_fmt_str:
 .global	Prof_EndFunc
 .global	Prof_End
 .global	Prof_Dump
-
-@ force dynamic areas off (unixlib seems to be using them even though we don't have arcem$heap set?)
-.global	__dynamic_no_da
-__dynamic_no_da:
 
 Prof_Init:
 	mov	ip, sp

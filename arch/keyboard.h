@@ -1,3 +1,6 @@
+#ifndef ARCH_KEYBOARD_H
+#define ARCH_KEYBOARD_H
+
 /* arch/keyboard.c -- a model of the Archimedes keyboard. */
 
 /* Keys on an Acorn R140 keyboard organised into groups as you'd find
@@ -131,6 +134,53 @@ enum {
 };
 typedef unsigned char arch_key_id;
 
+typedef struct {
+  int KeyColToSend, KeyRowToSend, KeyUpNDown;
+} KbdEntry;
+
+typedef enum {
+  KbdState_JustStarted,
+  KbdState_SentHardReset,
+  KbdState_SentAck1,
+  KbdState_SentAck2,
+  KbdState_SentKeyByte1, /* and waiting for ack */
+  KbdState_SentKeyByte2, /* and waiting for ack */
+  KbdState_SentMouseByte1,
+  KbdState_SentMouseByte2,
+  KbdState_Idle
+} KbdStates;
+
+#define KBDBUFFLEN 128
+
+#define KBD_LED_CAPSLOCK 1
+#define KBD_LED_NUMLOCK 2
+#define KBD_LED_SCROLLLOCK 4
+
+struct arch_keyboard {
+  KbdStates KbdState;
+  /* A signed, 7-bit value stored in an unsigned char as it gets
+   * passed to keyboard transmission functions expecting an
+   * unsigned char. */
+  unsigned char MouseXCount;
+  unsigned char MouseYCount;
+  int KeyColToSend,KeyRowToSend,KeyUpNDown;
+  int Leds;
+  /* The bottom three bits of leds holds their current state.  If
+   * the bit is set the LED should be emitting. */
+  void (*leds_changed)(unsigned int leds);
+
+  /* Double buffering - update the others while sending this */
+  unsigned char MouseXToSend;
+  unsigned char MouseYToSend;
+  int MouseTransEnable,KeyScanEnable; /* When 1 allowed to transmit */
+  int HostCommand;            /* Normally 0 else the command code */
+  KbdEntry Buffer[KBDBUFFLEN];
+  int BuffOcc;
+  int TimerIntHasHappened;
+};
+
+#define KBD (*(state->Kbd))
+
 /* ------------------------------------------------------------------ */
 
 /* Tell the Archimedes that key `kid' has changed state, this includes
@@ -138,6 +188,12 @@ typedef unsigned char arch_key_id;
 void keyboard_key_changed(struct arch_keyboard *kb, arch_key_id kid,
     int up);
 
+void Kbd_Init(ARMul_State *state);
 void Kbd_StartToHost(ARMul_State *state);
 void Kbd_CodeFromHost(ARMul_State *state, unsigned char FromHost);
+
+/* Frontend must implement this */
+int Kbd_PollHostKbd(ARMul_State *state);
+
+#endif
 

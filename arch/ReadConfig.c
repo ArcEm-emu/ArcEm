@@ -39,6 +39,9 @@ int ReadConfigFile(ARMul_State *state)
 #elif defined(MACOSX)
     envvar = "HOME";
     basename2 = "arcem/.arcemrc";
+#elif defined(__riscos__)
+    envvar = "ArcEm$Dir";
+    basename2 = "/arcemrc";
 #else
     envvar = "HOME";
     basename2 = ".arcemrc";
@@ -53,7 +56,11 @@ int ReadConfigFile(ARMul_State *state)
     *tmpbuf = '\0';
     if (envvar) {
         strcat(tmpbuf, env);
+#if defined(__riscos__)
+        strcat(tmpbuf, ".");
+#else
         strcat(tmpbuf, "/");
+#endif
     }
     strcat(tmpbuf, basename2);
 

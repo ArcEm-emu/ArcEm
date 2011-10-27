@@ -21,6 +21,7 @@
 #include "armemu.h"
 #include <time.h>
 #include "prof.h"
+#include "arch/archio.h"
 
 ARMul_State statestr;
 
@@ -992,7 +993,10 @@ static void EmuRate_Update(ARMul_State *state,CycleCount nowcycle)
     ARMul_EmuRate = (ARMul_EmuRate*7+newrate)>>3;
     EmuRate_LastUpdateCycle = nowcycle;
     EmuRate_LastUpdateTime = nowtime;
-//    printf("EmuRate %d\n",ARMul_EmuRate);
+    /* Recalculate IOC rates */
+    ioc.InvIOCRate = (((unsigned long long) ARMul_EmuRate)<<16)/2000000;
+    ioc.IOCRate = (((unsigned long long) 2000000)<<16)/ARMul_EmuRate;
+    //fprintf(stderr,"EmuRate %d IOC %.4f InvIOC %.4f\n",ARMul_EmuRate,((float)ioc.IOCRate)/65536,((float)ioc.InvIOCRate)/65536);
   }
   EventQ_RescheduleHead(state,nowcycle+(ARMul_EmuRate>>3),EmuRate_Update); /* Update 8 times per second? */
 }
@@ -1127,6 +1131,8 @@ ARMul_Emulate26(ARMul_State *state)
       Prof_End("Fetch/decode");
 
       CycleCount local_time = ARMul_Time;
+#if 1
+      /* Regular EventQ code */
       while(((CycleDiff) (local_time-state->EventQ[0].Time)) >= 0)
       {
         EventQ_Func func = state->EventQ[0].Func;
@@ -1134,6 +1140,22 @@ ARMul_Emulate26(ARMul_State *state)
         (func)(state,local_time);
         Prof_EndFunc(func);
       }
+#else
+      /* Code with runaway loop timer for debugging */
+      int loops = 256;
+      while((((CycleDiff) (local_time-state->EventQ[0].Time)) >= 0) && --loops)
+      {
+        EventQ_Func func = state->EventQ[0].Func;
+        Prof_BeginFunc(func);
+        (func)(state,local_time);
+        Prof_EndFunc(func);
+      }
+      if(!loops)
+      {
+        fprintf(stderr,"Runaway loop in EventQ. Head event func %08x time %08x (local_time %08x)\n",state->EventQ[0].Func,state->EventQ[0].Time,loops);
+        exit(1);
+      }
+#endif
 
       ARMword excep = state->Exception &~state->Reg[15];
       if (excep) { /* Any exceptions */

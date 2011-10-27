@@ -1,4 +1,17 @@
-@ Sound buffer fill code
+@ 
+@ riscos-single/soundbuf.s
+@ 
+@ (c) 2011 Jeffrey Lee <me@phlamethrower.co.uk>
+@ 
+@ Basic SharedSound sound driver for ArcEm, based in part on my SharedSound
+@ tutorial from http://www.iconbar.com/forums/viewthread.php?threadid=10778
+@
+@ This code handles filling the SharedSound buffer from the contents of the
+@ buffer in ArcEm's RISC OS frontend (riscos-single/sound.c).
+@
+@ At the moment only basic sample rate conversion is applied - no linear
+@ interpolation or anything like that.
+@
 
 .set X_Bit, 0x20000
 .set XSharedSound_RemoveHandler, 0x04B441 + X_Bit

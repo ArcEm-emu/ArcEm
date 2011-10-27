@@ -39,16 +39,12 @@ HOST_BIGENDIAN=no
 
 # Windowing System
 ifeq ($(SYSTEM),)
-SYSTEM=riscos-single
+SYSTEM=X
 endif
 
 CC=gcc
 LD=gcc
 LDFLAGS=
-
-# Armulator core endianess of the *emulated* processor (LITTLEEND or BIGEND)
-# Should stay as LITTLEEND when used in ArcEm
-ENDIAN=LITTLEEND
 
 WARN = -Wall -Wno-return-type -Wno-unknown-pragmas -Wshadow \
    -Wpointer-arith -Wcast-align -Wstrict-prototypes \
@@ -68,7 +64,7 @@ endif
 endif
 
 CFLAGS += \
-    -D$(ENDIAN) $(CFL) $(WARN) \
+    $(CFL) $(WARN) \
     -I$(SYSTEM) -Iarch -I.
 
 prefix=/usr/local
@@ -83,15 +79,16 @@ OBJS = armcopro.o armemu.o arminit.o \
 	armsupp.o main.o dagstandalone.o eventq.o \
 		$(SYSTEM)/DispKbd.o arch/i2c.o arch/archio.o \
     arch/fdc1772.o $(SYSTEM)/ControlPane.o arch/hdc63463.o arch/ReadConfig.o \
-    arch/keyboard.o $(SYSTEM)/filecalls.o arch/DispKbdShared.o \
-    arch/ArcemConfig.o arch/cp15.o
+    arch/keyboard.o $(SYSTEM)/filecalls.o \
+    arch/ArcemConfig.o arch/cp15.o arch/newsound.o arch/displaydev.o
 
 SRCS = armcopro.c armemu.c arminit.c arch/armarc.c \
 	armsupp.c main.c dagstandalone.c eventq.c \
 	$(SYSTEM)/DispKbd.c arch/i2c.c arch/archio.c \
 	arch/fdc1772.c $(SYSTEM)/ControlPane.c arch/hdc63463.c \
 	arch/ReadConfig.c arch/keyboard.c $(SYSTEM)/filecalls.c \
-	arch/DispKbdShared.c arch/ArcemConfig.c arch/cp15.c arch/newsound.c
+	arch/ArcemConfig.c arch/cp15.c arch/newsound.c \
+	arch/displaydev.c
 
 INCS = armdefs.h armemu.h $(SYSTEM)/KeyTable.h \
   arch/i2c.h arch/archio.h arch/fdc1772.h arch/ControlPane.h \
@@ -118,18 +115,11 @@ endif
 ifeq (${SYSTEM},gp2x)
 CC=arm-linux-gcc
 LD=$(CC)
-DIRECT_DISPLAY=yes
 SYSROOT = D:/gp2x/devkitGP2X/sysroot
 CFLAGS += -DSYSTEM_gp2x -Igp2x -I$(SYSROOT)/usr/include
 LIBS += -L$(SYSROOT)/usr/lib -static
 LD=$(CC)
 TARGET=arcem.gpe
-endif
-
-ifeq (${SYSTEM},riscos)
-EXTNROM_SUPPORT=notyet
-CFLAGS += -DSYSTEM_riscos -Iriscos-single
-TARGET=!ArcEm/arcem
 endif
 
 ifeq (${SYSTEM},riscos-single)
@@ -141,25 +131,28 @@ SOUND_SUPPORT=yes
 SOUND_PTHREAD=no
 OBJS += riscos-single/soundbuf.o
 # General
-DIRECT_DISPLAY=yes
 EXTNROM_SUPPORT=yes
 CFLAGS += -I@ -DSYSTEM_riscos_single -Iriscos-single -mtune=xscale -march=armv5te -mthrowback
 LDFLAGS += -static
 # Disable stack limit checks. -ffixed-sl required to prevent sl being used as temp storage, breaking unixlib and any other code that does do stack checks
+# Note - Currently won't work - we need to set up a big stack frame on entry to
+# avoid things like HostFS causing stack overflows
 #CFLAGS += -mno-apcs-stack-check -ffixed-sl
 # No function name poking for a bit extra speed
 CFLAGS += -mno-poke-function-name
 # Debug options
-CFLAGS += -save-temps -mpoke-function-name
+#CFLAGS += -save-temps -mpoke-function-name
 # Profiling
 #CFLAGS += -mpoke-function-name -DPROFILE_ENABLED
-OBJS += prof.o
+#OBJS += prof.o
 TARGET=!ArcEm/arcem
 endif
 
 ifeq (${SYSTEM},X)
 CFLAGS += -DSYSTEM_X -I/usr/X11R6/include
 LIBS += -L/usr/X11R6/lib -lXext -lX11
+OBJS += X/true.o X/pseudo.o
+#SOUND_SUPPORT = yes
 endif
 
 ifeq (${SYSTEM},win)
@@ -176,7 +169,7 @@ endif
 
 ifeq (${SOUND_SUPPORT},yes)
 CFLAGS += -DSOUND_SUPPORT
-OBJS += $(SYSTEM)/sound.o arch/newsound.o
+OBJS += $(SYSTEM)/sound.o
 INCS += arch/sound.h
 ifeq (${SOUND_PTHREAD},yes)
 LIBS += -lpthread
@@ -242,7 +235,7 @@ arcem.tar.gz:
 
 # memory models
 
-arch/armarc.o: armdefs.h arch/armarc.c arch/DispKbd.h arch/armarc.h \
+arch/armarc.o: armdefs.h arch/armarc.c arch/armarc.h \
                arch/fdc1772.h
 	$(CC) $(CFLAGS) -c $*.c -o arch/armarc.o
 
@@ -275,17 +268,17 @@ main.o: main.c armdefs.h
 eventq.o: eventq.c eventq.h
 	$(CC) $(CFLAGS) -c $*.c
 
-$(SYSTEM)/DispKbd.o: $(SYSTEM)/DispKbd.c arch/DispKbd.h $(SYSTEM)/KeyTable.h \
+$(SYSTEM)/DispKbd.o: $(SYSTEM)/DispKbd.c $(SYSTEM)/KeyTable.h \
                      arch/armarc.h arch/fdc1772.h arch/hdc63463.h \
                      arch/keyboard.h
 	$(CC) $(CFLAGS) -c $*.c -o $(SYSTEM)/DispKbd.o
 
-arch/i2c.o: arch/i2c.c arch/i2c.h arch/armarc.h arch/DispKbd.h arch/archio.h \
+arch/i2c.o: arch/i2c.c arch/i2c.h arch/armarc.h arch/archio.h \
             arch/fdc1772.h arch/hdc63463.h
 	$(CC) $(CFLAGS) -c $*.c -o arch/i2c.o
 
 arch/archio.o: arch/archio.c arch/archio.h arch/armarc.h arch/i2c.h \
-        arch/DispKbd.h arch/fdc1772.h arch/hdc63463.h
+        arch/fdc1772.h arch/hdc63463.h
 	$(CC) $(CFLAGS) -c $*.c -o arch/archio.o
 
 arch/fdc1772.o: arch/fdc1772.c arch/fdc1772.h arch/armarc.h
@@ -295,10 +288,10 @@ arch/hdc63463.o: arch/hdc63463.c arch/hdc63463.h arch/armarc.h
 	$(CC) $(CFLAGS) -c $*.c -o arch/hdc63463.o
 
 $(SYSTEM)/ControlPane.o: $(SYSTEM)/ControlPane.c arch/ControlPane.h \
-        arch/DispKbd.h arch/armarc.h
+        arch/armarc.h
 	$(CC) $(CFLAGS) -c $*.c -o $(SYSTEM)/ControlPane.o
 
-arch/ReadConfig.o: arch/ReadConfig.c arch/ReadConfig.h arch/DispKbd.h \
+arch/ReadConfig.o: arch/ReadConfig.c arch/ReadConfig.h \
 	arch/armarc.h
 	$(CC) $(CFLAGS) -c $*.c -o arch/ReadConfig.o
 
@@ -308,8 +301,17 @@ arch/keyboard.o: arch/keyboard.c arch/keyboard.h
 arch/newsound.o: arch/newsound.c arch/sound.h
 	$(CC) $(CFLAGS) -c $*.c -o arch/newsound.o
 
+arch/displaydev.o: arch/displaydev.c arch/displaydev.h
+	$(CC) $(CFLAGS) -c $*.c -o arch/displaydev.o
+
 win/gui.o: win/gui.rc win/gui.h win/arc.ico
 	windres $*.rc -o win/gui.o
+
+X/true.o: X/true.c
+	$(CC) $(CFLAGS) -c $*.c -o X/true.o
+
+X/pseudo.o: X/pseudo.c
+	$(CC) $(CFLAGS) -c $*.c -o X/pseudo.o
 
 
 # DO NOT DELETE

@@ -35,6 +35,11 @@ extern ARMul_State statestr;
 
 #define LATEABTSIG LOW /* TODO - is this correct? */
 
+#define MIN(a,b) ((a)<(b)?(a):(b))
+#define MAX(a,b) ((a)>(b)?(a):(b))
+
+#define UPDATEBLOCKSIZE 256
+
 /***************************************************************************\
 *                   Macros to extract instruction fields                    *
 \***************************************************************************/
@@ -172,7 +177,20 @@ typedef struct {
   EventQ_Func Func;    /* Function to call */
 } EventQ_Entry;
 
-#define EVENTQ_SIZE 8
+#define EVENTQ_SIZE 10
+
+/* NOTE - For speed reasons there aren't any overflow checks in the eventq
+          code, so be aware of how many systems are using the queue. At the
+          moment, these are:
+
+          arch/newsound.c - One entry for sound DMA fetches
+          arch/stddisplaydev.c - One entry for screen updates
+          arch/keyboard.c - One entry for keyboard/mouse polling
+          arch/archio.c - One entry for IOC timers
+          arch/archio.c - One entry for FDC & HDC updates
+          arch/armemu.c - One entry for updating ARMul_EmuRate
+        = 6 total
+*/
 
 /***************************************************************************\
 *                          Main emulator state                              *
@@ -197,7 +215,8 @@ typedef enum ARMStartIns {
   RESUME        = 8
 } ARMStartIns;
 
-typedef struct DisplayInfo DisplayInfo;
+typedef struct arch_keyboard arch_keyboard;
+typedef struct Vidc_Regs Vidc_Regs;
 
 #define Exception_IRQ R15IBIT
 #define Exception_FIQ R15FBIT
@@ -211,7 +230,8 @@ struct ARMul_State {
    ARMword Aborted;           /* sticky flag for aborts */
    ARMword AbortAddr;         /* to keep track of Prefetch aborts */
    ARMword Exception;         /* IRQ & FIQ pins */
-   DisplayInfo *Display;      /* VIDC/DisplayInfo struct */
+   Vidc_Regs *Display;        /* VIDC regs/host display struct */
+   arch_keyboard *Kbd;        /* Keyboard struct */
    ARMword Bank;              /* the current register bank */
    unsigned NtransSig;        /* MEMC USR/SVC flag, somewhat redundant with FastMapMode */
    ARMword Base;              /* extra hand for base writeback */
