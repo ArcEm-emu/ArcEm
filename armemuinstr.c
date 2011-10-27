@@ -1,23 +1,29 @@
 /* ################################################################################## */
 /* ## Individual decoded instruction functions                                     ## */
 /* ################################################################################## */
-static void EMFUNCDECL26(Branch) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(Branch) (ARMul_State *state, ARMword instr) {
   EMFUNC_CONDTEST
   /* Note that the upper bits of instr (those that don't form the branch offset) get masked out by INCPC */
   INCPCAMT(instr<<2);
   FLUSHPIPE;
 } /* EMFUNCDECL26(Branch */
 
-static void EMFUNCDECL26(BranchLink) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(BranchLink) (ARMul_State *state, ARMword instr) {
   EMFUNC_CONDTEST
-  if(instr & (1<<24))
-    state->Reg[14] = (pc + 4) | R15CCINTMODE;
+#ifndef ARMUL_USE_IMMEDTABLE
+  /* Do what INCPCAMT does when the immedtable isn't in use. Compiler should spot that they're similar and merge them. */
+  ARMword temp2 = state->Reg[15];
+  temp2 = ROTATER(temp2,26)-(4<<6);
+  state->Reg[14] = ROTATER(temp2,6);
+#else
+  state->Reg[14] = ((state->Reg[15] - 4) & R15PCBITS) | R15CCINTMODE;
+#endif
   /* Note that the upper bits of instr (those that don't form the branch offset) get masked out by INCPC */
   INCPCAMT(instr<<2);
   FLUSHPIPE;
 } /* EMFUNCDECL26(BranchLink */
 
-static void EMFUNCDECL26(Mul) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(Mul) (ARMul_State *state, ARMword instr) {
   register ARMword temp;
   ARMword rhs;
 
@@ -37,7 +43,7 @@ static void EMFUNCDECL26(Mul) (ARMul_State *state, ARMword instr, ARMword pc) {
 
 } /* EMFUNCDECL26(Mul */
 
-static void EMFUNCDECL26(Muls) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(Muls) (ARMul_State *state, ARMword instr) {
   register ARMword dest,temp;
   ARMword rhs;
 
@@ -62,7 +68,7 @@ static void EMFUNCDECL26(Muls) (ARMul_State *state, ARMword instr, ARMword pc) {
 
 } /* EMFUNCDECL26(Muls */
 
-static void EMFUNCDECL26(Mla) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(Mla) (ARMul_State *state, ARMword instr) {
   register ARMword temp;
   ARMword rhs;
 
@@ -82,7 +88,7 @@ static void EMFUNCDECL26(Mla) (ARMul_State *state, ARMword instr, ARMword pc) {
 
 } /* EMFUNCDECL26(Mla */
 
-static void EMFUNCDECL26(Mlas) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(Mlas) (ARMul_State *state, ARMword instr) {
   register ARMword dest,temp;
   ARMword rhs;
 
@@ -107,7 +113,7 @@ static void EMFUNCDECL26(Mlas) (ARMul_State *state, ARMword instr, ARMword pc) {
 
 } /* EMFUNCDECL26(Mlas */
 
-static void EMFUNCDECL26(AndReg) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(AndReg) (ARMul_State *state, ARMword instr) {
   register ARMword dest;
   ARMword rhs;
 
@@ -118,7 +124,7 @@ static void EMFUNCDECL26(AndReg) (ARMul_State *state, ARMword instr, ARMword pc)
 
 } /* EMFUNCDECL26(AndReg */
 
-static void EMFUNCDECL26(AndsReg) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(AndsReg) (ARMul_State *state, ARMword instr) {
   register ARMword dest;
   ARMword rhs;
 
@@ -129,7 +135,7 @@ static void EMFUNCDECL26(AndsReg) (ARMul_State *state, ARMword instr, ARMword pc
 
 } /* EMFUNCDECL26(AndsReg */
 
-static void EMFUNCDECL26(EorReg) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(EorReg) (ARMul_State *state, ARMword instr) {
   register ARMword dest;
   ARMword rhs;
 
@@ -140,7 +146,7 @@ static void EMFUNCDECL26(EorReg) (ARMul_State *state, ARMword instr, ARMword pc)
 
 } /* EMFUNCDECL26(EorReg */
 
-static void EMFUNCDECL26(EorsReg) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(EorsReg) (ARMul_State *state, ARMword instr) {
   register ARMword dest;
   ARMword rhs;
 
@@ -151,7 +157,7 @@ static void EMFUNCDECL26(EorsReg) (ARMul_State *state, ARMword instr, ARMword pc
 
 } /* EMFUNCDECL26(EorsReg */
 
-static void EMFUNCDECL26(SubReg) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(SubReg) (ARMul_State *state, ARMword instr) {
   register ARMword dest;
   ARMword rhs;
 
@@ -161,7 +167,7 @@ static void EMFUNCDECL26(SubReg) (ARMul_State *state, ARMword instr, ARMword pc)
   WRITEDEST(dest);
 } /* EMFUNCDECL26(SubReg */
 
-static void EMFUNCDECL26(SubsReg) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(SubsReg) (ARMul_State *state, ARMword instr) {
   register ARMword dest;
   ARMword lhs,rhs;
 
@@ -180,7 +186,7 @@ static void EMFUNCDECL26(SubsReg) (ARMul_State *state, ARMword instr, ARMword pc
 
 } /* EMFUNCDECL26(SubsReg */
 
-static void EMFUNCDECL26(RsbReg) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(RsbReg) (ARMul_State *state, ARMword instr) {
   register ARMword dest;
   ARMword rhs;
 
@@ -190,7 +196,7 @@ static void EMFUNCDECL26(RsbReg) (ARMul_State *state, ARMword instr, ARMword pc)
   WRITEDEST(dest);
 } /* EMFUNCDECL26(RsbReg */
 
-static void EMFUNCDECL26(RsbsReg) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(RsbsReg) (ARMul_State *state, ARMword instr) {
   register ARMword dest;
   ARMword lhs,rhs;
 
@@ -209,7 +215,7 @@ static void EMFUNCDECL26(RsbsReg) (ARMul_State *state, ARMword instr, ARMword pc
 
 } /* EMFUNCDECL26(RsbsReg */
 
-static void EMFUNCDECL26(AddReg) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(AddReg) (ARMul_State *state, ARMword instr) {
   register ARMword dest;
   ARMword rhs;
 
@@ -220,7 +226,7 @@ static void EMFUNCDECL26(AddReg) (ARMul_State *state, ARMword instr, ARMword pc)
 
 } /* EMFUNCDECL26(AddReg */
 
-static void EMFUNCDECL26(AddsReg) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(AddsReg) (ARMul_State *state, ARMword instr) {
   register ARMword dest;
   ARMword lhs,rhs;
 
@@ -241,7 +247,7 @@ static void EMFUNCDECL26(AddsReg) (ARMul_State *state, ARMword instr, ARMword pc
 
 } /* EMFUNCDECL26(AddsReg */
 
-static void EMFUNCDECL26(AdcReg) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(AdcReg) (ARMul_State *state, ARMword instr) {
   register ARMword dest;
   ARMword rhs;
 
@@ -252,7 +258,7 @@ rhs = DPRegRHS;
 
 } /* EMFUNCDECL26(AdcReg */
 
-static void EMFUNCDECL26(AdcsReg) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(AdcsReg) (ARMul_State *state, ARMword instr) {
   register ARMword dest;
   ARMword lhs,rhs;
 
@@ -274,7 +280,7 @@ static void EMFUNCDECL26(AdcsReg) (ARMul_State *state, ARMword instr, ARMword pc
 
 } /* EMFUNCDECL26(AdcsReg */
 
-static void EMFUNCDECL26(SbcReg) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(SbcReg) (ARMul_State *state, ARMword instr) {
   register ARMword dest;
   ARMword rhs;
 
@@ -285,7 +291,7 @@ static void EMFUNCDECL26(SbcReg) (ARMul_State *state, ARMword instr, ARMword pc)
 
 } /* EMFUNCDECL26(SbcReg */
 
-static void EMFUNCDECL26(SbcsReg) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(SbcsReg) (ARMul_State *state, ARMword instr) {
   register ARMword dest;
   ARMword lhs,rhs;
 
@@ -304,7 +310,7 @@ static void EMFUNCDECL26(SbcsReg) (ARMul_State *state, ARMword instr, ARMword pc
 
 } /* EMFUNCDECL26(SbcsReg */
 
-static void EMFUNCDECL26(RscReg) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(RscReg) (ARMul_State *state, ARMword instr) {
   ARMword dest,rhs;
 
   EMFUNC_CONDTEST
@@ -314,7 +320,7 @@ static void EMFUNCDECL26(RscReg) (ARMul_State *state, ARMword instr, ARMword pc)
 
 } /* EMFUNCDECL26(RscReg */
 
-static void EMFUNCDECL26(RscsReg) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(RscsReg) (ARMul_State *state, ARMword instr) {
   register ARMword dest;
   ARMword lhs,rhs;
 
@@ -333,7 +339,7 @@ static void EMFUNCDECL26(RscsReg) (ARMul_State *state, ARMword instr, ARMword pc
 
 } /* EMFUNCDECL26(RscsReg */
 
-static void EMFUNCDECL26(TstRegMrs1SwpNorm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(TstRegMrs1SwpNorm) (ARMul_State *state, ARMword instr) {
   register ARMword dest, temp;
 
   EMFUNC_CONDTEST
@@ -364,7 +370,7 @@ static void EMFUNCDECL26(TstRegMrs1SwpNorm) (ARMul_State *state, ARMword instr, 
 
 } /* EMFUNCDECL26( */
 
-static void EMFUNCDECL26(TstpRegNorm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(TstpRegNorm) (ARMul_State *state, ARMword instr) {
   register ARMword dest;
   ARMword rhs;
 
@@ -374,7 +380,7 @@ static void EMFUNCDECL26(TstpRegNorm) (ARMul_State *state, ARMword instr, ARMwor
   ARMul_NegZero(state,dest);
 } /* EMFUNCDECL26( */
 
-static void EMFUNCDECL26(TeqpRegNorm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(TeqpRegNorm) (ARMul_State *state, ARMword instr) {
   register ARMword dest;
   ARMword rhs;
   EMFUNC_CONDTEST
@@ -384,7 +390,7 @@ static void EMFUNCDECL26(TeqpRegNorm) (ARMul_State *state, ARMword instr, ARMwor
   ARMul_NegZero(state,dest);
 } /* EMFUNCDECL26( */
 
-static void EMFUNCDECL26(CmpRegMrs2SwpNorm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(CmpRegMrs2SwpNorm) (ARMul_State *state, ARMword instr) {
   register ARMword temp;
   EMFUNC_CONDTEST
 
@@ -405,7 +411,7 @@ static void EMFUNCDECL26(CmpRegMrs2SwpNorm) (ARMul_State *state, ARMword instr, 
 
 } /* EMFUNCDECL26( */
 
-static void EMFUNCDECL26(CmppRegNorm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(CmppRegNorm) (ARMul_State *state, ARMword instr) {
   register ARMword dest;
   ARMword lhs,rhs;
   EMFUNC_CONDTEST
@@ -423,7 +429,7 @@ static void EMFUNCDECL26(CmppRegNorm) (ARMul_State *state, ARMword instr, ARMwor
                    }
 } /* EMFUNCDECL26( */
 
-static void EMFUNCDECL26(CmnpRegNorm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(CmnpRegNorm) (ARMul_State *state, ARMword instr) {
   register ARMword dest;
   ARMword lhs,rhs;
   EMFUNC_CONDTEST
@@ -441,7 +447,7 @@ static void EMFUNCDECL26(CmnpRegNorm) (ARMul_State *state, ARMword instr, ARMwor
   }
 } /* EMFUNCDECL26( */
 
-static void EMFUNCDECL26(OrrRegNorm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(OrrRegNorm) (ARMul_State *state, ARMword instr) {
   register ARMword dest;
   ARMword rhs;
   EMFUNC_CONDTEST
@@ -451,7 +457,7 @@ static void EMFUNCDECL26(OrrRegNorm) (ARMul_State *state, ARMword instr, ARMword
   WRITEDESTNORM(dest);
 } /* EMFUNCDECL26( */
 
-static void EMFUNCDECL26(OrrsRegNorm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(OrrsRegNorm) (ARMul_State *state, ARMword instr) {
   register ARMword dest;
   ARMword rhs;
 
@@ -461,7 +467,7 @@ static void EMFUNCDECL26(OrrsRegNorm) (ARMul_State *state, ARMword instr, ARMwor
   WRITESDESTNORM(dest);
 } /* EMFUNCDECL26( */
 
-static void EMFUNCDECL26(MovRegNorm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(MovRegNorm) (ARMul_State *state, ARMword instr) {
   register ARMword dest;
 
   EMFUNC_CONDTEST
@@ -469,7 +475,7 @@ static void EMFUNCDECL26(MovRegNorm) (ARMul_State *state, ARMword instr, ARMword
   WRITEDESTNORM(dest);
 } /* EMFUNCDECL26(MovReg */
 
-static void EMFUNCDECL26(MovsRegNorm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(MovsRegNorm) (ARMul_State *state, ARMword instr) {
   register ARMword dest;
 
   EMFUNC_CONDTEST
@@ -477,7 +483,7 @@ static void EMFUNCDECL26(MovsRegNorm) (ARMul_State *state, ARMword instr, ARMwor
   WRITESDESTNORM(dest);
 } /* EMFUNCDECL26(MovsReg */
 
-static void EMFUNCDECL26(BicRegNorm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(BicRegNorm) (ARMul_State *state, ARMword instr) {
   register ARMword dest;
   ARMword rhs;
 
@@ -487,7 +493,7 @@ static void EMFUNCDECL26(BicRegNorm) (ARMul_State *state, ARMword instr, ARMword
   WRITEDESTNORM(dest);
 } /* EMFUNCDECL26( */
 
-static void EMFUNCDECL26(BicsRegNorm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(BicsRegNorm) (ARMul_State *state, ARMword instr) {
   register ARMword dest;
   ARMword rhs;
 
@@ -497,7 +503,7 @@ static void EMFUNCDECL26(BicsRegNorm) (ARMul_State *state, ARMword instr, ARMwor
   WRITESDESTNORM(dest);
 } /* EMFUNCDECL26( */
 
-static void EMFUNCDECL26(MvnRegNorm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(MvnRegNorm) (ARMul_State *state, ARMword instr) {
   register ARMword dest;
 
   EMFUNC_CONDTEST
@@ -505,7 +511,7 @@ static void EMFUNCDECL26(MvnRegNorm) (ARMul_State *state, ARMword instr, ARMword
   WRITEDESTNORM(dest);
 } /* EMFUNCDECL26( */
 
-static void EMFUNCDECL26(MvnsRegNorm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(MvnsRegNorm) (ARMul_State *state, ARMword instr) {
   register ARMword dest;
 
   EMFUNC_CONDTEST
@@ -513,7 +519,7 @@ static void EMFUNCDECL26(MvnsRegNorm) (ARMul_State *state, ARMword instr, ARMwor
   WRITESDESTNORM(dest);
 } /* EMFUNCDECL26( */
 
-static void EMFUNCDECL26(TstRegMrs1SwpPC) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(TstRegMrs1SwpPC) (ARMul_State *state, ARMword instr) {
   register ARMword dest, temp;
 
   EMFUNC_CONDTEST
@@ -539,7 +545,7 @@ static void EMFUNCDECL26(TstRegMrs1SwpPC) (ARMul_State *state, ARMword instr, AR
 
 } /* EMFUNCDECL26( */
 
-static void EMFUNCDECL26(TstpRegPC) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(TstpRegPC) (ARMul_State *state, ARMword instr) {
   register ARMword temp;
   ARMword rhs;
 
@@ -549,7 +555,7 @@ static void EMFUNCDECL26(TstpRegPC) (ARMul_State *state, ARMword instr, ARMword 
   SETR15PSR(temp);
 } /* EMFUNCDECL26( */
 
-static void EMFUNCDECL26(TeqpRegPC) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(TeqpRegPC) (ARMul_State *state, ARMword instr) {
   register ARMword temp;
   ARMword rhs;
   EMFUNC_CONDTEST
@@ -559,7 +565,7 @@ static void EMFUNCDECL26(TeqpRegPC) (ARMul_State *state, ARMword instr, ARMword 
   SETR15PSR(temp);
 } /* EMFUNCDECL26( */
 
-static void EMFUNCDECL26(CmpRegMrs2SwpPC) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(CmpRegMrs2SwpPC) (ARMul_State *state, ARMword instr) {
   register ARMword temp;
   EMFUNC_CONDTEST
 
@@ -580,7 +586,7 @@ static void EMFUNCDECL26(CmpRegMrs2SwpPC) (ARMul_State *state, ARMword instr, AR
 
 } /* EMFUNCDECL26( */
 
-static void EMFUNCDECL26(CmppRegPC) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(CmppRegPC) (ARMul_State *state, ARMword instr) {
   register ARMword temp;
   ARMword rhs;
   EMFUNC_CONDTEST
@@ -590,7 +596,7 @@ static void EMFUNCDECL26(CmppRegPC) (ARMul_State *state, ARMword instr, ARMword 
   SETR15PSR(temp);
 } /* EMFUNCDECL26( */
 
-static void EMFUNCDECL26(CmnpRegPC) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(CmnpRegPC) (ARMul_State *state, ARMword instr) {
   register ARMword temp;
   ARMword rhs;
   EMFUNC_CONDTEST
@@ -601,7 +607,7 @@ static void EMFUNCDECL26(CmnpRegPC) (ARMul_State *state, ARMword instr, ARMword 
 
 } /* EMFUNCDECL26( */
 
-static void EMFUNCDECL26(OrrRegPC) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(OrrRegPC) (ARMul_State *state, ARMword instr) {
   register ARMword dest;
   ARMword rhs;
   EMFUNC_CONDTEST
@@ -611,7 +617,7 @@ static void EMFUNCDECL26(OrrRegPC) (ARMul_State *state, ARMword instr, ARMword p
   WRITEDESTPC(dest);
 } /* EMFUNCDECL26( */
 
-static void EMFUNCDECL26(OrrsRegPC) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(OrrsRegPC) (ARMul_State *state, ARMword instr) {
   register ARMword dest;
   ARMword rhs;
 
@@ -621,7 +627,7 @@ static void EMFUNCDECL26(OrrsRegPC) (ARMul_State *state, ARMword instr, ARMword 
   WRITESDESTPC(dest);
 } /* EMFUNCDECL26( */
 
-static void EMFUNCDECL26(MovRegPC) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(MovRegPC) (ARMul_State *state, ARMword instr) {
   register ARMword dest;
 
   EMFUNC_CONDTEST
@@ -629,7 +635,7 @@ static void EMFUNCDECL26(MovRegPC) (ARMul_State *state, ARMword instr, ARMword p
   WRITEDESTPC(dest);
 } /* EMFUNCDECL26(MovReg */
 
-static void EMFUNCDECL26(MovsRegPC) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(MovsRegPC) (ARMul_State *state, ARMword instr) {
   register ARMword dest;
 
   EMFUNC_CONDTEST
@@ -637,7 +643,7 @@ static void EMFUNCDECL26(MovsRegPC) (ARMul_State *state, ARMword instr, ARMword 
   WRITESDESTPC(dest);
 } /* EMFUNCDECL26(MovsReg */
 
-static void EMFUNCDECL26(BicRegPC) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(BicRegPC) (ARMul_State *state, ARMword instr) {
   register ARMword dest;
   ARMword rhs;
 
@@ -647,7 +653,7 @@ static void EMFUNCDECL26(BicRegPC) (ARMul_State *state, ARMword instr, ARMword p
   WRITEDESTPC(dest);
 } /* EMFUNCDECL26( */
 
-static void EMFUNCDECL26(BicsRegPC) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(BicsRegPC) (ARMul_State *state, ARMword instr) {
   register ARMword dest;
   ARMword rhs;
 
@@ -657,7 +663,7 @@ static void EMFUNCDECL26(BicsRegPC) (ARMul_State *state, ARMword instr, ARMword 
   WRITESDESTPC(dest);
 } /* EMFUNCDECL26( */
 
-static void EMFUNCDECL26(MvnRegPC) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(MvnRegPC) (ARMul_State *state, ARMword instr) {
   register ARMword dest;
 
   EMFUNC_CONDTEST
@@ -665,7 +671,7 @@ static void EMFUNCDECL26(MvnRegPC) (ARMul_State *state, ARMword instr, ARMword p
   WRITEDESTPC(dest);
 } /* EMFUNCDECL26( */
 
-static void EMFUNCDECL26(MvnsRegPC) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(MvnsRegPC) (ARMul_State *state, ARMword instr) {
   register ARMword dest;
 
   EMFUNC_CONDTEST
@@ -673,7 +679,7 @@ static void EMFUNCDECL26(MvnsRegPC) (ARMul_State *state, ARMword instr, ARMword 
   WRITESDESTPC(dest);
 } /* EMFUNCDECL26( */
 
-static void EMFUNCDECL26(AndImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(AndImm) (ARMul_State *state, ARMword instr) {
   register ARMword dest;
 
   EMFUNC_CONDTEST
@@ -681,7 +687,7 @@ static void EMFUNCDECL26(AndImm) (ARMul_State *state, ARMword instr, ARMword pc)
   WRITEDEST(dest);
 } /* EMFUNCDECL26( */
 
-static void EMFUNCDECL26(AndsImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(AndsImm) (ARMul_State *state, ARMword instr) {
   register ARMword dest,rhs,temp;
 
   EMFUNC_CONDTEST
@@ -690,7 +696,7 @@ static void EMFUNCDECL26(AndsImm) (ARMul_State *state, ARMword instr, ARMword pc
   WRITESDEST(dest);
 } /* EMFUNCDECL26( */
 
-static void EMFUNCDECL26(EorImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(EorImm) (ARMul_State *state, ARMword instr) {
   register ARMword dest;
 
   EMFUNC_CONDTEST
@@ -698,7 +704,7 @@ static void EMFUNCDECL26(EorImm) (ARMul_State *state, ARMword instr, ARMword pc)
   WRITEDEST(dest);
 } /* EMFUNCDECL26( */
 
-static void EMFUNCDECL26(EorsImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(EorsImm) (ARMul_State *state, ARMword instr) {
   register ARMword dest,rhs,temp;
 
   EMFUNC_CONDTEST
@@ -707,7 +713,7 @@ static void EMFUNCDECL26(EorsImm) (ARMul_State *state, ARMword instr, ARMword pc
   WRITESDEST(dest);
 } /* EMFUNCDECL26( */
 
-static void EMFUNCDECL26(SubImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(SubImm) (ARMul_State *state, ARMword instr) {
   register ARMword dest;
 
   EMFUNC_CONDTEST
@@ -715,7 +721,7 @@ static void EMFUNCDECL26(SubImm) (ARMul_State *state, ARMword instr, ARMword pc)
   WRITEDEST(dest);
 } /* EMFUNCDECL26( */
 
-static void EMFUNCDECL26(SubsImmNorm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(SubsImmNorm) (ARMul_State *state, ARMword instr) {
   register ARMword dest,rhs,lhs;
 
   EMFUNC_CONDTEST
@@ -737,7 +743,7 @@ static void EMFUNCDECL26(SubsImmNorm) (ARMul_State *state, ARMword instr, ARMwor
 
 } /* EMFUNCDECL26( */
 
-/*static void EMFUNCDECL26(SubsImmPc) (ARMul_State *state, ARMword instr, ARMword pc) {
+/*static void EMFUNCDECL26(SubsImmPc) (ARMul_State *state, ARMword instr) {
   register ARMword dest,rhs,lhs;
 
   EMFUNC_CONDTEST
@@ -756,7 +762,7 @@ static void EMFUNCDECL26(SubsImmNorm) (ARMul_State *state, ARMword instr, ARMwor
 
 }*/ /* EMFUNCDECL26( */
 
-static void EMFUNCDECL26(RsbImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(RsbImm) (ARMul_State *state, ARMword instr) {
   register ARMword dest;
 
   EMFUNC_CONDTEST
@@ -764,7 +770,7 @@ static void EMFUNCDECL26(RsbImm) (ARMul_State *state, ARMword instr, ARMword pc)
   WRITEDEST(dest);
 } /* EMFUNCDECL26( */
 
-static void EMFUNCDECL26(RsbsImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(RsbsImm) (ARMul_State *state, ARMword instr) {
   register ARMword dest,rhs,lhs;
 
   EMFUNC_CONDTEST
@@ -782,7 +788,7 @@ static void EMFUNCDECL26(RsbsImm) (ARMul_State *state, ARMword instr, ARMword pc
 
 } /* EMFUNCDECL26( */
 
-static void EMFUNCDECL26(AddImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(AddImm) (ARMul_State *state, ARMword instr) {
   register ARMword dest;
 
   EMFUNC_CONDTEST
@@ -790,7 +796,7 @@ static void EMFUNCDECL26(AddImm) (ARMul_State *state, ARMword instr, ARMword pc)
   WRITEDEST(dest);
 } /* EMFUNCDECL26( */
 
-static void EMFUNCDECL26(AddsImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(AddsImm) (ARMul_State *state, ARMword instr) {
   register ARMword dest,lhs,rhs;
 
   EMFUNC_CONDTEST
@@ -810,7 +816,7 @@ static void EMFUNCDECL26(AddsImm) (ARMul_State *state, ARMword instr, ARMword pc
 
 } /* EMFUNCDECL26( */
 
-static void EMFUNCDECL26(AdcImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(AdcImm) (ARMul_State *state, ARMword instr) {
   register ARMword dest;
 
   EMFUNC_CONDTEST
@@ -818,7 +824,7 @@ static void EMFUNCDECL26(AdcImm) (ARMul_State *state, ARMword instr, ARMword pc)
   WRITEDEST(dest);
 } /* EMFUNCDECL26( */
 
-static void EMFUNCDECL26(AdcsImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(AdcsImm) (ARMul_State *state, ARMword instr) {
   register ARMword dest,lhs,rhs;
 
   EMFUNC_CONDTEST
@@ -838,7 +844,7 @@ static void EMFUNCDECL26(AdcsImm) (ARMul_State *state, ARMword instr, ARMword pc
 
 } /* EMFUNCDECL26( */
 
-static void EMFUNCDECL26(SbcImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(SbcImm) (ARMul_State *state, ARMword instr) {
   register ARMword dest;
 
   EMFUNC_CONDTEST
@@ -846,7 +852,7 @@ static void EMFUNCDECL26(SbcImm) (ARMul_State *state, ARMword instr, ARMword pc)
   WRITEDEST(dest);
 } /* EMFUNCDECL26( */
 
-static void EMFUNCDECL26(SbcsImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(SbcsImm) (ARMul_State *state, ARMword instr) {
   register ARMword dest,lhs,rhs;
   EMFUNC_CONDTEST
              lhs = LHS;
@@ -862,7 +868,7 @@ static void EMFUNCDECL26(SbcsImm) (ARMul_State *state, ARMword instr, ARMword pc
              WRITESDEST(dest);
 } /* EMFUNCDECL26( */
 
-static void EMFUNCDECL26(RscImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(RscImm) (ARMul_State *state, ARMword instr) {
   register ARMword dest;
 
   EMFUNC_CONDTEST
@@ -870,7 +876,7 @@ static void EMFUNCDECL26(RscImm) (ARMul_State *state, ARMword instr, ARMword pc)
   WRITEDEST(dest);
 } /* EMFUNCDECL26( */
 
-static void EMFUNCDECL26(RscsImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(RscsImm) (ARMul_State *state, ARMword instr) {
   register ARMword dest,lhs,rhs;
   EMFUNC_CONDTEST
 
@@ -888,7 +894,7 @@ static void EMFUNCDECL26(RscsImm) (ARMul_State *state, ARMword instr, ARMword pc
 
 } /* EMFUNCDECL26( */
 
-static void EMFUNCDECL26(TstpImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(TstpImm) (ARMul_State *state, ARMword instr) {
   register ARMword dest,rhs,temp;
   EMFUNC_CONDTEST
 
@@ -904,7 +910,7 @@ static void EMFUNCDECL26(TstpImm) (ARMul_State *state, ARMword instr, ARMword pc
 
 } /* EMFUNCDECL26( */
 
-static void EMFUNCDECL26(TeqpImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(TeqpImm) (ARMul_State *state, ARMword instr) {
   register ARMword dest,rhs,temp;
   EMFUNC_CONDTEST
 
@@ -920,7 +926,7 @@ static void EMFUNCDECL26(TeqpImm) (ARMul_State *state, ARMword instr, ARMword pc
 
 } /* EMFUNCDECL26( */
 
-static void EMFUNCDECL26(CmppImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(CmppImm) (ARMul_State *state, ARMword instr) {
   register ARMword dest,lhs,rhs,temp;
   EMFUNC_CONDTEST
 
@@ -944,7 +950,7 @@ static void EMFUNCDECL26(CmppImm) (ARMul_State *state, ARMword instr, ARMword pc
 
 } /* EMFUNCDECL26( */
 
-static void EMFUNCDECL26(CmnpImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(CmnpImm) (ARMul_State *state, ARMword instr) {
   register ARMword dest,lhs,rhs,temp;
   EMFUNC_CONDTEST
 
@@ -970,7 +976,7 @@ static void EMFUNCDECL26(CmnpImm) (ARMul_State *state, ARMword instr, ARMword pc
 
 } /* EMFUNCDECL26( */
 
-static void EMFUNCDECL26(OrrImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(OrrImm) (ARMul_State *state, ARMword instr) {
   register ARMword dest;
   EMFUNC_CONDTEST
 
@@ -978,7 +984,7 @@ static void EMFUNCDECL26(OrrImm) (ARMul_State *state, ARMword instr, ARMword pc)
   WRITEDEST(dest);
 } /* EMFUNCDECL26( */
 
-static void EMFUNCDECL26(OrrsImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(OrrsImm) (ARMul_State *state, ARMword instr) {
   register ARMword dest,rhs,temp;
   EMFUNC_CONDTEST
 
@@ -987,7 +993,7 @@ static void EMFUNCDECL26(OrrsImm) (ARMul_State *state, ARMword instr, ARMword pc
   WRITESDEST(dest);
 } /* EMFUNCDECL26( */
 
-static void EMFUNCDECL26(MovImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(MovImm) (ARMul_State *state, ARMword instr) {
   register ARMword dest;
   EMFUNC_CONDTEST
 
@@ -995,7 +1001,7 @@ static void EMFUNCDECL26(MovImm) (ARMul_State *state, ARMword instr, ARMword pc)
   WRITEDEST(dest);
 } /* EMFUNCDECL26( */
 
-static void EMFUNCDECL26(MovsImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(MovsImm) (ARMul_State *state, ARMword instr) {
   register ARMword rhs,temp;
   EMFUNC_CONDTEST
 
@@ -1003,7 +1009,7 @@ static void EMFUNCDECL26(MovsImm) (ARMul_State *state, ARMword instr, ARMword pc
   WRITESDEST(rhs);
 } /* EMFUNCDECL26( */
 
-static void EMFUNCDECL26(BicImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(BicImm) (ARMul_State *state, ARMword instr) {
   register ARMword dest;
   EMFUNC_CONDTEST
 
@@ -1011,7 +1017,7 @@ static void EMFUNCDECL26(BicImm) (ARMul_State *state, ARMword instr, ARMword pc)
   WRITEDEST(dest);
 } /* EMFUNCDECL26( */
 
-static void EMFUNCDECL26(BicsImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(BicsImm) (ARMul_State *state, ARMword instr) {
   register ARMword dest,rhs,temp;
   EMFUNC_CONDTEST
 
@@ -1020,7 +1026,7 @@ static void EMFUNCDECL26(BicsImm) (ARMul_State *state, ARMword instr, ARMword pc
   WRITESDEST(dest);
 } /* EMFUNCDECL26( */
 
-static void EMFUNCDECL26(MvnImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(MvnImm) (ARMul_State *state, ARMword instr) {
   register ARMword dest;
   EMFUNC_CONDTEST
 
@@ -1028,7 +1034,7 @@ static void EMFUNCDECL26(MvnImm) (ARMul_State *state, ARMword instr, ARMword pc)
   WRITEDEST(dest);
 } /* EMFUNCDECL26( */
 
-static void EMFUNCDECL26(MvnsImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(MvnsImm) (ARMul_State *state, ARMword instr) {
   register ARMword rhs,temp;
   EMFUNC_CONDTEST
 
@@ -1037,7 +1043,7 @@ static void EMFUNCDECL26(MvnsImm) (ARMul_State *state, ARMword instr, ARMword pc
 } /* EMFUNCDECL26( */
 
 
-static void EMFUNCDECL26(StoreNoWritePostDecImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(StoreNoWritePostDecImm) (ARMul_State *state, ARMword instr) {
   register ARMword lhs;
   EMFUNC_CONDTEST
              lhs = LHS;
@@ -1045,7 +1051,7 @@ static void EMFUNCDECL26(StoreNoWritePostDecImm) (ARMul_State *state, ARMword in
                 LSBase = lhs - LSImmRHS;
 }
 
-static void EMFUNCDECL26(LoadNoWritePostDecImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(LoadNoWritePostDecImm) (ARMul_State *state, ARMword instr) {
   register ARMword lhs;
   EMFUNC_CONDTEST
              lhs = LHS;
@@ -1053,7 +1059,7 @@ static void EMFUNCDECL26(LoadNoWritePostDecImm) (ARMul_State *state, ARMword ins
                 LSBase = lhs - LSImmRHS;
 }
 
-static void EMFUNCDECL26(StoreWritePostDecImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(StoreWritePostDecImm) (ARMul_State *state, ARMword instr) {
   register ARMword lhs,temp;
   EMFUNC_CONDTEST
              lhs = LHS;
@@ -1064,7 +1070,7 @@ static void EMFUNCDECL26(StoreWritePostDecImm) (ARMul_State *state, ARMword inst
              state->NtransSig = (R15MODE)?HIGH:LOW;
 }
 
-static void EMFUNCDECL26(LoadWritePostDecImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(LoadWritePostDecImm) (ARMul_State *state, ARMword instr) {
   register ARMword lhs;
   EMFUNC_CONDTEST
              lhs = LHS;
@@ -1074,7 +1080,7 @@ static void EMFUNCDECL26(LoadWritePostDecImm) (ARMul_State *state, ARMword instr
              state->NtransSig = (R15MODE)?HIGH:LOW;
 }
 
-static void EMFUNCDECL26(StoreBNoWritePostDecImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(StoreBNoWritePostDecImm) (ARMul_State *state, ARMword instr) {
   register ARMword lhs;
   EMFUNC_CONDTEST
              lhs = LHS;
@@ -1082,7 +1088,7 @@ static void EMFUNCDECL26(StoreBNoWritePostDecImm) (ARMul_State *state, ARMword i
                 LSBase = lhs - LSImmRHS;
 }
 
-static void EMFUNCDECL26(LoadBNoWritePostDecImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(LoadBNoWritePostDecImm) (ARMul_State *state, ARMword instr) {
   register ARMword lhs;
   EMFUNC_CONDTEST
              lhs = LHS;
@@ -1090,7 +1096,7 @@ static void EMFUNCDECL26(LoadBNoWritePostDecImm) (ARMul_State *state, ARMword in
                 LSBase = lhs - LSImmRHS;
 }
 
-static void EMFUNCDECL26(StoreBWritePostDecImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(StoreBWritePostDecImm) (ARMul_State *state, ARMword instr) {
   register ARMword lhs;
   EMFUNC_CONDTEST
              lhs = LHS;
@@ -1100,7 +1106,7 @@ static void EMFUNCDECL26(StoreBWritePostDecImm) (ARMul_State *state, ARMword ins
              state->NtransSig = (R15MODE)?HIGH:LOW;
 }
 
-static void EMFUNCDECL26(LoadBWritePostDecImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(LoadBWritePostDecImm) (ARMul_State *state, ARMword instr) {
   register ARMword lhs;
   EMFUNC_CONDTEST
              lhs = LHS;
@@ -1110,7 +1116,7 @@ static void EMFUNCDECL26(LoadBWritePostDecImm) (ARMul_State *state, ARMword inst
              state->NtransSig = (R15MODE)?HIGH:LOW;
 }
 
-static void EMFUNCDECL26(StoreNoWritePostIncImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(StoreNoWritePostIncImm) (ARMul_State *state, ARMword instr) {
   register ARMword lhs;
   EMFUNC_CONDTEST
              lhs = LHS;
@@ -1118,7 +1124,7 @@ static void EMFUNCDECL26(StoreNoWritePostIncImm) (ARMul_State *state, ARMword in
                 LSBase = lhs + LSImmRHS;
 }
 
-static void EMFUNCDECL26(LoadNoWritePostIncImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(LoadNoWritePostIncImm) (ARMul_State *state, ARMword instr) {
   register ARMword lhs;
   EMFUNC_CONDTEST
              lhs = LHS;
@@ -1126,7 +1132,7 @@ static void EMFUNCDECL26(LoadNoWritePostIncImm) (ARMul_State *state, ARMword ins
                 LSBase = lhs + LSImmRHS;
 }
 
-static void EMFUNCDECL26(StoreWritePostIncImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(StoreWritePostIncImm) (ARMul_State *state, ARMword instr) {
   register ARMword lhs;
   EMFUNC_CONDTEST
              lhs = LHS;
@@ -1136,7 +1142,7 @@ static void EMFUNCDECL26(StoreWritePostIncImm) (ARMul_State *state, ARMword inst
              state->NtransSig = (R15MODE)?HIGH:LOW;
 }
 
-static void EMFUNCDECL26(LoadWritePostIncImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(LoadWritePostIncImm) (ARMul_State *state, ARMword instr) {
   register ARMword lhs;
   EMFUNC_CONDTEST
              lhs = LHS;
@@ -1146,7 +1152,7 @@ static void EMFUNCDECL26(LoadWritePostIncImm) (ARMul_State *state, ARMword instr
              state->NtransSig = (R15MODE)?HIGH:LOW;
 }
 
-static void EMFUNCDECL26(StoreBNoWritePostIncImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(StoreBNoWritePostIncImm) (ARMul_State *state, ARMword instr) {
   register ARMword lhs;
   EMFUNC_CONDTEST
              lhs = LHS;
@@ -1154,7 +1160,7 @@ static void EMFUNCDECL26(StoreBNoWritePostIncImm) (ARMul_State *state, ARMword i
                 LSBase = lhs + LSImmRHS;
 }
 
-static void EMFUNCDECL26(LoadBNoWritePostIncImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(LoadBNoWritePostIncImm) (ARMul_State *state, ARMword instr) {
   register ARMword lhs;
   EMFUNC_CONDTEST
              lhs = LHS;
@@ -1162,7 +1168,7 @@ static void EMFUNCDECL26(LoadBNoWritePostIncImm) (ARMul_State *state, ARMword in
                 LSBase = lhs + LSImmRHS;
 }
 
-static void EMFUNCDECL26(StoreBWritePostIncImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(StoreBWritePostIncImm) (ARMul_State *state, ARMword instr) {
   register ARMword lhs;
   EMFUNC_CONDTEST
              lhs = LHS;
@@ -1172,7 +1178,7 @@ static void EMFUNCDECL26(StoreBWritePostIncImm) (ARMul_State *state, ARMword ins
              state->NtransSig = (R15MODE)?HIGH:LOW;
 }
 
-static void EMFUNCDECL26(LoadBWritePostIncImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(LoadBWritePostIncImm) (ARMul_State *state, ARMword instr) {
   register ARMword lhs;
   EMFUNC_CONDTEST
              lhs = LHS;
@@ -1183,17 +1189,17 @@ static void EMFUNCDECL26(LoadBWritePostIncImm) (ARMul_State *state, ARMword inst
 }
 
 
-static void EMFUNCDECL26(StoreNoWritePreDecImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(StoreNoWritePreDecImm) (ARMul_State *state, ARMword instr) {
   EMFUNC_CONDTEST
              (void)StoreWord(state,instr,LHS - LSImmRHS);
 }
 
-static void EMFUNCDECL26(LoadNoWritePreDecImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(LoadNoWritePreDecImm) (ARMul_State *state, ARMword instr) {
   EMFUNC_CONDTEST
              (void)LoadWord(state,instr,LHS - LSImmRHS);
 }
 
-static void EMFUNCDECL26(StoreWritePreDecImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(StoreWritePreDecImm) (ARMul_State *state, ARMword instr) {
   register ARMword temp;
   EMFUNC_CONDTEST
              temp = LHS - LSImmRHS;
@@ -1201,7 +1207,7 @@ static void EMFUNCDECL26(StoreWritePreDecImm) (ARMul_State *state, ARMword instr
                 LSBase = temp;
 }
 
-static void EMFUNCDECL26(LoadWritePreDecImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(LoadWritePreDecImm) (ARMul_State *state, ARMword instr) {
   register ARMword temp;
   EMFUNC_CONDTEST
              temp = LHS - LSImmRHS;
@@ -1209,17 +1215,17 @@ static void EMFUNCDECL26(LoadWritePreDecImm) (ARMul_State *state, ARMword instr,
                 LSBase = temp;
 }
 
-static void EMFUNCDECL26(StoreBNoWritePreDecImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(StoreBNoWritePreDecImm) (ARMul_State *state, ARMword instr) {
   EMFUNC_CONDTEST
              (void)StoreByte(state,instr,LHS - LSImmRHS);
 }
 
-static void EMFUNCDECL26(LoadBNoWritePreDecImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(LoadBNoWritePreDecImm) (ARMul_State *state, ARMword instr) {
   EMFUNC_CONDTEST
              (void)LoadByte(state,instr,LHS - LSImmRHS);
 }
 
-static void EMFUNCDECL26(StoreBWritePreDecImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(StoreBWritePreDecImm) (ARMul_State *state, ARMword instr) {
   register ARMword temp;
   EMFUNC_CONDTEST
              temp = LHS - LSImmRHS;
@@ -1227,7 +1233,7 @@ static void EMFUNCDECL26(StoreBWritePreDecImm) (ARMul_State *state, ARMword inst
                 LSBase = temp;
 }
 
-static void EMFUNCDECL26(LoadBWritePreDecImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(LoadBWritePreDecImm) (ARMul_State *state, ARMword instr) {
   register ARMword temp;
   EMFUNC_CONDTEST
              temp = LHS - LSImmRHS;
@@ -1235,17 +1241,17 @@ static void EMFUNCDECL26(LoadBWritePreDecImm) (ARMul_State *state, ARMword instr
                 LSBase = temp;
 }
 
-static void EMFUNCDECL26(StoreNoWritePreIncImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(StoreNoWritePreIncImm) (ARMul_State *state, ARMword instr) {
   EMFUNC_CONDTEST
              (void)StoreWord(state,instr,LHS + LSImmRHS);
 }
 
-static void EMFUNCDECL26(LoadNoWritePreIncImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(LoadNoWritePreIncImm) (ARMul_State *state, ARMword instr) {
   EMFUNC_CONDTEST
              (void)LoadWord(state,instr,LHS + LSImmRHS);
 }
 
-static void EMFUNCDECL26(StoreWritePreIncImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(StoreWritePreIncImm) (ARMul_State *state, ARMword instr) {
   register ARMword temp;
   EMFUNC_CONDTEST
              temp = LHS + LSImmRHS;
@@ -1253,7 +1259,7 @@ static void EMFUNCDECL26(StoreWritePreIncImm) (ARMul_State *state, ARMword instr
                 LSBase = temp;
 }
 
-static void EMFUNCDECL26(LoadWritePreIncImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(LoadWritePreIncImm) (ARMul_State *state, ARMword instr) {
   register ARMword temp;
   EMFUNC_CONDTEST
              temp = LHS + LSImmRHS;
@@ -1261,17 +1267,17 @@ static void EMFUNCDECL26(LoadWritePreIncImm) (ARMul_State *state, ARMword instr,
                 LSBase = temp;
 }
 
-static void EMFUNCDECL26(StoreBNoWritePreIncImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(StoreBNoWritePreIncImm) (ARMul_State *state, ARMword instr) {
   EMFUNC_CONDTEST
              (void)StoreByte(state,instr,LHS + LSImmRHS);
 }
 
-static void EMFUNCDECL26(LoadBNoWritePreIncImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(LoadBNoWritePreIncImm) (ARMul_State *state, ARMword instr) {
   EMFUNC_CONDTEST
              (void)LoadByte(state,instr,LHS + LSImmRHS);
 }
 
-static void EMFUNCDECL26(StoreBWritePreIncImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(StoreBWritePreIncImm) (ARMul_State *state, ARMword instr) {
   register ARMword temp;
   EMFUNC_CONDTEST
              temp = LHS + LSImmRHS;
@@ -1279,7 +1285,7 @@ static void EMFUNCDECL26(StoreBWritePreIncImm) (ARMul_State *state, ARMword inst
                 LSBase = temp;
 }
 
-static void EMFUNCDECL26(LoadBWritePreIncImm) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(LoadBWritePreIncImm) (ARMul_State *state, ARMword instr) {
   register ARMword temp;
   EMFUNC_CONDTEST
              temp = LHS + LSImmRHS;
@@ -1288,7 +1294,7 @@ static void EMFUNCDECL26(LoadBWritePreIncImm) (ARMul_State *state, ARMword instr
 }
 
 
-static void EMFUNCDECL26(StoreNoWritePostDecReg) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(StoreNoWritePostDecReg) (ARMul_State *state, ARMword instr) {
   register ARMword lhs;
   EMFUNC_CONDTEST
              lhs = LHS;
@@ -1296,7 +1302,7 @@ static void EMFUNCDECL26(StoreNoWritePostDecReg) (ARMul_State *state, ARMword in
                 LSBase = lhs - LSRegRHS;
 }
 
-static void EMFUNCDECL26(LoadNoWritePostDecReg) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(LoadNoWritePostDecReg) (ARMul_State *state, ARMword instr) {
   register ARMword lhs;
   EMFUNC_CONDTEST
              lhs = LHS;
@@ -1304,7 +1310,7 @@ static void EMFUNCDECL26(LoadNoWritePostDecReg) (ARMul_State *state, ARMword ins
                 LSBase = lhs - LSRegRHS;
 }
 
-static void EMFUNCDECL26(StoreWritePostDecReg) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(StoreWritePostDecReg) (ARMul_State *state, ARMword instr) {
   register ARMword lhs;
   EMFUNC_CONDTEST
              lhs = LHS;
@@ -1314,7 +1320,7 @@ static void EMFUNCDECL26(StoreWritePostDecReg) (ARMul_State *state, ARMword inst
              state->NtransSig = (R15MODE)?HIGH:LOW;
 }
 
-static void EMFUNCDECL26(LoadWritePostDecReg) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(LoadWritePostDecReg) (ARMul_State *state, ARMword instr) {
   register ARMword lhs;
   EMFUNC_CONDTEST
              lhs = LHS;
@@ -1324,7 +1330,7 @@ static void EMFUNCDECL26(LoadWritePostDecReg) (ARMul_State *state, ARMword instr
              state->NtransSig = (R15MODE)?HIGH:LOW;
 }
 
-static void EMFUNCDECL26(StoreBNoWritePostDecReg) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(StoreBNoWritePostDecReg) (ARMul_State *state, ARMword instr) {
   register ARMword lhs;
   EMFUNC_CONDTEST
              lhs = LHS;
@@ -1332,7 +1338,7 @@ static void EMFUNCDECL26(StoreBNoWritePostDecReg) (ARMul_State *state, ARMword i
                 LSBase = lhs - LSRegRHS;
 }
 
-static void EMFUNCDECL26(LoadBNoWritePostDecReg) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(LoadBNoWritePostDecReg) (ARMul_State *state, ARMword instr) {
   register ARMword lhs;
   EMFUNC_CONDTEST
              lhs = LHS;
@@ -1340,7 +1346,7 @@ static void EMFUNCDECL26(LoadBNoWritePostDecReg) (ARMul_State *state, ARMword in
                 LSBase = lhs - LSRegRHS;
 }
 
-static void EMFUNCDECL26(StoreBWritePostDecReg) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(StoreBWritePostDecReg) (ARMul_State *state, ARMword instr) {
   register ARMword lhs;
   EMFUNC_CONDTEST
              lhs = LHS;
@@ -1350,7 +1356,7 @@ static void EMFUNCDECL26(StoreBWritePostDecReg) (ARMul_State *state, ARMword ins
              state->NtransSig = (R15MODE)?HIGH:LOW;
 }
 
-static void EMFUNCDECL26(LoadBWritePostDecReg) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(LoadBWritePostDecReg) (ARMul_State *state, ARMword instr) {
   register ARMword lhs;
   EMFUNC_CONDTEST
              lhs = LHS;
@@ -1360,7 +1366,7 @@ static void EMFUNCDECL26(LoadBWritePostDecReg) (ARMul_State *state, ARMword inst
              state->NtransSig = (R15MODE)?HIGH:LOW;
 }
 
-static void EMFUNCDECL26(StoreNoWritePostIncReg) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(StoreNoWritePostIncReg) (ARMul_State *state, ARMword instr) {
   register ARMword lhs;
   EMFUNC_CONDTEST
              lhs = LHS;
@@ -1368,7 +1374,7 @@ static void EMFUNCDECL26(StoreNoWritePostIncReg) (ARMul_State *state, ARMword in
                 LSBase = lhs + LSRegRHS;
 }
 
-static void EMFUNCDECL26(LoadNoWritePostIncReg) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(LoadNoWritePostIncReg) (ARMul_State *state, ARMword instr) {
   register ARMword lhs;
   EMFUNC_CONDTEST
              lhs = LHS;
@@ -1376,7 +1382,7 @@ static void EMFUNCDECL26(LoadNoWritePostIncReg) (ARMul_State *state, ARMword ins
                 LSBase = lhs + LSRegRHS;
 }
 
-static void EMFUNCDECL26(StoreWritePostIncReg) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(StoreWritePostIncReg) (ARMul_State *state, ARMword instr) {
   register ARMword lhs;
   EMFUNC_CONDTEST
              lhs = LHS;
@@ -1386,7 +1392,7 @@ static void EMFUNCDECL26(StoreWritePostIncReg) (ARMul_State *state, ARMword inst
              state->NtransSig = (R15MODE)?HIGH:LOW;
 }
 
-static void EMFUNCDECL26(LoadWritePostIncReg) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(LoadWritePostIncReg) (ARMul_State *state, ARMword instr) {
   register ARMword lhs;
   EMFUNC_CONDTEST
              lhs = LHS;
@@ -1396,7 +1402,7 @@ static void EMFUNCDECL26(LoadWritePostIncReg) (ARMul_State *state, ARMword instr
              state->NtransSig = (R15MODE)?HIGH:LOW;
 }
 
-static void EMFUNCDECL26(StoreBNoWritePostIncReg) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(StoreBNoWritePostIncReg) (ARMul_State *state, ARMword instr) {
   register ARMword lhs;
   EMFUNC_CONDTEST
              lhs = LHS;
@@ -1404,7 +1410,7 @@ static void EMFUNCDECL26(StoreBNoWritePostIncReg) (ARMul_State *state, ARMword i
                 LSBase = lhs + LSRegRHS;
 }
 
-static void EMFUNCDECL26(LoadBNoWritePostIncReg) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(LoadBNoWritePostIncReg) (ARMul_State *state, ARMword instr) {
   register ARMword lhs;
   EMFUNC_CONDTEST
              lhs = LHS;
@@ -1412,7 +1418,7 @@ static void EMFUNCDECL26(LoadBNoWritePostIncReg) (ARMul_State *state, ARMword in
                 LSBase = lhs + LSRegRHS;
 }
 
-static void EMFUNCDECL26(StoreBWritePostIncReg) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(StoreBWritePostIncReg) (ARMul_State *state, ARMword instr) {
   register ARMword lhs;
   EMFUNC_CONDTEST
              lhs = LHS;
@@ -1422,7 +1428,7 @@ static void EMFUNCDECL26(StoreBWritePostIncReg) (ARMul_State *state, ARMword ins
              state->NtransSig = (R15MODE)?HIGH:LOW;
 }
 
-static void EMFUNCDECL26(LoadBWritePostIncReg) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(LoadBWritePostIncReg) (ARMul_State *state, ARMword instr) {
   register ARMword lhs;
   EMFUNC_CONDTEST
              lhs = LHS;
@@ -1433,17 +1439,17 @@ static void EMFUNCDECL26(LoadBWritePostIncReg) (ARMul_State *state, ARMword inst
 }
 
 
-static void EMFUNCDECL26(StoreNoWritePreDecReg) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(StoreNoWritePreDecReg) (ARMul_State *state, ARMword instr) {
   EMFUNC_CONDTEST
              (void)StoreWord(state,instr,LHS - LSRegRHS);
 }
 
-static void EMFUNCDECL26(LoadNoWritePreDecReg) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(LoadNoWritePreDecReg) (ARMul_State *state, ARMword instr) {
   EMFUNC_CONDTEST
              (void)LoadWord(state,instr,LHS - LSRegRHS);
 }
 
-static void EMFUNCDECL26(StoreWritePreDecReg) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(StoreWritePreDecReg) (ARMul_State *state, ARMword instr) {
   register ARMword temp;
   EMFUNC_CONDTEST
              temp = LHS - LSRegRHS;
@@ -1451,7 +1457,7 @@ static void EMFUNCDECL26(StoreWritePreDecReg) (ARMul_State *state, ARMword instr
                 LSBase = temp;
 }
 
-static void EMFUNCDECL26(LoadWritePreDecReg) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(LoadWritePreDecReg) (ARMul_State *state, ARMword instr) {
   register ARMword temp;
   EMFUNC_CONDTEST
              temp = LHS - LSRegRHS;
@@ -1459,17 +1465,17 @@ static void EMFUNCDECL26(LoadWritePreDecReg) (ARMul_State *state, ARMword instr,
                 LSBase = temp;
 }
 
-static void EMFUNCDECL26(StoreBNoWritePreDecReg) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(StoreBNoWritePreDecReg) (ARMul_State *state, ARMword instr) {
   EMFUNC_CONDTEST
              (void)StoreByte(state,instr,LHS - LSRegRHS);
 }
 
-static void EMFUNCDECL26(LoadBNoWritePreDecReg) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(LoadBNoWritePreDecReg) (ARMul_State *state, ARMword instr) {
   EMFUNC_CONDTEST
              (void)LoadByte(state,instr,LHS - LSRegRHS);
 }
 
-static void EMFUNCDECL26(StoreBWritePreDecReg) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(StoreBWritePreDecReg) (ARMul_State *state, ARMword instr) {
   register ARMword temp;
   EMFUNC_CONDTEST
              temp = LHS - LSRegRHS;
@@ -1477,7 +1483,7 @@ static void EMFUNCDECL26(StoreBWritePreDecReg) (ARMul_State *state, ARMword inst
                 LSBase = temp;
 }
 
-static void EMFUNCDECL26(LoadBWritePreDecReg) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(LoadBWritePreDecReg) (ARMul_State *state, ARMword instr) {
   register ARMword temp;
   EMFUNC_CONDTEST
              temp = LHS - LSRegRHS;
@@ -1485,17 +1491,17 @@ static void EMFUNCDECL26(LoadBWritePreDecReg) (ARMul_State *state, ARMword instr
                 LSBase = temp;
 }
 
-static void EMFUNCDECL26(StoreNoWritePreIncReg) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(StoreNoWritePreIncReg) (ARMul_State *state, ARMword instr) {
   EMFUNC_CONDTEST
              (void)StoreWord(state,instr,LHS + LSRegRHS);
 }
 
-static void EMFUNCDECL26(LoadNoWritePreIncReg) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(LoadNoWritePreIncReg) (ARMul_State *state, ARMword instr) {
   EMFUNC_CONDTEST
              (void)LoadWord(state,instr,LHS + LSRegRHS);
 }
 
-static void EMFUNCDECL26(StoreWritePreIncReg) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(StoreWritePreIncReg) (ARMul_State *state, ARMword instr) {
   register ARMword temp;
   EMFUNC_CONDTEST
              temp = LHS + LSRegRHS;
@@ -1503,7 +1509,7 @@ static void EMFUNCDECL26(StoreWritePreIncReg) (ARMul_State *state, ARMword instr
                 LSBase = temp;
 }
 
-static void EMFUNCDECL26(LoadWritePreIncReg) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(LoadWritePreIncReg) (ARMul_State *state, ARMword instr) {
   register ARMword temp;
   EMFUNC_CONDTEST
              temp = LHS + LSRegRHS;
@@ -1511,17 +1517,17 @@ static void EMFUNCDECL26(LoadWritePreIncReg) (ARMul_State *state, ARMword instr,
                 LSBase = temp;
 }
 
-static void EMFUNCDECL26(StoreBNoWritePreIncReg) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(StoreBNoWritePreIncReg) (ARMul_State *state, ARMword instr) {
   EMFUNC_CONDTEST
              (void)StoreByte(state,instr,LHS + LSRegRHS);
 }
 
-static void EMFUNCDECL26(LoadBNoWritePreIncReg) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(LoadBNoWritePreIncReg) (ARMul_State *state, ARMword instr) {
   EMFUNC_CONDTEST
              (void)LoadByte(state,instr,LHS + LSRegRHS);
 }
 
-static void EMFUNCDECL26(StoreBWritePreIncReg) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(StoreBWritePreIncReg) (ARMul_State *state, ARMword instr) {
   register ARMword temp;
   EMFUNC_CONDTEST
              temp = LHS + LSRegRHS;
@@ -1529,7 +1535,7 @@ static void EMFUNCDECL26(StoreBWritePreIncReg) (ARMul_State *state, ARMword inst
                 LSBase = temp;
 }
 
-static void EMFUNCDECL26(LoadBWritePreIncReg) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(LoadBWritePreIncReg) (ARMul_State *state, ARMword instr) {
   register ARMword temp;
   EMFUNC_CONDTEST
              temp = LHS + LSRegRHS;
@@ -1537,32 +1543,32 @@ static void EMFUNCDECL26(LoadBWritePreIncReg) (ARMul_State *state, ARMword instr
                 LSBase = temp;
 }
 
-static void EMFUNCDECL26(Undef) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(Undef) (ARMul_State *state, ARMword instr) {
   EMFUNC_CONDTEST
   ARMul_UndefInstr(state,instr);
 }
 
-static void EMFUNCDECL26(MultiStorePostDec) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(MultiStorePostDec) (ARMul_State *state, ARMword instr) {
   EMFUNC_CONDTEST
 
   STOREMULT(instr,LSBase - LSMNumRegs + 4L,0L);
 }
 
-static void EMFUNCDECL26(MultiLoadPostDec) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(MultiLoadPostDec) (ARMul_State *state, ARMword instr) {
   EMFUNC_CONDTEST
 
   LOADMULT(instr,LSBase - LSMNumRegs + 4L,0L);
   
 }
 
-static void EMFUNCDECL26(MultiStoreWritePostDec) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(MultiStoreWritePostDec) (ARMul_State *state, ARMword instr) {
   register ARMword temp;
   EMFUNC_CONDTEST
 
   temp = LSBase - LSMNumRegs;
   STOREMULT(instr,temp + 4L,temp);}
 
-static void EMFUNCDECL26(MultiLoadWritePostDec) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(MultiLoadWritePostDec) (ARMul_State *state, ARMword instr) {
   register ARMword temp;
   EMFUNC_CONDTEST
 
@@ -1571,19 +1577,19 @@ static void EMFUNCDECL26(MultiLoadWritePostDec) (ARMul_State *state, ARMword ins
 
 }
 
-static void EMFUNCDECL26(MultiStoreFlagsPostDec) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(MultiStoreFlagsPostDec) (ARMul_State *state, ARMword instr) {
   EMFUNC_CONDTEST
 
   STORESMULT(instr,LSBase - LSMNumRegs + 4L,0L);
 }
 
-static void EMFUNCDECL26(MultiLoadFlagsPostDec) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(MultiLoadFlagsPostDec) (ARMul_State *state, ARMword instr) {
   EMFUNC_CONDTEST
 
   LOADSMULT(instr,LSBase - LSMNumRegs + 4L,0L);
 }
 
-static void EMFUNCDECL26(MultiStoreWriteFlagsPostDec) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(MultiStoreWriteFlagsPostDec) (ARMul_State *state, ARMword instr) {
   register ARMword temp;
   EMFUNC_CONDTEST
 
@@ -1591,7 +1597,7 @@ static void EMFUNCDECL26(MultiStoreWriteFlagsPostDec) (ARMul_State *state, ARMwo
   STORESMULT(instr,temp + 4L,temp);
 }
 
-static void EMFUNCDECL26(MultiLoadWriteFlagsPostDec) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(MultiLoadWriteFlagsPostDec) (ARMul_State *state, ARMword instr) {
   register ARMword temp;
   EMFUNC_CONDTEST
 
@@ -1599,19 +1605,19 @@ static void EMFUNCDECL26(MultiLoadWriteFlagsPostDec) (ARMul_State *state, ARMwor
   LOADSMULT(instr,temp + 4L,temp);
 }
 
-static void EMFUNCDECL26(MultiStorePostInc) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(MultiStorePostInc) (ARMul_State *state, ARMword instr) {
   EMFUNC_CONDTEST
 
   STOREMULT(instr,LSBase,0L);
 }
 
-static void EMFUNCDECL26(MultiLoadPostInc) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(MultiLoadPostInc) (ARMul_State *state, ARMword instr) {
   EMFUNC_CONDTEST
 
   LOADMULT(instr,LSBase,0L);
 }
 
-static void EMFUNCDECL26(MultiStoreWritePostInc) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(MultiStoreWritePostInc) (ARMul_State *state, ARMword instr) {
   register ARMword temp;
   EMFUNC_CONDTEST
 
@@ -1619,7 +1625,7 @@ static void EMFUNCDECL26(MultiStoreWritePostInc) (ARMul_State *state, ARMword in
   STOREMULT(instr,temp,temp + LSMNumRegs);
 }
 
-static void EMFUNCDECL26(MultiLoadWritePostInc) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(MultiLoadWritePostInc) (ARMul_State *state, ARMword instr) {
   register ARMword temp;
   EMFUNC_CONDTEST
 
@@ -1627,19 +1633,19 @@ static void EMFUNCDECL26(MultiLoadWritePostInc) (ARMul_State *state, ARMword ins
   LOADMULT(instr,temp,temp + LSMNumRegs);
 }
 
-static void EMFUNCDECL26(MultiStoreFlagsPostInc) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(MultiStoreFlagsPostInc) (ARMul_State *state, ARMword instr) {
   EMFUNC_CONDTEST
 
   STORESMULT(instr,LSBase,0L);
 }
 
-static void EMFUNCDECL26(MultiLoadFlagsPostInc) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(MultiLoadFlagsPostInc) (ARMul_State *state, ARMword instr) {
   EMFUNC_CONDTEST
 
   LOADSMULT(instr,LSBase,0L);
 }
 
-static void EMFUNCDECL26(MultiStoreWriteFlagsPostInc) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(MultiStoreWriteFlagsPostInc) (ARMul_State *state, ARMword instr) {
   register ARMword temp;
   EMFUNC_CONDTEST
 
@@ -1647,7 +1653,7 @@ static void EMFUNCDECL26(MultiStoreWriteFlagsPostInc) (ARMul_State *state, ARMwo
   STORESMULT(instr,temp,temp + LSMNumRegs);
 }
 
-static void EMFUNCDECL26(MultiLoadWriteFlagsPostInc) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(MultiLoadWriteFlagsPostInc) (ARMul_State *state, ARMword instr) {
   register ARMword temp;
   EMFUNC_CONDTEST
 
@@ -1655,19 +1661,19 @@ static void EMFUNCDECL26(MultiLoadWriteFlagsPostInc) (ARMul_State *state, ARMwor
   LOADSMULT(instr,temp,temp + LSMNumRegs);
 }
 
-static void EMFUNCDECL26(MultiStorePreDec) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(MultiStorePreDec) (ARMul_State *state, ARMword instr) {
   EMFUNC_CONDTEST
 
   STOREMULT(instr,LSBase - LSMNumRegs,0L);
 }
 
-static void EMFUNCDECL26(MultiLoadPreDec) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(MultiLoadPreDec) (ARMul_State *state, ARMword instr) {
   EMFUNC_CONDTEST
 
   LOADMULT(instr,LSBase - LSMNumRegs,0L);
 }
 
-static void EMFUNCDECL26(MultiStoreWritePreDec) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(MultiStoreWritePreDec) (ARMul_State *state, ARMword instr) {
   register ARMword temp;
   EMFUNC_CONDTEST
 
@@ -1675,7 +1681,7 @@ static void EMFUNCDECL26(MultiStoreWritePreDec) (ARMul_State *state, ARMword ins
   STOREMULT(instr,temp,temp);
 }
 
-static void EMFUNCDECL26(MultiLoadWritePreDec) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(MultiLoadWritePreDec) (ARMul_State *state, ARMword instr) {
   register ARMword temp;
   EMFUNC_CONDTEST
 
@@ -1683,20 +1689,20 @@ static void EMFUNCDECL26(MultiLoadWritePreDec) (ARMul_State *state, ARMword inst
   LOADMULT(instr,temp,temp);
 }
 
-static void EMFUNCDECL26(MultiStoreFlagsPreDec) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(MultiStoreFlagsPreDec) (ARMul_State *state, ARMword instr) {
   EMFUNC_CONDTEST
 
   STORESMULT(instr,LSBase - LSMNumRegs,0L);
   
 }
 
-static void EMFUNCDECL26(MultiLoadFlagsPreDec) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(MultiLoadFlagsPreDec) (ARMul_State *state, ARMword instr) {
   EMFUNC_CONDTEST
 
   LOADSMULT(instr,LSBase - LSMNumRegs,0L);
 }
 
-static void EMFUNCDECL26(MultiStoreWriteFlagsPreDec) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(MultiStoreWriteFlagsPreDec) (ARMul_State *state, ARMword instr) {
   register ARMword temp;
   EMFUNC_CONDTEST
 
@@ -1704,7 +1710,7 @@ static void EMFUNCDECL26(MultiStoreWriteFlagsPreDec) (ARMul_State *state, ARMwor
   STORESMULT(instr,temp,temp);
 }
 
-static void EMFUNCDECL26(MultiLoadWriteFlagsPreDec) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(MultiLoadWriteFlagsPreDec) (ARMul_State *state, ARMword instr) {
   register ARMword temp;
   EMFUNC_CONDTEST
 
@@ -1712,19 +1718,19 @@ static void EMFUNCDECL26(MultiLoadWriteFlagsPreDec) (ARMul_State *state, ARMword
   LOADSMULT(instr,temp,temp);
 }
 
-static void EMFUNCDECL26(MultiStorePreInc) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(MultiStorePreInc) (ARMul_State *state, ARMword instr) {
   EMFUNC_CONDTEST
 
   STOREMULT(instr,LSBase + 4L,0L);
 }
 
-static void EMFUNCDECL26(MultiLoadPreInc) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(MultiLoadPreInc) (ARMul_State *state, ARMword instr) {
   EMFUNC_CONDTEST
 
   LOADMULT(instr,LSBase + 4L,0L);
 }
 
-static void EMFUNCDECL26(MultiStoreWritePreInc) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(MultiStoreWritePreInc) (ARMul_State *state, ARMword instr) {
   register ARMword temp;
   EMFUNC_CONDTEST
 
@@ -1732,7 +1738,7 @@ static void EMFUNCDECL26(MultiStoreWritePreInc) (ARMul_State *state, ARMword ins
   STOREMULT(instr,temp + 4L,temp + LSMNumRegs);
 }
 
-static void EMFUNCDECL26(MultiLoadWritePreInc) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(MultiLoadWritePreInc) (ARMul_State *state, ARMword instr) {
   register ARMword temp;
   EMFUNC_CONDTEST
 
@@ -1740,19 +1746,19 @@ static void EMFUNCDECL26(MultiLoadWritePreInc) (ARMul_State *state, ARMword inst
   LOADMULT(instr,temp + 4L,temp + LSMNumRegs);
 }
 
-static void EMFUNCDECL26(MultiStoreFlagsPreInc) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(MultiStoreFlagsPreInc) (ARMul_State *state, ARMword instr) {
   EMFUNC_CONDTEST
 
   STORESMULT(instr,LSBase + 4L,0L);
 }
 
-static void EMFUNCDECL26(MultiLoadFlagsPreInc) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(MultiLoadFlagsPreInc) (ARMul_State *state, ARMword instr) {
   EMFUNC_CONDTEST
 
   LOADSMULT(instr,LSBase + 4L,0L);
 }
 
-static void EMFUNCDECL26(MultiStoreWriteFlagsPreInc) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(MultiStoreWriteFlagsPreInc) (ARMul_State *state, ARMword instr) {
   register ARMword temp;
   EMFUNC_CONDTEST
 
@@ -1760,7 +1766,7 @@ static void EMFUNCDECL26(MultiStoreWriteFlagsPreInc) (ARMul_State *state, ARMwor
   STORESMULT(instr,temp + 4L,temp + LSMNumRegs);
 }
 
-static void EMFUNCDECL26(MultiLoadWriteFlagsPreInc) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(MultiLoadWriteFlagsPreInc) (ARMul_State *state, ARMword instr) {
   register ARMword temp;
   EMFUNC_CONDTEST
 
@@ -1768,7 +1774,7 @@ static void EMFUNCDECL26(MultiLoadWriteFlagsPreInc) (ARMul_State *state, ARMword
   LOADSMULT(instr,temp + 4L,temp + LSMNumRegs);
 }
 
-static void EMFUNCDECL26(CoLoadWritePostDec) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(CoLoadWritePostDec) (ARMul_State *state, ARMword instr) {
   register ARMword lhs;
   EMFUNC_CONDTEST
 
@@ -1777,20 +1783,20 @@ static void EMFUNCDECL26(CoLoadWritePostDec) (ARMul_State *state, ARMword instr,
   ARMul_LDC(state,instr,lhs);
 }
 
-static void EMFUNCDECL26(CoStoreNoWritePostDec) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(CoStoreNoWritePostDec) (ARMul_State *state, ARMword instr) {
   EMFUNC_CONDTEST
 
   ARMul_STC(state,instr,LHS);
 
 }
 
-static void EMFUNCDECL26(CoLoadNoWritePostDec) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(CoLoadNoWritePostDec) (ARMul_State *state, ARMword instr) {
   EMFUNC_CONDTEST
 
   ARMul_LDC(state,instr,LHS);
 }
 
-static void EMFUNCDECL26(CoStoreWritePostDec) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(CoStoreWritePostDec) (ARMul_State *state, ARMword instr) {
   register ARMword lhs;
   EMFUNC_CONDTEST
 
@@ -1799,19 +1805,19 @@ static void EMFUNCDECL26(CoStoreWritePostDec) (ARMul_State *state, ARMword instr
   ARMul_STC(state,instr,lhs);
 }
 
-static void EMFUNCDECL26(CoStoreNoWritePostInc) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(CoStoreNoWritePostInc) (ARMul_State *state, ARMword instr) {
   EMFUNC_CONDTEST
 
   ARMul_STC(state,instr,LHS);
 }
 
-static void EMFUNCDECL26(CoLoadNoWritePostInc) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(CoLoadNoWritePostInc) (ARMul_State *state, ARMword instr) {
   EMFUNC_CONDTEST
 
   ARMul_LDC(state,instr,LHS);
 }
 
-static void EMFUNCDECL26(CoStoreWritePostInc) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(CoStoreWritePostInc) (ARMul_State *state, ARMword instr) {
   register ARMword lhs;
   EMFUNC_CONDTEST
 
@@ -1820,7 +1826,7 @@ static void EMFUNCDECL26(CoStoreWritePostInc) (ARMul_State *state, ARMword instr
   ARMul_STC(state,instr,LHS);
 }
 
-static void EMFUNCDECL26(CoLoadWritePostInc) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(CoLoadWritePostInc) (ARMul_State *state, ARMword instr) {
   register ARMword lhs;
   EMFUNC_CONDTEST
 
@@ -1829,19 +1835,19 @@ static void EMFUNCDECL26(CoLoadWritePostInc) (ARMul_State *state, ARMword instr,
   ARMul_LDC(state,instr,LHS);
 }
 
-static void EMFUNCDECL26(CoStoreNoWritePreDec) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(CoStoreNoWritePreDec) (ARMul_State *state, ARMword instr) {
   EMFUNC_CONDTEST
 
   ARMul_STC(state,instr,LHS - LSCOff);
 }
 
-static void EMFUNCDECL26(CoLoadNoWritePreDec) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(CoLoadNoWritePreDec) (ARMul_State *state, ARMword instr) {
   EMFUNC_CONDTEST
 
   ARMul_LDC(state,instr,LHS - LSCOff);
 }
 
-static void EMFUNCDECL26(CoStoreWritePreDec) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(CoStoreWritePreDec) (ARMul_State *state, ARMword instr) {
   register ARMword lhs;
   EMFUNC_CONDTEST
 
@@ -1850,7 +1856,7 @@ static void EMFUNCDECL26(CoStoreWritePreDec) (ARMul_State *state, ARMword instr,
   ARMul_STC(state,instr,lhs);
 }
 
-static void EMFUNCDECL26(CoLoadWritePreDec) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(CoLoadWritePreDec) (ARMul_State *state, ARMword instr) {
   register ARMword lhs;
   EMFUNC_CONDTEST
 
@@ -1859,20 +1865,20 @@ static void EMFUNCDECL26(CoLoadWritePreDec) (ARMul_State *state, ARMword instr, 
   ARMul_LDC(state,instr,lhs);
 }
 
-static void EMFUNCDECL26(CoStoreNoWritePreInc) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(CoStoreNoWritePreInc) (ARMul_State *state, ARMword instr) {
   EMFUNC_CONDTEST
 
   ARMul_STC(state,instr,LHS + LSCOff);
 
 }
 
-static void EMFUNCDECL26(CoLoadNoWritePreInc) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(CoLoadNoWritePreInc) (ARMul_State *state, ARMword instr) {
   EMFUNC_CONDTEST
 
   ARMul_LDC(state,instr,LHS + LSCOff);
 }
 
-static void EMFUNCDECL26(CoStoreWritePreInc) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(CoStoreWritePreInc) (ARMul_State *state, ARMword instr) {
   register ARMword lhs;
   EMFUNC_CONDTEST
 
@@ -1881,7 +1887,7 @@ static void EMFUNCDECL26(CoStoreWritePreInc) (ARMul_State *state, ARMword instr,
   ARMul_STC(state,instr,lhs);
 }
 
-static void EMFUNCDECL26(CoLoadWritePreInc) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(CoLoadWritePreInc) (ARMul_State *state, ARMword instr) {
   register ARMword lhs;
   EMFUNC_CONDTEST
 
@@ -1890,7 +1896,7 @@ static void EMFUNCDECL26(CoLoadWritePreInc) (ARMul_State *state, ARMword instr, 
   ARMul_LDC(state,instr,lhs);
 }
 
-static void EMFUNCDECL26(CoMCRDataOp) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(CoMCRDataOp) (ARMul_State *state, ARMword instr) {
   EMFUNC_CONDTEST
              if (BIT(4)) { /* MCR */
                 if (DESTReg == 15) {
@@ -1904,7 +1910,7 @@ static void EMFUNCDECL26(CoMCRDataOp) (ARMul_State *state, ARMword instr, ARMwor
                 ARMul_CDP(state,instr);
 }
 
-static void EMFUNCDECL26(CoMRCDataOp) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(CoMRCDataOp) (ARMul_State *state, ARMword instr) {
   register ARMword temp;
   EMFUNC_CONDTEST
 
@@ -1920,9 +1926,9 @@ static void EMFUNCDECL26(CoMRCDataOp) (ARMul_State *state, ARMword instr, ARMwor
                 ARMul_CDP(state,instr);
 }
 
-static void EMFUNCDECL26(SWI) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(SWI) (ARMul_State *state, ARMword instr) {
   EMFUNC_CONDTEST
-             if (instr == ARMul_ABORTWORD && state->AbortAddr == pc) { /* a prefetch abort */
+             if (instr == ARMul_ABORTWORD && state->AbortAddr == ((state->Reg[15]-8) & R15PCBITS)) { /* a prefetch abort */
                 ARMul_Abort(state,ARMul_PrefetchAbortV);
                 return;
                 }
@@ -1930,5 +1936,5 @@ static void EMFUNCDECL26(SWI) (ARMul_State *state, ARMword instr, ARMword pc) {
                 ARMul_Abort(state,ARMul_SWIV);
 }
 
-static void EMFUNCDECL26(Noop) (ARMul_State *state, ARMword instr, ARMword pc) {
+static void EMFUNCDECL26(Noop) (ARMul_State *state, ARMword instr) {
 }

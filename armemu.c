@@ -38,7 +38,7 @@ extern PipelineEntry abortpipe;
 /***************************************************************************\
 *                   Load Instruction                                        *
 \***************************************************************************/
-static void
+static inline void
 ARMul_LoadInstr(ARMul_State *state,ARMword addr, PipelineEntry *p)
 {
   state->NumCycles++;
@@ -1069,7 +1069,9 @@ void
 ARMul_Emulate26(ARMul_State *state)
 {
   PipelineEntry pipe[PIPESIZE];   /* Instruction pipeline */
+#ifndef FLATPIPE
   ARMword pc = 0;          /* The address of the current instruction */
+#endif
   uint_fast8_t pipeidx = 0; /* Index of instruction to run */
 
   EmuRate_Reset(state);
@@ -1083,7 +1085,9 @@ ARMul_Emulate26(ARMul_State *state)
     if (state->NextInstr < PRIMEPIPE) {
       pipe[1].instr = state->decoded;
       pipe[2].instr = state->loaded;
+#ifndef FLATPIPE
       pc            = state->pc;
+#endif
 
       pipe[1].func = ARMul_Emulate_DecodeInstr(pipe[1].instr);
       pipe[2].func = ARMul_Emulate_DecodeInstr(pipe[2].instr);
@@ -1190,13 +1194,13 @@ ARMul_Emulate26(ARMul_State *state)
       }
 #else
 /* pipeidx = 0 */
+      ARMword r15 = state->Reg[15];
       Prof_Begin("Fetch/decode");
       switch (state->NextInstr) {
         case NORMAL: /* Advance the pipeline, and an S cycle */
-          INCPCAMT(4);
+          r15 += 4; /* Assume we don't care about the flags being corrupted by the PC wrapping */
         case PCINCED: /* Program counter advanced, and an S cycle */
-          pc += 4;
-          ARMul_LoadInstr(state, pc + 8, &pipe[0]);
+          ARMul_LoadInstr(state, r15, &pipe[0]);
           NORMALCYCLE;
           break;
         default: /* The program counter has been changed */
@@ -1213,8 +1217,11 @@ ARMul_Emulate26(ARMul_State *state)
         Prof_EndFunc(func);
       }
 
-      ARMword r15 = state->Reg[15];
       ARMword excep = state->Exception &~r15;
+      
+      /* Write back updated PC before handling exception/instruction */
+      state->Reg[15] = r15;
+
       if (excep) { /* Any exceptions */
         pipeidx = 1;
         if (excep & Exception_FIQ) {
@@ -1230,22 +1237,21 @@ ARMul_Emulate26(ARMul_State *state)
       }
 
       ARMword instr = pipe[1].instr;
-      /*fprintf(stderr, "exec: pc=0x%08x instr=0x%08x\n", pc, instr);*/
       if(ARMul_CCCheck(instr,(r15 & CCBITS)))
       {
         Prof_BeginFunc(pipe[1].func);
-        (pipe[1].func)(state, instr, pc);
+        (pipe[1].func)(state, instr);
         Prof_EndFunc(pipe[1].func);
       }
 
 /* pipeidx = 1 */
+      r15 = state->Reg[15];
       Prof_Begin("Fetch/decode");
       switch (state->NextInstr) {
         case NORMAL: /* Advance the pipeline, and an S cycle */
-          INCPCAMT(4);
+          r15 += 4; /* Assume we don't care about the flags being corrupted by the PC wrapping */
         case PCINCED: /* Program counter advanced, and an S cycle */
-          pc += 4;
-          ARMul_LoadInstr(state, pc + 8, &pipe[1]);
+          ARMul_LoadInstr(state, r15, &pipe[1]);
           NORMALCYCLE;
           break;
         default: /* The program counter has been changed */
@@ -1262,8 +1268,11 @@ ARMul_Emulate26(ARMul_State *state)
         Prof_EndFunc(func);
       }
 
-      r15 = state->Reg[15];
       excep = state->Exception &~r15;
+      
+      /* Write back updated PC before handling exception/instruction */
+      state->Reg[15] = r15;
+
       if (excep) { /* Any exceptions */
         pipeidx = 2;
         if (excep & Exception_FIQ) {
@@ -1279,32 +1288,27 @@ ARMul_Emulate26(ARMul_State *state)
       }
 
       instr = pipe[2].instr;
-      /*fprintf(stderr, "exec: pc=0x%08x instr=0x%08x\n", pc, instr);*/
       if(ARMul_CCCheck(instr,(r15 & CCBITS)))
       {
         Prof_BeginFunc(pipe[2].func);
-        (pipe[2].func)(state, instr, pc);
+        (pipe[2].func)(state, instr);
         Prof_EndFunc(pipe[2].func);
       }
 
 /* pipeidx = 2 */
+      r15 = state->Reg[15];
       Prof_Begin("Fetch/decode");
       switch (state->NextInstr) {
         case NORMAL: /* Advance the pipeline, and an S cycle */
-          INCPCAMT(4);
+          r15 += 4; /* Assume we don't care about the flags being corrupted by the PC wrapping */
         case PCINCED: /* Program counter advanced, and an S cycle */
-          pc += 4;
-          ARMul_LoadInstr(state, pc + 8, &pipe[2]);
+          ARMul_LoadInstr(state, r15, &pipe[2]);
           break;
         default: /* The program counter has been changed */
         reset_pipe:
-#ifdef DEBUG
-          printf("PC ch pc=0x%x (O 0x%x\n", state->Reg[15], pc);
-#endif
-          pc = PC;
-          INCPCAMT(8);
           state->Aborted = 0;
-          ARMul_LoadInstrTriplet(state, pc, pipe);
+          ARMul_LoadInstrTriplet(state, r15, pipe);
+          r15 += 8;
           break;
       }
       NORMALCYCLE;
@@ -1319,8 +1323,11 @@ ARMul_Emulate26(ARMul_State *state)
         Prof_EndFunc(func);
       }
 
-      r15 = state->Reg[15];
       excep = state->Exception &~r15;
+      
+      /* Write back updated PC before handling exception/instruction */
+      state->Reg[15] = r15;
+
       if (excep) { /* Any exceptions */
         pipeidx = 0;
         if (excep & Exception_FIQ) {
@@ -1336,11 +1343,10 @@ ARMul_Emulate26(ARMul_State *state)
       }
 
       instr = pipe[0].instr;
-      /*fprintf(stderr, "exec: pc=0x%08x instr=0x%08x\n", pc, instr);*/
       if(ARMul_CCCheck(instr,(r15 & CCBITS)))
       {
         Prof_BeginFunc(pipe[0].func);
-        (pipe[0].func)(state, instr, pc);
+        (pipe[0].func)(state, instr);
         Prof_EndFunc(pipe[0].func);
       }
 #endif
@@ -1348,6 +1354,10 @@ ARMul_Emulate26(ARMul_State *state)
 
     state->decoded = pipe[(pipeidx+1)%PIPESIZE].instr;
     state->loaded = pipe[(pipeidx+2)%PIPESIZE].instr;
+#ifndef FLATPIPE
     state->pc = pc;
+#else
+    state->pc = PC;
+#endif
   }
 } /* Emulate 26 in instruction based mode */

@@ -57,9 +57,10 @@ int __riscosify_control = 0;
 #define HOST_DIR_SEP_CHAR '.'
 #define HOST_DIR_SEP_STR "."
 
-/* ftello64/fseeko64 don't exist, but ftello/fseeko do */
+/* ftello64/fseeko64 don't exist, but ftello/fseeko do. Likewise, we need to use regular fopen. */
 #define ftello64 ftello
 #define fseeko64 fseeko
+#define fopen64 fopen
 
 #else /* __riscos__ */
 
@@ -86,8 +87,6 @@ int __riscosify_control = 0;
 static char HOSTFS_ROOT[512];
 
 #endif /* !HOSTFS_ARCEM */
-
-//#define OLD_FILECODE
 
 #define HOSTFS_PROTOCOL_VERSION	1
 
@@ -918,7 +917,7 @@ hostfs_open(ARMul_State *state)
   switch (state->Reg[0]) {
   case OPEN_MODE_READ:
     dbug_hostfs("\tOpen for read\n");
-    open_file[idx] = fopen(host_pathname, "rb");
+    open_file[idx] = fopen64(host_pathname, "rb");
     state->Reg[0] = FILE_INFO_WORD_READ_OK;
     break;
 
@@ -928,7 +927,7 @@ hostfs_open(ARMul_State *state)
 
   case OPEN_MODE_UPDATE:
     dbug_hostfs("\tOpen for update\n");
-    open_file[idx] = fopen(host_pathname, "rb+");
+    open_file[idx] = fopen64(host_pathname, "rb+");
     state->Reg[0] = (uint32_t) (FILE_INFO_WORD_READ_OK | FILE_INFO_WORD_WRITE_OK);
     break;
   }
@@ -982,19 +981,7 @@ hostfs_getbytes(ARMul_State *state)
 
   fseeko64(f, (off64_t) state->Reg[4], SEEK_SET);
 
-#ifdef OLD_FILECODE
-  ARMword i;
-
-  hostfs_ensure_buffer_size(state->Reg[3]);
-
-  fread(buffer, 1, state->Reg[3], f);
-
-  for (i = 0; i < state->Reg[3]; i++) {
-    ARMul_StoreByte(state, ptr++, buffer[i]);
-  }
-#else
   File_ReadRAM(f, ptr, state->Reg[3]);
-#endif
 }
 
 static void
@@ -1014,20 +1001,7 @@ hostfs_putbytes(ARMul_State *state)
 
   fseeko64(f, (off64_t) state->Reg[4], SEEK_SET);
 
-#ifdef OLD_FILECODE
-  ARMword i;
-
-  hostfs_ensure_buffer_size(state->Reg[3]);
-
-  for (i = 0; i < state->Reg[3]; i++) {
-    buffer[i] = ARMul_LoadByte(state, ptr);
-    ptr++;
-  }
-
-  fwrite(buffer, 1, state->Reg[3], f);
-#else
   File_WriteRAM(f, ptr, state->Reg[3]);
-#endif
 }
 
 static void
@@ -1245,7 +1219,7 @@ hostfs_write_file(ARMul_State *state, bool with_data)
     return;
   }
 
-  f = fopen(new_pathname, "wb");
+  f = fopen64(new_pathname, "wb");
   if (!f) {
     /* TODO handle errors */
     fprintf(stderr, "HostFS could not create file \'%s\': %s %d\n",
@@ -1253,34 +1227,6 @@ hostfs_write_file(ARMul_State *state, bool with_data)
     return;
   }
 
-#ifdef OLD_FILECODE
-  hostfs_ensure_buffer_size(BUFSIZE);
-
-  /* Fill the data buffer with 0's if we are not saving supplied data */
-  if (!with_data) {
-    memset(buffer, 0, BUFSIZE);
-  }
-
-  /* Save file in blocks of up to BUFSIZE */
-  while (length > 0) {
-    size_t buffer_amount = MIN(length, BUFSIZE);
-    size_t bytes_written;
-
-    if (with_data) {
-      unsigned i;
-
-      /* Copy the correct amount of data into the buffer */
-      for (i = 0; i < buffer_amount; i++) {
-        buffer[i] = ARMul_LoadByte(state, ptr);
-        ptr++;
-      }
-    }
-
-    /* TODO check for errors */
-    bytes_written = fwrite(buffer, 1, buffer_amount, f);
-    length -= bytes_written;
-  }
-#else
   size_t bytes_written;
   if (with_data) {
     bytes_written = File_WriteRAM(f,ptr,length);
@@ -1300,7 +1246,6 @@ hostfs_write_file(ARMul_State *state, bool with_data)
   }
 
   /* TODO - Check for errors */
-#endif
 
   fclose(f); /* TODO check for errors */
 
@@ -1570,31 +1515,14 @@ hostfs_file_255_load_file(ARMul_State *state)
   state->Reg[5] = object_info.attribs;
   state->Reg[6] = 0; /* TODO */
 
-  f = fopen(host_pathname, "rb");
+  f = fopen64(host_pathname, "rb");
   if (!f) {
     fprintf(stderr, "HostFS could not open file (File_255) \'%s\': %s %d\n",
             host_pathname, strerror(errno), errno);
     return;
   }
 
-#ifdef OLD_FILECODE
-  const unsigned BUFSIZE = MINIMUM_BUFFER_SIZE;
-  size_t bytes_read;
-
-  hostfs_ensure_buffer_size(BUFSIZE);
-
-  do {
-    unsigned i;
-
-    bytes_read = fread(buffer, 1, BUFSIZE, f);
-
-    for (i = 0; i < bytes_read; i++) {
-      ARMul_StoreByte(state, ptr++, buffer[i]);
-    }
-  } while (bytes_read == BUFSIZE);
-#else
   File_ReadRAM(f,ptr,state->Reg[4]);
-#endif
 
   fclose(f);
 }

@@ -21,7 +21,7 @@
 #define MEMORY_0x2000000_RAM_PHYS     0x2000000
 
 
-typedef void (*ARMEmuFunc)(ARMul_State *state, ARMword instr, ARMword pc);
+typedef void (*ARMEmuFunc)(ARMul_State *state, ARMword instr);
 
 ARMEmuFunc ARMul_Emulate_DecodeInstr(ARMword instr);
 
