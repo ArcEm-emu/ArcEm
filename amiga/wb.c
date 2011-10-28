@@ -139,8 +139,8 @@ void gettooltypes(struct WBArg *wbarg)
 			DisplayDev_UseUpdateFlags = 1;
 
 		if(s = (char *)IIcon->FindToolType(toolarray, "FRAMESKIP"))
-			PDD_FrameSkip = atoi(s);
-		else PDD_FrameSkip = 0;
+			DisplayDev_FrameSkip = atoi(s);
+		else DisplayDev_FrameSkip = 0;
 
 		if(IIcon->FindToolType(toolarray, "AUTOUPDATEFLAGS"))
 			DisplayDev_AutoUpdateFlags = 1;

@@ -44,15 +44,6 @@
       of the symbol. e.g.
       "#define PDD_Name(x) MyPDD_##x"
 
-   int PDD_FrameSkip
-    - If DisplayDev_UseUpdateFlags is 1, this is the reload value for the
-      frameskip counter. 0 disables frameskip.
-      - Note that this also affects the rate at which Host_PollDisplay is
-        called.
-    - However if DisplayDev_UseUpdateFlags is 0, this is the maximum number of
-      frames that can pass before a forced redraw occurs.
-    - Updated automatically if DisplayDev_AutoUpdateFlags is 1
-
    void PDD_Name(Host_PollDisplay)(ARMul_State *state)
     - Function that gets called after rendering each frame
 
@@ -516,7 +507,7 @@ static void PDD_Name(EventFunc)(ARMul_State *state,CycleCount nowtime)
     {
       return;
     }
-    DC.FrameSkip = PDD_FrameSkip;
+    DC.FrameSkip = DisplayDev_FrameSkip;
   }
 
   /* Ensure mode changes if pixel clock changed */
@@ -603,7 +594,7 @@ static void PDD_Name(EventFunc)(ARMul_State *state,CycleCount nowtime)
         {
           /* Disable */
           DisplayDev_UseUpdateFlags = 0;
-          PDD_FrameSkip = DC.Auto_FrameCount/DC.Auto_ForceRefresh;
+          DisplayDev_FrameSkip = DC.Auto_FrameCount/DC.Auto_ForceRefresh;
           ARMul_RebuildFastMap();
         }
         DC.Auto_FrameCount = 0;
@@ -620,7 +611,7 @@ static void PDD_Name(EventFunc)(ARMul_State *state,CycleCount nowtime)
         {
           /* Enable */        
           DisplayDev_UseUpdateFlags = 1;
-          PDD_FrameSkip = 0;
+          DisplayDev_FrameSkip = 0;
           ARMul_RebuildFastMap();
           /* Ensure the updateflags get reset */
           DC.ForceRefresh = true;
@@ -629,7 +620,7 @@ static void PDD_Name(EventFunc)(ARMul_State *state,CycleCount nowtime)
         else
         {
           /* Adjust frameskip value */
-          PDD_FrameSkip = DC.Auto_FrameCount/DC.Auto_ForceRefresh;
+          DisplayDev_FrameSkip = DC.Auto_FrameCount/DC.Auto_ForceRefresh;
         }
         DC.Auto_FrameCount = 0;
         DC.Auto_ForceRefresh = 0;
@@ -745,7 +736,7 @@ static void PDD_Name(EventFunc)(ARMul_State *state,CycleCount nowtime)
       /* Only update if forced, or frameskip has run out */
       if((flags & ROWFUNC_FORCE) || (!DC.FrameSkip))
       {
-        DC.FrameSkip = PDD_FrameSkip;
+        DC.FrameSkip = DisplayDev_FrameSkip;
 
         for(i=0;i<Height;i++)
         {

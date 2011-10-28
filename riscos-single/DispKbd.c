@@ -236,8 +236,6 @@ SDD_Name(Host_PollDisplay)(ARMul_State *state)
 static int BorderPalEntry; /* Border palette entry, or 256 if no spare entries */
 static int FakeBorderPalEntry=-1; /* Palette entry currently in use for the fake border (i.e. closest colour to real border colour; for when BorderPalEntry == 256). -1 if dirty and needs redraw. */
 
-static int PDD_FrameSkip = 0;
-
 typedef struct {
   ARMword *data;
   int offset;
@@ -995,9 +993,9 @@ static const menu_item items[] =
 {
   {'1',"Display driver",values_display,XX(hArcemConfig.eDisplayDriver)},
   {'2',"Red/blue swap 16bpp output",values_bool,XX(hArcemConfig.bRedBlueSwap)},
-  {'3',"Palettised auto UpdateFlags",values_bool,XX(DisplayDev_AutoUpdateFlags)},
-  {'4',"Palettised uses UpdateFlags",values_bool,XX(DisplayDev_UseUpdateFlags)},
-  {'5',"Palettised output frameskip",values_skip,XX(PDD_FrameSkip)},
+  {'3',"Display auto UpdateFlags",values_bool,XX(DisplayDev_AutoUpdateFlags)},
+  {'4',"Display uses UpdateFlags",values_bool,XX(DisplayDev_UseUpdateFlags)},
+  {'5',"Display frameskip",values_skip,XX(DisplayDev_FrameSkip)},
   {'6',"Aspect ratio correction",values_bool,XX(hArcemConfig.bAspectRatioCorrection)},
   {'7',"2X upscaling",values_bool,XX(hArcemConfig.bUpscale)},
   {'8',"Take screenshots on Print Screen",values_bool,XX(enable_screenshots)},
@@ -1092,7 +1090,7 @@ static void GoMenu(void)
       {
         /* Make sure these are sane */
         DisplayDev_UseUpdateFlags = 1;
-        PDD_FrameSkip = 0;
+        DisplayDev_FrameSkip = 0;
       }
     }
   } while(1);

@@ -210,8 +210,6 @@ static void set_cursor_palette(uint16_t *pal)
 
 static int BorderPalEntry;
 
-static int PDD_FrameSkip = 4; /* TODO - Tweak */
-
 static int palette_updated = 0;
 
 typedef struct {
@@ -446,6 +444,8 @@ DisplayDev_Init(ARMul_State *state)
   SelectScreenMode(320, 240, 3);
 
   openJoypad();
+
+  DisplayDev_FrameSkip = 4; /* TODO - Tweak */
 
   return DisplayDev_Set(state,&PDD_DisplayDev);
 } /* DisplayDev_Init */

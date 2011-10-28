@@ -49,9 +49,11 @@ struct Vidc_Regs {
 #define VIDC (*(state->Display))
 
 extern const DisplayDev *DisplayDev_Current; /* Pointer to current display device */
-extern bool DisplayDev_UseUpdateFlags; /* Global flag for whether the current device is using ARMul_State.UpdateFlags */
+extern bool DisplayDev_UseUpdateFlags; /* Global flag for whether the current device is using MEMC.UpdateFlags */
 
-extern bool DisplayDev_AutoUpdateFlags; /* Automatically select whether to use UpdateFlags or not */
+extern bool DisplayDev_AutoUpdateFlags; /* Automatically select whether to use UpdateFlags or not. If true, this causes DisplayDev_UseUpdateFlags and DisplayDev_FrameSkip to be updated automatically. */
+
+extern int DisplayDev_FrameSkip; /* If DisplayDev_UseUpdateFlags is true, this provides a frameskip value used by the standard & palettised drivers. If DisplayDev_UseUpdateFlags is false, it acts as failsafe counter that forces an update when a certain number of frames have passed */
 
 extern int DisplayDev_Set(ARMul_State *state,const DisplayDev *dev); /* Switch to indicated display device, returns nonzero on failure */
 

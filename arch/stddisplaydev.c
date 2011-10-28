@@ -206,6 +206,12 @@ struct SDD_Name(DisplayInfo) {
     uint32_t LineRate; /* Line rate, measured in EmuRate clock cycles */
     uint32_t Vptr; /* DMA pointer, in bits, as offset from start of phys RAM */
     uint32_t LastVinit; /* Last Vinit, so we can sync changes with the frame start */
+    int FrameSkip; /* Current frame skip counter */
+
+    /* DisplayDev_AutoUpdateFlags logic */
+
+    int Auto_FrameCount; /* How many frames have passed */
+    int Auto_ForceRefresh; /* How many frames caused a forced refresh */
   } Control;
 
   struct {
@@ -324,6 +330,8 @@ static inline void SDD_Name(PaletteUpdate8bpp)(ARMul_State *state,SDD_HostColour
    Returns non-zero if the row was updated
 */
 typedef int (*SDD_Name(RowFunc))(ARMul_State *state,int row,SDD_Row drow,int flags);
+/* Alternate version for when UpdateFlags are disabled */
+typedef void (*SDD_Name(RowFuncNoFlags))(ARMul_State *state,int row,SDD_Row drow);
 
 
 #define ROWFUNC_FORCE 0x1 /* Force row to be fully redrawn */
@@ -334,6 +342,8 @@ typedef int (*SDD_Name(RowFunc))(ARMul_State *state,int row,SDD_Row drow,int fla
 /*
 
   Screen output for 1X horizontal scaling
+
+  Version for DisplayDev_UseUpdateFlags == 1
 
 */
 
@@ -700,6 +710,8 @@ static int SDD_Name(RowFunc8bpp1X)(ARMul_State *state,int row,SDD_Row drow,int f
 
   Screen output for 2X horizontal scaling
 
+  Version for DisplayDev_UseUpdateFlags == 1
+
 */
 
 static int SDD_Name(RowFunc1bpp2X)(ARMul_State *state,int row,SDD_Row drow,int flags)
@@ -1063,6 +1075,466 @@ static int SDD_Name(RowFunc8bpp2X)(ARMul_State *state,int row,SDD_Row drow,int f
 
 /*
 
+  Screen output for 1X horizontal scaling
+
+  Version for DisplayDev_UseUpdateFlags == 0
+
+*/
+
+static void SDD_Name(RowFunc1bpp1XNoFlags)(ARMul_State *state,int row,SDD_Row drow)
+{
+  int i;
+  SDD_HostColour *Palette = HD.Palette;
+  /* Handle palette updates */
+  SDD_Name(PaletteUpdate)(state,Palette,2);
+
+  uint32_t Vptr = DC.Vptr;
+  uint32_t Vstart = MEMC.Vstart<<7;
+  uint32_t Vend = (MEMC.Vend+1)<<7; /* Point to pixel after end */
+  const ARMword *RAM = MEMC.PhysRam;
+  int Remaining = DC.LastHostWidth;
+
+  /* Sanity checks to avoid looping forever */
+  if((Vptr >= Vend) || (Vstart >= Vend))
+    return 0;
+  if(Vptr >= Vend)
+    Vptr = Vstart;
+
+  /* Process the row */
+  SDD_Name(Host_BeginUpdate)(state,&drow,Remaining);
+  while(Remaining > 0)
+  {
+    int Available = MIN(Remaining,Vend-Vptr);
+    
+    VIDEO_STAT(DisplayRedraw,1,1);
+    VIDEO_STAT(DisplayBits,1,Available);
+    /* Process the pixels in this region, stopping at end of row/Vend */
+    const ARMword *In = RAM+(Vptr>>5);
+    ARMword Bit = 1<<(Vptr & 31);
+    ARMword Data = *In++;
+    for(i=0;i<Available;i++)
+    {
+      int idx = (Data & Bit)?1:0;
+      SDD_Name(Host_WritePixel)(state,&drow,Palette[idx]);
+      Bit <<= 1;
+      if(!Bit)
+      {
+        Bit = 1;
+        Data = *In++;
+      }
+    }
+    Remaining -= Available;      
+    Vptr += Available;
+    if(Vptr >= Vend)
+      Vptr = Vstart;
+  }
+  DC.Vptr = Vptr;
+  SDD_Name(Host_EndUpdate)(state,&drow);
+}
+
+static void SDD_Name(RowFunc2bpp1XNoFlags)(ARMul_State *state,int row,SDD_Row drow)
+{
+  int i;
+  SDD_HostColour *Palette = HD.Palette;
+  /* Handle palette updates */
+  SDD_Name(PaletteUpdate)(state,Palette,4);
+
+  uint32_t Vptr = DC.Vptr;
+  uint32_t Vstart = MEMC.Vstart<<7;
+  uint32_t Vend = (MEMC.Vend+1)<<7; /* Point to pixel after end */
+  const ARMword *RAM = MEMC.PhysRam;
+  int Remaining = DC.LastHostWidth*2; /* Scale up to account for everything else counting in bits */
+
+  /* Sanity checks to avoid looping forever */
+  if((Vptr >= Vend) || (Vstart >= Vend))
+    return 0;
+  if(Vptr >= Vend)
+    Vptr = Vstart;
+
+  /* Process the row */
+  SDD_Name(Host_BeginUpdate)(state,&drow,Remaining>>1);
+  while(Remaining > 0)
+  {
+    /* Note: This is the number of available bits, not pixels */
+    int Available = MIN(Remaining,Vend-Vptr);
+      
+    VIDEO_STAT(DisplayRedraw,1,1);
+    VIDEO_STAT(DisplayBits,1,Available);
+    /* Process the pixels in this region, stopping at end of row/Vend */
+    const ARMword *In = RAM+(Vptr>>5);
+    uint32_t Shift = (Vptr & 31);
+    ARMword Data = (*In++) >> Shift;
+    for(i=0;i<Available;i+=2)
+    {
+      SDD_Name(Host_WritePixel)(state,&drow,Palette[Data & 3]);
+      Data >>= 2;
+      Shift += 2;
+      if(Shift == 32)
+      {
+        Shift = 0;
+        Data = *In++;
+      }
+    }
+
+    Remaining -= Available;      
+    Vptr += Available;
+    if(Vptr >= Vend)
+      Vptr = Vstart;
+  }
+  DC.Vptr = Vptr;
+  SDD_Name(Host_EndUpdate)(state,&drow);
+}
+
+static void SDD_Name(RowFunc4bpp1XNoFlags)(ARMul_State *state,int row,SDD_Row drow)
+{
+  int i;
+  SDD_HostColour *Palette = HD.Palette;
+  /* Handle palette updates */
+  SDD_Name(PaletteUpdate)(state,Palette,16);
+
+
+  uint32_t Vptr = DC.Vptr;
+  uint32_t Vstart = MEMC.Vstart<<7;
+  uint32_t Vend = (MEMC.Vend+1)<<7; /* Point to pixel after end */
+  const ARMword *RAM = MEMC.PhysRam;
+  int Remaining = DC.LastHostWidth*4; /* Scale up to account for everything else counting in bits */
+
+  /* Sanity checks to avoid looping forever */
+  if((Vptr >= Vend) || (Vstart >= Vend))
+    return 0;
+  if(Vptr >= Vend)
+    Vptr = Vstart;
+
+  /* Process the row */
+  SDD_Name(Host_BeginUpdate)(state,&drow,Remaining>>2);
+  while(Remaining > 0)
+  {
+    /* Note: This is the number of available bits, not pixels */
+    int Available = MIN(Remaining,Vend-Vptr);
+      
+    VIDEO_STAT(DisplayRedraw,1,1);
+    VIDEO_STAT(DisplayBits,1,Available);
+    /* Process the pixels in this region, stopping at end of row/Vend */
+
+    /* Display will always be a multiple of 2 pixels wide, so we can simplify things a bit compared to 1/2bpp case */
+    const ARMword *In = RAM+(Vptr>>5);      
+    uint32_t Shift = (Vptr & 31);
+    ARMword Data = (*In++) >> Shift;
+    for(i=0;i<Available;i+=8)
+    {
+      SDD_Name(Host_WritePixel)(state,&drow,Palette[Data & 0xf]);
+      Data >>= 4;
+      SDD_Name(Host_WritePixel)(state,&drow,Palette[Data & 0xf]);
+      Data >>= 4;
+      Shift += 8;
+      if(Shift == 32)
+      {
+        Shift = 0;
+        Data = *In++;
+      }        
+    }
+
+    Remaining -= Available;      
+    Vptr += Available;
+    if(Vptr >= Vend)
+      Vptr = Vstart;
+  }
+  DC.Vptr = Vptr;
+  SDD_Name(Host_EndUpdate)(state,&drow);
+}
+
+static void SDD_Name(RowFunc8bpp1XNoFlags)(ARMul_State *state,int row,SDD_Row drow)
+{
+  int i;
+  SDD_HostColour *Palette = HD.Palette;
+  /* Handle palette updates */
+  SDD_Name(PaletteUpdate8bpp)(state,Palette);
+
+  uint32_t Vptr = DC.Vptr;
+  uint32_t Vstart = MEMC.Vstart<<7;
+  uint32_t Vend = (MEMC.Vend+1)<<7; /* Point to pixel after end */
+  const ARMword *RAM = MEMC.PhysRam;
+  int Remaining = DC.LastHostWidth*8; /* Scale up to account for everything else counting in bits */
+
+  /* Sanity checks to avoid looping forever */
+  if((Vptr >= Vend) || (Vstart >= Vend))
+    return 0;
+  if(Vptr >= Vend)
+    Vptr = Vstart;
+
+  /* Process the row */
+  SDD_Name(Host_BeginUpdate)(state,&drow,Remaining>>3);
+  while(Remaining > 0)
+  {
+    /* Note: This is the number of available bits, not pixels */
+    int Available = MIN(Remaining,Vend-Vptr);
+      
+    VIDEO_STAT(DisplayRedraw,1,1);
+    VIDEO_STAT(DisplayBits,1,Available);
+    /* Process the pixels in this region, stopping at end of row/Vend */
+
+    /* Display will always be a multiple of 2 pixels wide, so we can simplify things a bit compared to 1/2bpp case */
+    const ARMword *In = RAM+(Vptr>>5);
+    uint32_t Shift = (Vptr & 31);
+    ARMword Data = (*In++) >> Shift;
+    for(i=0;i<Available;i+=16)
+    {
+      SDD_Name(Host_WritePixel)(state,&drow,Palette[Data & 0xff]);
+      Data >>= 8;
+      SDD_Name(Host_WritePixel)(state,&drow,Palette[Data & 0xff]);
+      if(Shift)
+      {
+        Shift = 0;
+        Data = *In++;
+      }
+      else
+      {
+        Shift = 16;
+        Data >>= 8;
+      }
+    }
+
+    Remaining -= Available;      
+    Vptr += Available;
+    if(Vptr >= Vend)
+      Vptr = Vstart;
+  }
+  DC.Vptr = Vptr;
+  SDD_Name(Host_EndUpdate)(state,&drow);
+}
+
+/*
+
+  Screen output for 2X horizontal scaling
+
+  Version for DisplayDev_UseUpdateFlags == 0
+
+*/
+
+static void SDD_Name(RowFunc1bpp2XNoFlags)(ARMul_State *state,int row,SDD_Row drow)
+{
+  int i;
+  SDD_HostColour *Palette = HD.Palette;
+  /* Handle palette updates */
+  SDD_Name(PaletteUpdate)(state,Palette,2);
+
+  uint32_t Vptr = DC.Vptr;
+  uint32_t Vstart = MEMC.Vstart<<7;
+  uint32_t Vend = (MEMC.Vend+1)<<7; /* Point to pixel after end */
+  const ARMword *RAM = MEMC.PhysRam;
+  int Remaining = DC.LastHostWidth;
+
+  /* Sanity checks to avoid looping forever */
+  if((Vptr >= Vend) || (Vstart >= Vend))
+    return 0;
+  if(Vptr >= Vend)
+    Vptr = Vstart;
+
+  /* Process the row */
+  SDD_Name(Host_BeginUpdate)(state,&drow,Remaining<<1);
+  while(Remaining > 0)
+  {
+    int Available = MIN(Remaining,Vend-Vptr);
+      
+    VIDEO_STAT(DisplayRedraw,1,1);
+    VIDEO_STAT(DisplayBits,1,Available);
+    /* Process the pixels in this region, stopping at end of row/Vend */
+    const ARMword *In = RAM+(Vptr>>5);
+    ARMword Bit = 1<<(Vptr & 31);
+    ARMword Data = *In++;
+    for(i=0;i<Available;i++)
+    {
+      int idx = (Data & Bit)?1:0;
+      SDD_Name(Host_WritePixels)(state,&drow,Palette[idx],2);
+      Bit <<= 1;
+      if(!Bit)
+      {
+        Bit = 1;
+        Data = *In++;
+      }
+    }
+
+    Remaining -= Available;      
+    Vptr += Available;
+    if(Vptr >= Vend)
+      Vptr = Vstart;
+  }
+  DC.Vptr = Vptr;
+  SDD_Name(Host_EndUpdate)(state,&drow);
+}
+
+static void SDD_Name(RowFunc2bpp2XNoFlags)(ARMul_State *state,int row,SDD_Row drow)
+{
+  int i;
+  SDD_HostColour *Palette = HD.Palette;
+  /* Handle palette updates */
+  SDD_Name(PaletteUpdate)(state,Palette,4);
+
+  uint32_t Vptr = DC.Vptr;
+  uint32_t Vstart = MEMC.Vstart<<7;
+  uint32_t Vend = (MEMC.Vend+1)<<7; /* Point to pixel after end */
+  const ARMword *RAM = MEMC.PhysRam;
+  int Remaining = DC.LastHostWidth*2; /* Scale up to account for everything else counting in bits */
+
+  /* Sanity checks to avoid looping forever */
+  if((Vptr >= Vend) || (Vstart >= Vend))
+    return 0;
+  if(Vptr >= Vend)
+    Vptr = Vstart;
+
+  /* Process the row */
+  SDD_Name(Host_BeginUpdate)(state,&drow,Remaining);
+  while(Remaining > 0)
+  {
+    /* Note: This is the number of available bits, not pixels */
+    int Available = MIN(Remaining,Vend-Vptr);
+      
+    VIDEO_STAT(DisplayRedraw,1,1);
+    VIDEO_STAT(DisplayBits,1,Available);
+    /* Process the pixels in this region, stopping at end of row/Vend */
+    const ARMword *In = RAM+(Vptr>>5);
+    uint32_t Shift = (Vptr & 31);
+    ARMword Data = (*In++) >> Shift;
+    for(i=0;i<Available;i+=2)
+    {
+      SDD_Name(Host_WritePixels)(state,&drow,Palette[Data & 3],2);
+      Data >>= 2;
+      Shift += 2;
+      if(Shift == 32)
+      {
+        Shift = 0;
+        Data = *In++;
+      }
+    }
+
+    Remaining -= Available;      
+    Vptr += Available;
+    if(Vptr >= Vend)
+      Vptr = Vstart;
+  }
+  DC.Vptr = Vptr;
+  SDD_Name(Host_EndUpdate)(state,&drow);
+}
+
+static void SDD_Name(RowFunc4bpp2XNoFlags)(ARMul_State *state,int row,SDD_Row drow)
+{
+  int i;
+  SDD_HostColour *Palette = HD.Palette;
+  /* Handle palette updates */
+  SDD_Name(PaletteUpdate)(state,Palette,16);
+
+  uint32_t Vptr = DC.Vptr;
+  uint32_t Vstart = MEMC.Vstart<<7;
+  uint32_t Vend = (MEMC.Vend+1)<<7; /* Point to pixel after end */
+  const ARMword *RAM = MEMC.PhysRam;
+  int Remaining = DC.LastHostWidth*4; /* Scale up to account for everything else counting in bits */
+
+  /* Sanity checks to avoid looping forever */
+  if((Vptr >= Vend) || (Vstart >= Vend))
+    return 0;
+  if(Vptr >= Vend)
+    Vptr = Vstart;
+
+  /* Process the row */
+  SDD_Name(Host_BeginUpdate)(state,&drow,Remaining>>1);
+  while(Remaining > 0)
+  {
+    /* Note: This is the number of available bits, not pixels */
+    int Available = MIN(Remaining,Vend-Vptr);
+      
+    VIDEO_STAT(DisplayRedraw,1,1);
+    VIDEO_STAT(DisplayBits,1,Available);
+    /* Process the pixels in this region, stopping at end of row/Vend */
+
+    /* Display will always be a multiple of 2 pixels wide, so we can simplify things a bit compared to 1/2bpp case */
+    const ARMword *In = RAM+(Vptr>>5);      
+    uint32_t Shift = (Vptr & 31);
+    ARMword Data = (*In++) >> Shift;
+    for(i=0;i<Available;i+=8)
+    {
+      SDD_Name(Host_WritePixels)(state,&drow,Palette[Data & 0xf],2);
+      Data >>= 4;
+      SDD_Name(Host_WritePixels)(state,&drow,Palette[Data & 0xf],2);
+      Data >>= 4;
+      Shift += 8;
+      if(Shift == 32)
+      {
+        Shift = 0;
+        Data = *In++;
+      }        
+    }
+
+    Remaining -= Available;      
+    Vptr += Available;
+    if(Vptr >= Vend)
+      Vptr = Vstart;
+  }
+  DC.Vptr = Vptr;
+  SDD_Name(Host_EndUpdate)(state,&drow);
+}
+
+static void SDD_Name(RowFunc8bpp2XNoFlags)(ARMul_State *state,int row,SDD_Row drow)
+{
+  int i;
+  SDD_HostColour *Palette = HD.Palette;
+  /* Handle palette updates */
+  SDD_Name(PaletteUpdate8bpp)(state,Palette);
+
+  uint32_t Vptr = DC.Vptr;
+  uint32_t Vstart = MEMC.Vstart<<7;
+  uint32_t Vend = (MEMC.Vend+1)<<7; /* Point to pixel after end */
+  const ARMword *RAM = MEMC.PhysRam;
+  int Remaining = DC.LastHostWidth*8; /* Scale up to account for everything else counting in bits */
+
+  /* Sanity checks to avoid looping forever */
+  if((Vptr >= Vend) || (Vstart >= Vend))
+    return 0;
+  if(Vptr >= Vend)
+    Vptr = Vstart;
+
+  /* Process the row */
+  SDD_Name(Host_BeginUpdate)(state,&drow,Remaining>>2);
+  while(Remaining > 0)
+  {
+    /* Note: This is the number of available bits, not pixels */
+    int Available = MIN(Remaining,Vend-Vptr);
+      
+    VIDEO_STAT(DisplayRedraw,1,1);
+    VIDEO_STAT(DisplayBits,1,Available);
+    /* Process the pixels in this region, stopping at end of row/Vend */
+
+    /* Display will always be a multiple of 2 pixels wide, so we can simplify things a bit compared to 1/2bpp case */
+    const ARMword *In = RAM+(Vptr>>5);
+    uint32_t Shift = (Vptr & 31);
+    ARMword Data = (*In++) >> Shift;
+    for(i=0;i<Available;i+=16)
+    {
+      SDD_Name(Host_WritePixels)(state,&drow,Palette[Data & 0xff],2);
+      Data >>= 8;
+      SDD_Name(Host_WritePixels)(state,&drow,Palette[Data & 0xff],2);
+      if(Shift)
+      {
+        Shift = 0;
+        Data = *In++;
+      }
+      else
+      {
+        Shift = 16;
+        Data >>= 8;
+      }
+    }
+
+    Remaining -= Available;      
+    Vptr += Available;
+    if(Vptr >= Vend)
+      Vptr = Vstart;
+  }
+  DC.Vptr = Vptr;
+  SDD_Name(Host_EndUpdate)(state,&drow);
+}
+
+/*
+
   Screen output other funcs
 
 */
@@ -1122,7 +1594,6 @@ static void SDD_Name(DisplayRow)(ARMul_State *state,int row)
 
   /* Handle border colour updates */
   int rowflags = (DC.ForceRefresh?ROWFUNC_FORCE:0);
-  VIDEO_STAT(DisplayFullForce,force,1);
   SDD_HostColour col = HD.BorderCol;
   
   if(rowflags || (HD.BorderCols[row] != col))
@@ -1192,6 +1663,73 @@ static void SDD_Name(DisplayRow)(ARMul_State *state,int row)
   }
 }
 
+static const SDD_Name(RowFunc) RowFuncsNoFlags[2][4] = {
+ { /* 1X horizontal scaling */
+   SDD_Name(RowFunc1bpp1XNoFlags),
+   SDD_Name(RowFunc2bpp1XNoFlags),
+   SDD_Name(RowFunc4bpp1XNoFlags),
+   SDD_Name(RowFunc8bpp1XNoFlags)
+ },
+ { /* 2X horizontal scaling */
+   SDD_Name(RowFunc1bpp2XNoFlags),
+   SDD_Name(RowFunc2bpp2XNoFlags),
+   SDD_Name(RowFunc4bpp2XNoFlags),
+   SDD_Name(RowFunc8bpp2XNoFlags)
+ }
+};
+
+static void SDD_Name(DisplayRowNoFlags)(ARMul_State *state,int row)
+{
+  /* Render a display row */
+  int hoststart = (row-(VIDC.Vert_DisplayStart+1))*HD.YScale+HD.YOffset;
+  int hostend = hoststart + HD.YScale;
+  if(hoststart < 0)
+    hoststart = 0;
+  if(hostend > HD.Height)
+    hostend = HD.Height;
+  if(hoststart >= hostend)
+    return;
+
+  /* Handle border colour updates */
+  SDD_HostColour col = HD.BorderCol;
+  
+  if(DC.ForceRefresh || (HD.BorderCols[row] != col))
+  {
+    VIDEO_STAT(BorderRedraw,1,1);
+    VIDEO_STAT(BorderRedrawForced,DC.ForceRefresh,1);
+    VIDEO_STAT(BorderRedrawColourChanged,(HD.BorderCols[row] != col),1);
+    HD.BorderCols[row] = col;
+    int i;
+    for(i=hoststart;i<hostend;i++)
+    {
+      SDD_Row drow = SDD_Name(Host_BeginRow)(state,i,0);
+      SDD_Name(Host_BeginUpdate)(state,&drow,HD.XOffset);
+      SDD_Name(Host_WritePixels)(state,&drow,col,HD.XOffset);
+      SDD_Name(Host_EndUpdate)(state,&drow);
+      int displaywidth = HD.XScale*DC.LastHostWidth;
+      SDD_Name(Host_SkipPixels)(state,&drow,displaywidth);
+      int rightborder = HD.Width-(displaywidth+HD.XOffset);
+      SDD_Name(Host_BeginUpdate)(state,&drow,rightborder);
+      SDD_Name(Host_WritePixels)(state,&drow,col,rightborder);
+      SDD_Name(Host_EndUpdate)(state,&drow);
+      SDD_Name(Host_EndRow)(state,&drow);
+    }
+  }
+
+  /* Display area */
+
+  const SDD_Name(RowFuncNoFlags) rf = RowFuncsNoFlags[HD.XScale-1][(DC.VIDC_CR&0xc)>>2];
+  /* Remember current Vptr */
+  uint32_t Vptr = DC.Vptr;
+  do
+  {
+    DC.Vptr = Vptr;
+    SDD_Row drow = SDD_Name(Host_BeginRow)(state,hoststart,HD.XOffset);
+    (rf)(state,row,drow);
+    SDD_Name(Host_EndRow)(state,&drow);
+  } while(++hoststart < hostend);
+}
+
 /*
 
   EventQ funcs
@@ -1259,6 +1797,19 @@ static void SDD_Name(Reschedule)(ARMul_State *state,CycleCount nowtime,EventQ_Fu
   EventQ_Reschedule(state,nowtime+rows*DC.LineRate,func,idx);
 }
 
+static void SDD_Name(DisplayEnd)(ARMul_State *state,CycleCount nowtime)
+{
+  /* Go to FrameEnd, with a VSync trigger */
+  SDD_Name(Reschedule)(state,nowtime,SDD_Name(FrameEnd),(VIDC.Vert_Cycle+1),true);
+}
+
+static void SDD_Name(SkipFrame)(ARMul_State *state,CycleCount nowtime)
+{
+  /* Work out which scanline VSync is due on */
+  int vsync = MAX(VIDC.Vert_DisplayStart,VIDC.Vert_DisplayEnd);
+  SDD_Name(Reschedule)(state,nowtime,SDD_Name(DisplayEnd),vsync+1,false);
+}
+
 static void SDD_Name(FrameStart)(ARMul_State *state,CycleCount nowtime)
 {
   /* Assuming a multiplier of 2, these are the required clock dividers
@@ -1279,6 +1830,19 @@ static void SDD_Name(FrameStart)(ARMul_State *state,CycleCount nowtime)
   DC.LineRate = (((uint64_t) ARMul_EmuRate)*(VIDC.Horiz_Cycle*2+2))*ClockDivider/ClockIn;
   if(DC.LineRate < 100)
     DC.LineRate = 100; /* Clamp to safe minimum value */
+
+  DC.FLYBK = false;
+
+  if(DisplayDev_UseUpdateFlags)
+  {
+    /* Handle frame skip */
+    if(DC.FrameSkip--)
+    {
+      SDD_Name(SkipFrame)(state,nowtime);
+      return;
+    }
+    DC.FrameSkip = DisplayDev_FrameSkip;
+  }
 
   /* Ensure mode changes if pixel clock changed */
   DC.ModeChanged |= (DC.VIDC_CR & 3) != (NewCR & 3);
@@ -1309,8 +1873,6 @@ static void SDD_Name(FrameStart)(ARMul_State *state,CycleCount nowtime)
   }
 
   DC.VIDC_CR = NewCR;
-
-  DC.FLYBK = false;
 
   /* Handle any mode changes */
   if(DC.ModeChanged)
@@ -1343,7 +1905,7 @@ static void SDD_Name(FrameStart)(ARMul_State *state,CycleCount nowtime)
       if((Width < 1) || (Height < 1))
       {
         /* Bad mode; skip straight to FrameEnd state */
-        SDD_Name(Reschedule)(state,nowtime,SDD_Name(FrameEnd),(VIDC.Vert_Cycle+1),0);
+        SDD_Name(Reschedule)(state,nowtime,SDD_Name(FrameEnd),(VIDC.Vert_Cycle+1),false);
         return;
       }
       
@@ -1365,11 +1927,85 @@ static void SDD_Name(FrameStart)(ARMul_State *state,CycleCount nowtime)
     vidstats_Dump("Stats for last 100 frames");
 #endif
 
+  /* Update AutoUpdateFlags */
+  if(DisplayDev_AutoUpdateFlags)
+  {
+    DC.Auto_FrameCount++;
+    if(DC.ForceRefresh || HD.RefreshFlags[0])
+      DC.Auto_ForceRefresh++;
+    if(DisplayDev_UseUpdateFlags)
+    {
+      /* Assuming refresh rate of 50Hz, disable UpdateFlags if we've been
+         running at >=5fps for the last 5 seconds. 5fps is a bit low, but it
+         allows slow games like Wolf 3D to be detected (assuming you're on a
+         slow host machine!) */
+      if(DC.Auto_FrameCount >= 250)
+      {
+        if(DC.Auto_ForceRefresh >= 25)
+        {
+          /* Disable */
+          DisplayDev_UseUpdateFlags = 0;
+          DisplayDev_FrameSkip = DC.Auto_FrameCount/DC.Auto_ForceRefresh;
+          ARMul_RebuildFastMap();
+        }
+        DC.Auto_FrameCount = 0;
+        DC.Auto_ForceRefresh = 0;
+      }
+    }
+    else
+    {
+      /* Assuming refresh rate of 50Hz, enable UpdateFlags if we've been
+         running at <5fps for the last second. */
+      if(DC.Auto_FrameCount >= 50)
+      {
+        if(DC.Auto_ForceRefresh < 5)
+        {
+          /* Enable */        
+          DisplayDev_UseUpdateFlags = 1;
+          DisplayDev_FrameSkip = 0;
+          ARMul_RebuildFastMap();
+          /* Ensure the updateflags get reset */
+          DC.ForceRefresh = true;
+          DC.FrameSkip = 0;
+        }
+        else
+        {
+          /* Adjust frameskip value */
+          DisplayDev_FrameSkip = DC.Auto_FrameCount/DC.Auto_ForceRefresh;
+        }
+        DC.Auto_FrameCount = 0;
+        DC.Auto_ForceRefresh = 0;
+      }
+    }
+  }
+
   /* Set up DMA */
   DC.Vptr = MEMC.Vinit<<7;
 
-  /* Schedule for first border row */
-  SDD_Name(Reschedule)(state,nowtime,SDD_Name(RowStart),VIDC.Vert_BorderStart+1,0);
+  if(DisplayDev_UseUpdateFlags)
+  {
+    /* Schedule for first border row */
+    SDD_Name(Reschedule)(state,nowtime,SDD_Name(RowStart),VIDC.Vert_BorderStart+1,false);
+  }
+  else
+  {
+    /* Only update if forced, or frameskip has run out
+       We use the first RefreshFlags entry to detect if any DMA changes have occured since the start of the last frame. If any have, we redraw the entire screen */
+    if(DC.ForceRefresh || HD.RefreshFlags[0] || !DC.FrameSkip)
+    {
+      DC.FrameSkip = DisplayDev_FrameSkip;
+      HD.RefreshFlags[0] = 0;
+
+      /* Schedule for first border row */
+      SDD_Name(Reschedule)(state,nowtime,SDD_Name(RowStart),VIDC.Vert_BorderStart+1,false);
+    }
+    else
+    {
+      DC.FrameSkip--;
+      SDD_Name(SkipFrame)(state,nowtime);
+      return;
+    }
+  }      
   
   /* Update host */
   SDD_Name(Host_PollDisplay)(state);
@@ -1406,7 +2042,14 @@ static void SDD_Name(RowStart)(ARMul_State *state,CycleCount nowtime)
     else if(dmaen && (row < (VIDC.Vert_DisplayEnd+1)))
     {
       /* Display */
-      SDD_Name(DisplayRow)(state,row);
+      if(DisplayDev_UseUpdateFlags)
+      {
+        SDD_Name(DisplayRow)(state,row);
+      }
+      else
+      {
+        SDD_Name(DisplayRowNoFlags)(state,row);
+      }
     }
     else if(row < (VIDC.Vert_BorderEnd+1))
     {
@@ -1459,8 +2102,12 @@ static void SDD_Name(VIDCPutVal)(ARMul_State *state,ARMword address, ARMword dat
       if(!(DC.DirtyPalette & (1<<Log)))
       {
         VIDEO_STAT(RefreshFlagsPalette,1,1);
+        /* TODO - Make it configurable whether palette changes cause a screen refresh when UseUpdateFlags == false */
+        if(!DC.DirtyPalette && DisplayDev_UseUpdateFlags)
+        {
+          memset(HD.RefreshFlags,0xff,sizeof(HD.RefreshFlags));
+        }
         DC.DirtyPalette |= (1<<Log);
-        memset(HD.RefreshFlags,0xff,sizeof(HD.RefreshFlags));
       }
     }
     return;
@@ -1685,7 +2332,7 @@ static int SDD_Name(Init)(ARMul_State *state,const struct Vidc_Regs *Vidc)
   DC.LastVinit = MEMC.Vinit;
   HD.BorderCol = SDD_Name(Host_GetColour)(state,VIDC.BorderCol);
 
-  memset(HOSTDISPLAY.RefreshFlags,~0,sizeof(HOSTDISPLAY.RefreshFlags));
+  memset(HOSTDISPLAY.RefreshFlags,0xff,sizeof(HOSTDISPLAY.RefreshFlags));
   memset(HOSTDISPLAY.UpdateFlags,0,sizeof(HOSTDISPLAY.UpdateFlags)); /* Initial value in MEMC.UpdateFlags is 1 */   
 
   /* Schedule first update event */
@@ -1701,6 +2348,8 @@ static void SDD_Name(Shutdown)(ARMul_State *state)
     idx = EventQ_Find(state,SDD_Name(FrameEnd));
   if(idx == -1)
     idx = EventQ_Find(state,SDD_Name(RowStart));
+  if(idx == -1)
+    idx = EventQ_Find(state,SDD_Name(DisplayEnd));
   if(idx >= 0)
     EventQ_Remove(state,idx);
   else

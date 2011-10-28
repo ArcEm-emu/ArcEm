@@ -165,7 +165,7 @@ The tweak menu can be accessed by simultaneously pressing both Windows keys on t
 
 * Switch between the two display drivers (--display command line option)
 * Toggle red/blue swapping in the 16bpp driver (--rbswap command line option)
-* Control the palettised driver performance options (see below)
+* Control the display driver performance options (see below)
 * Enable/disable aspect ratio correction & upscaling (--noaspect and --noupscale options)
 * Enable the ability to take screenshots when Print Screen is pressed. Screenshots will be saved to the directory !ArcEm is in.
 * Toggle the display of some stats to the top-left corner of the screen. The stats show (from left to right):
@@ -178,18 +178,18 @@ The tweak menu can be accessed by simultaneously pressing both Windows keys on t
 To resume the emulator from the tweak menu, press 'R'. To quit the emulator, press 'Q'.
 
 
-Palettised driver performance
------------------------------
+Display driver performance options
+--------------------------------
 
-As mentioned above, there are several options available in the tweak menu to help boost the performance when using the palettised display driver. These options are:
+As mentioned above, there are several options available in the tweak menu to help boost the performance of the display driver. These options are:
 
-  "Palettised auto UpdateFlags"
+  "Display auto UpdateFlags"
 
     Setting this to "On" will boost the performance of many games. However it
     may not work properly with some games/software (screen updates may be
     somewhat irratic), so by default it's set to "Off".
 
-  "Palettised uses UpdateFlags", "Palettised output frameskip"
+  "Display uses UpdateFlags", "Display frameskip"
 
     If the "auto UpdateFlags" option is on, these options will be set and
     adjusted automatically by the emulator, and must be left alone.

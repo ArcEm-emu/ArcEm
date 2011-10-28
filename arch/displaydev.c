@@ -18,6 +18,7 @@ const DisplayDev *DisplayDev_Current = NULL;
 
 bool DisplayDev_UseUpdateFlags = true;
 bool DisplayDev_AutoUpdateFlags = false;
+int DisplayDev_FrameSkip = 0;
 
 int DisplayDev_Set(ARMul_State *state,const DisplayDev *dev)
 {
