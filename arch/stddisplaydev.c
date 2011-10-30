@@ -1663,7 +1663,7 @@ static void SDD_Name(DisplayRow)(ARMul_State *state,int row)
   }
 }
 
-static const SDD_Name(RowFunc) RowFuncsNoFlags[2][4] = {
+static const SDD_Name(RowFuncNoFlags) RowFuncsNoFlags[2][4] = {
  { /* 1X horizontal scaling */
    SDD_Name(RowFunc1bpp1XNoFlags),
    SDD_Name(RowFunc2bpp1XNoFlags),
