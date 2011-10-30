@@ -6,29 +6,34 @@
 #include <proto/exec.h>
 #include <proto/dos.h>
 #include <proto/asl.h>
+#ifdef __amigaos4__ // weird _NewObject error
 #include <proto/intuition.h>
+#endif
 #include <proto/graphics.h>
 #include <proto/utility.h>
 //#include <proto/input.h>
 //#include <proto/picasso96api.h>
 
+#ifdef __amigaos4__
 struct Library *ExecBase;
-struct ExecIFace *IExec;
 struct Library *IntuitionBase;
-struct IntuitionIFace *IIntuition;
-//struct Library *P96Base;
-//struct P96IFace *IP96;
 struct Library *GfxBase;
-struct GraphicsIFace *IGraphics;
 struct Library *DOSBase;
-struct DOSIFace *IDOS;
 struct Library *AslBase;
-struct AslIFace *IAsl;
 struct Library *IconBase;
-struct IconIFace *IIcon;
 struct Library *UtilityBase;
-struct UtilityIFace *IUtility;
 //struct Device *inputdevice;
+
+struct ExecIFace *IExec;
+struct IntuitionIFace *IIntuition;
+struct GraphicsIFace *IGraphics;
+struct DOSIFace *IDOS;
+struct AslIFace *IAsl;
+struct IconIFace *IIcon;
+struct UtilityIFace *IUtility;
+#else
+#define IDCMP_EXTENDEDMOUSE 0
+#endif
 
 extern void cleanup(void);
 extern void sound_exit(void);

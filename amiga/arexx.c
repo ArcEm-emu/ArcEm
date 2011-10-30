@@ -35,9 +35,9 @@ STATIC struct ARexxCmd Commands[] =
 
 void ARexx_Init()
 {
-	if((ARexxBase = IExec->OpenLibrary((char *)&"arexx.class",51)))
+	if((ARexxBase = OpenLibrary((char *)&"arexx.class",51)))
 	{
-		if(IARexx = (struct ARexxIFace *)IExec->GetInterface(ARexxBase,(char *)&"main",1,NULL))
+		if(IARexx = (struct ARexxIFace *)GetInterface(ARexxBase,(char *)&"main",1,NULL))
 		{
 		
 			arexx_obj = ARexxObject,
@@ -62,12 +62,12 @@ void ARexx_Handle()
 void ARexx_Cleanup()
 {
 	if(arexx_obj)
-		IIntuition->DisposeObject(arexx_obj);
+		DisposeObject(arexx_obj);
 
 	if(IARexx)
 	{
-		IExec->DropInterface((struct Interface *)IARexx);
-		IExec->CloseLibrary(ARexxBase);
+		DropInterface((struct Interface *)IARexx);
+		CloseLibrary(ARexxBase);
 	}
 }
 

@@ -104,12 +104,26 @@ SOUND_SUPPORT=yes
 SOUND_PTHREAD=no
 SRCS += amiga/wb.c amiga/arexx.c
 OBJS += amiga/wb.o amiga/arexx.o
-CFLAGS += -mcrt=newlib -D__LARGE64_FILES
+CFLAGS += -mcrt=newlib -D__LARGE64_FILES -D__USE_INLINE__
 LDFLAGS += -mcrt=newlib
 # The following two lines are for Altivec support via libfreevec
 # Uncomment them if you are using a G4 or other PPC with Altivec
 #CFLAGS += -maltivec -mabi=altivec
 #LDFLAGS += -maltivec -mabi=altivec -lfreevec
+endif
+
+ifeq (${SYSTEM},amigaos3)
+CC=m68k-amigaos-gcc
+LD=$(CC)
+HOST_BIGENDIAN=yes
+HOSTFS_SUPPORT=yes
+EXTNROM_SUPPORT=yes
+SOUND_SUPPORT=yes
+SOUND_PTHREAD=no
+SRCS += amiga/wb.c
+OBJS += amiga/wb.o
+CFLAGS += -D__amigaos3__ -noixemul
+LDFLAGS += -noixemul
 endif
 
 ifeq (${SYSTEM},gp2x)

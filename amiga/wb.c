@@ -5,7 +5,6 @@
  *  set by tooltypes.                                          */
 
 #include <workbench/startup.h>
-
 #include <stdio.h>
 
 #include "ArcemConfig.h"
@@ -21,11 +20,10 @@ void closewblibs(void)
 	/* We only need these libraries to read tooltypes, so if they don't open
 		we can just skip the tooltypes and carry on */
 
-	if(IIcon)
-	{
-		IExec->DropInterface((struct Interface *)IIcon);
-		IExec->CloseLibrary(IconBase);
-	}
+#ifdef __amigaos4__
+	if(IIcon) DropInterface((struct Interface *)IIcon);
+#endif
+	CloseLibrary(IconBase);
 
 /*
 	if(IDOS)
@@ -43,11 +41,11 @@ void gettooltypes(struct WBArg *wbarg)
 	CONST_STRPTR *toolarray;
 	char *s;
 
-	if((*wbarg->wa_Name) && (dobj=IIcon->GetIconTags(wbarg->wa_Name,NULL)))
+	if((*wbarg->wa_Name) && (dobj=GetIconTags(wbarg->wa_Name,NULL)))
 	{
 		toolarray = (CONST_STRPTR *)dobj->do_ToolTypes;
 
-		if(s = (char *)IIcon->FindToolType(toolarray,"ROM"))
+		if(s = (char *)FindToolType(toolarray,"ROM"))
 		{
         	char *sNewRomName = strdup(s);
         
@@ -62,7 +60,7 @@ void gettooltypes(struct WBArg *wbarg)
         }
 
 #if defined(EXTNROM_SUPPORT)
-		if(s = (char *)IIcon->FindToolType(toolarray,"EXTNROMDIR"))
+		if(s = (char *)FindToolType(toolarray,"EXTNROMDIR"))
 		{
         	char *sNewExtnRomDir = strdup(s);
 
@@ -77,7 +75,7 @@ void gettooltypes(struct WBArg *wbarg)
 
 #endif /* EXTNROM_SUPPORT */
 #if defined(HOSTFS_SUPPORT)
-		if(s = (char *)IIcon->FindToolType(toolarray,"HOSTFSDIR"))
+		if(s = (char *)FindToolType(toolarray,"HOSTFSDIR"))
 		{
 	        char *sNewHostFSDir = strdup(s);
         
@@ -92,57 +90,56 @@ void gettooltypes(struct WBArg *wbarg)
         }
 #endif /* HOSTFS_SUPPORT */
 
-		if(s = (char *)IIcon->FindToolType(toolarray,"MEMORY"))
+		if(s = (char *)FindToolType(toolarray,"MEMORY"))
 		{
-			if(IIcon->MatchToolValue(s,"256K"))
+			if(MatchToolValue(s,"256K"))
           		hArcemConfig.eMemSize = MemSize_256K;
 
-			if(IIcon->MatchToolValue(s,"512K"))
+			if(MatchToolValue(s,"512K"))
           		hArcemConfig.eMemSize = MemSize_512K;
 
-			if(IIcon->MatchToolValue(s,"1M"))
+			if(MatchToolValue(s,"1M"))
           		hArcemConfig.eMemSize = MemSize_1M;
 
-			if(IIcon->MatchToolValue(s,"2M"))
+			if(MatchToolValue(s,"2M"))
           		hArcemConfig.eMemSize = MemSize_2M;
 
-			if(IIcon->MatchToolValue(s,"4M"))
+			if(MatchToolValue(s,"4M"))
           		hArcemConfig.eMemSize = MemSize_4M;
 
-			if(IIcon->MatchToolValue(s,"8M"))
+			if(MatchToolValue(s,"8M"))
           		hArcemConfig.eMemSize = MemSize_8M;
 
-			if(IIcon->MatchToolValue(s,"12M"))
+			if(MatchToolValue(s,"12M"))
           		hArcemConfig.eMemSize = MemSize_12M;
 
-			if(IIcon->MatchToolValue(s,"16M"))
+			if(MatchToolValue(s,"16M"))
           		hArcemConfig.eMemSize = MemSize_16M;
-
       }
 
-		if(s = (char *)IIcon->FindToolType(toolarray,"PROCESSOR"))
+		if(s = (char *)FindToolType(toolarray,"PROCESSOR"))
 		{
-			if(IIcon->MatchToolValue(s,"ARM2"))
+			if(MatchToolValue(s,"ARM2"))
 		         hArcemConfig.eProcessor = Processor_ARM2;
 
-			if(IIcon->MatchToolValue(s,"ARM250"))
+			if(MatchToolValue(s,"ARM250"))
 		         hArcemConfig.eProcessor = Processor_ARM250;
 
-			if(IIcon->MatchToolValue(s,"ARM3"))
+			if(MatchToolValue(s,"ARM3"))
 		         hArcemConfig.eProcessor = Processor_ARM3;
 
 		}
 
-		if(IIcon->FindToolType(toolarray,"FORCE8BIT")) force8bit=1;
+		if(FindToolType(toolarray,"FORCE8BIT")) force8bit=1;
 
-		if(IIcon->FindToolType(toolarray, "USEUPDATEFLAGS"))
+		if(FindToolType(toolarray, "USEUPDATEFLAGS"))
 			DisplayDev_UseUpdateFlags = 1;
 
-		if(s = (char *)IIcon->FindToolType(toolarray, "FRAMESKIP"))
+		if(s = (char *)FindToolType(toolarray, "FRAMESKIP"))
 			DisplayDev_FrameSkip = atoi(s);
 		else DisplayDev_FrameSkip = 0;
 
-		if(IIcon->FindToolType(toolarray, "AUTOUPDATEFLAGS"))
+		if(FindToolType(toolarray, "AUTOUPDATEFLAGS"))
 			DisplayDev_AutoUpdateFlags = 1;
 
 
@@ -151,7 +148,7 @@ void gettooltypes(struct WBArg *wbarg)
 			It is literally a copy'n'paste of the other code with fscanf(fConf)
 			changed to sscanf(s) */
 
-			if(s = (char *)IIcon->FindToolType(toolarray,"ST506DISC"))
+			if(s = (char *)FindToolType(toolarray,"ST506DISC"))
 			{
 	      		unsigned int drivenum,numcyl,numheads,numsect,reclength;
     			if (sscanf(s,"%u %u %u %u %u\n",&drivenum,&numcyl,&numheads,&numsect,&reclength)!=5)
@@ -173,7 +170,7 @@ void gettooltypes(struct WBArg *wbarg)
         }
 
 
-		IIcon->FreeDiskObject(dobj);
+		FreeDiskObject(dobj);
 	}
 
 }
@@ -184,11 +181,15 @@ void wblaunch(struct WBStartup *WBenchMsg)
 	long i;
 	int olddir;
 
+	#ifdef __amigaos4__
     IExec = (struct ExecIFace *)(*(struct ExecBase **)4)->MainInterface;
-
-	if(IconBase = IExec->OpenLibrary("icon.library",51))
+	#endif
+	
+	if(IconBase = OpenLibrary("icon.library",45))
 	{
+	#ifdef __amigaos4__
 		IIcon = IExec->GetInterface(IconBase,"main",1,NULL);
+	#endif
 	}
 	else
 	{
@@ -196,9 +197,11 @@ void wblaunch(struct WBStartup *WBenchMsg)
 		return;
 	}
 
-	if(DOSBase = IExec->OpenLibrary("dos.library",51))
+	if(DOSBase = OpenLibrary("dos.library",37))
 	{
-		IDOS = IExec->GetInterface(DOSBase,"main",1,NULL);
+	#ifdef __amigaos4__
+		IDOS = GetInterface(DOSBase,"main",1,NULL);
+	#endif
 	}
 	else
 	{
@@ -217,11 +220,11 @@ void wblaunch(struct WBStartup *WBenchMsg)
 	{
 		olddir =-1;
 		if((wbarg->wa_Lock)&&(*wbarg->wa_Name))
-			olddir = IDOS->CurrentDir(wbarg->wa_Lock);
+			olddir = CurrentDir(wbarg->wa_Lock);
 
 		gettooltypes(wbarg);
 
-		if(olddir !=-1) IDOS->CurrentDir(olddir);
+		if(olddir !=-1) CurrentDir(olddir);
 	}
 
 	closewblibs();

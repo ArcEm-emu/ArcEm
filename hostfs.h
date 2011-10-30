@@ -28,4 +28,13 @@ extern void hostfs_reset(void);
 typedef _off64_t off64_t;
 #endif
 
+#ifdef __amigaos3__
+typedef long off64_t;
+
+#define ftello64 ftell
+#define fseeko64 fseek
+#define fopen64 fopen
+#endif
+
+
 #endif

@@ -15,12 +15,17 @@
 #include "../armemu.h"
 #include "arch/displaydev.h"
 
+#include <proto/intuition.h>
 #include <intuition/pointerclass.h>
 #include <dos/dostags.h>
-#include <libraries/keymap.h>
 #include <devices/input.h>
 #include <devices/inputevent.h>
+
+#ifdef __amigaos4__
+#include <libraries/keymap.h>
 #include <graphics/blitattr.h>
+#endif
+
 
 struct Window *window = NULL;
 struct Screen *screen = NULL;
@@ -54,7 +59,7 @@ void writepixel(struct RastPort *,ULONG,ULONG,ULONG);
 void ChangeDisplayMode(ARMul_State *,long,long,int);
 void CloseDisplay(void);
 
-int ChangeMode(int width,int height,int log2bpp,int *xscale,int *yscale)
+int changemode(int width,int height,int log2bpp,int *xscale,int *yscale)
 {
 	ULONG id = INVALID_ID;
 
@@ -95,7 +100,7 @@ int ChangeMode(int width,int height,int log2bpp,int *xscale,int *yscale)
 
 
 	/* Call BestModeID() to hopefully stop crazy screenmodes */
-	id = IGraphics->BestModeID(BIDTAG_NominalWidth,width,
+	id = BestModeID(BIDTAG_NominalWidth,width,
 								BIDTAG_NominalHeight,height,
 								BIDTAG_DesiredWidth,width,
 								BIDTAG_DesiredHeight,height,
@@ -110,17 +115,17 @@ int ChangeMode(int width,int height,int log2bpp,int *xscale,int *yscale)
 
 	printf("-> ModeID: %lx\n",id);
 
-	IGraphics->WaitBlit();
+	WaitBlit();
 
 	if(friend.BitMap)
-		IGraphics->FreeBitMap(friend.BitMap);
+		FreeBitMap(friend.BitMap);
 
 	if(tmprp.BitMap)
-		IGraphics->FreeBitMap(tmprp.BitMap);
+		FreeBitMap(tmprp.BitMap);
 
 	CloseDisplay();
 
-	screen = IIntuition->OpenScreenTags(NULL,SA_Width,width,
+	screen = OpenScreenTags(NULL,SA_Width,width,
 											SA_Height,height,
 											SA_Depth,1<<log2bpp,
 											SA_Quiet,TRUE,
@@ -132,7 +137,7 @@ int ChangeMode(int width,int height,int log2bpp,int *xscale,int *yscale)
 
 	if(screen)
 	{
-		window = IIntuition->OpenWindowTags(NULL,WA_Width,width,
+		window = OpenWindowTags(NULL,WA_Width,width,
 					WA_Height,height,
 					WA_RMBTrap,TRUE,
 					WA_NoCareRefresh,TRUE,
@@ -146,11 +151,11 @@ int ChangeMode(int width,int height,int log2bpp,int *xscale,int *yscale)
 					WA_IDCMP,IDCMP_MOUSEBUTTONS | IDCMP_MOUSEMOVE | IDCMP_RAWKEY | IDCMP_DELTAMOVE | IDCMP_EXTENDEDMOUSE,
 					TAG_DONE);
 
-		IIntuition->SetWindowPointer(window,WA_Pointer,mouseobj,TAG_DONE);
+		SetWindowPointer(window,WA_Pointer,mouseobj,TAG_DONE);
 
-		if(mouse_bm) IGraphics->FreeBitMap(mouse_bm);
+		if(mouse_bm) FreeBitMap(mouse_bm);
 
-		mouse_bm = IGraphics->AllocBitMap(32, 32, 1<<log2bpp, BMF_CLEAR, window->RPort->BitMap);
+		mouse_bm = AllocBitMap(32, 32, 1<<log2bpp, BMF_CLEAR, window->RPort->BitMap);
 		mouse_rp.BitMap = mouse_bm;
 	}
 	else
@@ -165,15 +170,15 @@ int ChangeMode(int width,int height,int log2bpp,int *xscale,int *yscale)
 		exit(EXIT_FAILURE);
 	}
 
-	IIntuition->PubScreenStatus(screen,0);
+	PubScreenStatus(screen,0);
 
 	port = window->UserPort;
 
-	friend.BitMap = IGraphics->AllocBitMap(width,height,1<<log2bpp,BMF_CLEAR | BMF_DISPLAYABLE | BMF_INTERLEAVED,window->RPort->BitMap);
+	friend.BitMap = AllocBitMap(width,height,1<<log2bpp,BMF_CLEAR | BMF_DISPLAYABLE | BMF_INTERLEAVED,window->RPort->BitMap);
 
-    IExec->CopyMem(&friend,&tmprp,sizeof(struct RastPort));
+    CopyMem(&friend,&tmprp,sizeof(struct RastPort));
     tmprp.Layer = NULL;
-    tmprp.BitMap = IGraphics->AllocBitMap(width,1,1<<log2bpp,0,NULL);
+    tmprp.BitMap = AllocBitMap(width,1,1<<log2bpp,0,NULL);
 
 	oldheight = height;
 	oldwidth = width;
@@ -254,7 +259,7 @@ void SDD_Name(Host_PollDisplay)(ARMul_State *state);
 
 static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,int hz)
 {
-	int realdepth = ChangeMode(width,height,4,&HD.XScale,&HD.YScale);
+	int realdepth = changemode(width,height,4,&HD.XScale,&HD.YScale);
 
 	HD.Width = oldwidth;
 	HD.Height = oldheight;
@@ -281,7 +286,7 @@ static void sdd_refreshmouse(ARMul_State *state) {
  offset=0;
   memptr=MEMC.Cinit*16;
 
-	IGraphics->BltBitMap(friend.BitMap,OldMouseX,OldMouseY,
+	BltBitMap(friend.BitMap,OldMouseX,OldMouseY,
 			window->RPort->BitMap,OldMouseX,OldMouseY,
 			32,32,0x0C0,0xff,NULL);
 
@@ -334,12 +339,13 @@ static void sdd_refreshmouse(ARMul_State *state) {
 
       }; /* x */
 #error TODO - Needs updating for 16bpp
-		IGraphics->WritePixelLine8(&mouse_rp,0,y,32,line,&tmprp); // &mouseptr
+		WritePixelLine8(&mouse_rp,0,y,32,line,&tmprp); // &mouseptr
     } else return;
   }; /* y */
 
 // HorizPos,VertPos
-	IGraphics->BltBitMapTags(BLITA_Width, 32,
+#ifdef __amigaos4__
+	BltBitMapTags(BLITA_Width, 32,
 			BLITA_Height, height,
 			BLITA_Source, mouse_bm,
 			BLITA_SrcType, BLITT_BITMAP,
@@ -350,6 +356,7 @@ static void sdd_refreshmouse(ARMul_State *state) {
 			BLITA_DestX, HorizPos,
 			BLITA_DestY, VertPos,
 			TAG_DONE);
+#endif
 
 	OldMouseX = HorizPos;
 	OldMouseY = VertPos;
@@ -389,7 +396,7 @@ static void PDD_Name(Host_SetPaletteEntry)(ARMul_State *state,int i,unsigned int
 	ULONG g = ((phys>>4) & 0xf)*0x11111111;
 	ULONG b = ((phys>>8) & 0xf)*0x11111111;
 
-	IGraphics->SetRGB32(&screen->ViewPort,i,r,g,b);
+	SetRGB32(&screen->ViewPort,i,r,g,b);
 }
 
 static void PDD_Name(Host_SetBorderColour)(ARMul_State *state,unsigned int phys)
@@ -401,7 +408,7 @@ static void PDD_Name(Host_SetBorderColour)(ARMul_State *state,unsigned int phys)
 		ULONG g = ((phys>>4) & 0xf)*0x11111111;
 		ULONG b = ((phys>>8) & 0xf)*0x11111111;
 
-		IGraphics->SetRGB32(&screen->ViewPort,BorderPalEntry,r,g,b);
+		SetRGB32(&screen->ViewPort,BorderPalEntry,r,g,b);
 	}
 }
 
@@ -427,7 +434,7 @@ static inline ARMword *PDD_Name(Host_BeginUpdate)(ARMul_State *state,PDD_Row *ro
 
 static inline void PDD_Name(Host_EndUpdate)(ARMul_State *state,PDD_Row *row)
 {
-	IGraphics->WritePixelLine8(&friend,row->x,row->y,row->width,RowBuffer,&tmprp);
+	WritePixelLine8(&friend,row->x,row->y,row->width,RowBuffer,&tmprp);
 }
 
 static inline void PDD_Name(Host_AdvanceRow)(ARMul_State *state,PDD_Row *row,unsigned int count)
@@ -450,7 +457,7 @@ static void PDD_Name(Host_DrawBorderRect)(ARMul_State *state,int x,int y,int wid
 
 void PDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,int depth,int hz)
 {
-	int realdepth = ChangeMode(width,height,depth,&HD.XScale,&HD.YScale);
+	int realdepth = changemode(width,height,depth,&HD.XScale,&HD.YScale);
 
 	HD.Width = oldwidth;
 	HD.Height = oldheight;
@@ -522,13 +529,13 @@ static void pdd_refreshmouse(ARMul_State *state) {
 		ULONG r = (phys & 0xf)*0x11111111;
 		ULONG g = ((phys>>4) & 0xf)*0x11111111;
 		ULONG b = ((phys>>8) & 0xf)*0x11111111;
-		IGraphics->SetRGB32(&screen->ViewPort,col_reg+i,r,g,b);
+		SetRGB32(&screen->ViewPort,col_reg+i,r,g,b);
 	}
 
  offset=0;
   memptr=MEMC.Cinit*16;
 
-	IGraphics->BltBitMap(friend.BitMap,OldMouseX,OldMouseY,
+	BltBitMap(friend.BitMap,OldMouseX,OldMouseY,
 			window->RPort->BitMap,OldMouseX,OldMouseY,
 			32,32,0x0C0,0xff,NULL);
 
@@ -575,12 +582,13 @@ static void pdd_refreshmouse(ARMul_State *state) {
 			mask[(y*4) + (x/8)] = (mask[(y*4) + (x/8)] << 1) | maskbit;
 
       }; /* x */
-		IGraphics->WritePixelLine8(&mouse_rp,0,y,32,line,&tmprp); // &mouseptr
+		WritePixelLine8(&mouse_rp,0,y,32,line,&tmprp); // &mouseptr
     } else return;
   }; /* y */
 
 // HorizPos,VertPos
-	IGraphics->BltBitMapTags(BLITA_Width, 32,
+#ifdef __amigaos4__
+	BltBitMapTags(BLITA_Width, 32,
 			BLITA_Height, height,
 			BLITA_Source, mouse_bm,
 			BLITA_SrcType, BLITT_BITMAP,
@@ -591,6 +599,7 @@ static void pdd_refreshmouse(ARMul_State *state) {
 			BLITA_DestX, HorizPos,
 			BLITA_DestY, VertPos,
 			TAG_DONE);
+#endif
 
 	OldMouseX = HorizPos;
 	OldMouseY = VertPos;
@@ -602,7 +611,7 @@ PDD_Name(Host_PollDisplay)(ARMul_State *state)
 {
 	if(redraw_miny <= redraw_maxy)
 	{
-		IGraphics->BltBitMap(friend.BitMap,0,redraw_miny,
+		BltBitMap(friend.BitMap,0,redraw_miny,
 				window->RPort->BitMap,0,redraw_miny,
 				HD.Width,(redraw_maxy-redraw_miny)+1,0x0C0,0xff,NULL);
 		redraw_miny = INT_MAX;
@@ -622,13 +631,15 @@ PDD_Name(Host_PollDisplay)(ARMul_State *state)
 void CloseDisplay(void)
 {
 	if(window)
-		IIntuition->CloseWindow(window);
+		CloseWindow(window);
 
-	IIntuition->IDoMethod(arexx_obj, AM_EXECUTE, "QUIT", "ARCEMPANEL", NULL, NULL, NULL, NULL);
+#ifdef __amigaos4__
+	IDoMethod(arexx_obj, AM_EXECUTE, "QUIT", "ARCEMPANEL", NULL, NULL, NULL, NULL);
+#endif
 
 	if(screen)
 	{
-		while(!IIntuition->CloseScreen(screen));
+		while(!CloseScreen(screen));
 	}
 
 	window = NULL;
@@ -642,57 +653,56 @@ void cleanup(void)
 	sound_exit();
 #endif
 
-	IGraphics->WaitBlit();
+	WaitBlit();
 
 	if(mouseobj)
 	{
-		IIntuition->SetWindowPointer(window,TAG_DONE);
-		IIntuition->DisposeObject(mouseobj);
+		SetWindowPointer(window,TAG_DONE);
+		DisposeObject(mouseobj);
 	}
 
 	if(mouseptr.BitMap)
 	{
-		IGraphics->FreeBitMap(mouseptr.BitMap);
+		FreeBitMap(mouseptr.BitMap);
 		mouseptr.BitMap=NULL;
 	}
 
 	if(friend.BitMap)
-		IGraphics->FreeBitMap(friend.BitMap);
+		FreeBitMap(friend.BitMap);
 
 	if(tmprp.BitMap)
-		IGraphics->FreeBitMap(tmprp.BitMap);
+		FreeBitMap(tmprp.BitMap);
 
-	if(mouse_bm) IGraphics->FreeBitMap(mouse_bm);
+	if(mouse_bm) FreeBitMap(mouse_bm);
 
-	if(mask) IGraphics->FreeRaster(mask,32,32);
+	if(mask) FreeRaster(mask,32,32);
 
 	CloseDisplay();
 
+	#ifdef __amigaos4__
 	ARexx_Cleanup();
+	#endif
 
-	if(IGraphics)
-	{
-		IExec->DropInterface((struct Interface *)IGraphics);
-		IExec->CloseLibrary(GfxBase);
-	}
+	#ifdef __amigaos4__
+	if(IGraphics) DropInterface((struct Interface *)IGraphics);
+	#endif
+	CloseLibrary(GfxBase);
 
-	if(IDOS)
-	{
-		IExec->DropInterface((struct Interface *)IDOS);
-		IExec->CloseLibrary(DOSBase);
-	}
+	
+	#ifdef __amigaos4__
+	if(IDOS) DropInterface((struct Interface *)IDOS);
+	#endif
+	CloseLibrary(DOSBase);
 
-	if(IAsl)
-	{
-		IExec->DropInterface((struct Interface *)IAsl);
-		IExec->CloseLibrary(AslBase);
-	}
+	#ifdef __amigaos4__
+	if(IAsl) DropInterface((struct Interface *)IAsl);
+	#endif
+	CloseLibrary(AslBase);
 
-	if(IIntuition)
-	{
-		IExec->DropInterface((struct Interface *)IIntuition);
-		IExec->CloseLibrary(IntuitionBase);
-	}
+	#ifdef __amigaos4__
+	if(IIntuition) DropInterface((struct Interface *)IIntuition);
+	#endif
+	CloseLibrary(IntuitionBase);
 
 	exit(0);
 }
@@ -722,7 +732,7 @@ Kbd_PollHostKbd(ARMul_State *state)
 	struct IntuiWheelData *wheel = NULL;
 	if(!port) return(0);
 
-	while((msg=(struct IntuiMessage *)IExec->GetMsg(port)))
+	while((msg=(struct IntuiMessage *)GetMsg(port)))
 	{
 		switch(msg->Class)
 		{
@@ -755,7 +765,7 @@ Kbd_PollHostKbd(ARMul_State *state)
 					break;
 				}
 			break;
-
+#ifdef __amigaos4__
 			case IDCMP_EXTENDEDMOUSE:
 
 				if(msg->Code == IMSGCODE_INTUIWHEELDATA)
@@ -769,23 +779,23 @@ Kbd_PollHostKbd(ARMul_State *state)
 						keyboard_key_changed(&KBD, ARCH_KEY_button_5,TRUE);
 				}
 			break;
-
+#endif
 			case IDCMP_RAWKEY:
 
 				switch(msg->Code)
 				{
-
+#ifdef __amigaos4__
 					case 0x67:
 					{
 						BPTR *in,*out;
 
-						in = IDOS->Open("NIL:",MODE_OLDFILE);
-						out = IDOS->Open("NIL:",MODE_NEWFILE);
+						in = Open("NIL:",MODE_OLDFILE);
+						out = Open("NIL:",MODE_NEWFILE);
 
-						IDOS->SystemTags("arcempanel",SYS_Asynch,TRUE,SYS_Input,in,SYS_Output,out,TAG_DONE);
+						SystemTags("arcempanel",SYS_Asynch,TRUE,SYS_Input,in,SYS_Output,out,TAG_DONE);
 					}
 					break;
-
+#endif
 					default:
 						if(msg->Code >= 0x80)
 						{
@@ -809,13 +819,15 @@ Kbd_PollHostKbd(ARMul_State *state)
 			break;
 		}
 
-		if(msg) IExec->ReplyMsg((struct Message *)msg);
+		if(msg) ReplyMsg((struct Message *)msg);
 	}
 
+	#ifdef __amigaos4__
 	ARexx_Handle();
-
+	
 	if(arexx_quit)
 		cleanup();
+	#endif
 
   return 0;
 }
@@ -832,47 +844,57 @@ DisplayDev_Init(ARMul_State *state)
 
 /* Need to add some error messages here, although if these aren't available you have bigger problems */
 
+#ifdef __amigaos4__
     IExec = (struct ExecIFace *)(*(struct ExecBase **)4)->MainInterface;
+#endif
 
-	if((IntuitionBase = IExec->OpenLibrary((char *)&"intuition.library",51)))
+	if((IntuitionBase = OpenLibrary((char *)&"intuition.library",37)))
 	{
-		IIntuition = (struct IntuitionIFace *)IExec->GetInterface(IntuitionBase,(char *)&"main",1,NULL);
+	#ifdef __amigaos4__
+		IIntuition = (struct IntuitionIFace *)GetInterface(IntuitionBase,(char *)&"main",1,NULL);
+	#endif
 	}
 	else
 	{
 		cleanup();
 	}
 
-	if((GfxBase = IExec->OpenLibrary((char *)&"graphics.library",51)))
+	if((GfxBase = OpenLibrary((char *)&"graphics.library",37)))
 	{
-		IGraphics = (struct GraphicsIFace *)IExec->GetInterface(GfxBase,(char *)&"main",1,NULL);
+	#ifdef __amigaos4__
+		IGraphics = (struct GraphicsIFace *)GetInterface(GfxBase,(char *)&"main",1,NULL);
+	#endif
 	}
 	else
 	{
 		cleanup();
 	}
 
-	if((AslBase = IExec->OpenLibrary((char *)&"asl.library",51)))
+	if((AslBase = OpenLibrary((char *)&"asl.library",37)))
 	{
-		IAsl = (struct AslIFace *)IExec->GetInterface(AslBase,(char *)&"main",1,NULL);
+	#ifdef __amigaos4__
+		IAsl = (struct AslIFace *)GetInterface(AslBase,(char *)&"main",1,NULL);
+	#endif
 	}
 	else
 	{
 		cleanup();
 	}
 
+	#ifdef __amigaos4__
 	ARexx_Init();
+	#endif
 
-	IGraphics->InitRastPort(&mouseptr);
-	IGraphics->InitRastPort(&mouse_rp);
-	IGraphics->InitRastPort(&friend);
-	mask = IGraphics->AllocRaster(32,32);
+	InitRastPort(&mouseptr);
+	InitRastPort(&mouse_rp);
+	InitRastPort(&friend);
+	mask = AllocRaster(32,32);
 
 	/* blank mouse pointer image */
-	mouseptr.BitMap = IGraphics->AllocBitMap(1,1,1,BMF_CLEAR,NULL);
-	mouseobj = IIntuition->NewObject(NULL,"pointerclass",POINTERA_BitMap,mouseptr.BitMap,POINTERA_WordWidth,2,POINTERA_XOffset,0,POINTERA_YOffset,0,POINTERA_XResolution,POINTERXRESN_SCREENRES,POINTERA_YResolution,POINTERYRESN_SCREENRESASPECT,TAG_DONE);
+	mouseptr.BitMap = AllocBitMap(1,1,1,BMF_CLEAR,NULL);
+	mouseobj = NewObject(NULL,"pointerclass",POINTERA_BitMap,mouseptr.BitMap,POINTERA_WordWidth,2,POINTERA_XOffset,0,POINTERA_YOffset,0,POINTERA_XResolution,POINTERXRESN_SCREENRES,POINTERA_YResolution,POINTERYRESN_SCREENRESASPECT,TAG_DONE);
 
-	filereq = IAsl->AllocAslRequestTags(ASL_FileRequest,
+	filereq = AllocAslRequestTags(ASL_FileRequest,
 									ASLFR_RejectIcons,TRUE,
 	                             	ASLFR_InitialDrawer,"arexx",
 									ASLFR_InitialPattern,"#?.arcem",

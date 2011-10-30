@@ -18,23 +18,16 @@ SoundData sound_buffer[256*2]; /* Must be >= 2*Sound_BatchSize! */
 
 int openaudio(void)
 {
-	STRPTR audiof = NULL;
+	char audiof[256];
 
-	if(audiof = IUtility->ASPrintf("AUDIO:BITS/16/C/2/F/%lu/T/SIGNED",sampleRate))
+	sprintf(audiof, "AUDIO:BITS/16/C/2/F/%lu/T/SIGNED\0", sampleRate);
+
+	if(!(audioh = Open(audiof,MODE_NEWFILE)))
 	{
-		if(!(audioh = IDOS->Open(audiof,MODE_NEWFILE)))
-		{
-			fprintf(stderr, "Could not open audio: device\n");
-			return -1;
-		}
-		IExec->FreeVec(audiof);
-	}
-	else
-	{
-		fprintf(stderr, "sound_init(): Out of memory\n");
+		fprintf(stderr, "Could not open audio: device\n");
 		return -1;
 	}
-	
+
 	return 0;
 }
 
@@ -51,24 +44,12 @@ void Sound_HostBuffered(SoundData *buffer,int32_t numSamples)
 
 	/* TODO - Adjust Sound_FudgeRate to fine-tune how often we receive new data */
 
-	IDOS->Write(audioh,buffer,numSamples*sizeof(SoundData));
+	Write(audioh,buffer,numSamples*sizeof(SoundData));
 }
 
 int
 Sound_InitHost(ARMul_State *state)
 {
-//	We only need utility.library in the sound routine, so opening it here.
-
-	if(UtilityBase = IExec->OpenLibrary("utility.library",51))
-	{
-		IUtility = IExec->GetInterface(UtilityBase,"main",1,NULL);
-	}
-	else
-	{
-		fprintf(stderr, "sound_init(): Could not open utility.library v51\n");
-		return -1;
-	}
-
 	if(openaudio() == -1)
 		return -1;
 
@@ -85,11 +66,5 @@ Sound_InitHost(ARMul_State *state)
 void sound_exit(void)
 {
 //	IExec->FreeVec(buffer);
-	IDOS->Close(audioh);
-
-	if(IUtility)
-	{
-		IExec->DropInterface((struct Interface *)IUtility);
-		IExec->CloseLibrary(UtilityBase);
-	}
+	Close(audioh);
 }
