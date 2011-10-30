@@ -3,6 +3,7 @@
 #include <signal.h>
 #include <stdio.h>
 #include <time.h>
+#include <inttypes.h>
 #include "../armdefs.h"
 
 #ifdef MACOSX
@@ -266,11 +267,13 @@ void I2C_Update(ARMul_State *state) {
             /* Ah - we have got the whole of the slave address - well except for the last
                bit we are going to ignore it; the last bit tells us rNw */
             I2C.LastrNw=I2C.DataBuffer & 1;
-            dbug_i2c("I2C simulator got slave address 0x%x\n",I2C.DataBuffer);
+            dbug_i2c("I2C simulator got slave address "
+                "%#" PRIxFAST16 "\n", I2C.DataBuffer);
             if ((I2C.DataBuffer & 0xfe)!=0xa0) {
               /* Hey - its a request for a different I2C peripheral - like an A500's timer
                  chip */
-              fprintf(stderr,"I2C simulator got wierd slave address 0x%x\n",I2C.DataBuffer);
+              fprintf(stderr, "I2C simulator got wierd slave address "
+                  "%#" PRIxFAST16 "\n", I2C.DataBuffer);
               I2C.IAmTransmitter=false;
               I2C.NumberOfBitsSoFar=0;
               I2C.state=I2CChipState_Idle;
