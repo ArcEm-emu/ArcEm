@@ -955,7 +955,7 @@ static void *emalloc(size_t n, const char *use)
     void *p;
 
     if ((p = malloc(n)) == NULL) {
-        fprintf(stderr, "arcem: malloc of %u bytes for %s failed.\n",
+        fprintf(stderr, "arcem: malloc of %zu bytes for %s failed.\n",
             n, use);
         exit(1);
     }
