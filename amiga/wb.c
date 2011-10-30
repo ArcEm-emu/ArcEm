@@ -41,7 +41,9 @@ void gettooltypes(struct WBArg *wbarg)
 	CONST_STRPTR *toolarray;
 	char *s;
 
-	if((*wbarg->wa_Name) && (dobj=GetIconTags(wbarg->wa_Name,NULL)))
+	force8bit = 0;
+
+	if((*wbarg->wa_Name) && (dobj=GetDiskObject(wbarg->wa_Name)))
 	{
 		toolarray = (CONST_STRPTR *)dobj->do_ToolTypes;
 
@@ -185,10 +187,10 @@ void wblaunch(struct WBStartup *WBenchMsg)
     IExec = (struct ExecIFace *)(*(struct ExecBase **)4)->MainInterface;
 	#endif
 	
-	if(IconBase = OpenLibrary("icon.library",45))
+	if(IconBase = OpenLibrary("icon.library",37))
 	{
 	#ifdef __amigaos4__
-		IIcon = IExec->GetInterface(IconBase,"main",1,NULL);
+		IIcon = GetInterface(IconBase,"main",1,NULL);
 	#endif
 	}
 	else
@@ -209,13 +211,15 @@ void wblaunch(struct WBStartup *WBenchMsg)
 		return;
 	}
 
+	#ifdef __amigaos4__
 	/* if we are launching from WB, we don't need console windows popping up */
 		fclose(stderr);
 		stderr = fopen("NIL:","w");
 
 		fclose(stdout);
 		stdout = fopen("NIL:","w");
-
+	#endif
+		
 	for(i=0,wbarg=WBenchMsg->sm_ArgList;i<WBenchMsg->sm_NumArgs;i++,wbarg++)
 	{
 		olddir =-1;

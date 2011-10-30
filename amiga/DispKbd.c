@@ -344,7 +344,11 @@ static void sdd_refreshmouse(ARMul_State *state) {
   }; /* y */
 
 // HorizPos,VertPos
-#ifdef __amigaos4__
+
+	BltMaskBitMapRastPort(mouse_bm, 0, 0, window->RPort,
+		HorizPos, VertPos, 32, height, (ABC|ABNC|ANBC), mask);
+
+#if 0
 	BltBitMapTags(BLITA_Width, 32,
 			BLITA_Height, height,
 			BLITA_Source, mouse_bm,
@@ -587,7 +591,11 @@ static void pdd_refreshmouse(ARMul_State *state) {
   }; /* y */
 
 // HorizPos,VertPos
-#ifdef __amigaos4__
+
+	BltMaskBitMapRastPort(mouse_bm, 0, 0, window->RPort,
+		HorizPos, VertPos, 32, height, (ABC|ABNC|ANBC), mask);
+
+#if 0
 	BltBitMapTags(BLITA_Width, 32,
 			BLITA_Height, height,
 			BLITA_Source, mouse_bm,
