@@ -426,56 +426,47 @@ void I2C_Update(ARMul_State *state) {
   }; /* Transmitter */
 } /* I2C_Update */
 
-/* ------------------------------------------------------------------------- */
-static void SetUpCMOS(ARMul_State *state) {
-  int loop,dest;
-  unsigned int val;
-  FILE *InFile;
+/* ------------------------------------------------------------------ */
 
-#ifdef __riscos__
-  InFile = fopen("<ArcEm$Dir>.hexcmos", "r");
+static void SetUpCMOS(ARMul_State *state)
+{
+    FILE *fp;
+    int byte, dest;
+    unsigned int val;
+
+#if defined(__riscos__)
+    fp = fopen("<ArcEm$Dir>.hexcmos", "r");
+#elif defined(MACOSX)
+    chdir(arcemDir);
+    fp = fopen("hexcmos", "r");
+#elif defined(SYSTEM_gp2x)
+    fp = fopen("/mnt/sd/arcem/hexcmos", "r");
 #else
-#ifdef MACOSX
-  {
-      chdir(arcemDir);
-      InFile = fopen("hexcmos", "r");
-  }
-#else
-#ifdef SYSTEM_gp2x
-  InFile = fopen("/mnt/sd/arcem/hexcmos", "r");
-#else
-  InFile = fopen("hexcmos", "r");
-#endif
-#endif
+    fp = fopen("hexcmos", "r");
 #endif
 
-  if (InFile == NULL) {
-    fprintf(stderr,"SetUpCMOS: Could not open (hexcmos) CMOS settings file, resetting to internal defaults.\n");
-//    exit(1);
-  };
+    if (fp == NULL)
+        fputs("SetUpCMOS: Could not open (hexcmos) CMOS settings file, "
+            "resetting to internal defaults.\n", stderr);
 
+    for (byte = 0; byte < 240; byte++) {
+        if (fp) {
+            fscanf(fp, "%x\n", &val);
+        } else {
+            val = CMOSDefaults[byte];
+        }
 
-  for (loop = 0; loop < 240; loop++) {
-	if (InFile == NULL)
-	{
-		val=CMOSDefaults[loop];
-	}
-	else
-	{
-    	fscanf(InFile,"%x\n",&val);
-	}
+        /* Map 0..191 to 64...255, and 192...239 to 16...63. */
+        dest = byte + 64;
+        if (dest > 255) dest -= 240;
+        I2C.Data[dest] = val;
+    }
 
-    dest=loop+64;
-    if (dest>255) dest-=240;
+    if (fp) fclose(fp);
+}
 
-    I2C.Data[dest]=val;
-  };
+/* ------------------------------------------------------------------ */
 
-	if(InFile)
-  		fclose(InFile);
-} /* SetUpCMOS */
-
-/* ------------------------------------------------------------------------- */
 void
 I2C_Init(ARMul_State *state)
 {
