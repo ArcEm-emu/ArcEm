@@ -430,28 +430,33 @@ void I2C_Update(ARMul_State *state) {
 
 static void SetUpCMOS(ARMul_State *state)
 {
+    const char *path;
     FILE *fp;
     int byte, dest;
     unsigned int val;
 
 #if defined(__riscos__)
-    fp = fopen("<ArcEm$Dir>.hexcmos", "r");
+    path = "<ArcEm$Dir>.hexcmos";
 #elif defined(MACOSX)
     chdir(arcemDir);
-    fp = fopen("hexcmos", "r");
+    path = "hexcmos";
 #elif defined(SYSTEM_gp2x)
-    fp = fopen("/mnt/sd/arcem/hexcmos", "r");
+    path = "/mnt/sd/arcem/hexcmos";
 #else
-    fp = fopen("hexcmos", "r");
+    path = "hexcmos";
 #endif
 
-    if (fp == NULL)
+    if ((fp = fopen(path, "r")) == NULL)
         fputs("SetUpCMOS: Could not open (hexcmos) CMOS settings file, "
             "resetting to internal defaults.\n", stderr);
 
     for (byte = 0; byte < 240; byte++) {
         if (fp) {
-            fscanf(fp, "%x\n", &val);
+            if (fscanf(fp, "%x\n", &val) != 1) {
+                fprintf(stderr, "arcem: failed to read value %d of %s\n",
+                    byte, path);
+                exit(1);
+            }
         } else {
             val = CMOSDefaults[byte];
         }
