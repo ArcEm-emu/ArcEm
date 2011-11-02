@@ -22,6 +22,7 @@
 //#include <unistd.h>
 
 #include "../armdefs.h"
+#include "../armemu.h"
 
 #include "armarc.h"
 #include "ControlPane.h"
@@ -100,10 +101,11 @@ struct FDCStruct{
 #define IS_CMD(data, cmd) \
     (((data) & CMD_ ## cmd ## _MASK) == CMD_ ## cmd)
 
-#define READSPACING 1
-#define WRITESPACING 1
-#define READADDRSTART 50
-#define SEEKDELAY 1
+/* Assuming we get called every 250 cycles by FDCHDC_Poll, these are sensible delay counters for us to use: */
+#define READSPACING MAX(1,(ARMul_EmuRate/(250*31250))) /* 250kbps data rate */
+#define WRITESPACING MAX(1,(ARMul_EmuRate/(250*31250)))
+#define READADDRSTART MAX(50,(ARMul_EmuRate/(250*50))) /* At 300RPM, and 5 sectors per track, that's 1/25th of a second between each sector. But use a delay 1/50th since we'll usually be in the area between two sectors */
+#define SEEKDELAY MAX(1,(ARMul_EmuRate/(250*31250)))
 
 #define BIT_BUSY 1
 #define BIT_DRQ (1<<1)

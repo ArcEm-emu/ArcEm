@@ -1189,7 +1189,7 @@ ARMul_Emulate26(ARMul_State *state)
       if(ARMul_CCCheck(instr,ECC))
       {
         Prof_BeginFunc(pipe[pipeidx].func);
-        (pipe[pipeidx].func)(state, instr, pc);
+        (pipe[pipeidx].func)(state, instr);
         Prof_EndFunc(pipe[pipeidx].func);
       }
 #else
