@@ -1280,7 +1280,7 @@ hostfs_write_file(ARMul_State *state, bool with_data)
     }
   }
 
-  if(bytes_written != length)
+  if(bytes_written != (state->Reg[5] - state->Reg[4]))
   {
     fprintf(stderr,"hostfs_write_file(): Failed to write full extent of file\n");
     /* TODO - Examine errno? */
@@ -2186,6 +2186,9 @@ hostfs(ARMul_State *state)
     /* Ignore further HostFS operations after logging once */
     break;
   }
+
+  if(state->Reg[9] >= 0xb0)
+    fprintf(stderr,"\tReturning with error %x\n",state->Reg[9]);
 
 #if defined(__riscos__) && defined(__TARGET_UNIXLIB__)
   __riscosify_control = old_riscosify;
