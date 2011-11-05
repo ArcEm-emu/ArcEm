@@ -128,11 +128,14 @@ enum FILE_INFO_WORD {
 enum FILECORE_ERROR {
   FILECORE_ERROR_BADRENAME   = 0xb0,
   FILECORE_ERROR_DIRNOTEMPTY = 0xb4,
+  FILECORE_ERROR_ACCESS      = 0xbd,
   FILECORE_ERROR_TOOMANYOPEN = 0xc0, /* Too many open files */
   FILECORE_ERROR_OPEN        = 0xc2, /* File open */
   FILECORE_ERROR_LOCKED      = 0xc3,
   FILECORE_ERROR_EXISTS      = 0xc4, /* Already exists */
   FILECORE_ERROR_DISCFULL    = 0xc6,
+  FILECORE_ERROR_NOTFOUND    = 0xd6, /* Not found */
+  HOSTFS_ERROR_UNKNOWN       = 0x100, /* Not a filecore error, but causes HostFS to return 'an unknown error occured' */
 };
 
 enum RISC_OS_FILE_TYPE {
@@ -165,8 +168,6 @@ typedef struct {
 #define STRCASEEQ(x,y) (strcasecmp(x,y) == 0)
 
 #define MAX_OPEN_FILES 255
-
-#define NOT_IMPLEMENTED 255
 
 #define DEFAULT_ATTRIBUTES  0x03
 #define DEFAULT_FILE_TYPE   RISC_OS_FILE_TYPE_TEXT
@@ -201,6 +202,53 @@ dbug_hostfs(const char *format, ...)
 static void
 path_construct(const char *old_path, const char *ro_path,
                char *new_path, size_t len, ARMword load, ARMword exec);
+
+static ARMword
+errno_to_hostfs_error(const char *filename,const char *function,const char *op)
+{
+  switch(errno) {
+  case ENOMEM: /* Out of memory */
+    fprintf(stderr, "HostFS out of memory in %s: \'%s\'\n",function,strerror(errno));
+    exit(EXIT_FAILURE);
+    break;
+
+  case ENOENT: /* Object not found */
+    return FILECORE_ERROR_NOTFOUND;
+
+  case EACCES: /* Access violation */
+  case EPERM:
+    return FILECORE_ERROR_ACCESS;
+
+  case EEXIST:
+  case ENOTEMPTY: /* POSIX permits either error for directory not empty */
+    return FILECORE_ERROR_DIRNOTEMPTY;
+
+  case ENOSPC: /* No space for the directory (either physical or quota) */
+    return FILECORE_ERROR_DISCFULL;
+
+#ifdef __riscos__
+  case EOPSYS: /* RISC OS error */
+  {
+    _kernel_oserror *err = _kernel_last_oserror();
+    if(err && ((err->errnum >> 16) == 1) && ((err->errnum & 0xff) >= 0xb0))
+    {
+      /* Filesystem error, in the range HostFS will accept. Return it directly. */
+      return err->errnum & 0xff;
+    }
+    else
+    {
+      fprintf(stderr,"%s() could not %s '%s': %s %d\n",function,op,filename,strerror(errno),errno);
+      return HOSTFS_ERROR_UNKNOWN;
+    }
+  }
+#endif
+
+  default:
+    fprintf(stderr,"%s() could not %s '%s': %s %d\n",function,op,filename,strerror(errno),errno);
+    return HOSTFS_ERROR_UNKNOWN;
+  }
+}
+
 
 /**
  * @param buffer_size_needed Required buffer
@@ -934,29 +982,17 @@ hostfs_open(ARMul_State *state)
 
   /* Check for errors from opening the file */
   if (open_file[idx] == NULL) {
-    switch (errno) {
-    case ENOMEM: /* Out of memory */
-      fprintf(stderr, "HostFS out of memory in hostfs_open(): \'%s\'\n",
-              strerror(errno));
-      exit(EXIT_FAILURE);
-      break;
-
-    case ENOENT: /* File not found */
-      state->Reg[1] = 0; /* Signal to RISC OS file not found */
-      return;
-
-    default:
-      dbug_hostfs("HostFS could not open file \'%s\': %s %d\n",
-                  host_pathname, strerror(errno), errno);
-      state->Reg[1] = 0; /* Signal to RISC OS file not found */
-      return;
-    }
+    state->Reg[1] = 0; /* Signal to RISC OS file not found */
+    state->Reg[9] = errno_to_hostfs_error(host_pathname,__FUNCTION__,"open");
+    return;
   }
 
   /* Find the extent of the file */
   fseeko64(open_file[idx], UINT64_C(0), SEEK_END);
   state->Reg[3] = (ARMword) ftello64(open_file[idx]);
   rewind(open_file[idx]); /* Return to start */
+
+  dbug_hostfs("\tFile opened OK, handle %u, size %u\n",idx,state->Reg[3]);
 
   state->Reg[1] = idx; /* Our filing system's handle */
   state->Reg[2] = 1024; /* Buffer size to use in range 64-1024.
@@ -1209,27 +1245,24 @@ hostfs_write_file(ARMul_State *state, bool with_data)
                    new_pathname, sizeof(new_pathname),
                    state->Reg[2], state->Reg[3]);
     if (rename(host_pathname, new_pathname)) {
-      fprintf(stderr, "hostfs_file_7_create_file(): could not rename \'%s\'"
-              " to \'%s\': %s %d\n", host_pathname, new_pathname,
-              strerror(errno), errno);
+      state->Reg[9] = errno_to_hostfs_error(host_pathname,__FUNCTION__,"rename");
       return;
     }
     break;
 
   case OBJECT_TYPE_DIRECTORY:
     /* TODO Find a suitable error */
+    state->Reg[9] = HOSTFS_ERROR_UNKNOWN;
     return;
   }
 
   f = fopen64(new_pathname, "wb");
   if (!f) {
-    /* TODO handle errors */
-    fprintf(stderr, "HostFS could not create file \'%s\': %s %d\n",
-            new_pathname, strerror(errno), errno);
+    state->Reg[9] = errno_to_hostfs_error(new_pathname,__FUNCTION__,"open");
     return;
   }
 
-  size_t bytes_written;
+  size_t bytes_written=0;
   if (with_data) {
     bytes_written = File_WriteRAM(f,ptr,length);
   } else {
@@ -1247,7 +1280,12 @@ hostfs_write_file(ARMul_State *state, bool with_data)
     }
   }
 
-  /* TODO - Check for errors */
+  if(bytes_written != length)
+  {
+    fprintf(stderr,"hostfs_write_file(): Failed to write full extent of file\n");
+    /* TODO - Examine errno? */
+    state->Reg[9] = HOSTFS_ERROR_UNKNOWN;
+  }
 
   fclose(f); /* TODO check for errors */
 
@@ -1355,7 +1393,10 @@ hostfs_file_6_delete(ARMul_State *state)
   get_string(state, state->Reg[1], ro_path, sizeof(ro_path));
   dbug_hostfs("\tPATH = %s\n", ro_path);
 
-  /* TODO Ensure we do not try to delete the root object: i.e. $ */
+  /* Prevent being asked to delete root directory */
+  if (STREQ(ro_path, "$")) {
+    return;
+  }
 
   hostfs_path_process(ro_path, host_pathname, &object_info);
 
@@ -1373,26 +1414,13 @@ hostfs_file_6_delete(ARMul_State *state)
   switch (object_info.type) {
   case OBJECT_TYPE_FILE:
     if (unlink(host_pathname)) {
-      /* Error while deleting the file */
-      fprintf(stderr, "HostFS: Error deleting file \'%s\': %s %d\n",
-              host_pathname, strerror(errno), errno);
+      state->Reg[9] = errno_to_hostfs_error(host_pathname,__FUNCTION__,"delete file");
     }
     break;
 
   case OBJECT_TYPE_DIRECTORY:
     if (rmdir(host_pathname)) {
-      /* Error while deleting the directory */
-      switch (errno) {
-      case EEXIST:
-      case ENOTEMPTY: /* POSIX permits either error for directory not empty */
-        state->Reg[9] = FILECORE_ERROR_DIRNOTEMPTY;
-        break;
-
-      default:
-        fprintf(stderr, "HostFS: Error deleting directory \'%s\': %s %d\n",
-                host_pathname, strerror(errno), errno);
-        break;
-      }
+      state->Reg[9] = errno_to_hostfs_error(host_pathname,__FUNCTION__,"delete directory");
     }
     break;
 
@@ -1469,22 +1497,7 @@ hostfs_file_8_create_dir(ARMul_State *state)
 
   /* Create directory */
   if (mkdir(host_pathname, 0777)) {
-    /* An error occurred whilst creating the directory */
-
-    switch (errno) {
-    case EEXIST:
-      /* The object exists (not necessarily as a directory) - does it matter that it could be a file? TODO */
-      return; /* Return with no error */
-
-    case ENOSPC: /* No space for the directory (either physical or quota) */
-      state->Reg[9] = FILECORE_ERROR_DISCFULL;
-      return;
-
-    default:
-      fprintf(stderr, "HostFS could not create directory \'%s\': %s\n",
-              host_pathname, strerror(errno));
-      return;
-    }
+    state->Reg[9] = errno_to_hostfs_error(host_pathname,__FUNCTION__,"create directory");
   }
 }
 
@@ -1519,12 +1532,17 @@ hostfs_file_255_load_file(ARMul_State *state)
 
   f = fopen64(host_pathname, "rb");
   if (!f) {
-    fprintf(stderr, "HostFS could not open file (File_255) \'%s\': %s %d\n",
-            host_pathname, strerror(errno), errno);
+    state->Reg[9] = errno_to_hostfs_error(host_pathname,__FUNCTION__,"open");
     return;
   }
 
-  File_ReadRAM(f,ptr,state->Reg[4]);
+  ARMword bytes_read = File_ReadRAM(f,ptr,state->Reg[4]);
+  if(bytes_read != state->Reg[4])
+  {
+    fprintf(stderr,"hostfs_file_255_load_file(): Failed to read full extent of file\n");
+    /* TODO - Examine errno? */
+    state->Reg[9] = HOSTFS_ERROR_UNKNOWN;
+  }
 
   fclose(f);
 }
@@ -2022,7 +2040,7 @@ hostfs_func(ARMul_State *state)
 
   case 11:
     dbug_hostfs("\tRead disc name and boot option\n");
-    state->Reg[9] = NOT_IMPLEMENTED;
+    state->Reg[9] = HOSTFS_ERROR_UNKNOWN;
     break;
 
   case 14:

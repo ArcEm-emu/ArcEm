@@ -26,9 +26,13 @@
 
 	@ Filing system error codes
 	FILECORE_ERROR_DIRNOTEMPTY	= 0xb4
+	FILECORE_ERROR_ACCESS		= 0xbd           
+	FILECORE_ERROR_ALREADYOPEN	= 0xc2
 	FILECORE_ERROR_DISCFULL		= 0xc6
 	FILECORE_ERROR_BADDISC		= 0xc8
 	FILECORE_ERROR_DISCPROT		= 0xc9
+	FILECORE_ERROR_NOTFOUND		= 0xd6
+	HOSTFS_ERROR_UNKNOWN		= 0x100
 
 	@ Filing system properties
 	FILING_SYSTEM_NUMBER = 0x99	@ TODO choose unique value
@@ -64,7 +68,7 @@ title:
 	.string	"RPCEmuHostFS"
 
 help:
-	.string	"RPCEmu HostFS\t0.07 (31 Aug 2010)"
+	.string	"RPCEmu HostFS\t0.08 (05 Nov 2011)"
 
 	.align
 
@@ -247,6 +251,9 @@ fs_open:
 	mov	r9, #0
 	swi	ArcEm_HostFS
 
+	cmp	r9, #0xb0
+	bhs	hostfs_error
+
 	ldmfd	sp!, {pc}
 
 
@@ -257,6 +264,9 @@ fs_getbytes:
 
 	mov	r9, #1
 	swi	ArcEm_HostFS
+
+	cmp	r9, #0xb0
+	bhs	hostfs_error
 
 	ldmfd	sp!, {pc}
 
@@ -269,6 +279,9 @@ fs_putbytes:
 	mov	r9, #2
 	swi	ArcEm_HostFS
 
+	cmp	r9, #0xb0
+	bhs	hostfs_error
+
 	ldmfd	sp!, {pc}
 
 
@@ -280,6 +293,9 @@ fs_args:
 	mov	r9, #3
 	swi	ArcEm_HostFS
 
+	cmp	r9, #0xb0
+	bhs	hostfs_error
+
 	ldmfd	sp!, {pc}
 
 
@@ -290,6 +306,9 @@ fs_close:
 
 	mov	r9, #4
 	swi	ArcEm_HostFS
+
+	cmp	r9, #0xb0
+	bhs	hostfs_error
 
 	ldmfd	sp!, {pc}
 
@@ -303,7 +322,6 @@ fs_file:
 	swi	ArcEm_HostFS
 
 	cmp	r9, #0xb0
-	movhs	r0, r9
 	bhs	hostfs_error
 
 	ldmfd	sp!, {pc}
@@ -322,7 +340,6 @@ fs_func:
 	swi	ArcEm_HostFS
 
 	cmp	r9, #0xb0
-	movhs	r0, r9
 	bhs	hostfs_error
 
 	ldmfd	sp!, {pc}
@@ -331,12 +348,15 @@ fs_func:
         /* FSEntry_GBPB (Multi-byte operations)
          */
 fs_gbpb:
-        stmfd   sp!, {lr}
+	stmfd	sp!, {lr}
 
-        mov     r9, #7
-        swi     ArcEm_HostFS
+	mov	r9, #7
+	swi	ArcEm_HostFS
 
-        ldmfd   sp!, {pc}
+	cmp	r9, #0xb0
+	bhs	hostfs_error
+
+	ldmfd	sp!, {pc}
 
 
 boot:
@@ -358,28 +378,37 @@ not_implemented:
 
 
 	/* Entry: 
-	 * R0 = error number
+	 * R9 = error number
 	 * Exit:
 	 * Return function with error
 	 */
 hostfs_error:
-	teq	r0, #255
-	beq	not_implemented
-
-	teq	r0, #FILECORE_ERROR_DIRNOTEMPTY
+	teq	r9, #FILECORE_ERROR_DIRNOTEMPTY
 	adreq	r0, err_dirnotempty
 	beq	hostfs_return_error
 
-	teq	r0, #FILECORE_ERROR_DISCFULL
+	teq	r9, #FILECORE_ERROR_ACCESS
+	adreq	r0, err_access
+	beq	hostfs_return_error
+
+	teq	r9, #FILECORE_ERROR_ALREADYOPEN
+	adreq	r0, err_alreadyopen
+	beq	hostfs_return_error
+
+	teq	r9, #FILECORE_ERROR_DISCFULL
 	adreq	r0, err_discfull
 	beq	hostfs_return_error
 
-	teq	r0, #FILECORE_ERROR_BADDISC
+	teq	r9, #FILECORE_ERROR_BADDISC
 	adreq	r0, err_baddisc
 	beq	hostfs_return_error
 
-	teq	r0, #FILECORE_ERROR_DISCPROT
+	teq	r9, #FILECORE_ERROR_DISCPROT
 	adreq	r0, err_discprot
+	beq	hostfs_return_error
+
+	teq	r9, #FILECORE_ERROR_NOTFOUND
+	adreq	r0, err_notfound
 	beq	hostfs_return_error
 
 	adr	r0, err_unknown
@@ -399,6 +428,16 @@ err_dirnotempty:
 	.string	"Directory not empty"
 	.align
 
+err_access:
+	.int	0x10000 | (FILING_SYSTEM_NUMBER << 8) | FILECORE_ERROR_ACCESS
+	.string	"The access details set for this item do not allow this"
+	.align
+
+err_alreadyopen:
+	.int	0x10000 | (FILING_SYSTEM_NUMBER << 8) | FILECORE_ERROR_ALREADYOPEN
+	.string	"This file is already open"
+	.align
+
 err_discfull:
 	.int	0x10000 | (FILING_SYSTEM_NUMBER << 8) | FILECORE_ERROR_DISCFULL
 	.string	"Disc is full"
@@ -412,6 +451,11 @@ err_baddisc:
 err_discprot:
 	.int	0x10000 | (FILING_SYSTEM_NUMBER << 8) | FILECORE_ERROR_DISCPROT
 	.string	"Disc is protected for changes"
+	.align
+
+err_notfound:
+	.int	0x10000 | (FILING_SYSTEM_NUMBER << 8) | FILECORE_ERROR_NOTFOUND
+	.string	"Not found"
 	.align
 
 err_unknown:

@@ -90,7 +90,7 @@ static size_t filebuffer_read(uint8_t *pBuffer,size_t uCount,bool endian)
   {
     if(filebuffer_buffered == filebuffer_offset)
     {
-      if(filebuffer_remain)
+      if(!filebuffer_remain)
         return ret;
       filebuffer_fill();
     }
@@ -142,9 +142,9 @@ static void filebuffer_write(uint8_t *pBuffer,size_t uCount,bool endian)
   {
     size_t temp = MIN(uCount,buffer_size-filebuffer_offset);
     if(endian)
-      ByteCopy(buffer+filebuffer_offset,pBuffer,uCount);
+      ByteCopy(buffer+filebuffer_offset,pBuffer,temp);
     else
-      memcpy(buffer+filebuffer_offset,pBuffer,uCount);
+      memcpy(buffer+filebuffer_offset,pBuffer,temp);
     filebuffer_offset += temp;
     uCount -= temp;
     pBuffer += temp;

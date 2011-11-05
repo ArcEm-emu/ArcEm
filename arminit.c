@@ -174,7 +174,7 @@ void ARMul_Abort(ARMul_State *state, ARMword vector) {
 
     case ARMul_SWIV: /* Software Interrupt */
        {
-         ARMword addr = ARMul_GetPC(state)-8;
+         ARMword addr = (state->Reg[15]-8) & R15PCBITS;
          FastMapEntry *entry = FastMap_GetEntryNoWrap(state,addr);
          FastMapRes res = FastMap_DecodeRead(entry,state->FastMapMode);
          ARMword instr;
