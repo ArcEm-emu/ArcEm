@@ -36,6 +36,10 @@ The Amiga version can use tooltypes in place of command line switches, they foll
 Additionally, there is a tooltype ST506DISC which allows you to specify one ".arcemrc" config line.
 
 FORCE8BIT: Force ArcEm to only open 8-bit screens.  This potentially avoids some screen closing/opening and monitor resyncing, but may use more memory or be slower especially on planar configurations.
+
+SWAPMOUSEBUTTONS: Swaps MMB and RMB, most useful to allow two button mice to get into RISC OS menus.
+
+NOCONSOLEOUTPUT: Stops console output.
 @endnode
 
 @node ARexx

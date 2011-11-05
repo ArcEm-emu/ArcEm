@@ -42,6 +42,7 @@ void gettooltypes(struct WBArg *wbarg)
 	char *s;
 
 	force8bit = 0;
+	swapmousebuttons = 0;
 
 	if((*wbarg->wa_Name) && (dobj=GetDiskObject(wbarg->wa_Name)))
 	{
@@ -134,6 +135,8 @@ void gettooltypes(struct WBArg *wbarg)
 
 		if(FindToolType(toolarray,"FORCE8BIT")) force8bit=1;
 
+		if(FindToolType(toolarray,"SWAPBUTTONS")) swapmousebuttons=1;
+
 		if(FindToolType(toolarray, "USEUPDATEFLAGS"))
 			DisplayDev_UseUpdateFlags = 1;
 
@@ -144,6 +147,15 @@ void gettooltypes(struct WBArg *wbarg)
 		if(FindToolType(toolarray, "AUTOUPDATEFLAGS"))
 			DisplayDev_AutoUpdateFlags = 1;
 
+		if(FindToolType(toolarray, "NOCONSOLEOUTPUT"))
+		{
+			/* if we are launching from WB, we don't need console windows popping up */
+			fclose(stderr);
+			stderr = fopen("NIL:","w");
+
+			fclose(stdout);
+			stdout = fopen("NIL:","w");
+		}
 
 		/* This code implements ReadConfig.c via tooltypes - it searches for
 			ST506DISC, but it will only support 1 line atm.
@@ -211,15 +223,6 @@ void wblaunch(struct WBStartup *WBenchMsg)
 		return;
 	}
 
-	#ifdef __amigaos4__
-	/* if we are launching from WB, we don't need console windows popping up */
-		fclose(stderr);
-		stderr = fopen("NIL:","w");
-
-		fclose(stdout);
-		stdout = fopen("NIL:","w");
-	#endif
-		
 	for(i=0,wbarg=WBenchMsg->sm_ArgList;i<WBenchMsg->sm_NumArgs;i++,wbarg++)
 	{
 		olddir =-1;

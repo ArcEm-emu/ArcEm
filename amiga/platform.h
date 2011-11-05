@@ -39,4 +39,5 @@ extern void cleanup(void);
 extern void sound_exit(void);
 
 int force8bit;
+int swapmousebuttons;
 #endif

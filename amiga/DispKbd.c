@@ -286,10 +286,6 @@ static void sdd_refreshmouse(ARMul_State *state) {
  offset=0;
   memptr=MEMC.Cinit*16;
 
-	BltBitMap(friend.BitMap,OldMouseX,OldMouseY,
-			window->RPort->BitMap,OldMouseX,OldMouseY,
-			32,32,0x0C0,0xff,NULL);
-
 	mask[0] = 0;
 	mask[1] = 0;
 	mask[2] = 0;
@@ -344,6 +340,12 @@ static void sdd_refreshmouse(ARMul_State *state) {
   }; /* y */
 
 // HorizPos,VertPos
+
+//	WaitTOF();
+
+	BltBitMap(friend.BitMap,OldMouseX,OldMouseY,
+			window->RPort->BitMap,OldMouseX,OldMouseY,
+			32,32,0x0C0,0xff,NULL);
 
 	BltMaskBitMapRastPort(mouse_bm, 0, 0, window->RPort,
 		HorizPos, VertPos, 32, height, (ABC|ABNC|ANBC), mask);
@@ -539,10 +541,6 @@ static void pdd_refreshmouse(ARMul_State *state) {
  offset=0;
   memptr=MEMC.Cinit*16;
 
-	BltBitMap(friend.BitMap,OldMouseX,OldMouseY,
-			window->RPort->BitMap,OldMouseX,OldMouseY,
-			32,32,0x0C0,0xff,NULL);
-
 	mask[0] = 0;
 	mask[1] = 0;
 	mask[2] = 0;
@@ -591,6 +589,12 @@ static void pdd_refreshmouse(ARMul_State *state) {
   }; /* y */
 
 // HorizPos,VertPos
+
+//	WaitTOF();
+
+	BltBitMap(friend.BitMap,OldMouseX,OldMouseY,
+			window->RPort->BitMap,OldMouseX,OldMouseY,
+			32,32,0x0C0,0xff,NULL);
 
 	BltMaskBitMapRastPort(mouse_bm, 0, 0, window->RPort,
 		HorizPos, VertPos, 32, height, (ABC|ABNC|ANBC), mask);
@@ -757,19 +761,31 @@ Kbd_PollHostKbd(ARMul_State *state)
 					break;
 
 					case MENUDOWN:
-						keyboard_key_changed(&KBD, ARCH_KEY_button_3,FALSE);
+						if(!swapmousebuttons)
+							keyboard_key_changed(&KBD, ARCH_KEY_button_3,FALSE);
+						else
+							keyboard_key_changed(&KBD, ARCH_KEY_button_2,FALSE);
 					break;
 
 					case MENUUP:
-						keyboard_key_changed(&KBD, ARCH_KEY_button_3,TRUE);
+						if(!swapmousebuttons)
+							keyboard_key_changed(&KBD, ARCH_KEY_button_3,TRUE);
+						else
+							keyboard_key_changed(&KBD, ARCH_KEY_button_2,TRUE);
 					break;
 
 					case MIDDLEDOWN:
-						keyboard_key_changed(&KBD, ARCH_KEY_button_2,FALSE);
+						if(!swapmousebuttons)
+							keyboard_key_changed(&KBD, ARCH_KEY_button_2,FALSE);
+						else
+							keyboard_key_changed(&KBD, ARCH_KEY_button_3,FALSE);
 					break;
 
 					case MIDDLEUP:
-						keyboard_key_changed(&KBD, ARCH_KEY_button_2,TRUE);
+						if(!swapmousebuttons)
+							keyboard_key_changed(&KBD, ARCH_KEY_button_2,TRUE);
+						else
+							keyboard_key_changed(&KBD, ARCH_KEY_button_3,TRUE);
 					break;
 				}
 			break;
