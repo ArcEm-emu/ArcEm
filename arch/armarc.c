@@ -309,12 +309,17 @@ ARMul_MemoryInit(ARMul_State *state)
   /* Now allocate ROMs & RAM in one chunk */
   ARMword RAMChunkSize = MAX(MEMC.RAMSize,512*1024); /* Ensure at least 512K RAM allocated to avoid any issues caused by DMA pointers going out of range */
   MEMC.ROMRAMChunk = calloc(RAMChunkSize+MEMC.ROMHighSize+extnrom_size+256,1);
-  MEMC.EmuFuncChunk = calloc(RAMChunkSize+MEMC.ROMHighSize+extnrom_size+256,1);
+  MEMC.EmuFuncChunk = calloc(RAMChunkSize+MEMC.ROMHighSize+extnrom_size+256,sizeof(FastMapUInt)/4);
   if((MEMC.ROMRAMChunk == NULL) || (MEMC.EmuFuncChunk == NULL)) {
     fprintf(stderr,"Couldn't allocate ROMRAMChunk/EmuFuncChunk\n");
     exit(3);
   }
+#ifdef FASTMAP_64
+  /* On 64bit systems, ROMRAMChunk needs shifting to account for the shift that occurs in FastMap_Phy2Func */
+  state->FastMapInstrFuncOfs = ((FastMapUInt)MEMC.EmuFuncChunk)-(((FastMapUInt)MEMC.ROMRAMChunk)<<1);
+#else
   state->FastMapInstrFuncOfs = ((FastMapUInt)MEMC.EmuFuncChunk)-((FastMapUInt)MEMC.ROMRAMChunk);
+#endif
   /* Get everything 256 byte aligned for FastMap to work */
   MEMC.PhysRam = (ARMword*) ((((FastMapUInt)MEMC.ROMRAMChunk)+255)&~255); /* RAM must come first for FastMap_LogRamFunc to work! */
   MEMC.ROMHigh = MEMC.PhysRam + (RAMChunkSize>>2);
@@ -496,8 +501,8 @@ static void FastMap_SetEntries(ARMword addr,ARMword *data,FastMapAccessFunc func
 {
   FastMapEntry *entry = FastMap_GetEntryNoWrap(&statestr,addr);
 //  fprintf(stderr,"FastMap_SetEntries(%08x,%08x,%08x,%08x,%08x)\n",addr,data,func,flags,size);
-  addr = ((FastMapUInt)data)-addr; /* Offset so we can just add the phy addr to get a pointer back */
-  flags |= addr>>8;
+  FastMapUInt offset = ((FastMapUInt)data)-addr; /* Offset so we can just add the phy addr to get a pointer back */
+  flags |= offset>>8;
 //  fprintf(stderr,"->entry %08x\n->FlagsAndData %08x\n",entry,flags);
   while(size) {
     entry->FlagsAndData = flags;

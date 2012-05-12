@@ -89,7 +89,7 @@ ARMul_LoadInstr(ARMul_State *state,ARMword addr, PipelineEntry *p)
 static void
 ARMul_LoadInstrTriplet(ARMul_State *state,ARMword addr,PipelineEntry *p)
 {
-  if ((addr << 20) > 0xff000000) {
+  if (((uint32_t) (addr << 20)) > 0xff000000) {
     ARMul_LoadInstr(state,addr,p);
     ARMul_LoadInstr(state,addr+4,p+1);
     ARMul_LoadInstr(state,addr+8,p+2);
@@ -639,7 +639,7 @@ static void LoadMult(ARMul_State *state, ARMword instr,
     temp2 = state->Reg[15];
 
     /* Check if we can use the fastmap */
-    if(((address<<20) <= 0xfc000000) && !state->Aborted)
+    if((((uint32_t) (address<<20)) <= 0xfc000000) && !state->Aborted)
     {
        FastMapEntry *entry = FastMap_GetEntry(state,address);
        FastMapRes res = FastMap_DecodeRead(entry,state->FastMapMode);
@@ -729,7 +729,7 @@ static void LoadSMult(ARMul_State *state, ARMword instr,
     }
 
     /* Check if we can use the fastmap */
-    if(((address<<20) <= 0xfc000000) && !state->Aborted)
+    if((((uint32_t) (address<<20)) <= 0xfc000000) && !state->Aborted)
     {
        FastMapEntry *entry = FastMap_GetEntry(state,address);
        FastMapRes res = FastMap_DecodeRead(entry,state->FastMapMode);
@@ -817,7 +817,7 @@ static void StoreMult(ARMul_State *state, ARMword instr,
  for (temp = 0; !BIT(temp); temp++); /* N cycle first */
 
     /* Check if we can use the fastmap */
-    if(((address<<20) <= 0xfc000000) && !state->Aborted)
+    if((((uint32_t) (address<<20)) <= 0xfc000000) && !state->Aborted)
     {
        FastMapEntry *entry = FastMap_GetEntry(state,address);
        FastMapRes res = FastMap_DecodeWrite(entry,state->FastMapMode);
@@ -904,7 +904,7 @@ static void StoreSMult(ARMul_State *state, ARMword instr,
  for (temp = 0; !BIT(temp); temp++); /* N cycle first */
 
     /* Check if we can use the fastmap */
-    if(((address<<20) <= 0xfc000000) && !state->Aborted)
+    if((((uint32_t) (address<<20)) <= 0xfc000000) && !state->Aborted)
     {
        FastMapEntry *entry = FastMap_GetEntry(state,address);
        FastMapRes res = FastMap_DecodeWrite(entry,state->FastMapMode);

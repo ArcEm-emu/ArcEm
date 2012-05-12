@@ -73,8 +73,8 @@ extern struct MEMCStruct memc;
 /* ------------------- inlined FastMap functions ------------------------------ */
 static FastMapEntry *FastMap_GetEntry(ARMul_State *state,ARMword addr);
 static FastMapEntry *FastMap_GetEntryNoWrap(ARMul_State *state,ARMword addr);
-static FastMapRes FastMap_DecodeRead(const FastMapEntry *entry,ARMword mode);
-static FastMapRes FastMap_DecodeWrite(const FastMapEntry *entry,ARMword mode);
+static FastMapRes FastMap_DecodeRead(const FastMapEntry *entry,FastMapUInt mode);
+static FastMapRes FastMap_DecodeWrite(const FastMapEntry *entry,FastMapUInt mode);
 static ARMword *FastMap_Log2Phy(const FastMapEntry *entry,ARMword addr);
 static ARMEmuFunc *FastMap_Phy2Func(ARMul_State *state,ARMword *addr);
 static ARMword FastMap_LoadFunc(const FastMapEntry *entry,ARMul_State *state,ARMword addr);
@@ -93,13 +93,13 @@ static inline FastMapEntry *FastMap_GetEntryNoWrap(ARMul_State *state,ARMword ad
 	return &state->FastMap[addr>>12];
 }
 
-static inline FastMapRes FastMap_DecodeRead(const FastMapEntry *entry,ARMword mode)
+static inline FastMapRes FastMap_DecodeRead(const FastMapEntry *entry,FastMapUInt mode)
 {
 	/* Use the FASTMAP_RESULT_* macros to decide what to do */
 	return ((FastMapRes)((entry->FlagsAndData)&mode));
 }
 
-static inline FastMapRes FastMap_DecodeWrite(const FastMapEntry *entry,ARMword mode)
+static inline FastMapRes FastMap_DecodeWrite(const FastMapEntry *entry,FastMapUInt mode)
 {
 	/* Use the FASTMAP_RESULT_* macros to decide what to do */
 	return ((FastMapRes)((entry->FlagsAndData<<1)&mode));
@@ -114,7 +114,12 @@ static inline ARMword *FastMap_Log2Phy(const FastMapEntry *entry,ARMword addr)
 static inline ARMEmuFunc *FastMap_Phy2Func(ARMul_State *state,ARMword *addr)
 {
 	/* Return ARMEmuFunc * for an address returned by Log2Phy */
+#ifdef FASTMAP_64
+	/* Shift addr so we access ARMEmuFunc *'s as 64bit data types instead of 32bit */
+	return (ARMEmuFunc*)((((FastMapUInt)addr)<<1)+state->FastMapInstrFuncOfs);
+#else
 	return (ARMEmuFunc*)(((FastMapUInt)addr)+state->FastMapInstrFuncOfs);
+#endif
 }
 
 static inline ARMword FastMap_LoadFunc(const FastMapEntry *entry,ARMul_State *state,ARMword addr)
