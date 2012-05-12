@@ -23,9 +23,9 @@
  *
  * @param sPath Location of directory to scan
  * @param hDir Pointer to a Directory struct to fill in
- * @returns 1 on success 0 on failure
+ * @returns true on success false on failure
  */
-unsigned Directory_Open(const char *sPath, Directory *hDirectory)
+bool Directory_Open(const char *sPath, Directory *hDirectory)
 {
   assert(sPath);
   assert(*sPath);
@@ -34,9 +34,9 @@ unsigned Directory_Open(const char *sPath, Directory *hDirectory)
   hDirectory->hDir = opendir(sPath);
 
   if(NULL == hDirectory->hDir) {
-    return 0;
+    return false;
   } else {
-    return 1;
+    return true;
   }
 }
 
@@ -81,9 +81,9 @@ char *Directory_GetNextEntry(Directory *hDirectory)
  *
  * @param sPath Path to file to check
  * @param phFileInfo pointer to FileInfo struct to fill in
- * @returns 0 on failure 1 on success
+ * @returns false on failure true on success
  */
-unsigned char File_GetInfo(const char *sPath, FileInfo *phFileInfo)
+bool File_GetInfo(const char *sPath, FileInfo *phFileInfo)
 {
   struct stat hEntryInfo;
 
@@ -93,25 +93,25 @@ unsigned char File_GetInfo(const char *sPath, FileInfo *phFileInfo)
   if (stat(sPath, &hEntryInfo) != 0) {
     fprintf(stderr, "Warning: could not stat() entry \'%s\': %s\n",
             sPath, strerror(errno));
-    return 0;
+    return false;
   }
   
   /* Initialise components */
-  phFileInfo->bIsRegularFile = 0;
-  phFileInfo->bIsDirectory   = 0;
+  phFileInfo->bIsRegularFile = false;
+  phFileInfo->bIsDirectory   = false;
 
   if (S_ISREG(hEntryInfo.st_mode)) {
-    phFileInfo->bIsRegularFile = 1;
+    phFileInfo->bIsRegularFile = true;
   }
 
   if (S_ISDIR(hEntryInfo.st_mode)) {
-    phFileInfo->bIsDirectory = 1;
+    phFileInfo->bIsDirectory = true;
   }
   
   /* Fill in Size */
   phFileInfo->ulFilesize = hEntryInfo.st_size;
   
   /* Success! */
-  return 1;
+  return true;
 }
 

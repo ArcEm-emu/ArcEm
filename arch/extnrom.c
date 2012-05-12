@@ -20,8 +20,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "filecalls.h"
 #include "../armdefs.h"
+#include "filecalls.h"
 #include "extnrom.h"
 #include "ArcemConfig.h"
 
@@ -43,9 +43,9 @@ enum OS_ID_BYTE {
 };
 
 static void
-store_16bit_le(void *address, unsigned data)
+store_16bit_le(void *address, uint16_t data)
 {
-  unsigned char *addr = address;
+  uint8_t *addr = address;
 
   assert(address != NULL);
 
@@ -54,9 +54,9 @@ store_16bit_le(void *address, unsigned data)
 }
 
 static void
-store_24bit_le(void *address, unsigned data)
+store_24bit_le(void *address, uint32_t data)
 {
-  unsigned char *addr = address;
+  uint8_t *addr = address;
 
   assert(address != NULL);
 
@@ -66,9 +66,9 @@ store_24bit_le(void *address, unsigned data)
 }
 
 static void
-store_32bit_le(void *address, unsigned data)
+store_32bit_le(void *address, uint32_t data)
 {
-  unsigned char *addr = address;
+  uint8_t *addr = address;
 
   assert(address != NULL);
 
@@ -78,28 +78,28 @@ store_32bit_le(void *address, unsigned data)
   addr[3] = data >> 24;
 }
 
-static unsigned
+static uint32_t
 get_32bit_le(const void *address)
 {
-  const unsigned char *addr = address;
-  unsigned result;
+  const uint8_t *addr = address;
+  uint32_t result;
 
   assert(address != NULL);
 
-  result = (unsigned) addr[0];
-  result |= ((unsigned) addr[1]) << 8;
-  result |= ((unsigned) addr[2]) << 16;
-  result |= ((unsigned) addr[3]) << 24;
+  result = (uint32_t) addr[0];
+  result |= ((uint32_t) addr[1]) << 8;
+  result |= ((uint32_t) addr[2]) << 16;
+  result |= ((uint32_t) addr[3]) << 24;
 
   return result;
 }
 
-/* TODO: Make this a no-op on a little-endian host */
+#ifdef HOST_BIGENDIAN
 static void
-extnrom_endian_correct(ARMword *start_addr, unsigned size)
+extnrom_endian_correct(ARMword *start_addr, uint32_t size)
 {
-  unsigned size_in_words = ROUND_UP_TO_4(size) / 4;
-  unsigned word_num;
+  uint32_t size_in_words = ROUND_UP_TO_4(size) / 4;
+  uint32_t word_num;
   ARMword word;
 
   assert(start_addr != NULL);
@@ -110,13 +110,16 @@ extnrom_endian_correct(ARMword *start_addr, unsigned size)
     start_addr[word_num] = word;                /* Write host-endian */
   }
 }
+#else
+#define extnrom_endian_correct(A,B) ((void)0)
+#endif
 
-static unsigned
-extnrom_calculate_checksum(const ARMword *start_addr, unsigned size)
+static uint32_t
+extnrom_calculate_checksum(const ARMword *start_addr, uint32_t size)
 {
-  unsigned checksum = 0;
-  unsigned size_in_words = ROUND_UP_TO_4(size) / 4;
-  unsigned word_num;
+  uint32_t checksum = 0;
+  uint32_t size_in_words = ROUND_UP_TO_4(size) / 4;
+  uint32_t word_num;
 
   assert(start_addr != NULL);
   assert(size > 0);
@@ -129,12 +132,12 @@ extnrom_calculate_checksum(const ARMword *start_addr, unsigned size)
   return checksum;
 }
 
-unsigned
-extnrom_calculate_size(unsigned *entry_count)
+uint32_t
+extnrom_calculate_size(uint32_t *entry_count)
 {
   Directory hDir;
   char *sFilename;
-  unsigned required_size = 0;
+  uint32_t required_size = 0;
 
   assert(entry_count != NULL);
 
@@ -207,13 +210,13 @@ extnrom_calculate_size(unsigned *entry_count)
 }
 
 void
-extnrom_load(unsigned size, unsigned entry_count, void *address)
+extnrom_load(uint32_t size, uint32_t entry_count, void *address)
 {
   ARMword *start_addr = address;
   ARMword *chunk, *modules;
   Directory hDir;
   char *sFilename;
-  unsigned size_in_words = size / 4;
+  uint32_t size_in_words = size / 4;
 
   assert(((size != 0) && (entry_count != 0)) ||
          ((size == 0) && (entry_count == 0)));
@@ -228,11 +231,11 @@ extnrom_load(unsigned size, unsigned entry_count, void *address)
 
   /* Fill in Expansion Card identity */
   {
-    unsigned simple_ecid = 0x00; /* Acorn conformant, extended Expansion Card
+    uint32_t simple_ecid = 0x00; /* Acorn conformant, extended Expansion Card
                                     identity present, no Interrupts */
-    unsigned flags = 0x03; /* 8-bit wide, Interrupt Status Pointers present,
+    uint32_t flags = 0x03; /* 8-bit wide, Interrupt Status Pointers present,
                               Chunk Directory present */
-    unsigned reserved = 0x00; /* All values reserved - must be 0 */
+    uint32_t reserved = 0x00; /* All values reserved - must be 0 */
 
     start_addr[0] = simple_ecid |
                     (flags << 8) |
@@ -282,7 +285,7 @@ extnrom_load(unsigned size, unsigned entry_count, void *address)
   while ((sFilename = Directory_GetNextEntry(&hDir)) != NULL) {
     char path[ARCEM_PATH_MAX];
     FileInfo hFileInfo;
-    unsigned offset;
+    uint32_t offset;
     FILE *f;
 
     /* Ignore hidden entries - those starting with '.' */

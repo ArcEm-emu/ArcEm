@@ -2,21 +2,30 @@
 /* Some code based on DispKbd.c for other platforms                              */
 
 #include <string.h>
+#include <limits.h>
 
 #include "../armdefs.h"
 #include "armarc.h"
 #include "../arch/keyboard.h"
-#include "DispKbd.h"
+#include "displaydev.h"
 #include "KeyTable.h"
 #include "platform.h"
 #include "../arch/Version.h"
 #include "arexx.h"
+#include "../armemu.h"
+#include "arch/displaydev.h"
 
+#include <proto/intuition.h>
 #include <intuition/pointerclass.h>
 #include <dos/dostags.h>
-#include <libraries/keymap.h>
 #include <devices/input.h>
 #include <devices/inputevent.h>
+
+#ifdef __amigaos4__
+#include <libraries/keymap.h>
+#include <graphics/blitattr.h>
+#endif
+
 
 struct Window *window = NULL;
 struct Screen *screen = NULL;
@@ -27,91 +36,75 @@ struct FileRequester *filereq;
 static struct RastPort friend;
 struct RastPort tmprp;
 
+static struct BitMap *mouse_bm;
+static struct RastPort mouse_rp;
+PLANEPTR mask;
+
 struct IOStdReq *ir;
 struct MsgPort *mport;
 
 ULONG oldid=INVALID_ID;
 ULONG oldwidth = 0;
 ULONG oldheight = 0;
-ULONG olddepth = 0;
+ULONG oldlog2bpp = 0;
 
-ULONG oldMouseX = 0;
-ULONG oldMouseY = 0;
+static ULONG OldMouseX = 0;
+static ULONG OldMouseY = 0;
 
-//#define HD HOSTDISPLAY
-#define HD HostDisplay
-#define DC DISPLAYCONTROL
+static int redraw_miny = INT_MAX;
+static int redraw_maxy = 0; 
 
-#define KEYREENABLEDELAY 1000
-#define AUTOREFRESHPOLL 2500
 
 void writepixel(struct RastPort *,ULONG,ULONG,ULONG);
 void ChangeDisplayMode(ARMul_State *,long,long,int);
 void CloseDisplay(void);
 
-void CloseDisplay(void)
+int changemode(int width,int height,int log2bpp,int *xscale,int *yscale)
 {
-	if(window)
-		IIntuition->CloseWindow(window);
-
-	IIntuition->IDoMethod(arexx_obj, AM_EXECUTE, "QUIT", "ARCEMPANEL", NULL, NULL, NULL, NULL);
-
-	if(screen)
-	{
-		while(!IIntuition->CloseScreen(screen));
-	}
-
-	window = NULL;
-	screen = NULL;
-	port = NULL;
-}
-
-void ChangeDisplayMode(ARMul_State *state,long width,long height,int vidcdepth)
-{
-	int depth = 0;
 	ULONG id = INVALID_ID;
 
-	switch(vidcdepth)
-	{
-		case 0:
-			depth=1;
-		break;
-		case 1:
-			depth=2;
-		break;
-		case 2:
-			depth=4;
-		break;
-		case 3:
-			depth=8;
-		break;
-	}
+	printf("New display mode: %d x %d x %d ",width,height,1<<log2bpp);
 
-	printf("New display mode: %ld x %ld x %d ",width,height,depth);
-
-	if(width == oldwidth && height == oldheight && depth == olddepth)
+	if(width == oldwidth && height == oldheight && log2bpp == oldlog2bpp)
 	{
 		printf("-> Existing mode\n");
 		return;
 	}
 
-	if((width<=0) || (height <= 0) || (depth <= 0))
+	if((width<=0) || (height <= 0) || (log2bpp < 0))
 	{
 		printf("-> Invalid mode\n");
-		return;
+		exit(EXIT_FAILURE);
 	}
+
+	*xscale = 1;
+	*yscale = 1;
+#if 0 /* TODO - Get scaling working on amiga. Cursor image will need to be scaled, for a start. */
+	/* Try and detect rectangular pixel modes */
+	if(width >= height*2)
+	{
+		*yscale = 2;
+		height *= 2;
+	}
+	else if(height >= width*2)
+	{
+		*xscale = 2;
+		width *= 2;
+	}
+#endif
 
 	/* This forces ArcEm to use an 8-bit Intuition screen, which avoids unnecessary
        screen opening/closing.  However, it is likely to be slower or less memory
        efficient, especially on planar display hardware. */
-	if(force8bit) depth = 8;
+	if(force8bit && (log2bpp < 3)) log2bpp = 3;
+
 
 	/* Call BestModeID() to hopefully stop crazy screenmodes */
-	id = IGraphics->BestModeID(BIDTAG_NominalWidth,width,
+	id = BestModeID(BIDTAG_NominalWidth,width,
 								BIDTAG_NominalHeight,height,
 								BIDTAG_DesiredWidth,width,
 								BIDTAG_DesiredHeight,height,
-								BIDTAG_Depth,depth,
+								BIDTAG_Depth,1<<log2bpp,
 								TAG_DONE);
 
 	if(id == INVALID_ID)
@@ -122,19 +115,19 @@ void ChangeDisplayMode(ARMul_State *state,long width,long height,int vidcdepth)
 
 	printf("-> ModeID: %lx\n",id);
 
-	IGraphics->WaitBlit();
+	WaitBlit();
 
 	if(friend.BitMap)
-		IGraphics->FreeBitMap(friend.BitMap);
+		FreeBitMap(friend.BitMap);
 
 	if(tmprp.BitMap)
-  		IGraphics->FreeBitMap(tmprp.BitMap);
+		FreeBitMap(tmprp.BitMap);
 
 	CloseDisplay();
 
-	screen = IIntuition->OpenScreenTags(NULL,SA_Width,width,
+	screen = OpenScreenTags(NULL,SA_Width,width,
 											SA_Height,height,
-											SA_Depth,depth,
+											SA_Depth,1<<log2bpp,
 											SA_Quiet,TRUE,
 											SA_ShowTitle,FALSE,
 //											SA_Type,CUSTOMSCREEN,
@@ -144,7 +137,7 @@ void ChangeDisplayMode(ARMul_State *state,long width,long height,int vidcdepth)
 
 	if(screen)
 	{
-		window = IIntuition->OpenWindowTags(NULL,WA_Width,width,
+		window = OpenWindowTags(NULL,WA_Width,width,
 					WA_Height,height,
 					WA_RMBTrap,TRUE,
 					WA_NoCareRefresh,TRUE,
@@ -157,34 +150,513 @@ void ChangeDisplayMode(ARMul_State *state,long width,long height,int vidcdepth)
 					WA_MouseQueue,500,
 					WA_IDCMP,IDCMP_MOUSEBUTTONS | IDCMP_MOUSEMOVE | IDCMP_RAWKEY | IDCMP_DELTAMOVE | IDCMP_EXTENDEDMOUSE,
 					TAG_DONE);
+
+		SetWindowPointer(window,WA_Pointer,mouseobj,TAG_DONE);
+
+		if(mouse_bm) FreeBitMap(mouse_bm);
+
+		mouse_bm = AllocBitMap(32, 32, 1<<log2bpp, BMF_CLEAR, window->RPort->BitMap);
+		mouse_rp.BitMap = mouse_bm;
 	}
 	else
 	{
-		return;
+		printf("-> Failed to create screen\n");
+		exit(EXIT_FAILURE);
 	}
 
 	if(!window)
-		return;
+	{
+		printf("-> Failed to create window\n");
+		exit(EXIT_FAILURE);
+	}
 
-	IIntuition->PubScreenStatus(screen,0);
+	PubScreenStatus(screen,0);
 
 	port = window->UserPort;
 
-	friend.BitMap = IGraphics->AllocBitMap(width,height,depth,BMF_CLEAR | BMF_DISPLAYABLE | BMF_INTERLEAVED,window->RPort->BitMap);
+	friend.BitMap = AllocBitMap(width,height,1<<log2bpp,BMF_CLEAR | BMF_DISPLAYABLE | BMF_INTERLEAVED,window->RPort->BitMap);
 
-    IExec->CopyMem(&friend,&tmprp,sizeof(struct RastPort));
+    CopyMem(&friend,&tmprp,sizeof(struct RastPort));
     tmprp.Layer = NULL;
-    tmprp.BitMap = IGraphics->AllocBitMap(width,1,depth,0,NULL);
-
-	/* Completely new screen and window, so we have to set the palette and redraw the display */
-
-	DC.MustRedraw = 1;
-	DC.MustResetPalette = 1;
+    tmprp.BitMap = AllocBitMap(width,1,1<<log2bpp,0,NULL);
 
 	oldheight = height;
 	oldwidth = width;
-	olddepth = depth;
+	oldlog2bpp = log2bpp;
 	oldid=id;
+
+	return log2bpp;
+}
+
+#if 0
+/* ------------------------------------------------------------------ */
+
+/* Standard display device */
+
+typedef unsigned short SDD_HostColour;
+#define SDD_Name(x) sdd_##x
+static const int SDD_RowsAtOnce = 1;
+typedef SDD_HostColour *SDD_Row;
+
+static void sdd_refreshmouse(ARMul_State *state);
+
+static SDD_HostColour *ImageData,*CursorImageData;
+
+static SDD_HostColour SDD_Name(Host_GetColour)(ARMul_State *state,unsigned int col)
+{
+	/* Convert to 5-bit component values */
+	int r = (col & 0x00f) << 1;
+	int g = (col & 0x0f0) >> 3;
+	int b = (col & 0xf00) >> 7;
+	/* May want to tweak this a bit at some point? */
+	r |= r>>4;
+	g |= g>>4;
+	b |= b>>4;
+	/* TODO - Check that this is correct for 16bpp on amiga */
+	return (r<<10) | (g<<5) | (b);
+}  
+
+static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,int hz);
+
+static inline SDD_Row SDD_Name(Host_BeginRow)(ARMul_State *state,int row,int offset)
+{
+#error TODO - Return a pointer to a buffer we can write pixels into.
+}
+
+static inline void SDD_Name(Host_EndRow)(ARMul_State *state,SDD_Row *row)
+{
+#error TODO - Do whatever's necessary to flush the updated pixels to the screen. Probably better to do this via BeginUpdate/EndUpdate though, since we won't always write to the row.
+}
+
+static inline void SDD_Name(Host_BeginUpdate)(ARMul_State *state,SDD_Row *row,unsigned int count)
+{
+#error TODO -' This is called when we're about to write to 'count' pixels
+}
+
+static inline void SDD_Name(Host_EndUpdate)(ARMul_State *state,SDD_Row *row)
+{
+#error TODO -' This is called once we've finished writing to the pixels
+}
+
+static inline void SDD_Name(Host_SkipPixels)(ARMul_State *state,SDD_Row *row,unsigned int count)
+{
+#error TODO - Skip ahead 'count' pixels
+}
+
+static inline void SDD_Name(Host_WritePixel)(ARMul_State *state,SDD_Row *row,SDD_HostColour pix)
+{
+#error TODO - Write a pixel and move ahead one
+}
+
+static inline void SDD_Name(Host_WritePixels)(ARMul_State *state,SDD_Row *row,SDD_HostColour pix,unsigned int count)
+{
+#error TODO - Fill 'count' pixels with the given colour. 'count' may be zero!
+}
+
+void SDD_Name(Host_PollDisplay)(ARMul_State *state);
+
+#include "../arch/stddisplaydev.c"
+
+static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,int hz)
+{
+	int realdepth = changemode(width,height,4,&HD.XScale,&HD.YScale);
+
+	HD.Width = oldwidth;
+	HD.Height = oldheight;
+}
+
+/*-----------------------------------------------------------------------------*/
+/* Refresh the mouse pointer image                                                */
+static void sdd_refreshmouse(ARMul_State *state) {
+  int x,y,height,offset;
+  int memptr;
+  int HorizPos;
+  int height = (int)VIDC.Vert_CursorEnd - (int)VIDC.Vert_CursorStart;
+  int VertPos;
+  DisplayDev_GetCursorPos(state,&HorizPos,&VertPos);
+	ULONG transcol = 1;
+	SDD_HostColour line[32];
+	UBYTE maskbit;
+
+	if(!window) return;
+	if(!screen) return;
+
+	if(!mouse_bm) return;
+
+ offset=0;
+  memptr=MEMC.Cinit*16;
+
+	mask[0] = 0;
+	mask[1] = 0;
+	mask[2] = 0;
+	mask[3] = 0;
+	mask[4] = 0;
+	mask[5] = 0;
+	mask[6] = 0;
+	mask[7] = 0;
+	mask[8] = 0;
+	mask[9] = 0;
+	mask[10] = 0;
+	mask[11] = 0;
+	mask[12] = 0;
+	mask[13] = 0;
+	mask[14] = 0;
+	mask[15] = 0;
+
+  /* Cursor palette */
+  SDD_HostColour cursorPal[4];
+  cursorPal[0] = transcol;
+  for(x=0; x<3; x++) {
+    cursorPal[x+1] = SDD_Name(Host_GetColour)(state,VIDC.CursorPalette[x]);
+  }
+
+  for(y=0;y<32;y++,memptr+=8,offset+=8) {
+// fixed height to 32
+
+    if (offset<512*1024) {
+      ARMword tmp[2];
+
+      tmp[0]=MEMC.PhysRam[memptr/4];
+      tmp[1]=MEMC.PhysRam[memptr/4+1];
+
+      for(x=0;x<32;x++) {
+
+		int idx = 0;
+		if(y<height)
+		{
+			idx = (tmp[x/16]>>((x & 15)*2)) & 3;
+		}
+		line[x] = cursorPal[idx];
+
+		if(!idx) maskbit = 0;
+			else maskbit = 1;
+
+		mask[(y*4) + (x/8)] = (mask[(y*4) + (x/8)] << 1) | maskbit;
+
+      }; /* x */
+#error TODO - Needs updating for 16bpp
+		WritePixelLine8(&mouse_rp,0,y,32,line,&tmprp); // &mouseptr
+    } else return;
+  }; /* y */
+
+// HorizPos,VertPos
+
+//	WaitTOF();
+
+	BltBitMap(friend.BitMap,OldMouseX,OldMouseY,
+			window->RPort->BitMap,OldMouseX,OldMouseY,
+			32,32,0x0C0,0xff,NULL);
+
+	BltMaskBitMapRastPort(mouse_bm, 0, 0, window->RPort,
+		HorizPos, VertPos, 32, height, (ABC|ABNC|ANBC), mask);
+
+#if 0
+	BltBitMapTags(BLITA_Width, 32,
+			BLITA_Height, height,
+			BLITA_Source, mouse_bm,
+			BLITA_SrcType, BLITT_BITMAP,
+			BLITA_Dest, window->RPort,
+			BLITA_DestType, BLITT_RASTPORT,
+			BLITA_Minterm, (ABC|ABNC|ANBC),
+			BLITA_MaskPlane, mask,
+			BLITA_DestX, HorizPos,
+			BLITA_DestY, VertPos,
+			TAG_DONE);
+#endif
+
+	OldMouseX = HorizPos;
+	OldMouseY = VertPos;
+
+}; /* RefreshMouse */
+
+/*-----------------------------------------------------------------------------*/
+
+void
+SDD_Name(Host_PollDisplay)(ARMul_State *state)
+{
+	sdd_refreshmouse(state);
+}
+#endif
+
+/* ------------------------------------------------------------------ */
+
+/* Palettised display code */
+#define PDD_Name(x) pdd_##x
+
+static int BorderPalEntry;
+
+/* Technically this buffer only needs to be big enough to hold UPDATEBLOCKSIZE bytes * max X scale */
+#define MAX_DISPLAY_WIDTH 2048
+static ARMword RowBuffer[MAX_DISPLAY_WIDTH/4];
+
+typedef struct {
+	int x,y; /* Current coordinates in pixels */
+	int width; /* Width of area being updated */
+} PDD_Row;
+
+static void PDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,int depth,int hz);
+
+static void PDD_Name(Host_SetPaletteEntry)(ARMul_State *state,int i,unsigned int phys)
+{
+	ULONG r = (phys & 0xf)*0x11111111;
+	ULONG g = ((phys>>4) & 0xf)*0x11111111;
+	ULONG b = ((phys>>8) & 0xf)*0x11111111;
+
+	SetRGB32(&screen->ViewPort,i,r,g,b);
+}
+
+static void PDD_Name(Host_SetBorderColour)(ARMul_State *state,unsigned int phys)
+{
+	/* Set border palette entry */
+	if(BorderPalEntry != 256)
+	{
+		ULONG r = (phys & 0xf)*0x11111111;
+		ULONG g = ((phys>>4) & 0xf)*0x11111111;
+		ULONG b = ((phys>>8) & 0xf)*0x11111111;
+
+		SetRGB32(&screen->ViewPort,BorderPalEntry,r,g,b);
+	}
+}
+
+static inline PDD_Row PDD_Name(Host_BeginRow)(ARMul_State *state,int row,int offset,int *alignment)
+{
+	PDD_Row drow;
+	drow.x = offset;
+	drow.y = row;
+	*alignment = 0;
+	return drow;
+}
+
+static inline void PDD_Name(Host_EndRow)(ARMul_State *state,PDD_Row *row) { /* nothing */ };
+
+static inline ARMword *PDD_Name(Host_BeginUpdate)(ARMul_State *state,PDD_Row *row,unsigned int count,int *outoffset)
+{
+	row->width = count>>3;
+	*outoffset = 0;
+	redraw_miny = MIN(redraw_miny,row->y);
+	redraw_maxy = MAX(redraw_maxy,row->y);
+	return RowBuffer;
+}
+
+static inline void PDD_Name(Host_EndUpdate)(ARMul_State *state,PDD_Row *row)
+{
+	WritePixelLine8(&friend,row->x,row->y,row->width,RowBuffer,&tmprp);
+}
+
+static inline void PDD_Name(Host_AdvanceRow)(ARMul_State *state,PDD_Row *row,unsigned int count)
+{
+	row->x += count>>3;
+}
+
+static void
+PDD_Name(Host_PollDisplay)(ARMul_State *state);
+
+static void PDD_Name(Host_DrawBorderRect)(ARMul_State *state,int x,int y,int width,int height)
+{
+	if(BorderPalEntry != 256)
+	{
+		/* TODO - Fill rectangle with border colour */
+	}
+}
+
+#include "../arch/paldisplaydev.c"
+
+void PDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,int depth,int hz)
+{
+	int realdepth = changemode(width,height,depth,&HD.XScale,&HD.YScale);
+
+	HD.Width = oldwidth;
+	HD.Height = oldheight;
+
+	if(realdepth > depth)
+	{
+		/* We have enough palette entries to have a border */
+		BorderPalEntry = 1<<(1<<depth);
+	}
+	else
+	{
+		/* Disable border entry */
+		BorderPalEntry = 256;
+	}
+
+	/* Calculate expansion params */
+	if((depth == 3) && (HD.XScale == 1))
+	{
+		/* No expansion */
+		HD.ExpandTable = NULL;
+	}
+	else
+	{
+		/* Expansion! */
+		static ARMword expandtable[256];
+		HD.ExpandFactor = 0;
+		while((1<<HD.ExpandFactor) < HD.XScale)
+			HD.ExpandFactor++;
+		HD.ExpandFactor += (3-depth);
+		HD.ExpandTable = expandtable;
+		unsigned int mul = 1;
+		int i;
+		for(i=0;i<HD.XScale;i++)
+		{
+			mul |= 1<<(i*8);
+		}
+		GenExpandTable(HD.ExpandTable,1<<depth,HD.ExpandFactor,mul);
+	}
+
+	/* Screen is expected to be cleared */
+	PDD_Name(Host_DrawBorderRect)(state,0,0,HD.Width,HD.Height);
+}
+
+/*-----------------------------------------------------------------------------*/
+/* Refresh the mouse pointer image                                                */
+static void pdd_refreshmouse(ARMul_State *state) {
+  int x,y,offset;
+  int memptr;
+  int HorizPos;
+  int height = (int)VIDC.Vert_CursorEnd - (int)VIDC.Vert_CursorStart;
+  int VertPos;
+  DisplayDev_GetCursorPos(state,&HorizPos,&VertPos);
+	ULONG transcol = 16;
+	UBYTE line[32];
+	ULONG ptr_cols[4];
+	ULONG 	col_reg = 16+((0 & 0x06) << 1);
+	UBYTE maskbit;
+
+	if(!window) return;
+	if(!screen) return;
+
+	if(!mouse_bm) return;
+
+	/* Set up cursor palette */
+	int i;
+	for(i=1;i<4;i++)
+	{
+		int phys = VIDC.CursorPalette[i-1];
+		ULONG r = (phys & 0xf)*0x11111111;
+		ULONG g = ((phys>>4) & 0xf)*0x11111111;
+		ULONG b = ((phys>>8) & 0xf)*0x11111111;
+		SetRGB32(&screen->ViewPort,col_reg+i,r,g,b);
+	}
+
+ offset=0;
+  memptr=MEMC.Cinit*16;
+
+	mask[0] = 0;
+	mask[1] = 0;
+	mask[2] = 0;
+	mask[3] = 0;
+	mask[4] = 0;
+	mask[5] = 0;
+	mask[6] = 0;
+	mask[7] = 0;
+	mask[8] = 0;
+	mask[9] = 0;
+	mask[10] = 0;
+	mask[11] = 0;
+	mask[12] = 0;
+	mask[13] = 0;
+	mask[14] = 0;
+	mask[15] = 0;
+
+  for(y=0;y<32;y++,memptr+=8,offset+=8) {
+// fixed height to 32
+
+    if (offset<512*1024) {
+      ARMword tmp[2];
+
+      tmp[0]=MEMC.PhysRam[memptr/4];
+      tmp[1]=MEMC.PhysRam[memptr/4+1];
+
+      for(x=0;x<32;x++) {
+
+		if(y<height)
+		{
+        	line[x] = ((tmp[x/16]>>((x & 15)*2)) & 3) + col_reg;
+		}
+		else
+		{
+			line[x] = transcol;
+		}
+
+			if(line[x] == transcol) maskbit = 0;
+				else maskbit = 1;
+
+			mask[(y*4) + (x/8)] = (mask[(y*4) + (x/8)] << 1) | maskbit;
+
+      }; /* x */
+		WritePixelLine8(&mouse_rp,0,y,32,line,&tmprp); // &mouseptr
+    } else return;
+  }; /* y */
+
+// HorizPos,VertPos
+
+//	WaitTOF();
+
+	BltBitMap(friend.BitMap,OldMouseX,OldMouseY,
+			window->RPort->BitMap,OldMouseX,OldMouseY,
+			32,32,0x0C0,0xff,NULL);
+
+	BltMaskBitMapRastPort(mouse_bm, 0, 0, window->RPort,
+		HorizPos, VertPos, 32, height, (ABC|ABNC|ANBC), mask);
+
+#if 0
+	BltBitMapTags(BLITA_Width, 32,
+			BLITA_Height, height,
+			BLITA_Source, mouse_bm,
+			BLITA_SrcType, BLITT_BITMAP,
+			BLITA_Dest, window->RPort,
+			BLITA_DestType, BLITT_RASTPORT,
+			BLITA_Minterm, (ABC|ABNC|ANBC),
+			BLITA_MaskPlane, mask,
+			BLITA_DestX, HorizPos,
+			BLITA_DestY, VertPos,
+			TAG_DONE);
+#endif
+
+	OldMouseX = HorizPos;
+	OldMouseY = VertPos;
+
+}; /* RefreshMouse */
+
+static void
+PDD_Name(Host_PollDisplay)(ARMul_State *state)
+{
+	if(redraw_miny <= redraw_maxy)
+	{
+		BltBitMap(friend.BitMap,0,redraw_miny,
+				window->RPort->BitMap,0,redraw_miny,
+				HD.Width,(redraw_maxy-redraw_miny)+1,0x0C0,0xff,NULL);
+		redraw_miny = INT_MAX;
+		redraw_maxy = 0;
+	}
+
+	pdd_refreshmouse(state);
+}
+
+#undef DISPLAYINFO
+#undef HOSTDISPLAY
+#undef DC
+#undef HD
+
+/* ------------------------------------------------------------------ */
+
+void CloseDisplay(void)
+{
+	if(window)
+		CloseWindow(window);
+
+#ifdef __amigaos4__
+	IDoMethod(arexx_obj, AM_EXECUTE, "QUIT", "ARCEMPANEL", NULL, NULL, NULL, NULL);
+#endif
+
+	if(screen)
+	{
+		while(!CloseScreen(screen));
+	}
+
+	window = NULL;
+	screen = NULL;
+	port = NULL;
 }
 
 void cleanup(void)
@@ -193,69 +665,61 @@ void cleanup(void)
 	sound_exit();
 #endif
 
-	IGraphics->WaitBlit();
+	WaitBlit();
 
 	if(mouseobj)
 	{
-		IIntuition->SetWindowPointer(window,TAG_DONE);
-		IIntuition->DisposeObject(mouseobj);
+		SetWindowPointer(window,TAG_DONE);
+		DisposeObject(mouseobj);
 	}
 
 	if(mouseptr.BitMap)
 	{
-		IGraphics->FreeRaster(mouseptr.BitMap->Planes[0],32,32);
-		IGraphics->FreeRaster(mouseptr.BitMap->Planes[1],32,32);
-		IExec->FreeVec(mouseptr.BitMap);
-//		IGraphics->FreeBitMap(mouseptr.BitMap);
+		FreeBitMap(mouseptr.BitMap);
 		mouseptr.BitMap=NULL;
 	}
 
 	if(friend.BitMap)
-		IGraphics->FreeBitMap(friend.BitMap);
+		FreeBitMap(friend.BitMap);
 
 	if(tmprp.BitMap)
-  		IGraphics->FreeBitMap(tmprp.BitMap);
+		FreeBitMap(tmprp.BitMap);
+
+	if(mouse_bm) FreeBitMap(mouse_bm);
+
+	if(mask) FreeRaster(mask,32,32);
 
 	CloseDisplay();
 
+	#ifdef __amigaos4__
 	ARexx_Cleanup();
+	#endif
 
-/* input.device cleanup
-	if(ir)
-		IExec->FreeSysObject(ASOT_IOREQUEST,ir);
+	#ifdef __amigaos4__
+	if(IGraphics) DropInterface((struct Interface *)IGraphics);
+	#endif
+	CloseLibrary(GfxBase);
 
-	if(mport)
-		IExec->FreeSysObject(ASOT_PORT,mport);
-*/
+	
+	#ifdef __amigaos4__
+	if(IDOS) DropInterface((struct Interface *)IDOS);
+	#endif
+	CloseLibrary(DOSBase);
 
-	if(IGraphics)
-	{
-		IExec->DropInterface((struct Interface *)IGraphics);
-		IExec->CloseLibrary(GfxBase);
-	}
+	#ifdef __amigaos4__
+	if(IAsl) DropInterface((struct Interface *)IAsl);
+	#endif
+	CloseLibrary(AslBase);
 
-	if(IDOS)
-	{
-		IExec->DropInterface((struct Interface *)IDOS);
-		IExec->CloseLibrary(DOSBase);
-	}
-
-	if(IAsl)
-	{
-		IExec->DropInterface((struct Interface *)IAsl);
-		IExec->CloseLibrary(AslBase);
-	}
-
-	if(IIntuition)
-	{
-		IExec->DropInterface((struct Interface *)IIntuition);
-		IExec->CloseLibrary(IntuitionBase);
-	}
+	#ifdef __amigaos4__
+	if(IIntuition) DropInterface((struct Interface *)IIntuition);
+	#endif
+	CloseLibrary(IntuitionBase);
 
 	exit(0);
 }
 
-void MouseMoved(int xdiff,int ydiff)
+void MouseMoved(ARMul_State *state,int xdiff,int ydiff)
 {
 				if (xdiff > 63)
     				xdiff=63;
@@ -268,17 +732,19 @@ void MouseMoved(int xdiff,int ydiff)
 
 	  			KBD.MouseXCount = xdiff & 127;
   				KBD.MouseYCount = -ydiff & 127;
+
+//refreshmouse(state);
 }
 
 int
-DisplayKbd_PollHost(ARMul_State *state)
+Kbd_PollHostKbd(ARMul_State *state)
 {
 	struct IntuiMessage *msg;
 	int keyup,key;
 	struct IntuiWheelData *wheel = NULL;
 	if(!port) return(0);
 
-	while((msg=(struct IntuiMessage *)IExec->GetMsg(port)))
+	while((msg=(struct IntuiMessage *)GetMsg(port)))
 	{
 		switch(msg->Class)
 		{
@@ -295,23 +761,35 @@ DisplayKbd_PollHost(ARMul_State *state)
 					break;
 
 					case MENUDOWN:
-						keyboard_key_changed(&KBD, ARCH_KEY_button_3,FALSE);
+						if(!swapmousebuttons)
+							keyboard_key_changed(&KBD, ARCH_KEY_button_3,FALSE);
+						else
+							keyboard_key_changed(&KBD, ARCH_KEY_button_2,FALSE);
 					break;
 
 					case MENUUP:
-						keyboard_key_changed(&KBD, ARCH_KEY_button_3,TRUE);
+						if(!swapmousebuttons)
+							keyboard_key_changed(&KBD, ARCH_KEY_button_3,TRUE);
+						else
+							keyboard_key_changed(&KBD, ARCH_KEY_button_2,TRUE);
 					break;
 
 					case MIDDLEDOWN:
-						keyboard_key_changed(&KBD, ARCH_KEY_button_2,FALSE);
+						if(!swapmousebuttons)
+							keyboard_key_changed(&KBD, ARCH_KEY_button_2,FALSE);
+						else
+							keyboard_key_changed(&KBD, ARCH_KEY_button_3,FALSE);
 					break;
 
 					case MIDDLEUP:
-						keyboard_key_changed(&KBD, ARCH_KEY_button_2,TRUE);
+						if(!swapmousebuttons)
+							keyboard_key_changed(&KBD, ARCH_KEY_button_2,TRUE);
+						else
+							keyboard_key_changed(&KBD, ARCH_KEY_button_3,TRUE);
 					break;
 				}
 			break;
-
+#ifdef __amigaos4__
 			case IDCMP_EXTENDEDMOUSE:
 
 				if(msg->Code == IMSGCODE_INTUIWHEELDATA)
@@ -325,23 +803,23 @@ DisplayKbd_PollHost(ARMul_State *state)
 						keyboard_key_changed(&KBD, ARCH_KEY_button_5,TRUE);
 				}
 			break;
-
+#endif
 			case IDCMP_RAWKEY:
 
 				switch(msg->Code)
 				{
-
+#ifdef __amigaos4__
 					case 0x67:
 					{
 						BPTR *in,*out;
 
-						in = IDOS->Open("NIL:",MODE_OLDFILE);
-						out = IDOS->Open("NIL:",MODE_NEWFILE);
+						in = Open("NIL:",MODE_OLDFILE);
+						out = Open("NIL:",MODE_NEWFILE);
 
-						IDOS->SystemTags("arcempanel",SYS_Asynch,TRUE,SYS_Input,in,SYS_Output,out,TAG_DONE);
+						SystemTags("arcempanel",SYS_Asynch,TRUE,SYS_Input,in,SYS_Output,out,TAG_DONE);
 					}
 					break;
-
+#endif
 					default:
 						if(msg->Code >= 0x80)
 						{
@@ -361,709 +839,95 @@ DisplayKbd_PollHost(ARMul_State *state)
     		break;
 
 			case IDCMP_MOUSEMOVE:
-				MouseMoved(msg->MouseX,msg->MouseY);
+				MouseMoved(state, msg->MouseX,msg->MouseY);
 			break;
 		}
 
-		if(msg) IExec->ReplyMsg((struct Message *)msg);
+		if(msg) ReplyMsg((struct Message *)msg);
 	}
 
+	#ifdef __amigaos4__
 	ARexx_Handle();
-
+	
 	if(arexx_quit)
 		cleanup();
+	#endif
 
   return 0;
 }
 
 /*-----------------------------------------------------------------------------*/
-/* Configure the TrueColor pixelmap for the standard 1,2,4 bpp modes           */
-static void DoPixelMap_Standard(ARMul_State *state,int colours) {
-  struct XColor tmp;
-  int c;
-
-/* We only need to reset the palette if this is set, and we don't need to redraw
-   to reset it as we are using a palette-mapped screen */
-  if (!DC.MustResetPalette  || !screen) return;
-
-//  DC.MustRedraw = 1;
-
-  for(c=0;c<colours;c++) {
-    tmp.red=(VIDC.Palette[c] & 15)<<28; //12
-    tmp.green=((VIDC.Palette[c]>>4) & 15)<<28;
-    tmp.blue=((VIDC.Palette[c]>>8) & 15)<<28;
-
-	IGraphics->SetRGB32(&screen->ViewPort,c,tmp.red,tmp.green,tmp.blue);
-  };
-
-  /* Now do the ones for the cursor */
-
-	ULONG 	col_reg = 16+((0 & 0x06) << 1);
-
-  for(c=0;c<3;c++) {
-    tmp.red=(VIDC.CursorPalette[c] &15)<<28;
-    tmp.green=((VIDC.CursorPalette[c]>>4) &15)<<28;
-    tmp.blue=((VIDC.CursorPalette[c]>>8) &15)<<28;
-
-	IGraphics->SetRGB32(&screen->ViewPort,col_reg + 1 + c,tmp.red,tmp.green,tmp.blue);
-	
-    /* Entry 0 is transparent */
-  };
-
-  DC.MustResetPalette=0;
-}; /* DoPixelMap_Standard */
 
 
 /*-----------------------------------------------------------------------------*/
-/* Configure the true colour pixel map for the 8bpp modes                      */
-static void DoPixelMap_256(ARMul_State *state) {
-  struct XColor tmp;
-  ULONG c;
 
-  if (!DC.MustResetPalette || !screen) return;
-
-// This mostly fixes the Amiga screen depth < 8 crashing bug, but some problems remain.
-	if(olddepth<8) return;
-
-  // Don't need to redraw to change the palette on a palette-mapped screen
- // DC.MustRedraw = 1;
-
-  for(c=0;c<256;c++) {
-    int palentry=c &15;
-    int L4=(c>>4) &1;
-    int L65=(c>>5) &3;
-    int L7=(c>>7) &1;
-
-    tmp.red=((VIDC.Palette[palentry] & 7) | (L4<<3))<<28;
-    tmp.green=(((VIDC.Palette[palentry] >> 4) & 3) | (L65<<2))<<28;
-    tmp.blue=(((VIDC.Palette[palentry] >> 8) & 7) | (L7<<3))<<28;
-    /* I suppose I should do something with the supremacy bit....   12*/
-
-	IGraphics->SetRGB32(&screen->ViewPort,c,tmp.red,tmp.green,tmp.blue);
-  };
-
-  /* Now do the ones for the cursor */
-
-	ULONG 	col_reg = 16+((0 & 0x06) << 1);
-
-  for(c=0;c<3;c++) {
-    tmp.red=(VIDC.CursorPalette[c] &15)<<28;
-    tmp.green=((VIDC.CursorPalette[c]>>4) &15)<<28;
-    tmp.blue=((VIDC.CursorPalette[c]>>8) &15)<<28;
-
-	IGraphics->SetRGB32(&screen->ViewPort,col_reg + 1 + c,tmp.red,tmp.green,tmp.blue);
-    /* Entry 0 is transparent */
-
-  };
-
-  DC.MustResetPalette=0;
-}; /* DoPixelMap_256 */
-
-/*-----------------------------------------------------------------------------*/
-static void RefreshDisplay_TrueColor_1bpp(ARMul_State *state, int DisplayWidth, int DisplayHeight)
-{
-  int x,y,memoffset;
-  char Buffer[DisplayWidth / 8];
-  char *ImgPtr = HD.ImageData;
-	UBYTE line[DisplayWidth];
-
-  /* First configure the colourmap */
-//	if(DC.MustResetPalette)
-  		DoPixelMap_Standard(state,2);
-
-  for(y=0,memoffset=0;y<DisplayHeight;
-                      y++,memoffset+=DisplayWidth/8,ImgPtr+=DisplayWidth) {
-    if ((DC.MustRedraw) || (QueryRamChange(state,memoffset,DisplayWidth/8))) {
-      if (y<DC.miny) DC.miny=y;
-      if (y>DC.maxy) DC.maxy=y;
-      CopyScreenRAM(state,memoffset,DisplayWidth/8, Buffer);
-
-
-      for(x=0;x<DisplayWidth;x+=8) {
-        int pixel = Buffer[x>>3];
-
-		line[x] = (pixel) &1;
-		line[x+1] = (pixel>>1) &1;
-		line[x+2] = (pixel>>2) &1;
-		line[x+3] = (pixel>>3) &1;
-		line[x+4] = (pixel>>4) &1;
-		line[x+5] = (pixel>>5) &1;
-		line[x+6] = (pixel>>6) &1;
-		line[x+7] = (pixel>>7) &1;
-      }; /* x */
-	IGraphics->WritePixelLine8(&friend,0,y,DisplayWidth,line,&tmprp);
-    }; /* Refresh test */
-  }; /* y */
-  DC.MustRedraw=0;
-
-  MarkAsUpdated(state,memoffset);
-}; /* RefreshDisplay_TrueColor_1bpp */
-
-
-/*-----------------------------------------------------------------------------*/
-static void RefreshDisplay_TrueColor_2bpp(ARMul_State *state, int DisplayWidth, int DisplayHeight) {
-  int x,y,memoffset;
-  char Buffer[DisplayWidth/4];
-  char *ImgPtr=HD.ImageData;
-	UBYTE line[DisplayWidth];
-
-  /* First configure the colourmap */
-//	if(DC.MustResetPalette)
-  		DoPixelMap_Standard(state,4);
-
-  for(y=0,memoffset=0;y<DisplayHeight;
-                      y++,memoffset+=DisplayWidth/4,ImgPtr+=DisplayWidth) {
-    if ((DC.MustRedraw) || (QueryRamChange(state,memoffset,DisplayWidth/4))) {
-      if (y<DC.miny) DC.miny=y;
-      if (y>DC.maxy) DC.maxy=y;
-      CopyScreenRAM(state,memoffset,DisplayWidth/4, Buffer);
-
-
-      for(x=0;x<DisplayWidth;x+=4) {
-        int pixel = Buffer[x>>2];
-
-		line[x] = (pixel) &3;
-		line[x+1] = (pixel>>2) &3;
-		line[x+2] = (pixel>>4) &3;
-		line[x+3] = (pixel>>6) &3;
-
-      }; /* x */
-	IGraphics->WritePixelLine8(&friend,0,y,DisplayWidth,line,&tmprp);
-    }; /* Update test */
-  }; /* y */
-  DC.MustRedraw=0;
-  MarkAsUpdated(state,memoffset);
-
-}; /* RefreshDisplay_TrueColor_2bpp */
-
-static void RefreshDisplay_TrueColor_4bpp(ARMul_State *state, int DisplayWidth, int DisplayHeight) {
-  int x,y,memoffset;
-  char Buffer[DisplayWidth/2];
-  char *ImgPtr=HD.ImageData;
-	UBYTE line[DisplayWidth];
-
-  /* First configure the colourmap */
-//	if(DC.MustResetPalette)
-  		DoPixelMap_Standard(state,16);
-
-  for(y=0,memoffset=0;y<DisplayHeight;
-                      y++,memoffset+=(DisplayWidth/2),ImgPtr+=DisplayWidth) {
-    if ((DC.MustRedraw) || (QueryRamChange(state,memoffset,DisplayWidth/2))) {
-      if (y<DC.miny) DC.miny=y;
-      if (y>DC.maxy) DC.maxy=y;
-      CopyScreenRAM(state,memoffset,DisplayWidth/2, Buffer);
-
-      for(x=0;x<DisplayWidth;x+=2) {
-
-    int pixel = Buffer[x>>1];
-
-	line[x] = pixel &15;
-	line[x+1] = (pixel>>4) &15;
-
-      }; /* x */
-	IGraphics->WritePixelLine8(&friend,0,y,DisplayWidth,line,&tmprp);
-
-    }; /* Refresh test */
-  }; /* y */
-  DC.MustRedraw=0;
-  MarkAsUpdated(state,memoffset);
-}; /* RefreshDisplay_TrueColor_4bpp */
-
-
-/*-----------------------------------------------------------------------------*/
-static void RefreshDisplay_TrueColor_8bpp(ARMul_State *state, int DisplayWidth, int DisplayHeight) {
-  int y,memoffset;
-  unsigned char Buffer[DisplayWidth];
-  char *ImgPtr=HD.ImageData;
-
-
-  /* First configure the colourmap */
-  DoPixelMap_256(state);
-
-  for(y=0,memoffset=0;y<DisplayHeight;
-                      y++,memoffset+=DisplayWidth,ImgPtr+=DisplayWidth) {
-    if ((DC.MustRedraw) || (QueryRamChange(state,memoffset,DisplayWidth))) {
-      if (y<DC.miny) DC.miny=y;
-      if (y>DC.maxy) DC.maxy=y;
-      CopyScreenRAM(state,memoffset,DisplayWidth, Buffer);
-
-		IGraphics->WritePixelLine8(&friend,0,y,DisplayWidth,Buffer,&tmprp);
-
-    }; /* Refresh test */
-  }; /* y */
-  DC.MustRedraw=0;
-  MarkAsUpdated(state,memoffset);
-
-} /* RefreshDisplay_TrueColor_8bpp */
-
-void
-RefreshDisplay(ARMul_State *state)
-{
-	if(!window) return;
-	if(!friend.BitMap) return;
-
-  int DisplayHeight = VIDC.Vert_DisplayEnd - VIDC.Vert_DisplayStart;
-  int DisplayWidth  = (VIDC.Horiz_DisplayEnd - VIDC.Horiz_DisplayStart) * 2;
-
-  DC.AutoRefresh=AUTOREFRESHPOLL;
-  ioc.IRQStatus|=8; /* VSync */
-  ioc.IRQStatus |= 0x20; /* Sound - just an experiment */
-  IO_UpdateNirq();
-
-  DC.miny=DisplayHeight-1;
-  DC.maxy=0;
-
-  if (DisplayHeight > 0 && DisplayWidth > 0) {
-    /* First figure out number of BPP */
-    switch ((VIDC.ControlReg & 0xc)>>2) {
-      case 0: /* 1bpp */
-        RefreshDisplay_TrueColor_1bpp(state, DisplayWidth, DisplayHeight);
-        break;
-      case 1: /* 2bpp */
-        RefreshDisplay_TrueColor_2bpp(state, DisplayWidth, DisplayHeight);
-        break;
-      case 2: /* 4bpp */
-        RefreshDisplay_TrueColor_4bpp(state, DisplayWidth, DisplayHeight);
-        break;
-      case 3: /* 8bpp */
-        RefreshDisplay_TrueColor_8bpp(state, DisplayWidth, DisplayHeight);
-        break;
-    }
-  }
-
-  /* Only tell X to redisplay those bits which we've replotted into the image */
-  if (DC.miny < DC.maxy) {
-	IGraphics->BltBitMap(friend.BitMap,0,DC.miny,
-			window->RPort->BitMap,0,DC.miny,
-			DisplayWidth,(DC.maxy-DC.miny)+1,0x0C0,0xff,NULL);
-
-  }
-
-} /* RefreshDisplay */
-/*-----------------------------------------------------------------------------*/
-
-/*-----------------------------------------------------------------------------*/
-/* Refresh the mouse pointer image                                                */
-static void refreshmouse(ARMul_State *state) {
-  int x,y,height,offset;
-  int memptr;
-  unsigned short *ImgPtr;
-  int HorizPos = (int)VIDC.Horiz_CursorStart - (int)VIDC.Horiz_DisplayStart*2;
-  int Height = (int)VIDC.Vert_CursorEnd - (int)VIDC.Vert_CursorStart +1;
-  int VertPos;
-	UBYTE line[32];
-
-	if(!window) return;
-	if(!screen) return;
-
-	if(!mouseptr.BitMap)
-	{
-		mouseptr.BitMap=IExec->AllocVec(sizeof(struct BitMap),MEMF_CLEAR);
-		IGraphics->InitBitMap(mouseptr.BitMap,2,32,32);
-		mouseptr.BitMap->Planes[0] = IGraphics->AllocRaster(32,32);
-		mouseptr.BitMap->Planes[1] = IGraphics->AllocRaster(32,32);
-
-//		mouseptr.BitMap = IGraphics->AllocBitMap(32,32,2,BMF_DISPLAYABLE | BMF_CLEAR | BMF_INTERLEAVED,NULL);
-		mouseobj = IIntuition->NewObject(NULL,"pointerclass",POINTERA_BitMap,mouseptr.BitMap,POINTERA_WordWidth,2,POINTERA_XOffset,-22,POINTERA_YOffset,0,POINTERA_XResolution,POINTERXRESN_SCREENRES,POINTERA_YResolution,POINTERYRESN_SCREENRESASPECT,TAG_DONE);
-	}
-
-
-  VertPos = (int)VIDC.Vert_CursorStart;
-  VertPos -= (signed int)VIDC.Vert_DisplayStart;
-
-  if (Height < 1) Height = 1;
-  if (VertPos < 1) VertPos = 1;
-
-struct IBox ibox;
-
-/* My graphics card has problems getting into the negatively numbered X positions,
-   workaround is to enable SOFTSPRITE in the Radeon monitor tooltypes. */
-
-ibox.Left = HorizPos+22;
-ibox.Top = VertPos;
-ibox.Width = 1;
-ibox.Height = 1;
-
-IIntuition->SetWindowAttrs(window,WA_MouseLimits,&ibox,TAG_DONE);
-									//WA_GrabFocus,1,TAG_DONE);
-
-/* Snippet of mouse positioning code by Andy Broad
-In our situation, it doesn't work very well, leaving code here just in case but
-not using it at present.
-
-	if(!IExec->OpenDevice(INPUTNAME,0,ir,0))
-	{
-		struct InputEvent ie;
-		struct IEPointerPixel pp;
-
-		ir->io_Command = IND_WRITEEVENT;
-		ir->io_Length = sizeof(struct InputEvent);
-		ir->io_Data = &ie;
-
-		ie.ie_NextEvent = NULL;
-		ie.ie_Class = IECLASS_NEWPOINTERPOS;
-		ie.ie_SubClass = IESUBCLASS_PIXEL;
-		ie.ie_Code = 0;
-		ie.ie_Qualifier = 0; //IEQUALIFIER_RELATIVEMOUSE;;
-		ie.ie_EventAddress = &pp;
-
-		pp.iepp_Screen = screen;
-		pp.iepp_Position.X = HorizPos+22;
-		pp.iepp_Position.Y = VertPos;
-
-//IExec->DebugPrintF("%ld,%ld,%ld\n",HorizPos+22,VertPos,VIDC.Horiz_CursorStart);
-
-		IExec->DoIO(ir);
-	
-		IExec->CloseDevice(ir);
-	}
-
-*/
-  offset=0;
-  memptr=MEMC.Cinit*16;
-  height=(VIDC.Vert_CursorEnd-VIDC.Vert_CursorStart)+1;
-  ImgPtr=(unsigned short *) HD.CursorImageData;
-  for(y=0;y<32;y++,memptr+=8,offset+=8) {
-// fixed height to 32
-
-    if (offset<512*1024) {
-      ARMword tmp[2];
-
-      tmp[0]=MEMC.PhysRam[memptr/4];
-      tmp[1]=MEMC.PhysRam[memptr/4+1];
-
-      for(x=0;x<32;x++,ImgPtr++) {
-
-		if(y<height)
-		{
-        	line[x] = ((tmp[x/16]>>((x & 15)*2)) & 3);
-//printf("%ld ",line[x]);
-		}
-		else
-		{
-			line[x] = 0;
-		}
-      }; /* x */
-//printf("\n");
-		IGraphics->WritePixelLine8(&mouseptr,0,y,32,line,&tmprp);
-    } else return;
-  }; /* y */
-
-	IIntuition->SetWindowPointer(window,WA_Pointer,mouseobj,TAG_DONE);
-
-/*
-	IGraphics->BltBitMap(mouseptr.BitMap,0,0,
-			window->RPort->BitMap,HorizPos,VertPos,
-			32,height,0x0C0,0xff,NULL);
-*/
-
-}; /* RefreshMouse */
-
-void
-DisplayKbd_InitHost(ARMul_State *state)
+int
+DisplayDev_Init(ARMul_State *state)
 {
   /* Setup display and cursor bitmaps */
 
 /* Need to add some error messages here, although if these aren't available you have bigger problems */
 
+#ifdef __amigaos4__
     IExec = (struct ExecIFace *)(*(struct ExecBase **)4)->MainInterface;
+#endif
 
-	if((IntuitionBase = IExec->OpenLibrary((char *)&"intuition.library",51)))
+	if((IntuitionBase = OpenLibrary((char *)&"intuition.library",37)))
 	{
-		IIntuition = (struct IntuitionIFace *)IExec->GetInterface(IntuitionBase,(char *)&"main",1,NULL);
+	#ifdef __amigaos4__
+		IIntuition = (struct IntuitionIFace *)GetInterface(IntuitionBase,(char *)&"main",1,NULL);
+	#endif
 	}
 	else
 	{
 		cleanup();
 	}
 
-	if((GfxBase = IExec->OpenLibrary((char *)&"graphics.library",51)))
+	if((GfxBase = OpenLibrary((char *)&"graphics.library",37)))
 	{
-		IGraphics = (struct GraphicsIFace *)IExec->GetInterface(GfxBase,(char *)&"main",1,NULL);
+	#ifdef __amigaos4__
+		IGraphics = (struct GraphicsIFace *)GetInterface(GfxBase,(char *)&"main",1,NULL);
+	#endif
 	}
 	else
 	{
 		cleanup();
 	}
 
-	if((AslBase = IExec->OpenLibrary((char *)&"asl.library",51)))
+	if((AslBase = OpenLibrary((char *)&"asl.library",37)))
 	{
-		IAsl = (struct AslIFace *)IExec->GetInterface(AslBase,(char *)&"main",1,NULL);
+	#ifdef __amigaos4__
+		IAsl = (struct AslIFace *)GetInterface(AslBase,(char *)&"main",1,NULL);
+	#endif
 	}
 	else
 	{
 		cleanup();
 	}
 
-/* input.device related code
-	if((mport = IExec->AllocSysObjectTags(ASOT_PORT,ASO_NoTrack,FALSE,TAG_DONE)))
-	{
-		if((ir = IExec->AllocSysObjectTags(ASOT_IOREQUEST,ASO_NoTrack,FALSE,ASOIOR_ReplyPort,mport,ASOIOR_Size,sizeof(struct IOStdReq))))
-		{
-
-		}
-		else
-		{
-			cleanup();
-		}
-	}
-	else
-	{
-		cleanup();
-	}
-*/
-
+	#ifdef __amigaos4__
 	ARexx_Init();
+	#endif
 
-	IGraphics->InitRastPort(&mouseptr);
-	IGraphics->InitRastPort(&friend);
+	InitRastPort(&mouseptr);
+	InitRastPort(&mouse_rp);
+	InitRastPort(&friend);
+	mask = AllocRaster(32,32);
 
-	filereq = IAsl->AllocAslRequestTags(ASL_FileRequest,
+	/* blank mouse pointer image */
+	mouseptr.BitMap = AllocBitMap(1,1,1,BMF_CLEAR,NULL);
+	mouseobj = NewObject(NULL,"pointerclass",POINTERA_BitMap,mouseptr.BitMap,POINTERA_WordWidth,2,POINTERA_XOffset,0,POINTERA_YOffset,0,POINTERA_XResolution,POINTERXRESN_SCREENRES,POINTERA_YResolution,POINTERYRESN_SCREENRESASPECT,TAG_DONE);
+
+	filereq = AllocAslRequestTags(ASL_FileRequest,
 									ASLFR_RejectIcons,TRUE,
 	                             	ASLFR_InitialDrawer,"arexx",
 									ASLFR_InitialPattern,"#?.arcem",
 									ASLFR_DoPatterns,TRUE,
 									TAG_DONE);
 
-/*
-	if(P96Base = IExec->OpenLibrary("Picasso96API.library",0))
-	{
-		IP96 = IExec->GetInterface(P96Base,"main",1,NULL);
-	}
-*/
-
-  HD.red_prec    = 8;
-  HD.green_prec  = 8;
-  HD.blue_prec   = 8;
-  HD.red_shift   = 8;
-  HD.green_shift = 16;
-  HD.blue_shift  = 24;
-
+#if 0
+	return DisplayDev_Set(state,&SDD_DisplayDev);
+#else
+	return DisplayDev_Set(state,&PDD_DisplayDev);
+#endif
 }
-
-void VIDC_PutVal(ARMul_State *state,ARMword address, ARMword data,int bNw)
-{
-  unsigned int addr, val;
-
-  addr=(data>>24) & 255;
-  val=data & 0xffffff;
-
-  if (!(addr & 0xc0)) {
-    int Log, Sup,Red,Green,Blue;
-
-    /* This lot presumes its not 8bpp mode! */
-    Log=(addr>>2) & 15;
-    Sup=(val >> 12) & 1;
-    Blue=(val >> 8) & 15;
-    Green=(val >> 4) & 15;
-    Red=val & 15;
-#ifdef DEBUG_VIDCREGS
-    fprintf(stderr,"VIDC Palette write: Logical=%d Physical=(%d,%d,%d,%d)\n",
-      Log,Sup,Red,Green,Blue);
-#endif
-    VideoRelUpdateAndForce(DC.MustResetPalette,VIDC.Palette[Log],(val & 0x1fff));
-    return;
-  };
-
-  addr&=~3;
-  switch (addr) {
-    case 0x40: /* Border col */
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC border colour write val=0x%x\n",val);
-#endif
-      VideoRelUpdateAndForce(DC.MustResetPalette,VIDC.BorderCol,(val & 0x1fff));
-      break;
-
-    case 0x44: /* Cursor palette log col 1 */
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC cursor log col 1 write val=0x%x\n",val);
-#endif
-      VideoRelUpdateAndForce(DC.MustResetPalette,VIDC.CursorPalette[0],(val & 0x1fff));
-      break;
-
-    case 0x48: /* Cursor palette log col 2 */
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC cursor log col 2 write val=0x%x\n",val);
-#endif
-      VideoRelUpdateAndForce(DC.MustResetPalette,VIDC.CursorPalette[1],(val & 0x1fff));
-      break;
-
-    case 0x4c: /* Cursor palette log col 3 */
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC cursor log col 3 write val=0x%x\n",val);
-#endif
-      VideoRelUpdateAndForce(DC.MustResetPalette,VIDC.CursorPalette[2],(val & 0x1fff));
-      break;
-
-    case 0x60: /* Stereo image reg 7 */
-    case 0x64: /* Stereo image reg 0 */
-    case 0x68: /* Stereo image reg 1 */
-    case 0x6c: /* Stereo image reg 2 */
-    case 0x70: /* Stereo image reg 3 */
-    case 0x74: /* Stereo image reg 4 */
-    case 0x78: /* Stereo image reg 5 */
-    case 0x7c: /* Stereo image reg 6 */
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC stereo image reg write val=0x%x\n",val);
-#endif
-      VIDC.StereoImageReg[(addr==0x60)?7:((addr-0x64)/4)]=val & 7;
-      break;
-
-    case 0x80:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Horiz cycle register val=%d\n",val>>14);
-#endif
-      VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Horiz_Cycle,(val>>14) & 0x3ff);
-      break;
-
-    case 0x84:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Horiz sync width register val=%d\n",val>>14);
-#endif
-      VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Horiz_SyncWidth,(val>>14) & 0x3ff);
-      break;
-
-    case 0x88:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Horiz border start register val=%d\n",val>>14);
-#endif
-      VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Horiz_BorderStart,(val>>14) & 0x3ff);
-      break;
-
-    case 0x8c:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Horiz display start register val=%d\n",val>>14);
-#endif
-
-      VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Horiz_DisplayStart,(val>>14) & 0x3ff);
-
-		ChangeDisplayMode(state,(VIDC.Horiz_DisplayEnd-VIDC.Horiz_DisplayStart)*2,VIDC.Vert_DisplayEnd-VIDC.Vert_DisplayStart,(VIDC.ControlReg & 0xc)>>2);
-
-
-      break;
-
-    case 0x90:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Horiz display end register val=%d\n",val>>14);
-#endif
-
-      VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Horiz_DisplayEnd,(val>>14) & 0x3ff);
-
-		ChangeDisplayMode(state,(VIDC.Horiz_DisplayEnd-VIDC.Horiz_DisplayStart)*2,VIDC.Vert_DisplayEnd-VIDC.Vert_DisplayStart,(VIDC.ControlReg & 0xc)>>2);
-
-      break;
-
-    case 0x94:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC horizontal border end register val=%d\n",val>>14);
-#endif
-      VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Horiz_BorderEnd,(val>>14) & 0x3ff);
-      break;
-
-    case 0x98:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC horiz cursor start register val=%d\n",val>>13);
-#endif
-      VIDC.Horiz_CursorStart=(val>>13) & 0x7ff;
-//      DC.MustRedraw = 1;
-      refreshmouse(state);
-///sash
-      break;
-
-    case 0x9c:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC horiz interlace register val=%d\n",val>>14);
-#endif
-      VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Horiz_Interlace,(val>>14) & 0x3ff);
-      break;
-
-    case 0xa0:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Vert cycle register val=%d\n",val>>14);
-#endif
-      VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Vert_Cycle,(val>>14) & 0x3ff);
-      break;
-
-    case 0xa4:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Vert sync width register val=%d\n",val>>14);
-#endif
-      VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Vert_SyncWidth,(val>>14) & 0x3ff);
-      break;
-
-    case 0xa8:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Vert border start register val=%d\n",val>>14);
-#endif
-      VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Vert_BorderStart,(val>>14) & 0x3ff);
-      break;
-
-    case 0xac:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Vert disp start register val=%d\n",val>>14);
-#endif
-
-      VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Vert_DisplayStart,((val>>14) & 0x3ff));
-
-		ChangeDisplayMode(state,(VIDC.Horiz_DisplayEnd-VIDC.Horiz_DisplayStart)*2,VIDC.Vert_DisplayEnd-VIDC.Vert_DisplayStart,(VIDC.ControlReg & 0xc)>>2);
-
-      break;
-
-    case 0xb0:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Vert disp end register val=%d\n",val>>14);
-#endif
-
-      VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Vert_DisplayEnd,(val>>14) & 0x3ff);
-
-	ChangeDisplayMode(state,(VIDC.Horiz_DisplayEnd-VIDC.Horiz_DisplayStart)*2,VIDC.Vert_DisplayEnd-VIDC.Vert_DisplayStart,(VIDC.ControlReg & 0xc)>>2);
-
-      break;
-
-    case 0xb4:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Vert Border end register val=%d\n",val>>14);
-#endif
-      VideoRelUpdateAndForce(DC.MustRedraw,VIDC.Vert_BorderEnd,(val>>14) & 0x3ff);
-      break;
-
-    case 0xb8:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Vert cursor start register val=%d\n",val>>14);
-#endif
-      VIDC.Vert_CursorStart=(val>>14) & 0x3ff;
-      refreshmouse(state);
-//sash
-      break;
-
-    case 0xbc:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Vert cursor end register val=%d\n",val>>14);
-#endif
-      VIDC.Vert_CursorEnd=(val>>14) & 0x3ff;
-      refreshmouse(state);
-//sash
-      break;
-
-    case 0xc0:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Sound freq register val=%d\n",val);
-#endif
-      VIDC.SoundFreq=val & 0xff;
-      break;
-
-    case 0xe0:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Control register val=0x%x\n",val);
-#endif
-      VideoRelUpdateAndForce(DC.MustRedraw,VIDC.ControlReg,val & 0xffff);
-	ChangeDisplayMode(state,(VIDC.Horiz_DisplayEnd-VIDC.Horiz_DisplayStart)*2,VIDC.Vert_DisplayEnd-VIDC.Vert_DisplayStart,(VIDC.ControlReg & 0xc)>>2);
-      break;
-
-    default:
-      fprintf(stderr,"Write to unknown VIDC register reg=0x%x val=0x%x\n",addr,val);
-      break;
-
-  }; /* Register switch */
-}
-

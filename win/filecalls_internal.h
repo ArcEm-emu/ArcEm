@@ -11,7 +11,7 @@ struct Directory_s {
   char *sPath;
   WIN32_FIND_DATA w32fd;
   HANDLE hFile;  
-  unsigned char bFirstEntry;
+  bool bFirstEntry;
 };
 
 #define ARCEM_PATH_MAX MAX_PATH

@@ -21,128 +21,26 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
+
+#include "c99.h"
+
+typedef uint32_t ARMword; /* must be 32 bits wide */
+
+typedef struct ARMul_State ARMul_State;
+extern ARMul_State statestr;
 
 #define FALSE 0
 #define TRUE 1
 #define LOW 0
 #define HIGH 1
-#define LOWHIGH 1
-#define HIGHLOW 2
 
-#ifndef __STDC__
-typedef char * VoidStar;
-#endif
+#define LATEABTSIG LOW /* TODO - is this correct? */
 
-typedef unsigned int ARMword; /* must be 32 bits wide */
+#define MIN(a,b) ((a)<(b)?(a):(b))
+#define MAX(a,b) ((a)>(b)?(a):(b))
 
-typedef struct ARMul_State ARMul_State;
-extern ARMul_State *emu_state;
-extern ARMul_State statestr;
-
-typedef unsigned ARMul_CPInits(ARMul_State *state);
-typedef unsigned ARMul_CPExits(ARMul_State *state);
-typedef unsigned ARMul_LDCs(ARMul_State *state, unsigned type, ARMword instr, ARMword value);
-typedef unsigned ARMul_STCs(ARMul_State *state, unsigned type, ARMword instr, ARMword *value);
-typedef unsigned ARMul_MRCs(ARMul_State *state, unsigned type, ARMword instr, ARMword *value);
-typedef unsigned ARMul_MCRs(ARMul_State *state, unsigned type, ARMword instr, ARMword value);
-typedef unsigned ARMul_CDPs(ARMul_State *state, unsigned type, ARMword instr);
-typedef unsigned ARMul_CPReads(ARMul_State *state, unsigned reg, ARMword *value);
-typedef unsigned ARMul_CPWrites(ARMul_State *state, unsigned reg, ARMword value);
-
-
-typedef enum ARMStartIns {
-  SEQ           = 0,
-  NONSEQ        = 1,
-  PCINCEDSEQ    = 2,
-  PCINCEDNONSEQ = 3,
-  PRIMEPIPE     = 4,
-  RESUME        = 8
-} ARMStartIns;
-
-
-#include "arch/archio.h"
-#include "arch/armarc.h"
-
-struct ARMul_State {
-   ARMword Emulate;        /* to start and stop emulation */
-   unsigned ErrorCode;     /* type of illegal instruction */
-   ARMword Reg[16];        /* the current register file */
-   ARMword RegBank[5][16]; /* all the registers */
-   ARMword Cpsr;           /* the current PSR */
-   ARMword Spsr[7];        /* the exception PSRss */
-   ARMword NFlag, ZFlag, CFlag, VFlag, IFFlags; /* dummy flags for speed */
-   ARMword Bank;            /* the current register bank */
-   ARMword Mode;            /* the current mode */
-   ARMword instr, pc, temp; /* saved register state */
-   ARMword loaded, decoded; /* saved pipeline state */
-   unsigned long NumCycles;
-   enum ARMStartIns NextInstr;
-   unsigned VectorCatch;      /* caught exception mask */
-
-   void *MemDataPtr;          /* admin data */
-   ARMword MemSize;
-
-   unsigned char *OSptr;      /* OS Handle */
-   char *CommandLine;         /* Command Line from ARMsd */
-
-   ARMul_CPInits *CPInit[16]; /* coprocessor initialisers */
-   ARMul_CPExits *CPExit[16]; /* coprocessor finalisers */
-   ARMul_LDCs *LDC[16];       /* LDC instruction */
-   ARMul_STCs *STC[16];       /* STC instruction */
-   ARMul_MRCs *MRC[16];       /* MRC instruction */
-   ARMul_MCRs *MCR[16];       /* MCR instruction */
-   ARMul_CDPs *CDP[16];       /* CDP instruction */
-   ARMul_CPReads *CPRead[16]; /* Read CP register */
-   ARMul_CPWrites *CPWrite[16]; /* Write CP register */
-   unsigned char *CPData[16]; /* Coprocessor data */
-
-   unsigned EventSet; /* the number of events in the queue */
-   unsigned long Now; /* time to the nearest cycle */
-   struct EventNode **EventPtr; /* the event list */
-
-   unsigned Exception; /* enable the next four values */
-   unsigned NresetSig; /* reset the processor */
-   unsigned NfiqSig;
-   unsigned NirqSig;
-
-   unsigned abortSig;
-   unsigned NtransSig;
-   unsigned lateabtSig;
-   ARMword Vector;           /* synthesise aborts in cycle modes */
-   ARMword Aborted;          /* sticky flag for aborts */
-   ARMword Reseted;          /* sticky flag for Reset */
-   ARMword Inted, LastInted; /* sticky flags for interrupts */
-   ARMword Base;             /* extra hand for base writeback */
-   ARMword AbortAddr;        /* to keep track of Prefetch aborts */
-
-   const struct Dbg_HostosInterface *hostif;
-
- };
-
-#define ResetPin NresetSig
-#define FIQPin NfiqSig
-#define IRQPin NirqSig
-#define AbortPin abortSig
-#define TransPin NtransSig
-#define LateAbortPin lateabtSig
-
-/***************************************************************************\
-*                        Types of ARM we know about                         *
-\***************************************************************************/
-
-/* The bitflags */
-#define ARM_Fix26_Prop   0x01
-#define ARM_Nexec_Prop   0x02
-#define ARM_Debug_Prop   0x10
-#define ARM_Isync_Prop   ARM_Debug_Prop
-#define ARM_Lock_Prop    0x20
-
-/* ARM2 family */
-#define ARM2    (ARM_Fix26_Prop)
-#define ARM2as  ARM2
-#define ARM61   ARM2
-#define ARM3    ARM2
-
+#define UPDATEBLOCKSIZE 256
 
 /***************************************************************************\
 *                   Macros to extract instruction fields                    *
@@ -184,16 +82,186 @@ struct ARMul_State {
 #define IRQ26MODE 2L
 #define SVC26MODE 3L
 
-#define ARM26BITMODE (state->Mode <= 3)
-#define ARMMODE (state->Mode)
-#define ARMul_MODEBITS 0x1fL
-#define ARMul_MODE26BIT ARM26BITMODE
+#define USERBANK USER26MODE
+#define FIQBANK FIQ26MODE
+#define IRQBANK IRQ26MODE
+#define SVCBANK SVC26MODE
 
-#define USERBANK 0
-#define FIQBANK 1
-#define IRQBANK 2
-#define SVCBANK 3
-#define DUMMYBANK 4
+/***************************************************************************\
+*                          Fastmap definitions                              *
+\***************************************************************************/
+
+/* The fast map encodes the page access flags, memory pointer, and read/write
+   function pointers into just two words of data (8 bytes on 32bit platforms,
+   16 bytes on 64bit)
+   The first word contains the access flags and memory pointer
+   The second word contains the read/write func pointer (combined function
+   under the assumption that MMIO read/write will be infrequent) 
+*/
+
+#ifndef FASTMAP_64
+#ifdef __LP64__
+#define FASTMAP_64
+#endif
+#endif
+
+typedef intptr_t FastMapInt;
+typedef uintptr_t FastMapUInt;
+
+#ifdef FASTMAP_64
+#define FASTMAP_FLAG(X) (((FastMapUInt)(X))<<56) /* Shift a byte to the top byte of the word */
+#else
+#define FASTMAP_FLAG(X) (((FastMapUInt)(X))<<24) /* Shift a byte to the top byte of the word */
+#endif
+
+#define FASTMAP_SIZE (0x4000000/4096)
+
+#define FASTMAP_R_FUNC FASTMAP_FLAG(0x80) /* Use function for reading */
+#define FASTMAP_W_FUNC FASTMAP_FLAG(0x40) /* Use function for writing */
+#define FASTMAP_R_SVC  FASTMAP_FLAG(0x20) /* Page has SVC read access */
+#define FASTMAP_W_SVC  FASTMAP_FLAG(0x10) /* Page has SVC write access */
+#define FASTMAP_R_OS   FASTMAP_FLAG(0x08) /* Page has OS read access */
+#define FASTMAP_W_OS   FASTMAP_FLAG(0x04) /* Page has OS write access */
+#define FASTMAP_R_USR  FASTMAP_FLAG(0x02) /* Page has USR read access */
+#define FASTMAP_W_USR  FASTMAP_FLAG(0x01) /* Page has USR write access */
+
+#define FASTMAP_MODE_USR FASTMAP_FLAG(0x02) /* We are in user mode */
+#define FASTMAP_MODE_OS  FASTMAP_FLAG(0x08) /* The OS flag is set in the control register */
+#define FASTMAP_MODE_SVC FASTMAP_FLAG(0x20) /* We are in SVC mode */
+#define FASTMAP_MODE_MBO FASTMAP_FLAG(0x80) /* Must be one! */
+
+#define FASTMAP_ACCESSFUNC_WRITE       0x01UL
+#define FASTMAP_ACCESSFUNC_BYTE        0x02UL /* Only relevant for writes */
+#define FASTMAP_ACCESSFUNC_STATECHANGE 0x04UL /* Only relevant for writes */
+
+#define FASTMAP_CLOBBEREDFUNC 0 /* Value written when a func gets clobbered */
+
+typedef FastMapInt FastMapRes; /* Result of a DecodeRead/DecodeWrite function */
+
+typedef ARMword (*FastMapAccessFunc)(ARMul_State *state,ARMword addr,ARMword data,ARMword flags);
+
+typedef struct {
+  FastMapUInt FlagsAndData;
+  FastMapAccessFunc AccessFunc;
+} FastMapEntry;
+
+/***************************************************************************\
+*                               Event queue                                 *
+\***************************************************************************/
+
+/* The event queue is a simple priority queue used for all time-based events
+   external to the CPU. Updating IOC timers, frontend screen output, etc.
+
+   The CPU cycle counter is the timer used to trigger the events.
+   
+   When an event is triggered, it must either remove itself (via EventQ_Remove)
+   or reschedule itself for a different time (EventQ_RescheduleHead). Failure
+   to do either of those will result in an infinite loop where the same event
+   is repeatedly triggered without the CPU emulation advancing.
+
+   It's also acceptable for an event to remove itself and schedule several
+   other events, in its place. Just be careful about the order events are
+   inserted, otherwise when you call Remove(0) or RescheduleHead() the head
+   may not be the same as before. Also be wary of timer overflows; any event
+   scheduled for more than MAX_CYCLES_INTO_FUTURE cycles into the future will
+   be considered as having already been triggered and will fire immediately.
+ */
+
+typedef uint32_t CycleCount;
+typedef int32_t CycleDiff;
+#define MAX_CYCLES_INTO_FUTURE LONG_MAX
+
+typedef void (*EventQ_Func)(ARMul_State *state,CycleCount nowtime);
+
+typedef struct {
+  CycleCount Time;  /* When to trigger the event */
+  EventQ_Func Func;    /* Function to call */
+} EventQ_Entry;
+
+#define EVENTQ_SIZE 8
+
+/* NOTE - For speed reasons there aren't any overflow checks in the eventq
+          code, so be aware of how many systems are using the queue. At the
+          moment, these are:
+
+          arch/newsound.c - One entry for sound DMA fetches
+          arch/XXXdisplaydev.c - One entry for screen updates
+          arch/keyboard.c - One entry for keyboard/mouse polling
+          arch/archio.c - One entry for IOC timers
+          arch/archio.c - One entry for FDC & HDC updates
+        = 5 total
+*/
+
+/***************************************************************************\
+*                          Main emulator state                              *
+\***************************************************************************/
+
+typedef unsigned ARMul_CPInits(ARMul_State *state);
+typedef unsigned ARMul_CPExits(ARMul_State *state);
+typedef unsigned ARMul_LDCs(ARMul_State *state, unsigned type, ARMword instr, ARMword value);
+typedef unsigned ARMul_STCs(ARMul_State *state, unsigned type, ARMword instr, ARMword *value);
+typedef unsigned ARMul_MRCs(ARMul_State *state, unsigned type, ARMword instr, ARMword *value);
+typedef unsigned ARMul_MCRs(ARMul_State *state, unsigned type, ARMword instr, ARMword value);
+typedef unsigned ARMul_CDPs(ARMul_State *state, unsigned type, ARMword instr);
+typedef unsigned ARMul_CPReads(ARMul_State *state, unsigned reg, ARMword *value);
+typedef unsigned ARMul_CPWrites(ARMul_State *state, unsigned reg, ARMword value);
+
+typedef enum ARMStartIns {
+  NORMAL        = 0,
+  PCINCED       = 1,
+  PRIMEPIPE     = 2,
+  RESUME        = 4
+} ARMStartIns;
+
+typedef struct arch_keyboard arch_keyboard;
+typedef struct Vidc_Regs Vidc_Regs;
+
+#define Exception_IRQ R15IBIT
+#define Exception_FIQ R15FBIT
+
+struct ARMul_State {
+   /* Most common stuff, current register file first to ease indexing */
+   ARMword Reg[16];           /* the current register file */
+   CycleCount NumCycles;      /* Number of cycles */
+   enum ARMStartIns NextInstr;/* Pipeline state */
+   unsigned abortSig;         /* Abort state */
+   ARMword Aborted;           /* sticky flag for aborts */
+   ARMword AbortAddr;         /* to keep track of Prefetch aborts */
+   ARMword Exception;         /* IRQ & FIQ pins */
+   Vidc_Regs *Display;        /* VIDC regs/host display struct */
+   arch_keyboard *Kbd;        /* Keyboard struct */
+   ARMword Bank;              /* the current register bank */
+   unsigned NtransSig;        /* MEMC USR/SVC flag, somewhat redundant with FastMapMode */
+   ARMword Base;              /* extra hand for base writeback */
+
+   /* Event queue */
+   EventQ_Entry EventQ[EVENTQ_SIZE];
+   uint_fast8_t NumEvents;
+
+   /* Fastmap stuff */
+   FastMapUInt FastMapMode;   /* Current access mode flags */
+   FastMapUInt FastMapInstrFuncOfs; /* Offset between the RAM/ROM data and the ARMEmuFunc data */
+   FastMapEntry FastMap[FASTMAP_SIZE];
+
+   /* Less common stuff */   
+   ARMword RegBank[4][16];    /* all the registers */
+   ARMword instr, pc, temp;   /* saved register state */
+   ARMword loaded, decoded;   /* saved pipeline state */
+
+   /* Rare stuff */
+   ARMul_CPInits *CPInit[16]; /* coprocessor initialisers */
+   ARMul_CPExits *CPExit[16]; /* coprocessor finalisers */
+   ARMul_LDCs *LDC[16];       /* LDC instruction */
+   ARMul_STCs *STC[16];       /* STC instruction */
+   ARMul_MRCs *MRC[16];       /* MRC instruction */
+   ARMul_MCRs *MCR[16];       /* MCR instruction */
+   ARMul_CDPs *CDP[16];       /* CDP instruction */
+   ARMul_CPReads *CPRead[16]; /* Read CP register */
+   ARMul_CPWrites *CPWrite[16]; /* Write CP register */
+   unsigned char *CPData[16]; /* Coprocessor data */
+
+ };
+
 
 /***************************************************************************\
 *                  Definitons of things in the emulator                     *
@@ -201,7 +269,6 @@ struct ARMul_State {
 
 void ARMul_EmulateInit(void);
 ARMul_State *ARMul_NewState(void);
-void ARMul_SelectProcessor(ARMul_State *state, unsigned int processor);
 void ARMul_Reset(ARMul_State *state);
 ARMword ARMul_DoProg(ARMul_State *state);
 
@@ -209,15 +276,7 @@ ARMword ARMul_DoProg(ARMul_State *state);
 *                Definitons of things for event handling                    *
 \***************************************************************************/
 
-struct EventNode {        /* An event list node */
-  unsigned (*func)(void *); /* The function to call */
-  struct EventNode *next;
-};
-
-void ARMul_ScheduleEvent(struct EventNode* event, unsigned long delay,
-                        unsigned (*func)(void *));
-void ARMul_EnvokeEvent(void);
-#define ARMul_Time (statestr.NumCycles)
+#define ARMul_Time (state->NumCycles)
 
 /***************************************************************************\
 *                          Useful support routines                          *
@@ -230,43 +289,24 @@ void ARMul_SetPC(ARMul_State *state, ARMword value);
 ARMword ARMul_GetR15(ARMul_State *state);
 void ARMul_SetR15(ARMul_State *state, ARMword value);
 
-ARMword ARMul_GetCPSR(ARMul_State *state);
-void ARMul_SetCPSR(ARMul_State *state, ARMword value);
-ARMword ARMul_GetSPSR(ARMul_State *state, ARMword mode);
-void ARMul_SetSPSR(ARMul_State *state, ARMword mode, ARMword value);
-
 /***************************************************************************\
 *                  Definitons of things to handle aborts                    *
 \***************************************************************************/
 
 extern void ARMul_Abort(ARMul_State *state, ARMword address);
 #define ARMul_ABORTWORD 0xefffffff /* SWI -1 */
-#define ARMul_PREFETCHABORT(address) if (statestr.AbortAddr == 1) \
-                                        statestr.AbortAddr = ((address) & ~3L)
-#define ARMul_DATAABORT(address) statestr.abortSig = HIGH; \
-                                 statestr.Aborted = ARMul_DataAbortV;
-#define ARMul_CLEARABORT statestr.abortSig = LOW
+#define ARMul_PREFETCHABORT(address) if (state->AbortAddr == 1) \
+                                        state->AbortAddr = ((address) & ~3L)
+#define ARMul_DATAABORT(address) state->abortSig = HIGH; \
+                                 state->Aborted = ARMul_DataAbortV;
+#define ARMul_CLEARABORT state->abortSig = LOW
 
 /***************************************************************************\
 *              Definitons of things in the memory interface                 *
 \***************************************************************************/
 
-extern unsigned ARMul_MemoryInit(ARMul_State *state,unsigned long initmemsize);
+extern unsigned ARMul_MemoryInit(ARMul_State *state);
 extern void ARMul_MemoryExit(ARMul_State *state);
-
-extern ARMword ARMul_LoadWordS(ARMul_State *state,ARMword address);
-extern ARMword ARMul_LoadWordN(ARMul_State *state,ARMword address);
-extern ARMword ARMul_LoadByte(ARMul_State *state,ARMword address);
-
-extern void ARMul_StoreWordS(ARMul_State *state,ARMword address, ARMword data);
-extern void ARMul_StoreWordN(ARMul_State *state,ARMword address, ARMword data);
-extern void ARMul_StoreByte(ARMul_State *state,ARMword address, ARMword data);
-
-extern ARMword ARMul_SwapWord(ARMul_State *state,ARMword address, ARMword data);
-extern ARMword ARMul_SwapByte(ARMul_State *state,ARMword address, ARMword data);
-
-extern ARMword ARMul_MemAccess(ARMul_State *state,ARMword,ARMword,ARMword,
-                  ARMword,ARMword,ARMword,ARMword,ARMword,ARMword,ARMword);
 
 /***************************************************************************\
 *            Definitons of things in the co-processor interface             *
@@ -292,19 +332,6 @@ extern void ARMul_CoProAttach(ARMul_State *state, unsigned number,
 extern void ARMul_CoProDetach(ARMul_State *state, unsigned number);
 
 /***************************************************************************\
-*               Definitons of things in the host environment                *
-\***************************************************************************/
-
-extern unsigned ARMul_OSInit(ARMul_State *state);
-extern void ARMul_OSExit(ARMul_State *state);
-extern unsigned ARMul_OSHandleSWI(ARMul_State *state,ARMword number);
-extern ARMword ARMul_OSLastErrorP(ARMul_State *state);
-
-extern ARMword ARMul_Debug(ARMul_State *state, ARMword pc, ARMword instr);
-extern unsigned ARMul_OSException(ARMul_State *state, ARMword vector, ARMword pc);
-extern int rdi_log;
-
-/***************************************************************************\
 *                            Host-dependent stuff                           *
 \***************************************************************************/
 
@@ -313,5 +340,9 @@ pascal void SpinCursor(short increment);        /* copied from CursorCtl.h */
 # define HOURGLASS           SpinCursor( 1 )
 # define HOURGLASS_RATE      1023   /* 2^n - 1 */
 #endif
+
+#include "arch/archio.h"
+#include "arch/armarc.h"
+#include "eventq.h"
 
 #endif

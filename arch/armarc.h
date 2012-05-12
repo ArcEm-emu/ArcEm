@@ -3,8 +3,6 @@
 /* (c) David Alan Gilbert 1995-1998 - see Readme file for copying info */
 
 #include "../armdefs.h"
-#include "../armopts.h"
-#include "DispKbd.h"
 #include "archio.h"
 #include "fdc1772.h"
 #ifdef SOUND_SUPPORT
@@ -23,38 +21,22 @@
 #define MEMORY_0x2000000_RAM_PHYS     0x2000000
 
 
-/* Erm - this has to be 256....*/
-#define UPDATEBLOCKSIZE 256
+typedef void (*ARMEmuFunc)(ARMul_State *state, ARMword instr);
 
-typedef void (*ARMWriteFunc)(ARMul_State* state, ARMword addr, ARMword data, int bNw);
-typedef ARMword (*ARMReadFunc)(ARMul_State* state, ARMword addr);
-typedef void (*ARMEmuFunc)(ARMword instr, ARMword pc);
-
-ARMword GetWord(ARMword address);
-void PutVal(ARMul_State *state, ARMword address, ARMword data, int bNw,
-            int Statechange, ARMEmuFunc newfunc);
-
-#define PutWord(state, address, data) \
-        PutVal(state, address, data, 0, 1, ARMul_Emulate_DecodeInstr)
-
-
-void ARMul_Emulate_DecodeInstr(ARMword instr, ARMword pc);
-
-typedef struct {
-  ARMWriteFunc writeFunc; /* NULL means definitely abort */
-  ARMReadFunc readFunc;   /* NULL means definitely abort */
-  ARMword offset;         /* Offset used by the read and write funcs */
-} pageDesc;               /* Description for one 4K page */
+ARMEmuFunc ARMul_Emulate_DecodeInstr(ARMword instr);
 
 struct MEMCStruct {
   ARMword *ROMHigh;           /* ROM high and low are to seperate rom areas */
+  ARMword ROMHighMask;
   ARMword ROMHighSize;        /* For mapping in ROMs of different types eg. */
   ARMword *ROMLow;            /* 8bit Rom and 32bit Rom, or access speeds */ 
+  ARMword ROMLowMask;
   ARMword ROMLowSize;
   ARMword *PhysRam;
-  unsigned int RAMSize;
+  ARMword RAMSize;
+  ARMword RAMMask;
 
-  int PageTable[512]; /* Good old fashioned MEMC1 page table */
+  int32_t PageTable[512]; /* Good old fashioned MEMC1 page table */
   ARMword ControlReg;
   ARMword PageSizeFlags;
   ARMword Vinit,Vstart,Vend,Cinit;
@@ -65,59 +47,145 @@ struct MEMCStruct {
   ARMword Sptr; /* Current position in current buffer */
   ARMword SendC; /* End of current buffer */
   ARMword SstartC; /* The start of the current buffer */
-  int NextSoundBufferValid; /* This indicates whether the next buffer has been set yet */
+  bool NextSoundBufferValid; /* This indicates whether the next buffer has been set yet */
 
-  int ROMMapFlag; /* 0 means ROM is mapped as normal,1 means
+  uint_fast8_t ROMMapFlag; /* 0 means ROM is mapped as normal,1 means
                      processor hasn't done access to low memory, 2 means it
                      hasn't done an access to ROM space, so in 1 & 2 accesses
                      to  low mem access ROM */
 
-  unsigned int UpdateFlags[(512*1024)/UPDATEBLOCKSIZE]; /* One flag for
-                                                           each block of DMAble RAM
-                                                           incremented on a write */
+  ARMword DRAMPageSize; /* Page size we pretend our DRAM is */ 
 
-#ifdef NEWSTYLEMEM
-  /* Even though IO and ROM aren't paged finely we still use 4K entries for
-     them just so it makes the look up in one pass
+  uint32_t UpdateFlags[(512*1024)/UPDATEBLOCKSIZE]; /* One flag for
+                                                       each block of DMAble RAM
+                                                       incremented on a write */
 
-     1st sub is priveliged (1) for priv
-     2nd sub is OS setting in MEMC (1) for OS mode
-     */
-  pageDesc pt[2][2][16384]; /* That's 2^26 / 4096 */
-#else
-  int TmpPage; /* Holds the page number from the FindPageTableEntry */
-               /* in checkabort                                     */
-  unsigned int OldAddress1,OldPage1; /* TLAB */
-#endif
-
-  ARMEmuFunc *ROMHighFuncs;
-  ARMEmuFunc *ROMLowFuncs;
-  ARMEmuFunc *PhysRamfuncs;
+  /* Fastmap memory block pointers */
+  void *ROMRAMChunk;
+  void *EmuFuncChunk;
 };
 
 
 extern struct MEMCStruct memc;
 
-
-typedef struct {
-  DisplayInfo Display;
-
-  unsigned int irqflags,fiqflags;
-} PrivateDataType;
-
-
-typedef enum {
-  IntSource_IOC
-} IntSources;
-
-
-typedef enum {
-  FiqSource_IOC
-} FiqSources;
-
-#define PRIVD ((PrivateDataType *)emu_state->MemDataPtr)
 #define MEMC (memc)
-#define ARCPGINFO(priv,os,addr) (MEMC.pt[priv][os][addr>>12])
+
+/* ------------------- inlined FastMap functions ------------------------------ */
+static FastMapEntry *FastMap_GetEntry(ARMul_State *state,ARMword addr);
+static FastMapEntry *FastMap_GetEntryNoWrap(ARMul_State *state,ARMword addr);
+static FastMapRes FastMap_DecodeRead(const FastMapEntry *entry,FastMapUInt mode);
+static FastMapRes FastMap_DecodeWrite(const FastMapEntry *entry,FastMapUInt mode);
+static ARMword *FastMap_Log2Phy(const FastMapEntry *entry,ARMword addr);
+static ARMEmuFunc *FastMap_Phy2Func(ARMul_State *state,ARMword *addr);
+static ARMword FastMap_LoadFunc(const FastMapEntry *entry,ARMul_State *state,ARMword addr);
+static void FastMap_StoreFunc(const FastMapEntry *entry,ARMul_State *state,ARMword addr,ARMword data,ARMword flags);
+static void FastMap_RebuildMapMode(ARMul_State *state);
+
+static inline FastMapEntry *FastMap_GetEntry(ARMul_State *state,ARMword addr)
+{
+	/* Return FastMapEntry corresponding to this address */
+	return &state->FastMap[(addr&~UINT32_C(0xFC000000))>>12];
+}
+
+static inline FastMapEntry *FastMap_GetEntryNoWrap(ARMul_State *state,ARMword addr)
+{
+	/* Return FastMapEntry corresponding to this address, without performing address wrapping (use with caution!) */
+	return &state->FastMap[addr>>12];
+}
+
+static inline FastMapRes FastMap_DecodeRead(const FastMapEntry *entry,FastMapUInt mode)
+{
+	/* Use the FASTMAP_RESULT_* macros to decide what to do */
+	return ((FastMapRes)((entry->FlagsAndData)&mode));
+}
+
+static inline FastMapRes FastMap_DecodeWrite(const FastMapEntry *entry,FastMapUInt mode)
+{
+	/* Use the FASTMAP_RESULT_* macros to decide what to do */
+	return ((FastMapRes)((entry->FlagsAndData<<1)&mode));
+}
+
+static inline ARMword *FastMap_Log2Phy(const FastMapEntry *entry,ARMword addr)
+{
+	/* Returns physical (i.e. real) pointer assuming read/write check returned >0 and addr is properly within range */
+	return (ARMword*)(((FastMapUInt)addr)+(entry->FlagsAndData<<8));
+}
+
+static inline ARMEmuFunc *FastMap_Phy2Func(ARMul_State *state,ARMword *addr)
+{
+	/* Return ARMEmuFunc * for an address returned by Log2Phy */
+#ifdef FASTMAP_64
+	/* Shift addr so we access ARMEmuFunc *'s as 64bit data types instead of 32bit */
+	return (ARMEmuFunc*)((((FastMapUInt)addr)<<1)+state->FastMapInstrFuncOfs);
+#else
+	return (ARMEmuFunc*)(((FastMapUInt)addr)+state->FastMapInstrFuncOfs);
+#endif
+}
+
+static inline ARMword FastMap_LoadFunc(const FastMapEntry *entry,ARMul_State *state,ARMword addr)
+{
+	/* Return load result, assumes it's a func */
+	return (entry->AccessFunc)(state,addr,0,0);
+}
+
+static inline void FastMap_StoreFunc(const FastMapEntry *entry,ARMul_State *state,ARMword addr,ARMword data,ARMword flags)
+{
+	/* Perform store, assumes it's a func */
+	(entry->AccessFunc)(state,addr,data,flags | FASTMAP_ACCESSFUNC_WRITE);
+}
+
+static inline void FastMap_RebuildMapMode(ARMul_State *state)
+{
+	state->FastMapMode = (state->NtransSig?FASTMAP_MODE_MBO|FASTMAP_MODE_SVC:(MEMC.ControlReg&(1<<12))?FASTMAP_MODE_MBO|FASTMAP_MODE_OS:FASTMAP_MODE_MBO|FASTMAP_MODE_USR);
+}
+
+/* Macros to evaluate DecodeRead/DecodeWrite results
+   These are all mutually exclusive, so a standard DIRECT -> FUNC -> ABORT check doesn't need to explicitly check for abort */
+#define FASTMAP_RESULT_DIRECT(res) ((res) > 0)
+#define FASTMAP_RESULT_FUNC(res) (((FastMapUInt)(res)) > FASTMAP_MODE_MBO)
+#define FASTMAP_RESULT_ABORT(res) (((res)<<1)==0)
+
+/* ------------------- inlined higher-level memory funcs ---------------------- */
+
+#define FASTMAP_INLINE
+#ifdef FASTMAP_INLINE
+#define FASTMAP_PROTO static
+#else
+#define FASTMAP_PROTO extern
+#endif
+
+FASTMAP_PROTO ARMword ARMul_LoadWordS(ARMul_State *state,ARMword address);
+FASTMAP_PROTO ARMword ARMul_LoadByte(ARMul_State *state,ARMword address);
+FASTMAP_PROTO void ARMul_StoreWordS(ARMul_State *state, ARMword address, ARMword data);
+FASTMAP_PROTO void ARMul_StoreByte(ARMul_State *state, ARMword address, ARMword data);
+FASTMAP_PROTO ARMword ARMul_SwapWord(ARMul_State *state, ARMword address, ARMword data);
+FASTMAP_PROTO ARMword ARMul_SwapByte(ARMul_State *state, ARMword address, ARMword data);
+
+#ifdef FASTMAP_INLINE
+#include "arch/fastmap.c"
+#endif
+
+/**
+ * ARMul_LoadWordN
+ *
+ * Load Word, Non Sequential Cycle
+ *
+ * @param state
+ * @param address
+ * @returns
+ */
+#define ARMul_LoadWordN ARMul_LoadWordS /* These were 100% equivalent in the original implementation! */
+
+/**
+ * ARMul_StoreWordN
+ *
+ * Store Word, Non Sequential Cycle
+ *
+ * @param state
+ * @param address
+ * @param data
+ */
+#define ARMul_StoreWordN ARMul_StoreWordS /* These were 100% equivalent in the original implementation! */
 
 /* ------------------- access routines for other sections of code ------------- */
 /* Returns a byte in the keyboard serialiser tx register - or -1 if there isn't
@@ -129,17 +197,7 @@ int ArmArc_ReadKbdTx(ARMul_State *state);
    still full.                                                                  */
 int ArmArc_WriteKbdRx(ARMul_State *state, unsigned char value);
 
-void EnableTrace(void);
 
-int FindPageTableEntry(unsigned address, ARMword *PageTabVal);
-
-ARMword GetPhysAddress(unsigned int address);
-
-#ifdef SOUND_SUPPORT
-int SoundDMAFetch(SoundData *buffer);
-void SoundUpdateStereoImage(void);
-void SoundUpdateSampleRate(void);
-#endif
-
+void ARMul_RebuildFastMap(void);
 
 #endif

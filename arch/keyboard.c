@@ -1,7 +1,6 @@
 /* arch/keyboard.c -- a model of the Archimedes keyboard. */
 
 #include "armarc.h"
-#include "DispKbd.h"
 #include "keyboard.h"
 
 #define DEBUG_KEYBOARD 0
@@ -12,8 +11,8 @@
 /* Information on an arch_key_id. */
 typedef struct {
   const char *name;
-  unsigned char row;
-  unsigned char col;
+  uint8_t row;
+  uint8_t col;
 } key_info;
 
 static key_info keys[] = {
@@ -36,7 +35,7 @@ static key_info keys[] = {
 /* ------------------------------------------------------------------ */
 
 void keyboard_key_changed(struct arch_keyboard *kb, arch_key_id kid,
-                          int up)
+                          bool up)
 {
   key_info *ki;
   KbdEntry *e;
@@ -103,7 +102,7 @@ void Kbd_StartToHost(ARMul_State *state)
 
   /* Perhaps some keyboard data */
   if (KBD.KeyScanEnable && KBD.BuffOcc > 0) {
-    int loop;
+    uint8_t loop;
 
     DBG((stderr, "KBD_StartToHost - sending key -  BuffOcc=%d "
         "(%d,%d,%d)\n", KBD.BuffOcc, KBD.Buffer[0].KeyUpNDown,
@@ -119,7 +118,7 @@ void Kbd_StartToHost(ARMul_State *state)
       KBD.Buffer[loop - 1] = KBD.Buffer[loop];
     }
 
-    if (IOC_WriteKbdRx(state, (unsigned char) ((KBD.KeyUpNDown ? 0xd0 : 0xc0) | KBD.KeyRowToSend)) != -1) {
+    if (IOC_WriteKbdRx(state, (uint8_t) ((KBD.KeyUpNDown ? 0xd0 : 0xc0) | KBD.KeyRowToSend)) != -1) {
       KBD.KbdState = KbdState_SentKeyByte1;
     }
     KBD.BuffOcc--;
@@ -147,7 +146,7 @@ void Kbd_StartToHost(ARMul_State *state)
 /* Called when there is some data in the serial tx register on the
  * IOC. */
 
-void Kbd_CodeFromHost(ARMul_State *state, unsigned char FromHost)
+void Kbd_CodeFromHost(ARMul_State *state, uint8_t FromHost)
 {
   DBG((stderr, "Kbd_CodeFromHost: FromHost=0x%x State=%d\n",
       FromHost, KBD.KbdState));
@@ -283,7 +282,7 @@ void Kbd_CodeFromHost(ARMul_State *state, unsigned char FromHost)
               KBD.KbdState = KbdState_SentMouseByte2;
             } else {
               if (IOC_WriteKbdRx(state,
-                  (unsigned char) ((KBD.KeyUpNDown ? 0xd0 : 0xc0) |
+                  (uint8_t) ((KBD.KeyUpNDown ? 0xd0 : 0xc0) |
                   KBD.KeyColToSend)) == -1)
               {
                   DBG((stderr, "KBD: Couldn't send 2nd byte "
@@ -318,3 +317,45 @@ void Kbd_CodeFromHost(ARMul_State *state, unsigned char FromHost)
 
   return;
 }
+
+void Keyboard_Poll(ARMul_State *state,CycleCount nowtime)
+{
+  EventQ_RescheduleHead(state,nowtime+12500,Keyboard_Poll); /* TODO - Should probably be realtime */
+  /* Call host-specific routine */
+  Kbd_PollHostKbd(state);
+  /* Keyboard check */
+  int KbdSerialVal = IOC_ReadKbdTx(state);
+  if (KbdSerialVal != -1) {
+    Kbd_CodeFromHost(state, (uint8_t) KbdSerialVal);
+  } else {
+    if (KBD.TimerIntHasHappened > 2) {
+      KBD.TimerIntHasHappened = 0;
+      if (KBD.KbdState == KbdState_Idle) {
+        Kbd_StartToHost(state);
+      }
+    }
+  }
+}
+
+void Kbd_Init(ARMul_State *state)
+{
+  static arch_keyboard kbd;
+  state->Kbd = &kbd;
+
+  KBD.KbdState            = KbdState_JustStarted;
+  KBD.MouseTransEnable    = false;
+  KBD.KeyScanEnable       = false;
+  KBD.KeyColToSend        = -1;
+  KBD.KeyRowToSend        = -1;
+  KBD.MouseXCount         = 0;
+  KBD.MouseYCount         = 0;
+  KBD.KeyUpNDown          = false; /* When false it means the key to be sent is a key down event, true is up */
+  KBD.HostCommand         = 0;
+  KBD.BuffOcc             = 0;
+  KBD.TimerIntHasHappened = 0; /* If using AutoKey should be 2 Otherwise it never reinitialises the event routines */
+  KBD.Leds                = 0;
+  KBD.leds_changed        = NULL;
+
+  EventQ_Insert(state,ARMul_Time+12500,Keyboard_Poll);
+}
+

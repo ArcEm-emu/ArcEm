@@ -643,12 +643,12 @@ static void RefreshMouse(ARMul_State *state) {
 
 
 void
-RefreshDisplay(ARMul_State *state)
+RefreshDisplay(ARMul_State *state,CycleCount nowtime)
 {
-    DC.AutoRefresh = AUTOREFRESHPOLL;
+    EventQ_RescheduleHead(state,nowtime+POLLGAP*AUTOREFRESHPOLL,RefreshDisplay);
     ioc.IRQStatus |= 8; /* VSync */
     ioc.IRQStatus |= 0x20; /* Sound - just an experiment */
-    IO_UpdateNirq();
+    IO_UpdateNirq(state);
 
     DC.miny=MonitorHeight-1;
     DC.maxy=0;
@@ -782,6 +782,7 @@ DisplayKbd_InitHost(ARMul_State *state)
   HD.red_shift = 10;
   HD.green_shift = 5;
   HD.blue_shift = 0;
+  EventQ_Insert(state,ARMul_Time+POLLGAP*AUTOREFRESHPOLL,RefreshDisplay);
 }
 
 void VIDC_PutVal(ARMul_State *state,ARMword address, ARMword data,int bNw)

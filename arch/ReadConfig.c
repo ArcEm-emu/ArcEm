@@ -9,7 +9,6 @@
 #include <string.h>
 
 #include "../armdefs.h"
-#include "../armopts.h"
 
 #include "ArcemConfig.h"
 #include "ReadConfig.h"
@@ -24,7 +23,7 @@
 int ReadConfigFile(ARMul_State *state)
 {
     const char *envvar;
-    const char *basename;
+    const char *basename2;
     char *env;
     char tmpbuf[1024];
     FILE *fConf;
@@ -33,30 +32,37 @@ int ReadConfigFile(ARMul_State *state)
  * Makefile, not some platform-dependent one. */
 #if defined(WIN32)
     envvar = NULL;
-    basename = "arcemrc";
+    basename2 = "arcemrc";
 #elif defined(AMIGA)
     envvar = NULL;
-    basename = ".arcemrc";
+    basename2 = ".arcemrc";
 #elif defined(MACOSX)
     envvar = "HOME";
-    basename = "arcem/.arcemrc";
+    basename2 = "arcem/.arcemrc";
+#elif defined(__riscos__)
+    envvar = "ArcEm$Dir";
+    basename2 = "/arcemrc";
 #else
     envvar = "HOME";
-    basename = ".arcemrc";
+    basename2 = ".arcemrc";
 #endif
 
     if (envvar && (env = getenv(envvar)) == NULL) {
         fprintf(stderr, "configuration file is $%s/%s but $%s isn't "
-            "set.", envvar, basename, envvar);
+            "set.", envvar, basename2, envvar);
         return 0;
     }
 
     *tmpbuf = '\0';
     if (envvar) {
         strcat(tmpbuf, env);
+#if defined(__riscos__)
+        strcat(tmpbuf, ".");
+#else
         strcat(tmpbuf, "/");
+#endif
     }
-    strcat(tmpbuf, basename);
+    strcat(tmpbuf, basename2);
 
     if ((fConf = fopen(tmpbuf, "r")) == NULL) {
         fprintf(stderr, "couldn't open config file: %s\n", tmpbuf);

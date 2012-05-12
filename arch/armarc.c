@@ -15,45 +15,28 @@
 //#include <unistd.h>
 #include <math.h>
 
-#include "../armopts.h"
 #include "../armdefs.h"
-#include "../armrdi.h"
+#include "../hostfs.h"
 
 #include "dbugsys.h"
 
 #include "armarc.h"
 #include "archio.h"
-#include "DispKbd.h"
 #include "archio.h"
 #include "fdc1772.h"
 #include "ReadConfig.h"
 #include "Version.h"
 #include "extnrom.h"
 #include "ArcemConfig.h"
+#include "sound.h"
+#include "displaydev.h"
+#include "filecalls.h"
 
 
 #ifdef MACOSX
 #include <unistd.h>
 extern char arcemDir[256];
 void arcem_exit(char* msg);
-#endif
-
-#ifdef __riscos__
-#include "kernel.h"
-#include "swis.h"
-#endif
-
-#ifdef DIRECT_DISPLAY
-
-extern int *DirectScreenMemory;
-extern int DirectScreenExtent;
-
-extern int MonitorBpp;
-
-int Vstartold;
-int Vinitold;
-int Vendold;
-
 #endif
 
 /* Page size flags */
@@ -65,309 +48,135 @@ int Vendold;
 
 struct MEMCStruct memc;
 
-#ifdef SOUND_SUPPORT
-static SoundData soundTable[256];
-static double channelAmount[8][2];
-static unsigned int numberOfChannels = 0;
-#endif
-
 /*-----------------------------------------------------------------------------*/
 
-
-#define PRIVILEGED (statestr.NtransSig)
-
-#define OSMODE(state) ((MEMC.ControlReg >> 12) & 1)
-
-static ARMul_State *sigavailablestate=NULL;
-
-#ifdef SOUND_SUPPORT
-static void SoundInitTable(void);
-#endif
+static ARMword ARMul_ManglePhysAddr(ARMword phy);
 
 /*------------------------------------------------------------------------------*/
 /* OK - this is getting treated as an odds/sods engine - just hook up anything
    you need to do occasionally! */
 static void DumpHandler(int sig) {
+  ARMul_State *state = &statestr;
   FILE *res;
+  int i;
 
-  exit(0);
-
-  fprintf(stderr,"SIGUSR2 at PC=0x%x R[15]=0x%x\n",(unsigned int)statestr.pc,
-                                            (unsigned int)statestr.Reg[15]);
+  fprintf(stderr,"SIGUSR2 at PC=0x%x\n",ARMul_GetPC(state));
 #ifndef WIN32
   signal(SIGUSR2,DumpHandler);
 #endif
+  /* Register dump */
+  fprintf(stderr, "Current registers:\n"
+                  "r0  = %08x  r1  = %08x  r2  = %08x  r3  = %08x\n"
+                  "r4  = %08x  r5  = %08x  r6  = %08x  r7  = %08x\n"
+                  "r8  = %08x  r9  = %08x  r10 = %08x  r11 = %08x\n"
+                  "r12 = %08x  r13 = %08x  r14 = %08x  r15 = %08x\n",
+    state->Reg[0], state->Reg[1], state->Reg[2], state->Reg[3],
+    state->Reg[4], state->Reg[5], state->Reg[6], state->Reg[7],
+    state->Reg[8], state->Reg[9], state->Reg[10], state->Reg[11],
+    state->Reg[12], state->Reg[13], state->Reg[14], state->Reg[15]);
+  if(state->Bank == FIQBANK)
+  {
+    fprintf(stderr,"USR registers:\n"
+                   "r8  = %08x  r9  = %08x  r10 = %08x  r11 = %08x\n"
+                   "r12 = %08x  r13 = %08x  r14 = %08x\n",
+      state->RegBank[USERBANK][8], state->RegBank[USERBANK][9],
+      state->RegBank[USERBANK][10], state->RegBank[USERBANK][11],
+      state->RegBank[USERBANK][12],
+      state->RegBank[USERBANK][13], state->RegBank[USERBANK][14]);
+  }
+  else if(state->Bank != USERBANK)
+  {
+    fprintf(stderr,"USR registers:  r13 = %08x  r14 = %08x\n",
+      state->RegBank[USERBANK][13], state->RegBank[USERBANK][14]);
+  }
+  if(state->Bank != FIQBANK)
+  {
+    fprintf(stderr,"FIQ registers:\n"
+                   "r8  = %08x  r9  = %08x  r10 = %08x  r11 = %08x\n"
+                   "r12 = %08x  r13 = %08x  r14 = %08x\n",
+      state->RegBank[FIQBANK][8], state->RegBank[FIQBANK][9],
+      state->RegBank[FIQBANK][10], state->RegBank[FIQBANK][11],
+      state->RegBank[FIQBANK][12],
+      state->RegBank[FIQBANK][13], state->RegBank[FIQBANK][14]);
+  }
+  if(state->Bank != IRQBANK)
+  {
+    fprintf(stderr,"IRQ registers:  r13 = %08x  r14 = %08x\n",
+      state->RegBank[IRQBANK][13], state->RegBank[IRQBANK][14]);
+  }  
+  if(state->Bank != SVCBANK)
+  {
+    fprintf(stderr,"SVC registers:  r13 = %08x  r14 = %08x\n",
+      state->RegBank[SVCBANK][13], state->RegBank[SVCBANK][14]);
+  }  
 
-  exit(0);
+  /* IOC timers */
+  for(i=0;i<4;i++)
+    fprintf(stderr,"Timer%d Count %08x Latch %08x\n",i,ioc.TimerCount[i],ioc.TimerInputLatch[i]);
+
+  /* Memory map */
+  fprintf(stderr,"MEMC using %dKB page size\n",4<<MEMC.PageSizeFlags);
+  ARMword size=1<<(12+MEMC.PageSizeFlags);
+  int idx;
+  for(idx=0;idx<512;idx++)
+  {
+    int32_t pt = MEMC.PageTable[idx];
+    if(pt>0)
+    {
+      ARMword logadr,phys,mangle;
+      /* Assume MEMC isn't in OS mode */
+      static const char *prot[4] = {"USR R/W","USR R","SVC only","SVC only"};
+      switch(MEMC.PageSizeFlags) {
+        default:
+        case MEMC_PAGESIZE_O_4K:
+          phys = pt & 127;
+          logadr = (pt & 0x7ff000)
+                | ((pt & 0x000c00)<<13);
+          break;
+        case MEMC_PAGESIZE_1_8K:
+          phys = ((pt>>1) & 0x3f) | ((pt & 1) << 6);
+          logadr = (pt & 0x7fe000)
+                | ((pt & 0x000c00)<<13);
+          break;
+        case MEMC_PAGESIZE_2_16K:
+          phys = ((pt>>2) & 0x1f) | ((pt & 3) << 5);
+          logadr = (pt & 0x7fc000)
+                | ((pt & 0x000c00)<<13);
+          break;
+        case MEMC_PAGESIZE_3_32K:
+          phys = ((pt>>3) & 0xf) | ((pt&1)<<4) | ((pt&2)<<5) | ((pt&4)<<3) | (pt&0x80) | ((pt>>4)&0x100);
+          logadr = (pt & 0x7f8000)
+                | ((pt & 0x000c00)<<13);
+          break;
+      }
+      phys *= size;
+      mangle = ARMul_ManglePhysAddr(phys);
+      fprintf(stderr,"log %08x -> phy %08x (pre-mangle %08x) prot %s\n",logadr,mangle,phys,prot[(pt>>8)&3]);
+    }
+  }
+
+  /* Physical RAM dump */
+#ifdef __riscos__
+  res=fopen("<arcem$dir>.memdump","wb");
+#else
   res=fopen("memdump","wb");
+#endif
 
   if (res==NULL) {
     fprintf(stderr,"Could not open memory dump file\n");
     return;
   };
 
-  fwrite(MEMC.PhysRam,1,/*MEMC.RAMSize*/ 512*1024,res);
+  fwrite(MEMC.PhysRam,1,MEMC.RAMSize,res);
 
   fclose(res);
+
+#ifdef __riscos__
+  __write_backtrace(sig);
+#endif
+
+  exit(0);
 } /* DumpHandler */
-
-/**
- * GetPhysAddress
- *
- * Uses MEMC.TmpPage which must have been previously been set up by a call to
- * checkabort
- *
- * @param address  Logical RAM address
- * @returns        Physical RAM address
- */
-ARMword
-GetPhysAddress(unsigned address)
-{
-  ARMword pagetabval = MEMC.TmpPage;
-  unsigned PhysPage;
-
-  if (pagetabval == -1)
-    return 0;
-
-  switch (MEMC.PageSizeFlags) {
-    case MEMC_PAGESIZE_O_4K:
-      /* 4K */
-      PhysPage = pagetabval & 127;
-      return (address & 0xfff) | (PhysPage << 12);
-
-    case MEMC_PAGESIZE_1_8K:
-      /* 8K */
-      PhysPage = ((pagetabval >> 1) & 0x3f) | ((pagetabval & 1) << 6);
-      return (address & 0x1fff) | (PhysPage << 13);
-
-    case MEMC_PAGESIZE_2_16K:
-      /* 16K */
-      PhysPage = ((pagetabval >> 2) & 0x1f) | ((pagetabval & 3) << 5);
-      return (address & 0x3fff) | (PhysPage << 14);
-
-    case MEMC_PAGESIZE_3_32K:
-      /* 32K */
-      PhysPage = ((pagetabval >> 3) & 0xf) | ((pagetabval & 1) << 4) |
-                 ((pagetabval & 2) << 5) | ((pagetabval & 4) << 3) |
-                 (pagetabval & 0x80) | ((pagetabval >> 4) & 0x100);
-      return (address & 0x7fff) | (PhysPage << 15);
-  } /* Page size switch */
-
-  abort();
-  return 0;
-} /* GetPhysAddress */
-
-
-/**
- * FindPageTableEntry_Search
- *
- * Look up an address in the pagetable and return the raw entry
- * Return 1 if we find it
- *
- * @param address
- * @param PageTabVal
- * @returns 1 if we find it
-  */
-static int
-FindPageTableEntry_Search(unsigned address, ARMword *PageTabVal)
-{
-  int Current;
-  unsigned int matchaddr;
-  unsigned int mask;
-
-  switch (MEMC.PageSizeFlags) {
-    case MEMC_PAGESIZE_O_4K: /* 4K */
-      matchaddr = ((address & 0x7ff) << 12) |
-                  ((address & 0x1800) >> 1);
-      mask = 0x807ffc00;
-      break;
-
-    case MEMC_PAGESIZE_1_8K: /* 8K */
-      matchaddr = ((address & 0x3ff) << 13) |
-                   (address & 0xc00);
-      mask = 0x807fec00;
-      break;
-
-    case MEMC_PAGESIZE_2_16K: /* 16K */
-      matchaddr = ((address & 0x1ff) << 14) |
-                  ((address & 0x600) << 1);
-      mask = 0x807fcc00;
-      break;
-
-    case MEMC_PAGESIZE_3_32K: /* 32K */
-      matchaddr = ((address & 0xff) << 15) |
-                  ((address & 0x300) << 2);
-      mask = 0x807f8c00;
-      break;
-
-    default:
-      abort();
-  }
-
-  for (Current = 0; Current < 512; Current++) {
-    if ((MEMC.PageTable[Current] & mask) == matchaddr) {
-      MEMC.OldAddress1 = address;
-      MEMC.OldPage1 = MEMC.PageTable[Current];
-      *PageTabVal   = MEMC.PageTable[Current];
-      return 1;
-    }
-  }
-
-  return 0;
-} /* FindPageTableEntry_Search */
-
-
-/** FindPageTableEntry
- *
- * @param address
- * @param PageTabVal
- * @returns 1 if page entry for address found
- */
-int
-FindPageTableEntry(unsigned address, ARMword *PageTabVal)
-{
-  address >>= (12 + MEMC.PageSizeFlags);
-  if (address == MEMC.OldAddress1) {
-    *PageTabVal = MEMC.OldPage1;
-    return 1;
-  }
-
-  return FindPageTableEntry_Search(address, PageTabVal);
-}
-
-
-/**
- * CheckAbortR
- *
- * Would a read to the address cause an abort?
- *
- * @param address Address to check
- * @returns 0 if we should abort. non zero if fine
- */
-static int CheckAbortR(int address) {
-  ARMword PageTabVal;
-
-  /*printf("CheckAbort for address=0x%x\n",address);*/
-
-  /* First check if we are doing ROM remapping and are accessing a remapped location */
-  /* If it is then map it into the ROM space */
-  if ((MEMC.ROMMapFlag) && (address <0xc00000))
-    address = MEMORY_0x3400000_R_ROM_LOW + address;
-
-  switch ((address >> 24) & 3) {
-    case 3: /* 0x03000000 - 0x03FFFFFF - 16MB - IO Controllers (8MB) and ROM space 2 x 4MB */
-      /* If we are in ROM and trying to read then there is no hassle */
-      if (address >= MEMORY_0x3400000_R_ROM_LOW) {
-        /* It's ROM read - no hassle */
-        return(1);
-      }
-      /* NOTE: No break, IOC has same permissions as physical RAM */
-
-    case 2: /* 0x02000000 - 0x02FFFFFF - 16MB - Phyisically mapped Ram */
-      /* Privileged only */
-      return PRIVILEGED;
-
-    case 0: /* 0x00000000 - 0x01FFFFFF - 32MB - Logically mapped Ram */
-    case 1:
-      /* OK - it's in logically mapped RAM */
-      if (!FindPageTableEntry(address,&PageTabVal)) {
-        MEMC.TmpPage=-1;
-        dbug("ChecKAbortR at 0x%08x due to unmapped page\n",address);
-        return(0);
-      }
-
-      MEMC.TmpPage=PageTabVal;
-
-      /* The page exists - so if it's supervisor then it's OK */
-      if (PRIVILEGED)
-        return(1);
-
-      if (MEMC.ControlReg & (1<<12)) {
-        /* OS mode */
-        /* it can read anything */
-        return(1);
-      } else {
-        /* User mode */
-        /* Extract page protection level */
-        if (PageTabVal & 512) {
-          MEMC.TmpPage=-1;
-          dbug("CheckAbortR at 0x%08x due to bad user mode PPL PageTabVal=0x%x\n",address,PageTabVal);
-          return(0);
-        } else
-          return 1;
-      } /* User mode */
-  }
-  return 0;
-} /* CheckAbortR */
-
-
-/**
- * CheckAbortW
- *
- * Would a write to the address cause an abort?
- *
- * @param address Address to check
- * @returns 0 if we should abort, non zero if fine
- */
-static int CheckAbortW(int address) {
-  ARMword PageTabVal;
-
-  /*printf("CheckAbort for address=0x%x\n",address);*/
-
-  /* All writes to Physically mapped Ram, IO controllers, Video Controller
-     DMA Address Generator, MEMC control register, and to the Logical to
-     physical address translator all are only allowed in Supervisor mode
-     (PRIVELEGED) */
-  if (address >= MEMORY_0x2000000_RAM_PHYS) {
-    /*fprintf(stderr,"Ntrans=%d\n",statestr.NtransSig); */
-    return PRIVILEGED;
-  }
-
-  /* OK - it's in logically mapped RAM */
-  if (!FindPageTableEntry(address, &PageTabVal)) {
-    MEMC.TmpPage = -1;
-    dbug("Failed CheckAbortW at address0x%08x due to inability to find page\n", address);
-    return(0);
-  }
-
-  MEMC.TmpPage = PageTabVal;
-
-  /* The page exists - so if it's superviser then it's OK */
-  if (PRIVILEGED)
-    return(1);
-
-  /* Extract page protection level */
-  PageTabVal >>= 8;
-  PageTabVal &= 3;
-
-  if (MEMC.ControlReg & (1<<12)) {
-    /* OS mode */
-
-    /* it can only write if the top bit of the PPL is low */
-    if (PageTabVal & 2) {
-      MEMC.TmpPage = -1;
-      return(0);
-    } else {
-      return(1);
-    }
-
-  } else {
-    /* User mode */
-    if (PageTabVal) {
-      MEMC.TmpPage = -1;
-      return 0;
-
-    } else {
-      return 1;
-    }
-
-  } /* User mode */
-
-  /* Hey - it shouldn't get here */
-  abort();
-  return(0);
-} /* CheckAbort */
-
 
 /**
  * ARMul_MemoryInit
@@ -376,74 +185,86 @@ static int CheckAbortW(int address) {
  * load extension Roms
  *
  * @param state
- * @param initmemorysize If non zero, then use this for the ammount of physical ram
- *                       in bytes. If 0 default to 4MB
  * @returns
  */
 unsigned
-ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
+ARMul_MemoryInit(ARMul_State *state)
 {
-  PrivateDataType *PrivDPtr;
   FILE *ROMFile;
-  unsigned int ROMWordNum, ROMWord;
   int PresPage;
   unsigned int i;
-  unsigned extnrom_size = 0;
+  uint32_t extnrom_size = 0;
 #if defined(EXTNROM_SUPPORT)
-  unsigned extnrom_entry_count;
+  uint32_t extnrom_entry_count;
 #endif
+  uint32_t initmemsize;
+  
+  MEMC.DRAMPageSize = MEMC_PAGESIZE_3_32K;
+  switch(hArcemConfig.eMemSize) {
+    case MemSize_256K:
+#if 0
+      initmemsize = 256 * 1024;
+      MEMC.DRAMPageSize = MEMC_PAGESIZE_O_4K;
+      break;
+#else
+      fprintf(stderr, "256K memory size may not be working right. Rounding up to 512K\n");
+      /* fall through... */
+#endif
+      
+    case MemSize_512K:
+      initmemsize = 512 * 1024;
+      MEMC.DRAMPageSize = MEMC_PAGESIZE_O_4K;
+      break;
 
-  PrivDPtr = calloc(sizeof(PrivateDataType), 1);
-  if (PrivDPtr == NULL) {
-    fprintf(stderr,"ARMul_MemoryInit: malloc of PrivateDataType failed\n");
-    exit(3);
+    case MemSize_1M:
+      initmemsize = 1 * 1024 * 1024;
+      MEMC.DRAMPageSize = MEMC_PAGESIZE_1_8K;
+      break;
+
+    case MemSize_2M:
+      initmemsize = 2 * 1024 * 1024;
+      MEMC.DRAMPageSize = MEMC_PAGESIZE_2_16K;
+      break;
+
+    case MemSize_4M:
+      initmemsize = 4 * 1024 * 1024;
+      break;
+
+    case MemSize_8M:
+      initmemsize = 8 * 1024 * 1024;
+      break;
+
+    case MemSize_12M:
+      initmemsize = 12 * 1024 * 1024;
+      break;
+
+    case MemSize_16M:
+      initmemsize = 16 * 1024 * 1024;
+      break;
+
+    default:
+      fprintf(stderr, "Unsupported memory size");
+      exit(EXIT_FAILURE);
   }
-
-  statestr.MemDataPtr = (unsigned char *)PrivDPtr;
 
   dbug("Reading config file....\n");
   ReadConfigFile(state);
 
-  if (initmemsize) {
-   statestr.MemSize = initmemsize;
-  } else {
-    statestr.MemSize = initmemsize = 4 * 1024 * 1024; /* seems like a good value! */
-  }
-
-  sigavailablestate = state;
 #ifndef WIN32
   signal(SIGUSR2,DumpHandler);
-#endif
-
-  MEMC.RAMSize = initmemsize;
-  /* and now the RAM */
-  /* Was malloc - but I want it 0 init */
-  MEMC.PhysRam = calloc(MEMC.RAMSize,1);
-  MEMC.PhysRamfuncs = malloc(((MEMC.RAMSize) / 4) * sizeof(ARMEmuFunc));
-  if ((MEMC.PhysRam == NULL) || (MEMC.PhysRamfuncs == NULL)) {
-    fprintf(stderr,"Couldn't allocate RAM space\n");
-    exit(3);
-  }
-
-  for (i = 0; i < MEMC.RAMSize / 4; i++) {
-    MEMC.PhysRamfuncs[i] = ARMul_Emulate_DecodeInstr;
-  }
-
-  MEMC.ROMMapFlag    = 1; /* Map ROM to address 0 */
-  MEMC.ControlReg    = 0; /* Defaults */
-  MEMC.PageSizeFlags = MEMC_PAGESIZE_O_4K;
-  MEMC.NextSoundBufferValid = 0; /* Not set till Sstart and SendN have been written */
-
-#ifdef SOUND_SUPPORT
-  SoundInitTable();
 #endif
 
   /* Top bit set means it isn't valid */
   for (PresPage = 0; PresPage < 512; PresPage++)
     MEMC.PageTable[PresPage] = 0xffffffff;
 
-  dbug(" Loading ROM....\n ");
+  MEMC.ROMMapFlag    = 1; /* Map ROM to address 0 */
+  MEMC.ControlReg    = 0; /* Defaults */
+  MEMC.PageSizeFlags = MEMC_PAGESIZE_O_4K;
+  MEMC.NextSoundBufferValid = false; /* Not set till Sstart and SendN have been written */
 
+  MEMC.RAMSize = initmemsize;
+  MEMC.RAMMask = (initmemsize-1) & (4*1024*1024-1); /* Mask within a 4M MEMC bank */
 
 #ifdef MACOSX
   {
@@ -459,51 +280,53 @@ ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
   if (ROMFile = fopen(hArcemConfig.sRomImageName, "rb"), ROMFile == NULL) {
 #endif
     fprintf(stderr, "Couldn't open ROM file\n");
-    exit(EXIT_FAILURE);
+    exit(2);
   }
 #endif
 
   /* Find the rom file size */
   fseek(ROMFile, 0l, SEEK_END);
 
-  MEMC.ROMHighSize = (ARMword) ftell(ROMFile);
+  MEMC.ROMHighSize = (((ARMword) ftell(ROMFile))+4095)&~4095;
+  MEMC.ROMHighMask = MEMC.ROMHighSize-1;
+
+  if(MEMC.ROMHighSize & MEMC.ROMHighMask) {
+    fprintf(stderr,"ROM High isn't power of 2 in size\n");
+    exit(3);
+  }
 
   fseek(ROMFile, 0l, SEEK_SET);
 
 #if defined(EXTNROM_SUPPORT)
   /* Add the space required by an Extension Rom */
-  extnrom_size = extnrom_calculate_size(&extnrom_entry_count);
+  extnrom_size = (extnrom_calculate_size(&extnrom_entry_count)+4095)&~4095;
   fprintf(stderr, "extnrom_size = %u, extnrom_entry_count= %u\n",
           extnrom_size, extnrom_entry_count);
 #endif /* EXTNROM_SUPPORT */
   dbug("Total ROM size required = %u KB\n",
        (MEMC.ROMHighSize + extnrom_size) / 1024);
 
-  /* Allocate the space for the system ROM in ROMHigh */
-  /* 128 is to try and ensure gap with next malloc to stop cache thrashing */
-  MEMC.ROMHigh = calloc(MEMC.ROMHighSize + 128, 1);
-  MEMC.ROMHighFuncs = malloc((MEMC.ROMHighSize / 4) * sizeof(ARMEmuFunc));
-
-  if ((MEMC.ROMHigh == NULL) || (MEMC.ROMHighFuncs == NULL)) {
-    fprintf(stderr,"Couldn't allocate space for ROM High\n");
+  /* Now allocate ROMs & RAM in one chunk */
+  ARMword RAMChunkSize = MAX(MEMC.RAMSize,512*1024); /* Ensure at least 512K RAM allocated to avoid any issues caused by DMA pointers going out of range */
+  MEMC.ROMRAMChunk = calloc(RAMChunkSize+MEMC.ROMHighSize+extnrom_size+256,1);
+  MEMC.EmuFuncChunk = calloc(RAMChunkSize+MEMC.ROMHighSize+extnrom_size+256,sizeof(FastMapUInt)/4);
+  if((MEMC.ROMRAMChunk == NULL) || (MEMC.EmuFuncChunk == NULL)) {
+    fprintf(stderr,"Couldn't allocate ROMRAMChunk/EmuFuncChunk\n");
     exit(3);
   }
-
-  for (ROMWordNum = 0; ROMWordNum < MEMC.ROMHighSize / 4; ROMWordNum++) {
-#ifdef DEBUG
-    if (!(ROMWordNum & 0x1ff)) {
-      fprintf(stderr, ".");
-      fflush(stderr);
-    }
+#ifdef FASTMAP_64
+  /* On 64bit systems, ROMRAMChunk needs shifting to account for the shift that occurs in FastMap_Phy2Func */
+  state->FastMapInstrFuncOfs = ((FastMapUInt)MEMC.EmuFuncChunk)-(((FastMapUInt)MEMC.ROMRAMChunk)<<1);
+#else
+  state->FastMapInstrFuncOfs = ((FastMapUInt)MEMC.EmuFuncChunk)-((FastMapUInt)MEMC.ROMRAMChunk);
 #endif
+  /* Get everything 256 byte aligned for FastMap to work */
+  MEMC.PhysRam = (ARMword*) ((((FastMapUInt)MEMC.ROMRAMChunk)+255)&~255); /* RAM must come first for FastMap_LogRamFunc to work! */
+  MEMC.ROMHigh = MEMC.PhysRam + (RAMChunkSize>>2);
 
-    ROMWord  =  fgetc(ROMFile);
-    ROMWord |= (fgetc(ROMFile) << 8);
-    ROMWord |= (fgetc(ROMFile) << 16);
-    ROMWord |= (fgetc(ROMFile) << 24);
-    MEMC.ROMHigh[ROMWordNum] = ROMWord;
-    MEMC.ROMHighFuncs[ROMWordNum] = ARMul_Emulate_DecodeInstr;
-  }
+  dbug(" Loading ROM....\n ");
+
+  File_ReadEmu(ROMFile,(uint8_t *) MEMC.ROMHigh,MEMC.ROMHighSize);
 
   /* Close System ROM Image File */
   fclose(ROMFile);
@@ -511,46 +334,49 @@ ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
   /* Create Space for extension ROM in ROMLow */
   if (extnrom_size) {
     MEMC.ROMLowSize = extnrom_size;
-
-    /* calloc() now used to ensure that Extension ROM space is zero'ed */
-    MEMC.ROMLow = calloc(MEMC.ROMLowSize, 1);
-    MEMC.ROMLowFuncs = malloc((MEMC.ROMLowSize / 4) * sizeof(ARMEmuFunc));
-
-    if ((MEMC.ROMLow == NULL) || (MEMC.ROMLowFuncs == NULL)) {
-      fprintf(stderr,"Couldn't allocate space for ROM Low\n");
+    MEMC.ROMLowMask = MEMC.ROMLowSize-1;
+  
+    if(MEMC.ROMLowSize & MEMC.ROMLowMask) {
+      fprintf(stderr,"ROM Low isn't power of 2 in size\n");
       exit(3);
     }
+
+    /* calloc() now used to ensure that Extension ROM space is zero'ed */
+    MEMC.ROMLow = MEMC.ROMHigh + (MEMC.ROMHighSize>>2);
+
 #if defined(EXTNROM_SUPPORT)
     /* Load extension ROM */
     dbug("Loading Extension ROM...\n");
-    extnrom_load(extnrom_size, extnrom_entry_count,
-                 (unsigned char *) MEMC.ROMLow);
+    extnrom_load(extnrom_size, extnrom_entry_count, MEMC.ROMLow);
 #endif /* EXTNROM_SUPPORT */
-
-    for (ROMWordNum = 0; ROMWordNum < MEMC.ROMLowSize / 4; ROMWordNum++) {
-      MEMC.ROMLowFuncs[ROMWordNum] = ARMul_Emulate_DecodeInstr;
-    }
   }
+
 
   dbug(" ..Done\n ");
 
   IO_Init(state);
-  DisplayKbd_Init(state);
 
-  PRIVD->irqflags = 0;
-  PRIVD->fiqflags = 0;
+  if (DisplayDev_Init(state)) {
+    /* There was an error of some sort - it will already have been reported */
+    fprintf(stderr, "Could not initialise display - exiting\n");
+    exit(EXIT_FAILURE);
+  }
+
+  if (Sound_Init(state)) {
+    /* There was an error of some sort - it will already have been reported */
+    fprintf(stderr, "Could not initialise sound output - exiting\n");
+    exit(EXIT_FAILURE);
+  }
 
   for (i = 0; i < 512 * 1024 / UPDATEBLOCKSIZE; i++) {
     MEMC.UpdateFlags[i] = 1;
   }
 
-  MEMC.OldAddress1 = -1;
-  MEMC.OldPage1    = -1;
+  ARMul_RebuildFastMap();
+  FastMap_RebuildMapMode(state);
 
-#ifdef DEBUG
-  ARMul_ConsolePrint(state, " Archimedes memory ");
-  ARMul_ConsolePrint(state, Version);
-  ARMul_ConsolePrint(state, "\n");
+#ifdef HOSTFS_SUPPORT
+  hostfs_init();
 #endif
 
   return(TRUE);
@@ -565,385 +391,303 @@ ARMul_MemoryInit(ARMul_State *state, unsigned long initmemsize)
  */
 void ARMul_MemoryExit(ARMul_State *state)
 {
-  free(MEMC.PhysRam);
-  free(MEMC.ROMHigh);
-  free(MEMC.ROMHighFuncs);
-  if (MEMC.ROMLow) {
-    free(MEMC.ROMLow);
-  }
-  if (MEMC.ROMLowFuncs) {
-    free(MEMC.ROMLowFuncs);
-  }
-  free(PRIVD);
+  free(MEMC.ROMRAMChunk);
+  free(MEMC.EmuFuncChunk);
+  free(state->Display);
 }
 
-/**
- * ARMul_LoadWordS
- *
- * Load Word, Sequential Cycle
- *
- * @param state
- * @param address
- * @returns
- */
-ARMword ARMul_LoadWordS(ARMul_State *state, ARMword address)
+static ARMword ARMul_ManglePhysAddr(ARMword phy)
 {
-  statestr.NumCycles++;
-  address &= 0x3ffffff;
+  /* Emulate the different ways that MEMC converts physical addresses to
+     row & column addresses. We perform two mappings here: From the physical
+     address to row & column, via the current MEMC page size, and then from
+     the row & column back to a physical address, via our emulated DRAM page
+     size.
 
-  if (CheckAbortR(address)) {
-    ARMul_CLEARABORT;
-  } else {
-    dbug("ARMul_LoadWordS abort on address 0x%08x PC=0x%x R[15]=0x%x priv=%d osmode=%d mode=%d\n",
-         address, statestr.pc, statestr.Reg[15], PRIVILEGED, OSMODE(state), statestr.Mode);
-    ARMul_DATAABORT(address);
-    return(ARMul_ABORTWORD);
+     Assuming the OS detects the right amount of RAM, this will be a 1:1
+     mapping, allowing all our DMA operations (video, audio) to work the same
+     as before. But while the OS (in this case RISC OS) is doing its DRAM
+     detection it won't be a 1:1 mapping, but the mapping will be such that
+     when the OS tries an address that should be invalid it will generate an
+     invalid address here too.
+
+     Note that physical address bits 0-11, 14-18 & 22-23 don't get affected by
+     the mangling. This corresponds to row bits 0-7 and column bits 0-1, 4-8.
+     So all we need to do is calculate row bits 8,9 and column bits 2,3,9.
+  */
+
+  if(MEMC.PageSizeFlags != MEMC.DRAMPageSize)
+  {
+    ARMword r8=0,r9=0,c2=0,c3=0,c9=0;
+  
+    switch(MEMC.PageSizeFlags)
+    {
+    case MEMC_PAGESIZE_O_4K:
+      c2 = (phy>>12) & 1;
+      c3 = (phy>>13) & 1;
+      break;
+    case MEMC_PAGESIZE_1_8K:
+      r8 = (phy>>12) & 1;
+      c2 = (phy>>19) & 1;
+      c3 = (phy>>13) & 1;
+      break;
+    case MEMC_PAGESIZE_2_16K:
+      r8 = (phy>>12) & 1;
+      c2 = (phy>>19) & 1;
+      c3 = (phy>>13) & 1;
+      c9 = (phy>>20) & 1;
+      break;
+    case MEMC_PAGESIZE_3_32K:
+      r8 = (phy>>12) & 1;
+      r9 = (phy>>13) & 1;
+      c2 = (phy>>19) & 1;
+      c3 = (phy>>21) & 1;
+      c9 = (phy>>20) & 1;
+      break;
+    }
+  
+    phy &= 0xffc7cfff; /* Mask off the bits extracted above */
+  
+    /* Now translate back */
+  
+    ARMword b12=0,b13=0,b19=0,b20=0,b21=0;
+  
+    switch(MEMC.DRAMPageSize)
+    {
+    case MEMC_PAGESIZE_O_4K:
+      b12 = c2;
+      b13 = c3;
+      break;
+    case MEMC_PAGESIZE_1_8K:
+      b12 = r8;
+      b19 = c2;
+      b13 = c3;
+      break;
+    case MEMC_PAGESIZE_2_16K:
+      b12 = r8;
+      b19 = c2;
+      b13 = c3;
+      b20 = c9;
+      break;
+    case MEMC_PAGESIZE_3_32K:
+      b12 = r8;
+      b13 = r9;
+      b19 = c2;
+      b21 = c3;
+      b20 = c9;
+      break;
+    }
+
+    phy |= (b12<<12) | (b13<<13) | (b19<<19) | (b20<<20) | (b21<<21);
   }
 
-  return GetWord(address);
-}
+  /* Mask by how much RAM is fitted
+     We use slightly funny masking logic to deal with the case of having 12M
+     RAM fitted (3 banks of 4M). Any banks outside the number which are fitted
+     will wrap back to bank 0.
+  */
 
-/**
- * ARMul_LoadWordN
- *
- * Load Word, Non Sequential Cycle
- *
- * @param state
- * @param address
- * @returns
- */
-ARMword ARMul_LoadWordN(ARMul_State *state, ARMword address)
+  ARMword bank = phy>>22;
+
+  phy &= MEMC.RAMMask;
+
+  if(bank >= MEMC.RAMSize>>22)
+    bank = 0;
+
+  return phy | (bank<<22);
+}    
+
+static void FastMap_SetEntries(ARMword addr,ARMword *data,FastMapAccessFunc func,FastMapUInt flags,ARMword size)
 {
-  statestr.NumCycles++;
-  address &= 0x3ffffff;
-
-  if (CheckAbortR(address)) {
-    ARMul_CLEARABORT;
-  } else {
-    dbug("ARMul_LoadWordN abort on address 0x%08x PC=0x%x R[15]=0x%x priv=%d osmode=%d mode=%d\n",
-         address, statestr.pc, statestr.Reg[15], PRIVILEGED, OSMODE(state), statestr.Mode);
-    ARMul_DATAABORT(address);
-    return(ARMul_ABORTWORD);
+  FastMapEntry *entry = FastMap_GetEntryNoWrap(&statestr,addr);
+//  fprintf(stderr,"FastMap_SetEntries(%08x,%08x,%08x,%08x,%08x)\n",addr,data,func,flags,size);
+  FastMapUInt offset = ((FastMapUInt)data)-addr; /* Offset so we can just add the phy addr to get a pointer back */
+  flags |= offset>>8;
+//  fprintf(stderr,"->entry %08x\n->FlagsAndData %08x\n",entry,flags);
+  while(size) {
+    entry->FlagsAndData = flags;
+    entry->AccessFunc = func;
+    entry++;
+    size -= 4096;
   }
-
-  return GetWord(address);
 }
 
-/**
- * ARMul_LoadByte
- *
- * Load Byte, (Non Sequential Cycle)
- *
- * @param state
- * @param address
- * @returns
- */
-ARMword ARMul_LoadByte(ARMul_State *state, ARMword address) {
-  unsigned int temp;
-  int bytenum = address & 3;
-
-  address &= 0x3ffffff;
-
-  statestr.NumCycles++;
-
-  if (CheckAbortR(address)) {
-    ARMul_CLEARABORT;
-  } else {
-    dbug("ARMul_LoadByte abort on address 0x%08x PC=0x%x R[15]=0x%x priv=%d osmode=%d mode=%d\n",
-         address, statestr.pc, statestr.Reg[15], PRIVILEGED, OSMODE(state), statestr.Mode);
-    ARMul_DATAABORT(address);
-    return(ARMul_ABORTWORD);
-  }
-
-  temp = GetWord(address);
-
-  /* WARNING! Little endian only */
-  temp>>=(bytenum*8);
-
-  return(temp & 0xff);
-}
-
-/**
- * ARMul_StoreWordS
- *
- * Store Word, Sequential Cycle
- *
- * @param state
- * @param address
- * @param data
- */
-void ARMul_StoreWordS(ARMul_State *state, ARMword address, ARMword data)
+static void FastMap_SetEntries_Repeat(ARMword addr,ARMword *data,FastMapAccessFunc func,FastMapUInt flags,ARMword size,ARMword totsize)
 {
-  statestr.NumCycles++;
-  address &= 0x3ffffff;
-
-  if (CheckAbortW(address)) {
-    ARMul_CLEARABORT;
-  } else {
-    dbug("ARMul_StoreWordS abort on address 0x%08x PC=0x%x R[15]=0x%x priv=%d osmode=%d mode=%d\n",
-         address, statestr.pc, statestr.Reg[15], PRIVILEGED, OSMODE(state), statestr.Mode);
-    ARMul_DATAABORT(address);
-    return;
+  while(totsize > size) {
+    FastMap_SetEntries(addr,data,func,flags,size);
+    addr += size;
+    totsize -= size;
   }
-
-  PutWord(state, address, data);
+  /* Should always be something left */
+  FastMap_SetEntries(addr,data,func,flags,totsize);
 }
 
-/**
- * ARMul_StoreWordN
- *
- * Store Word, Non Sequential Cycle
- *
- * @param state
- * @param address
- * @param data
- */
-void ARMul_StoreWordN(ARMul_State *state, ARMword address, ARMword data)
+static void ARMul_RebuildFastMapPTIdx(ARMword idx);
+
+static void ARMul_PurgeFastMapPTIdx(ARMword idx)
 {
-  statestr.NumCycles++;
-  address &= 0x3ffffff;
-
-  if (CheckAbortW(address)) {
-    ARMul_CLEARABORT;
-  } else {
-    dbug("ARMul_StoreWordN abort on address 0x%08x PC=0x%x R[15]=0x%x priv=%d osmode=%d mode=%d\n",
-         address, statestr.pc, statestr.Reg[15], PRIVILEGED, OSMODE(state), statestr.Mode);
-    ARMul_DATAABORT(address);
-    return;
-  }
-
-  PutWord(state, address, data);
-}
-
-/**
- * ARMul_StoreByte
- *
- * Store Byte, (Non Sequential Cycle)
- *
- * @param state
- * @param address
- * @param data
- */
-void ARMul_StoreByte(ARMul_State *state, ARMword address, ARMword data)
-{
-  statestr.NumCycles++;
-  address &= 0x3ffffff;
-
-  if (CheckAbortW(address)) {
-    ARMul_CLEARABORT;
-  } else {
-    ARMul_DATAABORT(address);
-    return;
-  }
-
-  PutVal(state, address, data, 1, 1, ARMul_Emulate_DecodeInstr);
-}
-
-
-/**
- * ARMul_SwapWord
- *
- * Swap Word, (Two Non Sequential Cycles)
- *
- * @param state
- * @param address
- * @param data
- * @returns
- */
-ARMword ARMul_SwapWord(ARMul_State *state, ARMword address, ARMword data)
-{
-  ARMword temp;
-
-  statestr.NumCycles++;
-  address &= 0x3ffffff;
-
-  if (CheckAbortW(address)) {
-    ARMul_CLEARABORT;
-  } else {
-    ARMul_DATAABORT(address);
-    return(ARMul_ABORTWORD);
-  }
-
-  temp = GetWord(address);
-  statestr.NumCycles++;
-  PutWord(state, address, data);
-  return(temp);
-}
-
-/**
- * ARMul_SwapByte
- *
- * Swap Byte, (Two Non Sequential Cycles)
- *
- * @param state
- * @param address
- * @param data
- * @returns
- */
-ARMword ARMul_SwapByte(ARMul_State *state, ARMword address, ARMword data)
-{
-  ARMword temp;
-
-  address &= 0x3ffffff;
-  if (CheckAbortW(address)) {
-    ARMul_CLEARABORT;
-  } else {
-    ARMul_DATAABORT(address);
-    return(ARMul_ABORTWORD);
-  }
-
-  temp = ARMul_LoadByte(state, address);
-  ARMul_StoreByte(state, address, data);
-  return(temp);
-}
-
-/**
- * GetWord
- *
- * Return the contents of an address in the archimedes memory map.
- * The caller MUST perform a full abort check first - if only to ensure that
- * a page in logical RAM does not abort.
- *
- * @param address Address to get value of
- * @returns Content of address
- */
-ARMword GetWord(ARMword address) {
-
-  /* First check if we are doing ROM remapping and are accessing a remapped */
-  /* location.  If it is then map it into the High ROM space                */
-  if ((MEMC.ROMMapFlag) && (address < 0x800000)) {
-    /* A simple ROM wrap around */
-    return MEMC.ROMHigh[(address % MEMC.ROMHighSize) / 4];
-  }
-
-  switch ((address >> 24) & 3) {
-    case 3: /* 0x03000000 - 0x03FFFFFF - 16MB - IO Controllers (4MB) and ROM space 4 + 8MB */
-
-      /* Check if we should cancel ROM mapped to low memory */
-      if (MEMC.ROMMapFlag == 2) {
-        MEMC.ROMMapFlag = 0;
-        MEMC.OldAddress1 = -1;
-        MEMC.OldPage1 = -1;
-      }
-
-      if (address >= MEMORY_0x3400000_R_ROM_LOW) {
-
-        /* Both ROM areas wrap around */
-        if (address >= MEMORY_0x3800000_R_ROM_HIGH) {
-          address -= MEMORY_0x3800000_R_ROM_HIGH;
-          return MEMC.ROMHigh[(address % MEMC.ROMHighSize) / 4];
-        } else {
-          if (MEMC.ROMLow) {
-            address -= MEMORY_0x3400000_R_ROM_LOW;
-            return MEMC.ROMLow[(address % MEMC.ROMLowSize) / 4];
-          } else {
-            return 0;
+  if(MEMC.ROMMapFlag)
+    return; /* Still in ROM mode, abort */
+    
+  int32_t pt = MEMC.PageTable[idx];
+  if(pt>0)
+  {
+    ARMword logadr,phys,mask;
+    switch(MEMC.PageSizeFlags) {
+      default:
+      case MEMC_PAGESIZE_O_4K:
+        phys = pt & 127;
+        logadr = (pt & 0x7ff000)
+              | ((pt & 0x000c00)<<13);
+        mask = 0x7ffc00;
+        break;
+      case MEMC_PAGESIZE_1_8K:
+        phys = ((pt>>1) & 0x3f) | ((pt & 1) << 6);
+        logadr = (pt & 0x7fe000)
+              | ((pt & 0x000c00)<<13);
+        mask = 0x7fec00;
+        break;
+      case MEMC_PAGESIZE_2_16K:
+        phys = ((pt>>2) & 0x1f) | ((pt & 3) << 5);
+        logadr = (pt & 0x7fc000)
+              | ((pt & 0x000c00)<<13);
+        mask = 0x7fcc00;
+        break;
+      case MEMC_PAGESIZE_3_32K:
+        phys = ((pt>>3) & 0xf) | ((pt&1)<<4) | ((pt&2)<<5) | ((pt&4)<<3) | (pt&0x80) | ((pt>>4)&0x100);
+        logadr = (pt & 0x7f8000)
+              | ((pt & 0x000c00)<<13);
+        mask = 0x7f8c00;
+        break;
+    }
+    ARMword size=12+MEMC.PageSizeFlags;
+    phys = ARMul_ManglePhysAddr(phys<<size);
+    size = 1<<size;
+    FastMapEntry *entry = FastMap_GetEntryNoWrap(&statestr,logadr);
+    
+    /* To cope with multiply mapped pages (i.e. multiple physical pages mapping to the same logical page) we need to check if the page we're about to unmap is still owned by us
+       If it is owned by us, we'll have to search the page tables for a replacement (if any)
+       Otherwise we don't need to do anything at all
+       Note that we only need to check the first page for ownership, because any change to the page size will result in the full map being rebuilt */
+       
+    FastMapUInt addr = ((FastMapUInt)(MEMC.PhysRam+(phys>>2)))-logadr; /* Address part of FlagsAndData */
+    if((entry->FlagsAndData<<8) == addr)
+    {
+      /* We own this page */
+      ARMword idx2;
+      pt &= mask;
+      for(idx2=0;idx2<512;idx2++)
+      {
+        if(idx2 != idx)
+        {
+          int32_t pt2 = MEMC.PageTable[idx2];
+          if((pt2 > 0) && ((pt2 & mask) == pt))
+          {
+            /* We've found a suitable replacement */
+            ARMul_RebuildFastMapPTIdx(idx2); /* Take the easy way out */
+            return;
           }
         }
       }
-
-      return GetWord_IO(emu_state,address);
-
-    case 2: /* 0x02000000 - 0x02FFFFFF - 16MB - Phyisically mapped Ram */
-      if (MEMC.ROMMapFlag == 2) {
-        MEMC.ROMMapFlag = 0;
-        MEMC.OldAddress1 =- 1;
-        MEMC.OldPage1 =- 1;
+      /* No replacement found, so just nuke this entry */
+      while(size) {
+        if((entry->FlagsAndData<<8) == addr)
+          entry->FlagsAndData = 0; /* No need to nuke function pointer */
+        entry++;
+        size -= 4096;
       }
-      address -= MEMORY_0x2000000_RAM_PHYS;
+    }    
+  }
+}
 
-      /* I used to think memory wrapped after the real RAM - but it doesn't */
-      /* appear to */
-      if  (address >= MEMC.RAMSize) {
-        dbug_memc("GetWord returning dead0bad - after PhysRam\n");
-        return(0xdead0bad);
-      }
+static void FastMap_DMAAbleWrite(ARMword address,ARMword data)
+{
+  MEMC.UpdateFlags[address/UPDATEBLOCKSIZE]++;
+}
 
-      return MEMC.PhysRam[address / 4];
-
-    case 0: /* 0x00000000 - 0x01FFFFFF - 32MB - Logically mapped Ram */
-    case 1:
-      /* Logically mapped RAM */
-      address = GetPhysAddress(address);
-
-      /* I used to think memory wrapped after the real RAM - but it doesn't */
-      /* appear to */
-      if (address >= MEMC.RAMSize) {
-        dbug_memc("GetWord returning dead0bad - after PhysRam (from log ram)\n");
-        return(0xdead0bad);
-      }
-
-      return (MEMC.PhysRam[address / 4]);
+static ARMword FastMap_LogRamFunc(ARMul_State *state, ARMword addr,ARMword data,ARMword flags)
+{
+  /* Write to DMAAble log RAM, kinda crappy */
+  ARMword *phy = FastMap_Log2Phy(FastMap_GetEntry(state,addr),addr&~3);
+  ARMword orig = *phy;
+  if(flags & FASTMAP_ACCESSFUNC_BYTE)
+  {
+    ARMword shift = ((addr&3)<<3);
+    data = (data&0xff)<<shift;
+    data |= orig &~ (0xff<<shift);
+  }
+  if(orig != data)
+  {
+    *phy = data;
+    *(FastMap_Phy2Func(state,phy)) = FASTMAP_CLOBBEREDFUNC;
+    /* Convert pointer to physical addr, then update DMA flags */
+    addr = (ARMword) (((FastMapUInt)phy)-((FastMapUInt)MEMC.PhysRam));
+    FastMap_DMAAbleWrite(addr,data);
   }
   return 0;
-} /* GetWord */
+} 
 
-/**
- * PutVal
- *
- * Set a value of an address in the archimedes memory map
- * The caller MUST check for aborts before calling us!
- *
- * @param state        Emulator state
- * @param address      Address to write to
- * @param data         Data to write
- * @param byteNotword  Non-zero if this is a byte store, not a word store
- * @param Statechange
- * @param newfunc
- */
-void
-PutVal(ARMul_State *state, ARMword address, ARMword data, int byteNotword,
-       int Statechange, ARMEmuFunc newfunc)
+static void ARMul_RebuildFastMapPTIdx(ARMword idx)
 {
-  if (address >= MEMORY_0x3800000_W_LOG2PHYS) {
-    /* Logical-to-physical address translation */
-    unsigned tmp;
+  if(MEMC.ROMMapFlag)
+    return; /* Still in ROM mode, abort */
 
-    if (!Statechange)
-      return;
+  static const FastMapUInt PPL_To_Flags[4] = {
+  FASTMAP_R_USR|FASTMAP_R_OS|FASTMAP_R_SVC|FASTMAP_W_USR|FASTMAP_W_OS|FASTMAP_W_SVC, /* PPL 00 */
+  FASTMAP_R_USR|FASTMAP_R_OS|FASTMAP_R_SVC|FASTMAP_W_OS|FASTMAP_W_SVC,  /* PPL 01 */
+  FASTMAP_R_OS|FASTMAP_R_SVC|FASTMAP_W_SVC,  /* PPL 10 */
+  FASTMAP_R_OS|FASTMAP_R_SVC|FASTMAP_W_SVC,  /* PPL 11 */
+  };
 
-    MEMC.OldAddress1 = -1;
-    MEMC.OldPage1 = -1;
-
-    if (MEMC.ROMMapFlag == 2)
-      MEMC.ROMMapFlag = 0;
-
-    tmp = address - MEMORY_0x3800000_W_LOG2PHYS;
-#ifdef DEBUG_MEMC
-    {
-      unsigned logbaseaddr;
-      unsigned Entry;
-
-      logbaseaddr =  (tmp >> 15) & 0xff;
-      logbaseaddr |= (tmp >> 2) & 0x300;
-      logbaseaddr <<= (12 + MEMC.PageSizeFlags); /* Actually all that masking is only OK for 32K */
-
-      Entry =  (tmp >> 3) & 0xf;
-      Entry |= (tmp << 4) & 0x10;
-      Entry |= (tmp << 3) & 0x20;
-      Entry |= (tmp << 5) & 0x40;
-      Entry |= tmp & 0x80;
-      Entry |= (tmp >> 4) & 0x100;
-      fprintf(stderr,"PutVal: Pagetable write, address=0x%x entry=0x%x val=0x%x (logbaseaddress=0x%08x ppn=%d - for 32K size)\n",
-              address, ((address >> 4) & 0x100) | (address & 0xff),
-              tmp & 0x0fffffff, logbaseaddr, Entry);
+  int32_t pt = MEMC.PageTable[idx];
+  if(pt>0)
+  {
+    ARMword logadr,phys;
+    switch(MEMC.PageSizeFlags) {
+      default:
+      case MEMC_PAGESIZE_O_4K:
+        phys = pt & 127;
+        logadr = (pt & 0x7ff000)
+              | ((pt & 0x000c00)<<13);
+        break;
+      case MEMC_PAGESIZE_1_8K:
+        phys = ((pt>>1) & 0x3f) | ((pt & 1) << 6);
+        logadr = (pt & 0x7fe000)
+              | ((pt & 0x000c00)<<13);
+        break;
+      case MEMC_PAGESIZE_2_16K:
+        phys = ((pt>>2) & 0x1f) | ((pt & 3) << 5);
+        logadr = (pt & 0x7fc000)
+              | ((pt & 0x000c00)<<13);
+        break;
+      case MEMC_PAGESIZE_3_32K:
+        phys = ((pt>>3) & 0xf) | ((pt&1)<<4) | ((pt&2)<<5) | ((pt&4)<<3) | (pt&0x80) | ((pt>>4)&0x100);
+        logadr = (pt & 0x7f8000)
+              | ((pt & 0x000c00)<<13);
+        break;
     }
-#endif
-
-    MEMC.PageTable[((address >> 4) & 0x100) | (address & 0xff)] = tmp & 0x0fffffff;
-
-    return;
+    ARMword size=12+MEMC.PageSizeFlags;
+    phys = ARMul_ManglePhysAddr(phys<<size);
+    size = 1<<size;
+    FastMapUInt flags = PPL_To_Flags[(pt>>8)&3];
+    if((phys<512*1024) && DisplayDev_UseUpdateFlags)
+    {
+      /* DMAable, must use func on write */
+      FastMap_SetEntries(logadr,MEMC.PhysRam+(phys>>2),FastMap_LogRamFunc,flags|FASTMAP_W_FUNC,size);
+    }
+    else
+    {
+      /* Normal */
+      FastMap_SetEntries(logadr,MEMC.PhysRam+(phys>>2),0,flags,size);
+    }
   }
+}
 
-  if (address >= MEMORY_0x3600000_W_DMA_GEN) {
+static void DMA_PutVal(ARMul_State *state,ARMword address)
+{
     /* DMA address generation - MEMC Control reg */
     ARMword RegNum,RegVal;
-
-    if (!Statechange)
-      return;
-
-    if (MEMC.ROMMapFlag == 2)
-      MEMC.ROMMapFlag = 0;
 
     RegNum = (address >> 17) & 7;
     RegVal = (address >> 2) & 0x7fff;
@@ -952,19 +696,35 @@ PutVal(ARMul_State *state, ARMword address, ARMword data, int byteNotword,
 
     switch (RegNum) {
       case 0: /* Vinit */
-        VideoRelUpdateAndForce(DISPLAYCONTROL.MustRedraw, MEMC.Vinit, RegVal);
+        if(MEMC.Vinit != RegVal)
+        {
+          MEMC.Vinit = RegVal;
+          (DisplayDev_Current->DAGWrite)(state,RegNum,RegVal);
+        }
         break;
 
       case 1: /* Vstart */
-        VideoRelUpdateAndForce(DISPLAYCONTROL.MustRedraw, MEMC.Vstart, RegVal);
+        if(MEMC.Vstart != RegVal)
+        {
+          MEMC.Vstart = RegVal;
+          (DisplayDev_Current->DAGWrite)(state,RegNum,RegVal);
+        }
         break;
 
       case 2: /* Vend */
-        VideoRelUpdateAndForce(DISPLAYCONTROL.MustRedraw, MEMC.Vend, RegVal);
+        if(MEMC.Vend != RegVal)
+        {
+          MEMC.Vend = RegVal;
+          (DisplayDev_Current->DAGWrite)(state,RegNum,RegVal);
+        }
         break;
 
       case 3: /* Cinit */
-        MEMC.Cinit = RegVal;
+        if(MEMC.Cinit != RegVal)
+        {
+          MEMC.Cinit = RegVal;
+          (DisplayDev_Current->DAGWrite)(state,RegNum,RegVal);
+        }
         break;
 
       case 4: /* Sstart */
@@ -973,7 +733,7 @@ PutVal(ARMul_State *state, ARMword address, ARMword data, int byteNotword,
         /* The data sheet does not define what happens if you write start before end. */
         MEMC.NextSoundBufferValid = 1;
         ioc.IRQStatus &= ~IRQB_SIRQ; /* Take sound interrupt off */
-        IO_UpdateNirq();
+        IO_UpdateNirq(state);
         dbug_memc("Write to MEMC Sstart register\n");
         break;
 
@@ -996,425 +756,267 @@ PutVal(ARMul_State *state, ARMword address, ARMword data, int byteNotword,
           MEMC.SstartC = MEMC.Sptr;
           MEMC.NextSoundBufferValid = 0;
           ioc.IRQStatus |= IRQB_SIRQ; /* Take sound interrupt on */
-          IO_UpdateNirq();
+          IO_UpdateNirq(state);
         }
         break;
 
       case 7: /* MEMC Control register */
         dbug_memc("MEMC Control register set to 0x%x by PC=0x%x R[15]=0x%x\n",
-                  address, (unsigned int)statestr.pc, (unsigned int)statestr.Reg[15]);
+                  address, (unsigned int)state->pc, (unsigned int)state->Reg[15]);
         MEMC.ControlReg = address;
         MEMC.PageSizeFlags = (MEMC.ControlReg & 12) >> 2;
-        MEMC.OldAddress1 = -1;
-        MEMC.OldPage1 = -1;
+        FastMap_RebuildMapMode(state);
+        ARMul_RebuildFastMap();
         break;
     }
-    return;
-  } /* DMA address gen/MEMC control */
+}
 
-  /* VIDC Space */
-  if (address >= MEMORY_0x3400000_W_VIDEOCON) {
-    if (!Statechange)
-      return;
-
-    if (MEMC.ROMMapFlag == 2)
-      MEMC.ROMMapFlag = 0;
-    /* VIDC */
-    VIDC_PutVal(state, address, data, byteNotword);
-    return;
-  }
-
-  if (address >= MEMORY_0x3000000_CON_IO) {
-    if (!Statechange)
-      return;
-
-    if (MEMC.ROMMapFlag == 2)
-      MEMC.ROMMapFlag = 0;
-    /* IOC */
-    PutValIO(state, address, data, byteNotword);
-    return;
-  }
-
-  if (address < MEMORY_0x2000000_RAM_PHYS) {
-    /* Logically mapped RAM - shift the address so that the physical ram code will do it */
-    address = GetPhysAddress(address);
-  } else {
-    /* Physical ram */
-    if (MEMC.ROMMapFlag == 2) {
-      MEMC.ROMMapFlag = 0;
-    }
-    address -= MEMORY_0x2000000_RAM_PHYS;
-  }
-
-  if (address >= MEMC.RAMSize) {
-    return;
-  }
-
-  /* Do updating for VIDC emulation */
-  /* See if it's in DMAble ram */
-  if (address<512*1024) {
-    MEMC.UpdateFlags[address/UPDATEBLOCKSIZE]++;
-  }
-
-  /* Handle byte stores */
-  if (byteNotword) {
-    /* Essentially we read the word in RAM,
-       clear the byte we want to write to,
-       and fill the byte with the value to be written */
-    static const unsigned masktab[] = {
-      0xffffff00, 0xffff00ff, 0xff00ffff, 0x00ffffff
-    };
-    ARMword mask;
-    ARMword tmp;
-    data &= 0xff;
-
-    mask = masktab[address & 3];
-    tmp = MEMC.PhysRam[address / 4] & mask;
-    data = tmp | (data << ((address & 3) * 8));
-  }
-
-#ifdef DIRECT_DISPLAY
-#ifdef __riscos__
-  if (MEMC.Vstart!=Vstartold || MEMC.Vend!=Vendold)
-  {
-    int size=_swi(OS_ReadDynamicArea, _IN(0)|_RETURN(1), 2);
-    int size_wanted=(MEMC.Vend+1-MEMC.Vstart)*16;
-
-    printf("Size wanted: %d, Old size: %d\n",size_wanted,size);
-
-    switch (MonitorBpp)
-    {
-      case 0:
-        size_wanted/=8;
-        break;
-      case 1:
-        size_wanted/=4;
-        break;
-      case 2:
-        size_wanted/=2;
-        break;
-    }
-
-    _swix(OS_ChangeDynamicArea, _INR(0,1), 2, size_wanted - size);
-
-    size = _swi(OS_ReadDynamicArea, _IN(0) | _RETURN(1), 2);
-
-    printf("Size wanted: %d, New size: %d\n", size_wanted, size);
-
-    {
-      int block[3];
-
-      block[0]=148;
-      block[1]=150;
-      block[2]=-1;
-
-      _swi(OS_ReadVduVariables, _INR(0,1), &block, &block);
-
-      DirectScreenMemory = (int *)block[0];
-      DirectScreenExtent = block[1];
-    }
-
-    Vstartold=MEMC.Vstart;
-    Vendold=MEMC.Vend;
-  }
-#endif
-
-  if (MEMC.Vinit!=Vinitold)
-  {
-    unsigned int offset=(MEMC.Vinit-MEMC.Vstart)*16;
-
-    switch (MonitorBpp)
-    {
-      case 0:
-        offset/=8;
-        break;
-      case 1:
-        offset/=4;
-        break;
-      case 2:
-        offset/=2;
-        break;
-    }
-
-#ifdef __riscos__
-    {
-        char block[5];
-        block[0]=(1<<1)+(1<<0);
-        block[1]=(offset & 0x000000ff);
-        block[2]=(offset & 0x0000ff00) >> 8;
-        block[3]=(offset & 0x00ff0000) >> 16;
-        block[4]=(offset & 0xff000000) >> 24;
-
-        _swi(OS_Word, _INR(0,1), 22, &block);
-    }
-#endif
-#ifdef SYSTEM_gp2x
-    {
-        extern void gp2xScreenOffset(int);
-        gp2xScreenOffset(offset);
-    }
-#endif
-
-    Vinitold=MEMC.Vinit;
-  }
-
-  if (address < DirectScreenExtent) {
-//    extern void ScreenWrite(int *address, ARMword data);
-
-//    ScreenWrite(DirectScreenMemory + address / 4, data);
-    DirectScreenMemory[address/4] = data;
-  }
-#endif
-
-  MEMC.PhysRam[address / 4] = data;
-  MEMC.PhysRamfuncs[address / 4] = newfunc;
-
-  return;
-} /* PutVal */
-
-
-#ifdef SOUND_SUPPORT
-/**
- * SoundDMAFetch
- *
- * Gets and converts one 16 byte block from the current buffer,
- * then does updating like switching to the next buffer.
- *
- * Note that this does not fill the buffer if there is no new buffer,
- * so you are expected to keep the contents yourself if you want it to wrap.
- *
- * The amount of buffer you must provide is 64 bytes
- *
- * @param buffer       Buffer to fill with sound data
- * @param blocks       Number of 4 words blocks to fetch, that is blocks * 16 bytes
- * @returns 0 if the fetch was done, 1 if sound dma is disabled and so no fetch was done.
- */
-int
-SoundDMAFetch(SoundData *buffer)
+static void MEMC_PutVal(ARMword address)
 {
-  int i;
-  if ((MEMC.ControlReg & (1 << 11)) == 0) {
-    return 1;
+    /* Logical-to-physical address translation */
+    unsigned tmp;
+
+    tmp = address - MEMORY_0x3800000_W_LOG2PHYS;
+
+    address = ((address >> 4) & 0x100) | (address & 0xff);
+
+    ARMul_PurgeFastMapPTIdx(address); /* Unmap old value */
+    MEMC.PageTable[address] = tmp & 0x0fffffff;
+    ARMul_RebuildFastMapPTIdx(address); /* Map in new value */
+}
+
+static ARMword FastMap_ROMMap1Func(ARMul_State *state, ARMword addr,ARMword data,ARMword flags)
+{
+  /* Does nothing more than set ROMMapFlag to 2 and read a word of ROM */
+  MEMC.ROMMapFlag = 2;
+  ARMul_RebuildFastMap();
+  return MEMC.ROMHigh[(addr & MEMC.ROMHighMask)>>2];
+}
+
+static ARMword FastMap_PhysRamFuncROMMap2(ARMul_State *state, ARMword addr,ARMword data,ARMword flags)
+{
+  /* Read/write from phys RAM, switching to ROMMapFlag 0 if necessary */
+  if(MEMC.ROMMapFlag == 2)
+  {
+    MEMC.ROMMapFlag = 0;
+    ARMul_RebuildFastMap();
   }
-
-  if(numberOfChannels==0)
-    SoundUpdateStereoImage();
-
-  for (i = 0; i < 16; i += numberOfChannels) {
-    int j;
-    double leftTotal = 0;
-    double rightTotal = 0;
-    for (j = 0; j < numberOfChannels; j++) {
-      unsigned char val = ((unsigned char *) (MEMC.PhysRam + (MEMC.Sptr / sizeof(ARMword))))[i + j];
-
-      leftTotal  += (signed short int) soundTable[val] * channelAmount[j][0];
-      rightTotal += (signed short int) soundTable[val] * channelAmount[j][1];
-    }
-    buffer[2 * i]       = (SoundData) leftTotal;
-    buffer[(2 * i) + 1] = (SoundData) rightTotal;
+  ARMword *phy = FastMap_Log2Phy(FastMap_GetEntry(state,addr),addr&~3);
+  if(!(flags & FASTMAP_ACCESSFUNC_WRITE))
+    return *phy;
+  if(flags & FASTMAP_ACCESSFUNC_BYTE)
+  {
+    ARMword shift = ((addr&3)<<3);
+    phy = (ARMword*)(((FastMapUInt)phy)&~3);
+    data = (data&0xff)<<shift;
+    data |= (*phy) &~ (0xff<<shift);
   }
-
-  MEMC.Sptr += 16;
-
-  /* Reached end of buffer? */
-  if (MEMC.Sptr + 16 >= MEMC.SendC) {
-
-    /* Have the next buffer addresses been written? */
-    if (MEMC.NextSoundBufferValid == 1) {
-      /* Yes, so change to the next buffer */
-      ARMword swap;
-
-      MEMC.Sptr = MEMC.Sstart;
-      MEMC.SstartC = MEMC.Sstart;
-
-      swap = MEMC.SendC;
-      MEMC.SendC = MEMC.SendN;
-      MEMC.SendN = swap;
-
-      ioc.IRQStatus |= IRQB_SIRQ; /* Take sound interrupt on */
-      IO_UpdateNirq();
-
-      MEMC.NextSoundBufferValid = 0;
-      return 1;
-    } else {
-      /* Otherwise wrap to the beginning of the buffer */
-      MEMC.Sptr = MEMC.SstartC;
-    }
-  }
-
+  *phy = data;
+  *(FastMap_Phy2Func(state,phy)) = FASTMAP_CLOBBEREDFUNC;
+  if(addr < 512*1024)
+    FastMap_DMAAbleWrite(addr,data);
   return 0;
 }
 
-static void
-SoundInitTable(void)
+static ARMword FastMap_PhysRamFunc(ARMul_State *state, ARMword addr,ARMword data,ARMword flags)
 {
-  unsigned i;
-
-  for (i = 0; i < 256; i++) {
-    /*
-     * (not VIDC1, whoops...)
-     * VIDC2:
-     * 0 Sign
-     * 4,3,2,1 Point on chord
-     * 7,6,5 Chord select
-     */
-
-    unsigned int chordSelect = (i & 0xE0) >> 5;
-    unsigned int pointSelect = (i & 0x1E) >> 1;
-    unsigned int sign = (i & 1);
-
-    unsigned int stepSize;
-
-    SoundData scale = (SoundData) 0xFFFF / (247 * 2);
-    SoundData chordBase;
-    SoundData sample;
-
-    switch (chordSelect) {
-      case 0: chordBase = 0;
-              stepSize = scale / 16;
-              break;
-      case 1: chordBase = scale;
-              stepSize = (2 * scale) / 16;
-              break;
-      case 2: chordBase = 3*scale;
-              stepSize = (4 * scale) / 16;
-              break;
-      case 3: chordBase = 7*scale;
-              stepSize = (8 * scale) / 16;
-              break;
-      case 4: chordBase = 15*scale;
-              stepSize = (16 * scale) / 16;
-              break;
-      case 5: chordBase = 31*scale;
-              stepSize = (32 * scale) / 16;
-              break;
-      case 6: chordBase = 63*scale;
-              stepSize = (64 * scale) / 16;
-              break;
-      case 7: chordBase = 127*scale;
-              stepSize = (120 * scale) / 16;
-              break;
-      /* End of chord 7 is 247 * scale. */
-
-      default: chordBase = 0;
-               stepSize = 0;
-               break;
-    }
-
-    sample = chordBase + stepSize * pointSelect;
-
-    if (sign == 1) { /* negative */
-      soundTable[i] = ~(sample - 1);
-    } else {
-      soundTable[i] = sample;
-    }
-    if (i == 128) {
-      soundTable[i] = 0xFFFF;
-    }
+  /* Write to direct-mapped phys RAM. Address guaranteed to be valid. */
+  addr -= MEMORY_0x2000000_RAM_PHYS;
+  ARMword *phy = &MEMC.PhysRam[addr>>2];
+  ARMword orig = *phy;
+  if(flags & FASTMAP_ACCESSFUNC_BYTE)
+  {
+    ARMword shift = ((addr&3)<<3);
+    data = (data&0xff)<<shift;
+    data |= orig &~ (0xff<<shift);
   }
+  if(orig != data)
+  {
+    *phy = data;
+    *(FastMap_Phy2Func(state,phy)) = FASTMAP_CLOBBEREDFUNC;
+    /* Update DMA flags */
+    FastMap_DMAAbleWrite(addr,data);
+  }
+  return 0;
 }
 
-/**
- * SoundUpdateStereoImage
- *
- * Called whenever VIDC stereo image registers are written so that the
- * channelAmount array can be recalculated and the new number of channels can
- * be figured out.
- * Additionally, the sample rate is updated as the SFR has a different
- * meaning depending on the number of channels in use.
- */
-void
-SoundUpdateStereoImage(void)
+static ARMword FastMap_ConIOFunc(ARMul_State *state, ARMword addr,ARMword data,ARMword flags)
 {
-  int i = 0;
-
-  /* Note that the order of this if block is important for it to
-     pick the right number of channels. */
-
-  /* 1 channel mode? */
-  if (VIDC.StereoImageReg[0] == VIDC.StereoImageReg[1] &&
-      VIDC.StereoImageReg[0] == VIDC.StereoImageReg[2] &&
-      VIDC.StereoImageReg[0] == VIDC.StereoImageReg[3] &&
-      VIDC.StereoImageReg[0] == VIDC.StereoImageReg[4] &&
-      VIDC.StereoImageReg[0] == VIDC.StereoImageReg[5] &&
-      VIDC.StereoImageReg[0] == VIDC.StereoImageReg[6] &&
-      VIDC.StereoImageReg[0] == VIDC.StereoImageReg[7])
+  /* Read/write IO space */
+  if((flags & (FASTMAP_ACCESSFUNC_WRITE|FASTMAP_ACCESSFUNC_STATECHANGE)) == FASTMAP_ACCESSFUNC_WRITE)
+    return 0; /* Write without state change is bad! */
+  if(MEMC.ROMMapFlag == 2)
   {
-    numberOfChannels = 1;
+    MEMC.ROMMapFlag = 0;
+    ARMul_RebuildFastMap();
   }
-  /* 2 channel mode? */
-  else if (VIDC.StereoImageReg[0] == VIDC.StereoImageReg[2] &&
-           VIDC.StereoImageReg[0] == VIDC.StereoImageReg[4] &&
-           VIDC.StereoImageReg[0] == VIDC.StereoImageReg[6] &&
-           VIDC.StereoImageReg[1] == VIDC.StereoImageReg[3] &&
-           VIDC.StereoImageReg[1] == VIDC.StereoImageReg[5] &&
-           VIDC.StereoImageReg[1] == VIDC.StereoImageReg[7])
+  if(flags & FASTMAP_ACCESSFUNC_WRITE)
   {
-    numberOfChannels = 2;
+    PutValIO(state,addr,data,flags&FASTMAP_ACCESSFUNC_BYTE);
+    return 0;
   }
-  /* 4 channel mode? */
-  else if (VIDC.StereoImageReg[0] == VIDC.StereoImageReg[4] &&
-           VIDC.StereoImageReg[1] == VIDC.StereoImageReg[5] &&
-           VIDC.StereoImageReg[2] == VIDC.StereoImageReg[6] &&
-           VIDC.StereoImageReg[3] == VIDC.StereoImageReg[7])
+  return GetWord_IO(state,addr);
+}
+
+static ARMword FastMap_VIDCFunc(ARMul_State *state, ARMword addr,ARMword data,ARMword flags)
+{
+  /* May be a ROMMapFlag read */
+  if((flags & (FASTMAP_ACCESSFUNC_WRITE|FASTMAP_ACCESSFUNC_STATECHANGE)) == FASTMAP_ACCESSFUNC_WRITE)
+    return 0; /* Write without state change is bad! */
+  if(MEMC.ROMMapFlag == 2)
   {
-    numberOfChannels = 4;
+    MEMC.ROMMapFlag = 0;
+    ARMul_RebuildFastMap();
   }
-  /* Otherwise it is 8 channel mode. */
-  else {
-    numberOfChannels = 8;
+  if(flags & FASTMAP_ACCESSFUNC_WRITE)
+  {
+    (DisplayDev_Current->VIDCPutVal)(state,addr,data,flags&FASTMAP_ACCESSFUNC_BYTE);
+    return 0;
   }
+  if(MEMC.ROMLow)
+  {
+    data = MEMC.ROMLow[(addr & MEMC.ROMLowMask)>>2];
+    if(flags & FASTMAP_ACCESSFUNC_BYTE)
+      data = (data>>((addr&3)<<3))&0xff;
+  }
+  return data;
+}
 
-  for (i = 0; i < 8; i++) {
-    switch (VIDC.StereoImageReg[i]) {
-      /* Centre */
-      case 4: channelAmount[i][0] = 0.5;
-              channelAmount[i][1] = 0.5;
-              break;
+static ARMword FastMap_DMAFunc(ARMul_State *state, ARMword addr,ARMword data,ARMword flags)
+{
+  /* May be a ROMMapFlag read */
+  if((flags & (FASTMAP_ACCESSFUNC_WRITE|FASTMAP_ACCESSFUNC_STATECHANGE)) == FASTMAP_ACCESSFUNC_WRITE)
+    return 0; /* Write without state change is bad! */
+  if(MEMC.ROMMapFlag == 2)
+  {
+    MEMC.ROMMapFlag = 0;
+    ARMul_RebuildFastMap();
+  }
+  if(flags & FASTMAP_ACCESSFUNC_WRITE)
+  {
+    DMA_PutVal(state,addr);
+    return 0;
+  }
+  if(MEMC.ROMLow)
+  {
+    data = MEMC.ROMLow[(addr & MEMC.ROMLowMask)>>2];
+    if(flags & FASTMAP_ACCESSFUNC_BYTE)
+      data = (data>>((addr&3)<<3))&0xff;
+  }
+  return data;
+}
 
-      /* Left 100% */
-      case 1: channelAmount[i][0] = 1.0;
-              channelAmount[i][1] = 0.0;
-              break;
-      /* Left 83% */
-      case 2: channelAmount[i][0] = 0.83;
-              channelAmount[i][1] = 0.17;
-              break;
-      /* Left 67% */
-      case 3: channelAmount[i][0] = 0.67;
-              channelAmount[i][1] = 0.33;
-              break;
+static ARMword FastMap_MEMCFunc(ARMul_State *state, ARMword addr,ARMword data,ARMword flags)
+{
+  /* May be a ROMMapFlag read */
+  if((flags & (FASTMAP_ACCESSFUNC_WRITE|FASTMAP_ACCESSFUNC_STATECHANGE)) == FASTMAP_ACCESSFUNC_WRITE)
+    return 0; /* Write without state change is bad! */
+  if(MEMC.ROMMapFlag == 2)
+  {
+    MEMC.ROMMapFlag = 0;
+    ARMul_RebuildFastMap();
+  }
+  if(flags & FASTMAP_ACCESSFUNC_WRITE)
+  {
+    MEMC_PutVal(addr);
+    return 0;
+  }
+  if(MEMC.ROMHigh)
+  {
+    data = MEMC.ROMHigh[(addr & MEMC.ROMHighMask)>>2];
+    if(flags & FASTMAP_ACCESSFUNC_BYTE)
+      data = (data>>((addr&3)<<3))&0xff;
+  }
+  return data;
+}
 
-      /* Right 100% */
-      case 5: channelAmount[i][1] = 1.0;
-              channelAmount[i][0] = 0.0;
-              break;
-      /* Right 83% */
-      case 6: channelAmount[i][1] = 0.83;
-              channelAmount[i][0] = 0.17;
-              break;
-      /* Right 67% */
-      case 7: channelAmount[i][1] = 0.67;
-              channelAmount[i][0] = 0.33;
-              break;
+void ARMul_RebuildFastMap(void)
+{
+  ARMword i;
+  
+  /* completely rebuild the fast map */
+  switch(MEMC.ROMMapFlag)
+  {
+  case 0:
+    {
+      /* Map in logical RAM using the page tables */
+      FastMap_SetEntries(0,0,0,0,0x2000000);
+
+      for(i=0;i<512;i++)
+        ARMul_RebuildFastMapPTIdx(i);
     }
-
-    /* We have to share each stereo side between the number of channels. */
-    channelAmount[i][0] /= numberOfChannels;
-    channelAmount[i][1] /= numberOfChannels;
+    break;
+  case 1:
+    /* Map ROM to 0x0, using access func, even though we know the very first thing the processor will do is fetch from 0x0 and transition us away... */
+    FastMap_SetEntries_Repeat(0,0,FastMap_ROMMap1Func,FASTMAP_R_USR|FASTMAP_R_OS|FASTMAP_R_SVC|FASTMAP_R_FUNC,MEMC.ROMHighSize,0x800000);
+    FastMap_SetEntries(0x800000,0,0,0,0x1800000);
+    break;
+  case 2:
+    /* Map ROM to 0x0 */
+    FastMap_SetEntries_Repeat(0,MEMC.ROMHigh,0,FASTMAP_R_USR|FASTMAP_R_OS|FASTMAP_R_SVC,MEMC.ROMHighSize,0x800000);
+    FastMap_SetEntries(0x800000,0,0,0,0x1800000);
+    break;
   }
 
-  SoundUpdateSampleRate();
+  /* Map physical RAM */
+  if(MEMC.ROMMapFlag == 2)
+  {
+    /* Use access func for all of it */
+    FastMap_SetEntries(MEMORY_0x2000000_RAM_PHYS,0,FastMap_PhysRamFuncROMMap2,FASTMAP_R_SVC|FASTMAP_W_SVC|FASTMAP_R_FUNC|FASTMAP_W_FUNC,16*1024*1024);
+  }
+  else
+  {
+    for(i=0;i<16*1024*1024;i+=4096)
+    {
+      ARMword phy = ARMul_ManglePhysAddr(i);
+      if((phy < 512*1024) && DisplayDev_UseUpdateFlags)
+      {
+        /* Lower 512K must use access func for write
+           But we can use a fast function (for when the OS has correctly detected our RAM setup) or a slow one. */
+        if(i == phy)
+        {
+          /* Direct mapping, use fast func */
+          FastMap_SetEntries(MEMORY_0x2000000_RAM_PHYS+i,MEMC.PhysRam+(phy>>2),FastMap_PhysRamFunc,FASTMAP_R_SVC|FASTMAP_W_SVC|FASTMAP_W_FUNC,4096);
+        }
+        else
+        {
+          /* Indirect mapping, reuse LogRamFunc */
+          FastMap_SetEntries(MEMORY_0x2000000_RAM_PHYS+i,MEMC.PhysRam+(phy>>2),FastMap_LogRamFunc,FASTMAP_R_SVC|FASTMAP_W_SVC|FASTMAP_W_FUNC,4096);
+        }
+      }
+      else
+      {
+        /* Remainder can use direct access for read/write */
+        FastMap_SetEntries(MEMORY_0x2000000_RAM_PHYS+i,MEMC.PhysRam+(phy>>2),0,FASTMAP_R_SVC|FASTMAP_W_SVC,4096);
+      }
+    }
+  }
+
+  /* I/O space */
+  FastMap_SetEntries(MEMORY_0x3000000_CON_IO,0,FastMap_ConIOFunc,FASTMAP_R_SVC|FASTMAP_W_SVC|FASTMAP_R_FUNC|FASTMAP_W_FUNC,0x400000);
+
+  /* ROM Low/VIDC/DMA */
+  /* Make life easier for ourselves by mapping in everything as DMA then overwriting with VIDC */
+  if(MEMC.ROMLow && (MEMC.ROMMapFlag != 2))
+    FastMap_SetEntries_Repeat(MEMORY_0x3400000_R_ROM_LOW,MEMC.ROMLow,FastMap_DMAFunc,FASTMAP_R_USR|FASTMAP_R_SVC|FASTMAP_R_OS|FASTMAP_W_SVC|FASTMAP_W_FUNC,MEMC.ROMLowSize,0x400000);
+  else
+    FastMap_SetEntries(MEMORY_0x3400000_R_ROM_LOW,0,FastMap_DMAFunc,FASTMAP_R_USR|FASTMAP_R_SVC|FASTMAP_R_OS|FASTMAP_W_SVC|FASTMAP_W_FUNC|FASTMAP_R_FUNC,0x400000);
+
+  /* Overwrite with VIDC */
+  FastMapEntry *entry = FastMap_GetEntryNoWrap(&statestr,MEMORY_0x3400000_W_VIDEOCON);
+  for(i=0;i<MEMORY_0x3600000_W_DMA_GEN-MEMORY_0x3400000_W_VIDEOCON;i+=4096)
+  {
+    entry->AccessFunc = FastMap_VIDCFunc;
+    entry++;
+  }
+
+  /* ROM High/MEMC */
+  if(MEMC.ROMHigh && (MEMC.ROMMapFlag != 2))
+    FastMap_SetEntries_Repeat(MEMORY_0x3800000_R_ROM_HIGH,MEMC.ROMHigh,FastMap_MEMCFunc,FASTMAP_R_USR|FASTMAP_R_SVC|FASTMAP_R_OS|FASTMAP_W_SVC|FASTMAP_W_FUNC,MEMC.ROMHighSize,0x800000);
+  else
+    FastMap_SetEntries(MEMORY_0x3800000_R_ROM_HIGH,0,FastMap_MEMCFunc,FASTMAP_R_USR|FASTMAP_R_SVC|FASTMAP_R_OS|FASTMAP_W_SVC|FASTMAP_W_FUNC|FASTMAP_R_FUNC,0x800000);
 }
 
-void
-SoundUpdateSampleRate(void)
-{
-  /* SFR = (N - 2) where N is sample period in microseconds. */
-  if (numberOfChannels != 8) {
-    sound_setSampleRate(VIDC.SoundFreq + 2);
-  } else {
-    sound_setSampleRate((VIDC.SoundFreq + 2) * 8);
-  }
-}
+#ifndef FASTMAP_INLINE
+#include "arch/fastmap.c"
 #endif

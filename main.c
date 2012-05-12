@@ -19,6 +19,7 @@
 
 #include "dagstandalone.h"
 #include "ArcemConfig.h"
+#include "prof.h"
 
 #ifdef WIN32
 
@@ -48,8 +49,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 // Main function for X, RISC OS and MacOS X versions
 
 
+#ifdef USE_FAKEMAIN
+int fakemain(int argc,char *argv[]);
+
+int fakemain(int argc,char *argv[])
+#else
 int main(int argc, char *argv[])
+#endif
 {
+  Prof_Init();
+  
   // Setup the default values for the config system
   ArcemConfig_SetupDefaults();
 

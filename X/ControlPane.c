@@ -10,9 +10,10 @@
 #include "../armdefs.h"
 #include "archio.h"
 #include "armarc.h"
-#include "DispKbd.h"
 #include "ControlPane.h"
+#include "arch/displaydev.h"
 #include "platform.h"
+#include "arch/keyboard.h"
 
 #include <string.h>
 
@@ -23,13 +24,11 @@
 #define LEDWIDTH 15
 #define LEDTOPS 90
 
-#define DC DISPLAYCONTROL
-
 
 /*-----------------------------------------------------------------------------*/
 
 static void TextAt(ARMul_State *state, const char *Text, int x, int y) {
-  XDrawImageString(HD.disp, HD.ControlPane, HD.ControlPaneGC, x, y,
+  XDrawImageString(PD.disp, PD.ControlPane, PD.ControlPaneGC, x, y,
                    Text, strlen(Text));
 } /* TextAt */
 
@@ -38,30 +37,30 @@ static void TextAt(ARMul_State *state, const char *Text, int x, int y) {
 
 static void DoLED(const char *Text, int On, int ty, int lx)
 {
-  XSetBackground(HD.disp, HD.ControlPaneGC, HD.OffWhite.pixel);
-  XSetForeground(HD.disp, HD.ControlPaneGC, HD.Black.pixel);
+  XSetBackground(PD.disp, PD.ControlPaneGC, PD.OffWhite.pixel);
+  XSetForeground(PD.disp, PD.ControlPaneGC, PD.Black.pixel);
 
   TextAt(NULL, Text, lx + LEDWIDTH + 2, ty);
 
-  XSetForeground(HD.disp, HD.ControlPaneGC, HD.Black.pixel);
-  XSetFillStyle(HD.disp, HD.ControlPaneGC, FillSolid);
+  XSetForeground(PD.disp, PD.ControlPaneGC, PD.Black.pixel);
+  XSetFillStyle(PD.disp, PD.ControlPaneGC, FillSolid);
 
-  XDrawArc(HD.disp, HD.ControlPane, HD.ControlPaneGC, lx, ty-LEDHEIGHT, LEDWIDTH, LEDHEIGHT,
+  XDrawArc(PD.disp, PD.ControlPane, PD.ControlPaneGC, lx, ty-LEDHEIGHT, LEDWIDTH, LEDHEIGHT,
            0, 360*64);
 
-  XSetForeground(HD.disp, HD.ControlPaneGC, (On?HD.Green:HD.GreyDark).pixel);
-  XFillArc(HD.disp, HD.ControlPane, HD.ControlPaneGC, lx+2, ty+6-(LEDHEIGHT+4), LEDWIDTH-4, (LEDHEIGHT-4),
+  XSetForeground(PD.disp, PD.ControlPaneGC, (On?PD.Green:PD.GreyDark).pixel);
+  XFillArc(PD.disp, PD.ControlPane, PD.ControlPaneGC, lx+2, ty+6-(LEDHEIGHT+4), LEDWIDTH-4, (LEDHEIGHT-4),
            0, 360*64);
 } /* DoLED */
 
 
 /*----------------------------------------------------------------------------*/
 
-static void draw_keyboard_leds(unsigned int leds)
+static void draw_keyboard_leds(uint8_t leds)
 {
-    DoLED("Caps Lock",   leds & 1, LEDTOPS, 0);
-    DoLED("Num Lock",    leds & 2, LEDTOPS, 90);
-    DoLED("Scroll Lock", leds & 4, LEDTOPS, 180);
+    DoLED("Caps Lock",   leds & KBD_LED_CAPSLOCK, LEDTOPS, 0);
+    DoLED("Num Lock",    leds & KBD_LED_NUMLOCK, LEDTOPS, 90);
+    DoLED("Scroll Lock", leds & KBD_LED_SCROLLLOCK, LEDTOPS, 180);
 }
 
 
@@ -113,7 +112,7 @@ static int TextCenteredH(ARMul_State *state, const char *Text, int ty, int lx, i
   XCharStruct overall;
   int x;
 
-  XTextExtents(HD.ButtonFont, Text, strlen(Text),
+  XTextExtents(PD.ButtonFont, Text, strlen(Text),
      &dirreturn, &ascentret, &descentret, &overall);
 
   /* Move the text down so that its top is where the caller asked */
@@ -131,8 +130,8 @@ static int TextCenteredH(ARMul_State *state, const char *Text, int ty, int lx, i
 static void ControlPane_Redraw(ARMul_State *state, XExposeEvent *e) {
   int y;
 
-  XSetBackground(HD.disp, HD.ControlPaneGC, HD.OffWhite.pixel);
-  XSetForeground(HD.disp, HD.ControlPaneGC, HD.Black.pixel);
+  XSetBackground(PD.disp, PD.ControlPaneGC, PD.OffWhite.pixel);
+  XSetForeground(PD.disp, PD.ControlPaneGC, PD.Black.pixel);
   y = TextCenteredH(state, "Archimedes Emulation (c) 1995-1999 David Alan Gilbert", 0, 0,
                     CTRLPANEWIDTH);
 
@@ -140,7 +139,7 @@ static void ControlPane_Redraw(ARMul_State *state, XExposeEvent *e) {
   y = TextCenteredH(state, "http://arcem.sf.net/", y, 0, CTRLPANEWIDTH);
 
   y+=2;
-  XDrawLine(HD.disp, HD.ControlPane, HD.ControlPaneGC,
+  XDrawLine(PD.disp, PD.ControlPane, PD.ControlPaneGC,
             0, y, CTRLPANEWIDTH-1, y);
 
   y += 2;
@@ -193,8 +192,8 @@ void ControlPane_Init(ARMul_State *state) {
   char *tmpptr;
     int drive;
 
-  HD.ControlPane = XCreateWindow(HD.disp,
-                                 HD.RootWindow,  /* HD.BackingWindow, */
+  PD.ControlPane = XCreateWindow(PD.disp,
+                                 PD.RootWindow,  /* PD.BackingWindow, */
                                  0, 0,           /* above main pane */
                                  CTRLPANEWIDTH, CTRLPANEHEIGHT,
                                  0,              /* Border width */
@@ -210,27 +209,27 @@ void ControlPane_Init(ARMul_State *state) {
     exit(1);
   }
 
-  XSetWMName(HD.disp, HD.ControlPane, &name);
+  XSetWMName(PD.disp, PD.ControlPane, &name);
   XFree(name.value);
 
-  HD.ControlPaneGC = XCreateGC(HD.disp, HD.ControlPane, 0, NULL);
-  XCopyGC(HD.disp, DefaultGC(HD.disp, HD.ScreenNum), GCPlaneMask|GCSubwindowMode,
-          HD.ControlPaneGC);
+  PD.ControlPaneGC = XCreateGC(PD.disp, PD.ControlPane, 0, NULL);
+  XCopyGC(PD.disp, DefaultGC(PD.disp, PD.ScreenNum), GCPlaneMask|GCSubwindowMode,
+          PD.ControlPaneGC);
 
-  HD.ButtonFont = XLoadQueryFont(HD.disp, "fixed");
+  PD.ButtonFont = XLoadQueryFont(PD.disp, "fixed");
 
-  if (HD.ButtonFont == NULL) {
+  if (PD.ButtonFont == NULL) {
     fprintf(stderr, "Couldn't get font for buttons\n");
     exit(1);
   }
 
-  XSetFont(HD.disp, HD.ControlPaneGC, HD.ButtonFont->fid);
+  XSetFont(PD.disp, PD.ControlPaneGC, PD.ButtonFont->fid);
 
-  XSetWindowBackground(HD.disp, HD.ControlPane, HD.OffWhite.pixel);
+  XSetWindowBackground(PD.disp, PD.ControlPane, PD.OffWhite.pixel);
 
-  XSelectInput(HD.disp, HD.ControlPane, KeyPressMask | ExposureMask);
+  XSelectInput(PD.disp, PD.ControlPane, KeyPressMask | ExposureMask);
 
-  XMapWindow(HD.disp, HD.ControlPane);
+  XMapWindow(PD.disp, PD.ControlPane);
 
   /* setup callbacks for each time various LEDs change */
   KBD.leds_changed = draw_keyboard_leds;

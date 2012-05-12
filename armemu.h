@@ -15,6 +15,19 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. */
 
+/* Control the use of the immediate constant table (ARMul_ImmedTable)
+   On ARM we don't want to use it, as it's about 8% slower than using the barrel shifter directly
+   Other platforms with decent a rotate right instruction may want to avoid using the table too
+*/
+
+#ifndef __arm__
+#ifndef __PPC__
+#define ARMUL_USE_IMMEDTABLE
+#endif
+#endif
+
+#include "c99.h"
+
 /***************************************************************************\
 *                           Condition code values                           *
 \***************************************************************************/
@@ -49,143 +62,146 @@
 *               Macros to twiddle the status flags and mode                 *
 \***************************************************************************/
 
-#define NBIT ((unsigned)1L << 31)
-#define ZBIT (1L << 30)
-#define CBIT (1L << 29)
-#define VBIT (1L << 28)
-#define IBIT (1L << 7)
-#define FBIT (1L << 6)
-#define IFBITS (3L << 6)
-#define R15IBIT (1L << 27)
-#define R15FBIT (1L << 26)
-#define R15IFBITS (3L << 26)
+#define NBIT (UINT32_C(1) << 31)
+#define ZBIT (UINT32_C(1) << 30)
+#define CBIT (UINT32_C(1) << 29)
+#define VBIT (UINT32_C(1) << 28)
+#define R15IBIT (UINT32_C(1) << 27)
+#define R15FBIT (UINT32_C(1) << 26)
+#define R15IFBITS (UINT32_C(3) << 26)
 
 #define POS(i) ( (~(i)) >> 31 )
 #define NEG(i) ( (i) >> 31 )
 
-#define NFLAG armflags[0]
-#define SETN NFLAG = 1
-#define CLEARN NFLAG = 0
-#define ASSIGNN(res) NFLAG = res
-
-#define ZFLAG armflags[1]
-#define SETZ ZFLAG = 1
-#define CLEARZ ZFLAG = 0
-#define ASSIGNZ(res) ZFLAG = res
-
-#define CFLAG armflags[2]
-#define SETC CFLAG = 1
-#define CLEARC CFLAG = 0
-#define ASSIGNC(res) CFLAG = res
-
-#define VFLAG armflags[3]
-#define SETV VFLAG = 1
-#define CLEARV VFLAG = 0
-#define ASSIGNV(res) VFLAG = res
-
-#define IFLAG (armflags[4] >> 1)
-#define FFLAG (armflags[4] & 1)
-#define IFFLAGS armflags[4]
-#define ASSIGNINT(res) IFFLAGS = (((res) >> 6) & 3)
-#define ASSIGNR15INT(res) IFFLAGS = (((res) >> 26) & 3)
-
-
-#define CCBITS (0xf0000000L)
-#define INTBITS (0xc0L)
-#define PCBITS (0xfffffffcL)
-#define MODEBITS (0x1fL)
-#define R15INTBITS (3L << 26)
-#define R15PCBITS (0x03fffffcL)
-#define R15PCMODEBITS (0x03ffffffL)
-#define R15MODEBITS (0x3L)
-
-#ifdef MODE32
-#define PCMASK PCBITS
-#define PCWRAP(pc) (pc)
+#define NFLAG ((state->Reg[15]>>31)&1)
+#define SETN state->Reg[15] |= NBIT
+#define CLEARN state->Reg[15] &= ~NBIT
+#ifndef __arm__
+#define ASSIGNN(res) state->Reg[15] = (res?state->Reg[15]|NBIT:state->Reg[15]&~NBIT)
 #else
+#define ASSIGNN(res) inlASSIGN(state,res,NBIT)
+static inline void inlASSIGN(ARMul_State *state,ARMword res,ARMword bit)
+{
+	ARMword temp = state->Reg[15];
+	if(res)
+		temp |= bit;
+	else
+		temp &= ~bit;
+	state->Reg[15] = temp;
+}
+#endif
+
+#define ZFLAG ((state->Reg[15]>>30)&1)
+#define SETZ state->Reg[15] |= ZBIT
+#define CLEARZ state->Reg[15] &= ~ZBIT
+#ifndef __arm__
+#define ASSIGNZ(res) state->Reg[15] = (res?state->Reg[15]|ZBIT:state->Reg[15]&~ZBIT)
+#else
+#define ASSIGNZ(res) inlASSIGN(state,res,ZBIT)
+#endif
+
+#define CFLAG ((state->Reg[15]>>29)&1)
+#define SETC state->Reg[15] |= CBIT
+#define CLEARC state->Reg[15] &= ~CBIT
+#ifndef __arm__
+#define ASSIGNC(res) state->Reg[15] = (res?state->Reg[15]|CBIT:state->Reg[15]&~CBIT)
+#else
+#define ASSIGNC(res) inlASSIGN(state,res,CBIT)
+#endif
+
+#define VFLAG ((state->Reg[15]>>28)&1)
+#define SETV state->Reg[15] |= VBIT
+#define CLEARV state->Reg[15] &= ~VBIT
+#ifndef __arm__
+#define ASSIGNV(res) state->Reg[15] = (res?state->Reg[15]|VBIT:state->Reg[15]&~VBIT)
+#else
+#define ASSIGNV(res) inlASSIGN(state,res,VBIT)
+#endif
+
+#define CLEARNCV state->Reg[15] &= ~(NBIT|CBIT|VBIT)
+#define CLEARCV state->Reg[15] &= ~(CBIT|VBIT)
+
+#define IFLAG ((state->Reg[15]>>27)&1)
+#define FFLAG ((state->Reg[15]>>26)&1)
+#define IFFLAGS ((state->Reg[15]>>26)&3)
+#define ASSIGNR15INT(res) state->Reg[15] = (state->Reg[15]&~R15IFBITS) | ((res)&R15IFBITS)
+
+
+#define CCBITS (UINT32_C(0xf0000000))
+#define R15INTBITS (UINT32_C(3) << 26)
+#define R15PCBITS (UINT32_C(0x03fffffc))
+#define R15PCMODEBITS (UINT32_C(0x03ffffff))
+#define R15MODEBITS (UINT32_C(0x3))
+
 #define PCMASK R15PCBITS
 #define PCWRAP(pc) ((pc) & R15PCBITS)
-#endif
-#define PC (statestr.Reg[15] & PCMASK)
-#define R15CCINTMODE (statestr.Reg[15] & (CCBITS | R15INTBITS | R15MODEBITS))
-#define R15INT (statestr.Reg[15] & R15INTBITS)
-#define R15INTPC (statestr.Reg[15] & (R15INTBITS | R15PCBITS))
-#define R15INTPCMODE (statestr.Reg[15] & (R15INTBITS | R15PCBITS | R15MODEBITS))
-#define R15INTMODE (statestr.Reg[15] & (R15INTBITS | R15MODEBITS))
-#define R15PC (statestr.Reg[15] & R15PCBITS)
-#define R15PCMODE (statestr.Reg[15] & (R15PCBITS | R15MODEBITS))
-#define R15MODE (statestr.Reg[15] & R15MODEBITS)
+#define PC (state->Reg[15] & PCMASK)
+#define R15CCINTMODE (state->Reg[15] & (CCBITS | R15INTBITS | R15MODEBITS))
+#define R15INT (state->Reg[15] & R15INTBITS)
+#define R15INTPC (state->Reg[15] & (R15INTBITS | R15PCBITS))
+#define R15INTPCMODE (state->Reg[15] & (R15INTBITS | R15PCBITS | R15MODEBITS))
+#define R15INTMODE (state->Reg[15] & (R15INTBITS | R15MODEBITS))
+#define R15PC (state->Reg[15] & R15PCBITS)
+#define R15PCMODE (state->Reg[15] & (R15PCBITS | R15MODEBITS))
+#define R15MODE (state->Reg[15] & R15MODEBITS)
 
-#define ECC ((NFLAG << 31) | (ZFLAG << 30) | (CFLAG << 29) | (VFLAG << 28))
-#define EINT (IFFLAGS << 6)
-#define ER15INT (IFFLAGS << 26)
-#define EMODE (statestr.Mode)
+#define ECC (state->Reg[15] & CCBITS)
+#define ER15INT (state->Reg[15] & R15IFBITS)
+#define EMODE (state->Reg[15] & R15MODEBITS)
 
-#define CPSR (ECC | EINT | EMODE)
-#ifdef MODE32
-#define PATCHR15
-#else
-#define PATCHR15 statestr.Reg[15] = ECC | ER15INT | EMODE | R15PC
-#endif
-
-#define GETSPSR(bank) bank > 0 ? statestr.Spsr[bank] : ECC | EINT | EMODE;
-#define SETPSR(d,s) d = (s) & (ARMword)(CCBITS | INTBITS | MODEBITS)
-#define SETINTMODE(d,s) d = ((d) & CCBITS) | ((s) & (INTBITS | MODEBITS))
-#define SETCC(d,s) d = ((d) & (INTBITS | MODEBITS)) | ((s) & CCBITS)
-#define SETR15PSR(s) if (statestr.Mode == USER26MODE) { \
-                        statestr.Reg[15] = ((s) & CCBITS) | R15PC | ER15INT | EMODE; \
-                        ASSIGNN((statestr.Reg[15] & NBIT) != 0); \
-                        ASSIGNZ((statestr.Reg[15] & ZBIT) != 0); \
-                        ASSIGNC((statestr.Reg[15] & CBIT) != 0); \
-                        ASSIGNV((statestr.Reg[15] & VBIT) != 0); \
+#define SETR15PSR(s) if (R15MODE == USER26MODE) { \
+                        state->Reg[15] = ((s) & CCBITS) | R15INTPCMODE; \
                         } \
                      else { \
-                        statestr.Reg[15] = R15PC | ((s) & (CCBITS | R15INTBITS | R15MODEBITS)); \
-                        ARMul_R15Altered(emu_state); \
+                        state->Reg[15] = R15PC | ((s) & (CCBITS | R15INTBITS | R15MODEBITS)); \
+                        ARMul_R15Altered(state); \
                         }
-#define SETABORT(i,m) statestr.Cpsr = ECC | EINT | (i) | (m)
+#define SETABORT(i,m) state->Reg[15] = (state->Reg[15]&~R15MODEBITS) | (i) | (m)
+#define SETPC(pc) state->Reg[15] = (state->Reg[15]&~R15PCBITS)|((pc)&R15PCBITS)
 
-#ifndef MODE32
-#define VECTORS 0x20
-#define LEGALADDR 0x03ffffff
-#define VECTORACCESS(address) (address < VECTORS && ARMul_MODE26BIT && statestr.prog32Sig)
-#define ADDREXCEPT(address) (address > LEGALADDR)
-#endif
-
-#define INTERNALABORT(address) if (address < VECTORS) \
-                                  statestr.Aborted = ARMul_DataAbortV; \
-                               else \
-                                  statestr.Aborted = ARMul_AddrExceptnV;
-
-#ifdef MODE32
-#define TAKEABORT ARMul_Abort(emu_state,ARMul_DataAbortV)
+/* Assumed that 'amt' is a multiple of 4 */
+#ifdef ARMUL_USE_IMMEDTABLE
+/* Simple implementation for platforms without a rotate left/right instruction */
+#define INCPCAMT(amt) SETPC(state->Reg[15]+(amt))
 #else
-#define TAKEABORT if (statestr.Aborted == ARMul_AddrExceptnV) \
-                     ARMul_Abort(emu_state,ARMul_AddrExceptnV); \
-                  else \
-                     ARMul_Abort(emu_state,ARMul_DataAbortV)
+/* Using ROTATER should reduce the instruction count a bit */
+#define INCPCAMT(amt) do { \
+                        ARMword temp=state->Reg[15]; \
+                        temp = ROTATER(temp,26)+((amt)<<6); \
+                        state->Reg[15] = ROTATER(temp,6); \
+                      } while(0)
 #endif
-#define CPTAKEABORT if (!statestr.Aborted) \
-                       ARMul_Abort(emu_state,ARMul_UndefinedInstrV); \
-                    else if (statestr.Aborted == ARMul_AddrExceptnV) \
-                       ARMul_Abort(emu_state,ARMul_AddrExceptnV); \
+
+#define LEGALADDR (UINT32_C(0x03ffffff))
+#define ADDREXCEPT(address) (address >= (LEGALADDR+1))
+
+#define INTERNALABORT(address) state->Aborted = ARMul_AddrExceptnV;
+
+#define TAKEABORT if (state->Aborted == ARMul_AddrExceptnV) \
+                     ARMul_Abort(state,ARMul_AddrExceptnV); \
+                  else \
+                     ARMul_Abort(state,ARMul_DataAbortV)
+#define CPTAKEABORT if (!state->Aborted) \
+                       ARMul_Abort(state,ARMul_UndefinedInstrV); \
+                    else if (state->Aborted == ARMul_AddrExceptnV) \
+                       ARMul_Abort(state,ARMul_AddrExceptnV); \
                     else \
-                       ARMul_Abort(emu_state,ARMul_DataAbortV)
+                       ARMul_Abort(state,ARMul_DataAbortV)
 
 
 /***************************************************************************\
 *               Different ways to start the next instruction                *
 \***************************************************************************/
 
-#define NORMALCYCLE statestr.NextInstr = SEQ
-#define BUSUSEDN statestr.NextInstr |= NONSEQ /* the next fetch will be an N cycle */
-#define BUSUSEDINCPCS statestr.Reg[15] += 4; /* a standard PC inc and an S cycle */ \
-                      statestr.NextInstr |= PCINCEDSEQ
-#define BUSUSEDINCPCN statestr.Reg[15] += 4; /* a standard PC inc and an N cycle */ \
-                      statestr.NextInstr |= PCINCEDNONSEQ
-#define INCPC statestr.Reg[15] += 4; /* a standard PC inc */ \
-                      statestr.NextInstr |=  PCINCEDSEQ
-#define FLUSHPIPE statestr.NextInstr |= PRIMEPIPE
+#define NORMALCYCLE state->NextInstr = NORMAL
+#define BUSUSEDN ((void)0) /* the next fetch will be an N cycle */
+#define BUSUSEDINCPCS state->Reg[15] += 4; /* a standard PC inc and an S cycle */ \
+                      state->NextInstr |= PCINCED
+#define BUSUSEDINCPCN state->Reg[15] += 4; /* a standard PC inc and an N cycle */ \
+                      state->NextInstr |= PCINCED
+#define INCPC state->Reg[15] += 4; /* a standard PC inc */ \
+                      state->NextInstr |= PCINCED
+#define FLUSHPIPE state->NextInstr |= PRIMEPIPE
 
 /***************************************************************************\
 *                          Cycle based emulation                            *
@@ -211,12 +227,19 @@
 #define LHSReg (BITS(16,19))
 #define RHSReg (BITS(0,3))
 
-#define DEST (statestr.Reg[DESTReg])
+#define DEST (state->Reg[DESTReg])
 
-#ifdef MODE32
-#define LHS (statestr.Reg[LHSReg])
+#ifndef __arm__ /* GCC makes a mess of this ternary op, much better to go with the hand-holding approach to ensure there's only one LDR */
+#define LHS ((LHSReg == 15) ? R15PC : (state->Reg[LHSReg]) )
 #else
-#define LHS ((LHSReg == 15) ? R15PC : (statestr.Reg[LHSReg]) )
+#define LHS inlLHS(state,LHSReg)
+static inline ARMword inlLHS(ARMul_State *state,ARMword r)
+{
+	ARMword lhs = state->Reg[r];
+	if(r == 15)
+		lhs &= R15PCBITS;
+	return lhs;
+}
 #endif
 
 #define MULDESTReg (BITS(16,19))
@@ -224,41 +247,37 @@
 #define MULRHSReg (BITS(8,11))
 #define MULACCReg (BITS(12,15))
 
+#ifdef ARMUL_USE_IMMEDTABLE
 #define DPImmRHS (ARMul_ImmedTable[BITS(0,11)])
 #define DPSImmRHS temp = BITS(0,11); \
                   rhs = ARMul_ImmedTable[temp]; \
                   if (temp > 255) /* there was a shift */ \
                      ASSIGNC(rhs >> 31);
-
-#ifdef MODE32
-#define DPRegRHS ((BITS(4,11)==0) ? statestr.Reg[RHSReg] \
-                                  : GetDPRegRHS(emu_state, instr))
-#define DPSRegRHS ((BITS(4,11)==0) ? statestr.Reg[RHSReg] \
-                                   : GetDPSRegRHS(emu_state, instr))
 #else
-#define DPRegRHS ((BITS(0,11)<15) ? statestr.Reg[RHSReg] \
-                                  : GetDPRegRHS(emu_state, instr))
-#define DPSRegRHS ((BITS(0,11)<15) ? statestr.Reg[RHSReg] \
-                                   : GetDPSRegRHS(emu_state, instr))
+#define DPImmRHS (ROTATER(BITS(0,7),BITS(8,11)<<1))
+#define DPSImmRHS temp = BITS(0,11); \
+                  rhs = ROTATER(BITS(0,7),BITS(8,11)<<1); \
+                  if (temp > 255) /* there was a shift */ \
+                     ASSIGNC(rhs >> 31);
 #endif
 
-#define LSBase statestr.Reg[LHSReg]
+#define DPRegRHS ((BITS(0,11)<15) ? state->Reg[RHSReg] \
+                                  : GetDPRegRHS(state, instr))
+#define DPSRegRHS ((BITS(0,11)<15) ? state->Reg[RHSReg] \
+                                   : GetDPSRegRHS(state, instr))
+
+#define LSBase state->Reg[LHSReg]
 #define LSImmRHS (BITS(0,11))
 
-#ifdef MODE32
-#define LSRegRHS ((BITS(4,11)==0) ? statestr.Reg[RHSReg] \
-                                  : GetLSRegRHS(emu_state, instr))
-#else
-#define LSRegRHS ((BITS(0,11)<15) ? statestr.Reg[RHSReg] \
-                                  : GetLSRegRHS(emu_state, instr))
-#endif
+#define LSRegRHS ((BITS(0,11)<15) ? state->Reg[RHSReg] \
+                                  : GetLSRegRHS(state, instr))
 
 #define LSMNumRegs ((ARMword)ARMul_BitList[BITS(0,7)] + \
                     (ARMword)ARMul_BitList[BITS(8,15)] )
 #define LSMBaseFirst ((LHSReg == 0 && BIT(0)) || \
                       (BIT(LHSReg) && BITS(0,LHSReg-1) == 0))
 
-#define SWAPSRC (statestr.Reg[RHSReg])
+#define SWAPSRC (state->Reg[RHSReg])
 
 #define LSCOff (BITS(0,7) << 2)
 #define CPNum BITS(8,11)
@@ -275,65 +294,50 @@
 
 #define WRITEDEST(d) {/*fprintf(stderr,"WRITEDEST: %d=0x%08x\n",DESTReg,d);*/\
                       if (DESTReg==15) \
-                        WriteR15(emu_state, d); \
+                        WriteR15(state, d); \
                      else \
                           DEST = d;\
                       }
 
 #define WRITEDESTNORM(d) {/*fprintf(stderr,"WRITEDEST: %d=0x%08x\n",DESTReg,d);*/ DEST = d;}
 
-#define WRITEDESTPC(d) {/*fprintf(stderr,"WRITEDEST: %d=0x%08x\n", 15, d);*/ WriteR15(emu_state, d);}
+#define WRITEDESTPC(d) {/*fprintf(stderr,"WRITEDEST: %d=0x%08x\n", 15, d);*/ WriteR15(state, d);}
 
 #define WRITESDEST(d) { /*fprintf(stderr,"WRITESDEST: %d=0x%08x\n",DESTReg,d);*/\
                       if (DESTReg == 15) \
-                         WriteSR15(emu_state, d); \
+                         WriteSR15(state, d); \
                       else { \
                          DEST = d; \
-                         ARMul_NegZero(emu_state, d); \
+                         ARMul_NegZero(state, d); \
                          };\
                       }
 
 #define WRITESDESTNORM(d) {DEST = d; \
-                         ARMul_NegZero(emu_state, d); }
+                         ARMul_NegZero(state, d); }
 
-#define WRITESDESTPC(d) WriteSR15(emu_state, d)
+#define WRITESDESTPC(d) WriteSR15(state, d)
 
-#define BYTETOBUS(data) ((data & 0xff) | \
-                        ((data & 0xff) << 8) | \
-                        ((data & 0xff) << 16) | \
-                        ((data & 0xff) << 24))
-#define BUSTOBYTE(address,data) \
-           if (statestr.bigendSig) \
-              temp = (data >> (((address ^ 3) & 3) << 3)) & 0xff; \
-           else \
-              temp = (data >> ((address & 3) << 3)) & 0xff
-
-#define LOADMULT(instr,address,wb) LoadMult(emu_state,instr,address,wb)
-#define LOADSMULT(instr,address,wb) LoadSMult(emu_state,instr,address,wb)
-#define STOREMULT(instr,address,wb) StoreMult(emu_state,instr,address,wb)
-#define STORESMULT(instr,address,wb) StoreSMult(emu_state,instr,address,wb)
-
-#define POSBRANCH ((instr & 0x7fffff) << 2)
-/* DAG: NOTE! Constant in Negbranch was 0xff000000! - obviously wrong -
-   corrupts top two bits of the branch offset */
-#define NEGBRANCH (0xfc000000 | ((instr & 0xffffff) << 2))
+#define LOADMULT(instr,address,wb) LoadMult(state,instr,address,wb)
+#define LOADSMULT(instr,address,wb) LoadSMult(state,instr,address,wb)
+#define STOREMULT(instr,address,wb) StoreMult(state,instr,address,wb)
+#define STORESMULT(instr,address,wb) StoreSMult(state,instr,address,wb)
 
 /***************************************************************************\
 *                      Stuff that is shared across modes                    *
 \***************************************************************************/
 
-void ARMul_Emulate26(void);
-void ARMul_Icycles(unsigned number);
+void ARMul_Emulate26(ARMul_State *state);
+void ARMul_Icycles(ARMul_State *state,unsigned number);
 
-extern unsigned ARMul_MultTable[]; /* Number of I cycles for a mult */
+extern uint_fast8_t ARMul_MultTable[]; /* Number of I cycles for a mult */
+#ifdef ARMUL_USE_IMMEDTABLE
 extern ARMword ARMul_ImmedTable[]; /* Immediate DP LHS values */
-extern char ARMul_BitList[];       /* Number of bits in a byte table */
+#endif
+extern uint_fast8_t ARMul_BitList[];       /* Number of bits in a byte table */
+extern uint_fast16_t ARMul_CCTable[16];
+#define ARMul_CCCheck(instr,psr) (ARMul_CCTable[instr>>28] & (1<<(psr>>28)))
 
-void ARMul_Abort26(ARMul_State *state, ARMword);
-void ARMul_Abort32(ARMul_State *state, ARMword);
 unsigned ARMul_NthReg(ARMword instr,unsigned number);
-void ARMul_MSRCpsr(ARMul_State *state, ARMword instr, ARMword rhs);
-void ARMul_CPSRAltered(ARMul_State *state);
 void ARMul_R15Altered(ARMul_State *state);
 ARMword ARMul_SwitchMode(ARMul_State *state,ARMword oldmode, ARMword newmode);
 unsigned ARMul_NthReg(ARMword instr, unsigned number);
@@ -350,17 +354,16 @@ ARMword ARMul_Align(ARMul_State *state, ARMword address, ARMword data);
 *                               ARM Support                                 *
 \***************************************************************************/
 
-void ARMul_FixCPSR(ARMul_State *state, ARMword instr, ARMword rhs);
-void ARMul_FixSPSR(ARMul_State *state, ARMword instr, ARMword rhs);
 void ARMul_UndefInstr(ARMul_State *state,ARMword instr);
 
-#ifdef __riscos__
-ARMword GetDPRegRHS(ARMul_State *state, ARMword instr);
-ARMword GetDPSRegRHS(ARMul_State *state, ARMword instr);
-#endif
+/* An estimate of how many cycles the host is executing per second */
+extern uint32_t ARMul_EmuRate;
 
+/* Reset the EmuRate code, to cope with situations where the emulator has just been resumed after being suspended for a period of time (i.e. > 1 second) */
+void EmuRate_Reset(ARMul_State *state);
 
-#define EVENTLISTSIZE 1024UL
+/* Update the EmuRate value. Note: Manipulates event queue! */
+void EmuRate_Update(ARMul_State *state);
 
 /***************************************************************************\
 *                      Macros to scrutinise instructions                    *

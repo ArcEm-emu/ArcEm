@@ -4,7 +4,6 @@
 #define FDC1772
 
 #include "../armdefs.h"
-#include "../armopts.h"
 
 /**
  * FDC_Init
@@ -37,7 +36,7 @@ ARMword FDC_Read(ARMul_State *state, ARMword offset);
  * @param bNw    byteNotWord IMPROVE unused parameter
  * @returns      IMRPOVE always 0
  */
-ARMword FDC_Write(ARMul_State *state, ARMword offset, ARMword data, int bNw);
+ARMword FDC_Write(ARMul_State *state, ARMword offset, ARMword data, bool bNw);
 
 /**
  * FDC_LatchAChange

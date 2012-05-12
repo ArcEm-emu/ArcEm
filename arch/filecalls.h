@@ -5,6 +5,7 @@
 #ifndef __FILECALLS_H
 #define __FILECALLS_H
 
+#include "../armdefs.h"
 /* Include this platforms required parts, note the platform directory
    must be on the compilers include path */
 #include "filecalls_internal.h"
@@ -20,7 +21,7 @@ typedef struct Directory_s Directory;
  * @param hDir Pointer to a Directory struct to fill in
  * @returns 1 on success 0 on failure
  */
-unsigned Directory_Open(const char *sPath, Directory *hDir);
+bool Directory_Open(const char *sPath, Directory *hDir);
 
 /**
  * Directory_Close
@@ -43,9 +44,9 @@ char *Directory_GetNextEntry(Directory *hDirectory);
 
 typedef struct FileInfo
 {
-  unsigned long ulFilesize;      /* In bytes */
-  unsigned char bIsRegularFile;
-  unsigned char bIsDirectory;
+  uint32_t ulFilesize;      /* In bytes */
+  bool bIsRegularFile;
+  bool bIsDirectory;
 } FileInfo;
 
 /**
@@ -57,6 +58,60 @@ typedef struct FileInfo
  * @param phFileInfo pointer to FileInfo struct to fill in
  * @returns 0 on failure 1 on success
  */
-unsigned char File_GetInfo(const char *sPath, FileInfo *phFileInfo);
+bool File_GetInfo(const char *sPath, FileInfo *phFileInfo);
+
+/* These next few are implemented in arch/filecommon.c */
+
+/**
+ * File_ReadEmu
+ *
+ * Reads from the given file handle into the given buffer
+ * Data will be endian swapped to match the byte order of the emulated RAM
+ *
+ * @param pFile File to read from
+ * @param pBuffer Buffer to write to
+ * @param uCount Number of bytes to read
+ * @returns Number of bytes read
+ */
+size_t File_ReadEmu(FILE *pFile,uint8_t *pBuffer,size_t uCount);
+
+/**
+ * File_WriteEmu
+ *
+ * Writes data to the given file handle
+ * Data will be endian swapped to match the byte order of the emulated RAM
+ *
+ * @param pFile File to write to
+ * @param pBuffer Buffer to read from
+ * @param uCount Number of bytes to write
+ * @returns Number of bytes written
+ */
+size_t File_WriteEmu(FILE *pFile,const uint8_t *pBuffer,size_t uCount);
+
+/**
+ * File_ReadRAM
+ *
+ * Reads from the given file handle into emulator memory
+ * Data will be endian swapped to match the byte order of the emulated RAM
+ *
+ * @param pFile File to read from
+ * @param uAddress Logical address of buffer to write to
+ * @param uCount Number of bytes to read
+ * @returns Number of bytes read
+ */
+size_t File_ReadRAM(FILE *pFile,ARMword uAddress,size_t uCount);
+
+/**
+ * File_WriteRAM
+ *
+ * Writes data from emulator memory to the given file handle
+ * Data will be endian swapped to match the byte order of the emulated RAM
+ *
+ * @param pFile File to write to
+ * @param uAddress Logical address of buffer to read from
+ * @param uCount Number of bytes to write
+ * @returns Number of bytes written
+ */
+size_t File_WriteRAM(FILE *pFile,ARMword uAddress,size_t uCount);
 
 #endif /* __FILECALLS_H */

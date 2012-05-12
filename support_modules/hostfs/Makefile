@@ -9,7 +9,7 @@ OBJCOPY = armobjcopy
 
 
 
-all: hostfs,ffa hostfsfiler,ffa
+all: hostfs,ffa
 
 %,ffa: %.elf
 	$(OBJCOPY) -O binary $< $@

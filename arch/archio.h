@@ -3,19 +3,19 @@
 /* (c) David Alan Gilbert 1995-1998 - see Readme file for copying info */
 
 #include <signal.h>
-#include "../armopts.h"
 #include "../armdefs.h"
 
 struct IOCStruct {
-  unsigned char ControlReg;
-  unsigned char ControlRegInputData;
-  unsigned char SerialRxData;
-  unsigned char SerialTxData;
-  unsigned int IRQStatus,IRQMask;
-  unsigned int FIRQStatus,FIRQMask;
-  int TimerCount[4];
-  unsigned int TimerInputLatch[4];
-  unsigned int TimerOutputLatch[4];
+  uint8_t ControlReg;
+  uint8_t ControlRegInputData;
+  uint8_t SerialRxData;
+  uint8_t SerialTxData;
+  uint8_t IOEBControlReg;
+  uint16_t IRQStatus,IRQMask;
+  uint16_t FIRQStatus,FIRQMask;
+  int32_t TimerCount[4];
+  uint16_t TimerInputLatch[4];
+  uint16_t TimerOutputLatch[4];
 
   struct {
     unsigned int insidebitcount;
@@ -28,10 +28,14 @@ struct IOCStruct {
   unsigned int LatchB;
   unsigned int LatchBold;
 
-  unsigned long TimersLastUpdated;
-  unsigned long NextTimerTrigger;
-  unsigned int Timer0CanInt;
-  unsigned int Timer1CanInt;
+  CycleCount TimersLastUpdated;
+  CycleCount NextTimerTrigger;
+  uint16_t TimerFracBit;
+  bool Timer0CanInt;
+  bool Timer1CanInt;
+
+  uint32_t IOCRate; /* Number of IOC clock ticks per emu cycle, in 16.16 fixed-point format */
+  uint32_t InvIOCRate; /* Inverse IOC rate, 16.16 */
 };
 
 extern struct IOCStruct ioc;
@@ -59,8 +63,14 @@ extern struct IOCStruct ioc;
 #define FIQ_FORCE   (1U << 7)   /* Software generated FIQ */
 
 
-#define TIMERSCALE 10
-#define IOCTIMERSTEP 1
+/* IOEB control reg bits */
+#define IOEB_CR_VIDC_MASK   (0x3)
+#define IOEB_CR_VIDC_24MHz  (0x0)
+#define IOEB_CR_VIDC_25MHz  (0x1)
+#define IOEB_CR_VIDC_36MHz  (0x2)
+#define IOEB_CR_VIDC_24MHzB (0x3) /* Two settings will produce a 24MHz clock */
+#define IOEB_CR_EORH        (0x4)
+#define IOEB_CR_EORV        (0x8)
 
 /*------------------------------------------------------------------------------*/
 void IOC_DoIntCheck(ARMul_State *state);
@@ -68,22 +78,19 @@ void IOC_DoIntCheck(ARMul_State *state);
 /*-----------------------------------------------------------------------------*/
 void IO_Init(ARMul_State *state);
 
-/*------------------------------------------------------------------------------*/
-void IOC_UpdateTimers(void);
-
 /*-----------------------------------------------------------------------------*/
 ARMword GetWord_IO(ARMul_State *state, ARMword address);
 
 /*-----------------------------------------------------------------------------*/
-void PutValIO(ARMul_State *state,ARMword address, ARMword data,int bNw);
+void PutValIO(ARMul_State *state,ARMword address, ARMword data,bool bNw);
 
 /*-----------------------------------------------------------------------------*/
-int IOC_WriteKbdRx(ARMul_State *state, unsigned char value);
+int IOC_WriteKbdRx(ARMul_State *state, uint8_t value);
 /*-----------------------------------------------------------------------------*/
 int IOC_ReadKbdTx(ARMul_State *state);
 
-void UpdateTimerRegisters(void);
-void IO_UpdateNfiq(void);
-void IO_UpdateNirq(void);
+void UpdateTimerRegisters(ARMul_State *state);
+void IO_UpdateNfiq(ARMul_State *state);
+void IO_UpdateNirq(ARMul_State *state);
 
 #endif

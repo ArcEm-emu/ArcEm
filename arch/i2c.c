@@ -3,7 +3,7 @@
 #include <signal.h>
 #include <stdio.h>
 #include <time.h>
-#include "../armopts.h"
+#include <inttypes.h>
 #include "../armdefs.h"
 
 #ifdef MACOSX
@@ -52,15 +52,15 @@ typedef enum {
 } I2CState;
 
 struct I2CStruct {
-  unsigned char Data[256];
-  int IAmTransmitter;
-  int OldDataState;
-  int OldClockState;
+  uint8_t Data[256];
+  bool IAmTransmitter;
+  uint8_t OldDataState;
+  uint8_t OldClockState;
   I2CState state;
-  int DataBuffer;
-  int NumberOfBitsSoFar;
-  int LastrNw;
-  unsigned char WordAddress; /* Note unsigned char - can never be outside Data bounds */
+  uint_fast16_t DataBuffer;
+  uint8_t NumberOfBitsSoFar;
+  bool LastrNw;
+  uint8_t WordAddress; /* Note unsigned char - can never be outside Data bounds */
 };
 
 static struct I2CStruct I2C;
@@ -100,7 +100,7 @@ static void
 I2C_SetupTransmit(ARMul_State *state)
 {
   /*fprintf(stderr,"I2C_SetupTransmit (address=%d)\n",I2C.WordAddress); */
-  I2C.IAmTransmitter = 1;
+  I2C.IAmTransmitter = true;
   I2C.state = I2CChipState_TransmittingToMaster;
 
   /* Get the value that we are about to send */
@@ -223,7 +223,7 @@ void I2C_Update(ARMul_State *state) {
         /* Its a start */
         dbug_i2c("I2C Start!\n");
         I2C.state=I2CChipState_GotStart;
-        I2C.IAmTransmitter=0;
+        I2C.IAmTransmitter=false;
         I2CDATAWRITE(1);
         I2C.NumberOfBitsSoFar=0;
         I2C.DataBuffer=0;
@@ -235,7 +235,7 @@ void I2C_Update(ARMul_State *state) {
         /* Its a stop */
         dbug_i2c("I2C Stop!\n");
         I2C.state=I2CChipState_Idle;
-        I2C.IAmTransmitter=0;
+        I2C.IAmTransmitter=false;
         I2CDATAWRITE(1);
         I2C.OldDataState=I2CDATAREAD;
         return;
@@ -267,17 +267,19 @@ void I2C_Update(ARMul_State *state) {
             /* Ah - we have got the whole of the slave address - well except for the last
                bit we are going to ignore it; the last bit tells us rNw */
             I2C.LastrNw=I2C.DataBuffer & 1;
-            dbug_i2c("I2C simulator got slave address 0x%x\n",I2C.DataBuffer);
+            dbug_i2c("I2C simulator got slave address "
+                "%#" PRIxFAST16 "\n", I2C.DataBuffer);
             if ((I2C.DataBuffer & 0xfe)!=0xa0) {
               /* Hey - its a request for a different I2C peripheral - like an A500's timer
                  chip */
-              fprintf(stderr,"I2C simulator got wierd slave address 0x%x\n",I2C.DataBuffer);
-              I2C.IAmTransmitter=0;
+              fprintf(stderr, "I2C simulator got wierd slave address "
+                  "%#" PRIxFAST16 "\n", I2C.DataBuffer);
+              I2C.IAmTransmitter=false;
               I2C.NumberOfBitsSoFar=0;
               I2C.state=I2CChipState_Idle;
             } else {
               /* Good - its for us */
-              I2C.IAmTransmitter=1;
+              I2C.IAmTransmitter=true;
               I2C.NumberOfBitsSoFar=0;
               I2C.state=I2CChipState_AckAfterSlaveAddr;
               I2CDATAWRITE(0);
@@ -293,7 +295,7 @@ void I2C_Update(ARMul_State *state) {
             /* Got the whole word address */
             I2C.WordAddress=I2C.DataBuffer;
             I2C.DataBuffer=0;
-            I2C.IAmTransmitter=1; /* Acknowledge */
+            I2C.IAmTransmitter=true; /* Acknowledge */
             I2C.NumberOfBitsSoFar=0;
             I2C.state=I2CChipState_AckAfterWordAddr;
             I2CDATAWRITE(0);
@@ -316,7 +318,7 @@ void I2C_Update(ARMul_State *state) {
             I2C.DataBuffer=0;
             I2C.NumberOfBitsSoFar=0;
             /* Acknowledge */
-            I2C.IAmTransmitter=1;
+            I2C.IAmTransmitter=true;
             I2C.state=I2CChipState_AckAfterReceiveData;
             I2CDATAWRITE(0);
           };
@@ -328,7 +330,7 @@ void I2C_Update(ARMul_State *state) {
           if (I2CDATAREAD) {
             /* The data line is high - that means that there was no acknowledge to our data
                - so it doesn't want any more */
-            I2C.IAmTransmitter=0;
+            I2C.IAmTransmitter=false;
             I2CDATAWRITE(1);
             I2C.DataBuffer=0;
             I2C.state=I2CChipState_Idle; /* Actually waiting for a stop - perhaps we should have a separate state */
@@ -361,7 +363,7 @@ void I2C_Update(ARMul_State *state) {
             I2C.state=I2CChipState_GettingWordAddr; /* Writing the word address */
             I2C.NumberOfBitsSoFar=0;
             I2C.DataBuffer=0;
-            I2C.IAmTransmitter=0;
+            I2C.IAmTransmitter=false;
             I2CDATAWRITE(1);
           };
           break;
@@ -380,7 +382,7 @@ void I2C_Update(ARMul_State *state) {
             I2C.state=I2CChipState_GettingData; /* Writing the data from the master */
             I2C.NumberOfBitsSoFar=0;
             I2C.DataBuffer=0;
-            I2C.IAmTransmitter=0;
+            I2C.IAmTransmitter=false;
             I2CDATAWRITE(1);
           };
           break;
@@ -393,7 +395,7 @@ void I2C_Update(ARMul_State *state) {
           I2C.state=I2CChipState_GettingData; /* Writing the data from the master */
           I2C.NumberOfBitsSoFar=0;
           I2C.DataBuffer=0;
-          I2C.IAmTransmitter=0;
+          I2C.IAmTransmitter=false;
           I2CDATAWRITE(1);
           break;
                /*-----------------------------------------------*/
@@ -411,7 +413,7 @@ void I2C_Update(ARMul_State *state) {
             I2C.WordAddress++;
             I2C.DataBuffer=0;
             I2C.state=I2CChipState_AckAfterTransmitData;
-            I2C.IAmTransmitter=0; /* No - we want the other guy to acknowledge our data...I think! */
+            I2C.IAmTransmitter=false; /* No - we want the other guy to acknowledge our data...I think! */
             I2CDATAWRITE(1);
           };
           break;
@@ -424,66 +426,62 @@ void I2C_Update(ARMul_State *state) {
   }; /* Transmitter */
 } /* I2C_Update */
 
-/* ------------------------------------------------------------------------- */
-static void SetUpCMOS(ARMul_State *state) {
-  int loop,dest;
-  unsigned int val;
-  FILE *InFile;
+/* ------------------------------------------------------------------ */
 
-#ifdef __riscos__
-  InFile = fopen("<ArcEm$Dir>.hexcmos", "r");
+static void SetUpCMOS(ARMul_State *state)
+{
+    const char *path;
+    FILE *fp;
+    int byte, dest;
+    unsigned int val;
+
+#if defined(__riscos__)
+    path = "<ArcEm$Dir>.hexcmos";
+#elif defined(MACOSX)
+    chdir(arcemDir);
+    path = "hexcmos";
+#elif defined(SYSTEM_gp2x)
+    path = "/mnt/sd/arcem/hexcmos";
 #else
-#ifdef MACOSX
-  {
-      chdir(arcemDir);
-      InFile = fopen("hexcmos", "r");
-  }
-#else
-#ifdef SYSTEM_gp2x
-  InFile = fopen("/mnt/sd/arcem/hexcmos", "r");
-#else
-  InFile = fopen("hexcmos", "r");
-#endif
-#endif
+    path = "hexcmos";
 #endif
 
-  if (InFile == NULL) {
-    fprintf(stderr,"SetUpCMOS: Could not open (hexcmos) CMOS settings file, resetting to internal defaults.\n");
-//    exit(1);
-  };
+    if ((fp = fopen(path, "r")) == NULL)
+        fputs("SetUpCMOS: Could not open (hexcmos) CMOS settings file, "
+            "resetting to internal defaults.\n", stderr);
 
+    for (byte = 0; byte < 240; byte++) {
+        if (fp) {
+            if (fscanf(fp, "%x\n", &val) != 1) {
+                fprintf(stderr, "arcem: failed to read value %d of %s\n",
+                    byte, path);
+                exit(1);
+            }
+        } else {
+            val = CMOSDefaults[byte];
+        }
 
-  for (loop = 0; loop < 240; loop++) {
-	if (InFile == NULL)
-	{
-		val=CMOSDefaults[loop];
-	}
-	else
-	{
-    	fscanf(InFile,"%x\n",&val);
-	}
+        /* Map 0..191 to 64...255, and 192...239 to 16...63. */
+        dest = byte + 64;
+        if (dest > 255) dest -= 240;
+        I2C.Data[dest] = val;
+    }
 
-    dest=loop+64;
-    if (dest>255) dest-=240;
+    if (fp) fclose(fp);
+}
 
-    I2C.Data[dest]=val;
-  };
+/* ------------------------------------------------------------------ */
 
-	if(InFile)
-  		fclose(InFile);
-} /* SetUpCMOS */
-
-/* ------------------------------------------------------------------------- */
 void
 I2C_Init(ARMul_State *state)
 {
   I2C.OldDataState = 0;
   I2C.OldClockState = 0;
-  I2C.IAmTransmitter = 0;
+  I2C.IAmTransmitter = false;
   I2CDATAWRITE(1);
   I2C.state = I2CChipState_Idle;
   I2C.NumberOfBitsSoFar = 0;
-  I2C.LastrNw = 0;
+  I2C.LastrNw = false;
   I2C.WordAddress = 0;
 
   SetUpCMOS(state);

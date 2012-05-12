@@ -35,6 +35,7 @@
       there too.
 */
 #include "arch/hdc63463.h"
+#include "../c99.h"
 
 typedef enum ArcemConfig_MemSize_e {
   MemSize_256K,
@@ -53,6 +54,10 @@ typedef enum ArcemConfig_Processor_e {
   Processor_ARM3                  // ARM 2AS
 } ArcemConfig_Processor;
 
+typedef enum ArcemConfig_DisplayDriver_e {
+  DisplayDriver_Palettised,
+  DisplayDriver_Standard, /* i.e. 16/32bpp true colour */
+} ArcemConfig_DisplayDriver;
 
 /* THIS IS THE MAIN CONFIGURATION STRUCTURE */
 
@@ -72,6 +77,17 @@ typedef struct ArcemConfig_s {
 
   /* Shapes of the MFM ST506 drives as set in the config file */
   struct HDCshape aST506DiskShapes[4];
+
+  /* Platform-specific bits */
+#if defined(SYSTEM_riscos_single)
+  ArcemConfig_DisplayDriver eDisplayDriver;
+  bool bRedBlueSwap; /* Red/blue swap 16bpp output */
+  bool bAspectRatioCorrection; /* Apply H/V scaling for aspect ratio correction */
+  bool bUpscale; /* Allow upscaling to fill screen */
+  bool bNoLowColour; /* Disable 1/2/4bpp modes */
+  int iMinResX,iMinResY;
+  int iLCDResX,iLCDResY;
+#endif
 
 } ArcemConfig;
 

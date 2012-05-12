@@ -5,9 +5,6 @@
 #include "armdefs.h"
 #include "arch/keyboard.h"
 
-#define MonitorWidth 800
-#define MonitorHeight 600
-
 #define NR_THREADS (0x1000)
 
 HBITMAP hbmp = NULL;
@@ -184,10 +181,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
       BitBlt(hdc, 0, 0, xSize, ySize, hsrc, 0, 0, SRCCOPY);
       DeleteDC(hsrc);
 
-      hsrc1=CreateCompatibleDC(hdc);
-      SelectObject(hsrc1, cbmp);
-      BitBlt(hdc, rMouseX, rMouseY, 32, rMouseHeight, hsrc1, 0, 0, SRCCOPY);
-      DeleteDC(hsrc1);
+      if(rMouseHeight > 0) {
+        hsrc1=CreateCompatibleDC(hdc);
+        SelectObject(hsrc1, cbmp);
+        BitBlt(hdc, rMouseX, rMouseY, 32, rMouseHeight, hsrc1, 0, 0, SRCCOPY);
+        DeleteDC(hsrc1);
+      }
 
       EndPaint(hWnd, &ps);
 		}
@@ -295,6 +294,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         // You can tell whether it's up or down by checking it's
         // positive or negative, to work out the extent you use
         // HIWORD(wParam), but we don't need that.
+        ARMul_State *state = &statestr;
 
         if(iMouseWheelValue > 0) {
           // Fire our fake button_4 wheelup event, this'll get picked up

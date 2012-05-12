@@ -1,8 +1,8 @@
 #ifndef EXTNROM_H
 #define EXTNROM_H
 
-unsigned extnrom_calculate_size(unsigned *entry_count);
+uint32_t extnrom_calculate_size(uint32_t *entry_count);
 
-void extnrom_load(unsigned size, unsigned entry_count, void *address);
+void extnrom_load(uint32_t size, uint32_t entry_count, void *address);
 
 #endif /* EXTNROM_H */

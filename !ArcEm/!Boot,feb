@@ -1,0 +1,5 @@
+| !Boot file for ArcEm
+
+Set ArcEm$Dir <Obey$Dir>
+Iconsprites <ArcEm$Dir>.!Sprites
+

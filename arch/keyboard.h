@@ -1,3 +1,6 @@
+#ifndef ARCH_KEYBOARD_H
+#define ARCH_KEYBOARD_H
+
 /* arch/keyboard.c -- a model of the Archimedes keyboard. */
 
 /* Keys on an Acorn R140 keyboard organised into groups as you'd find
@@ -129,15 +132,73 @@ enum {
     ARCH_KEYBOARD_DEFINITION
 #undef X
 };
-typedef unsigned char arch_key_id;
+typedef uint8_t arch_key_id;
+
+typedef struct {
+  int8_t KeyColToSend, KeyRowToSend;
+  bool KeyUpNDown;
+} KbdEntry;
+
+typedef enum {
+  KbdState_JustStarted,
+  KbdState_SentHardReset,
+  KbdState_SentAck1,
+  KbdState_SentAck2,
+  KbdState_SentKeyByte1, /* and waiting for ack */
+  KbdState_SentKeyByte2, /* and waiting for ack */
+  KbdState_SentMouseByte1,
+  KbdState_SentMouseByte2,
+  KbdState_Idle
+} KbdStates;
+
+#define KBDBUFFLEN 128
+
+#define KBD_LED_CAPSLOCK 1
+#define KBD_LED_NUMLOCK 2
+#define KBD_LED_SCROLLLOCK 4
+
+struct arch_keyboard {
+  KbdStates KbdState;
+  /* A signed, 7-bit value stored in a uint8_t as it gets
+   * passed to keyboard transmission functions expecting an
+   * uint8_t. */
+  uint8_t MouseXCount;
+  uint8_t MouseYCount;
+  int8_t KeyColToSend,KeyRowToSend;
+  bool KeyUpNDown;
+  uint8_t Leds;
+  /* The bottom three bits of leds holds their current state.  If
+   * the bit is set the LED should be emitting. */
+  void (*leds_changed)(uint8_t leds);
+
+  /* Double buffering - update the others while sending this */
+  uint8_t MouseXToSend;
+  uint8_t MouseYToSend;
+  bool MouseTransEnable,KeyScanEnable; /* When 1 allowed to transmit */
+  uint8_t HostCommand;            /* Normally 0 else the command code */
+  KbdEntry Buffer[KBDBUFFLEN];
+  uint8_t BuffOcc;
+  uint8_t TimerIntHasHappened;
+};
+
+#define KBD (*(state->Kbd))
 
 /* ------------------------------------------------------------------ */
 
 /* Tell the Archimedes that key `kid' has changed state, this includes
  * mouse buttons. */
 void keyboard_key_changed(struct arch_keyboard *kb, arch_key_id kid,
-    int up);
+    bool up);
 
+void Kbd_Init(ARMul_State *state);
 void Kbd_StartToHost(ARMul_State *state);
-void Kbd_CodeFromHost(ARMul_State *state, unsigned char FromHost);
+void Kbd_CodeFromHost(ARMul_State *state, uint8_t FromHost);
+
+/* Internal function; just exposed so the profiling code can mess with it */
+void Keyboard_Poll(ARMul_State *state,CycleCount nowtime);
+
+/* Frontend must implement this */
+int Kbd_PollHostKbd(ARMul_State *state);
+
+#endif
 

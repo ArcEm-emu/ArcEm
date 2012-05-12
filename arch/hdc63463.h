@@ -8,11 +8,10 @@
 #define HDC63463_HEADER
 
 #include "../armdefs.h"
-#include "../armopts.h"
 
 /* Structure used to store the configurable shape of the Harddrive */
 struct HDCshape {
-  unsigned int NCyls,NHeads,NSectors,RecordLength;
+  uint32_t NCyls,NHeads,NSectors,RecordLength;
 };
 
 /* Write to HDC memory space */

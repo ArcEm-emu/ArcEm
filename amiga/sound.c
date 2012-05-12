@@ -8,116 +8,63 @@
 #include "platform.h"
 #include "../armdefs.h"
 #include "../arch/sound.h"
+#include "../arch/displaydev.h"
 
 BPTR audioh = 0;
 
 static unsigned long sampleRate = 44100;
-static unsigned long bufferSize = 64;
 
-/* This is the size of the gap between sound_poll doing something. */
-static unsigned long delayTotal = 5; // 100
-static unsigned long delayProgress = 0;
-
-static SoundData *buffer = NULL;
-
-void
-sound_poll(void)
-{
-  delayProgress++;
-  if (delayProgress >= delayTotal)
-	{
-	    delayProgress = 0;
-
-	      if (SoundDMAFetch(buffer) == 1)
-			{
-        		return;
-      		}
-
-		IDOS->Write(audioh,buffer,64);
-
-    }
-}
+SoundData sound_buffer[256*2]; /* Must be >= 2*Sound_BatchSize! */
 
 int openaudio(void)
 {
-	STRPTR audiof = NULL;
+	char audiof[256];
 
-	if(audiof = IUtility->ASPrintf("AUDIO:BITS/16/C/2/F/%lu/T/SIGNED",sampleRate))
+	sprintf(audiof, "AUDIO:BITS/16/C/2/F/%lu/T/SIGNED\0", sampleRate);
+
+	if(!(audioh = Open(audiof,MODE_NEWFILE)))
 	{
-		if(!(audioh = IDOS->Open(audiof,MODE_NEWFILE)))
-		{
-    		fprintf(stderr, "Could not open audio: device\n");
-    		return -1;
-		}
-		IExec->FreeVec(audiof);
-	}
-	else
-	{
+		fprintf(stderr, "Could not open audio: device\n");
 		return -1;
 	}
+
+	return 0;
+}
+
+SoundData *Sound_GetHostBuffer(int32_t *destavail)
+{
+	/* Just assume we always have enough space for the max batch size */
+	*destavail = sizeof(sound_buffer)/(sizeof(SoundData)*2);
+	return sound_buffer;
+}
+
+void Sound_HostBuffered(SoundData *buffer,int32_t numSamples)
+{
+	numSamples *= 2;
+
+	/* TODO - Adjust Sound_FudgeRate to fine-tune how often we receive new data */
+
+	Write(audioh,buffer,numSamples*sizeof(SoundData));
 }
 
 int
-sound_init(void)
+Sound_InitHost(ARMul_State *state)
 {
-//	We only need utility.library in the sound routine, so opening it here.
-
-	if(UtilityBase = IExec->OpenLibrary("utility.library",51))
-	{
-		IUtility = IExec->GetInterface(UtilityBase,"main",1,NULL);
-	}
-	else
-	{
-		return -1;
-	}
-
 	if(openaudio() == -1)
 		return -1;
 
-  buffer = IExec->AllocVec(bufferSize,MEMF_CLEAR);
-  if (!buffer) {
-    fprintf(stderr, "sound_init(): Out of memory\n");
-    exit(EXIT_FAILURE);
-  }
+	/* TODO - Tweak these as necessary */
+	eSound_StereoSense = Stereo_LeftRight;
 
-  return 0;
-}
+	Sound_BatchSize = 256;
 
-/**
- * sound_setSampleRate
- *
- * Set the sample rate of sound, using
- * the period specified in microseconds.
- *
- * @param period period of sample in microseconds
- */
-void
-sound_setSampleRate(unsigned long period)
-{
-  /* freq = 1 / (period * 10^-6) */
+	Sound_HostRate = sampleRate<<10;
 
-  if (period != 0) {
-    sampleRate = 1000000 / period;
-  } else {
-    sampleRate = 44100;
-  }
-
-  printf("asked to set sample rate to %lu\n", sampleRate);
-
-	IDOS->Close(audioh);	
-	openaudio();
-
-  printf("set sample rate to %lu\n", sampleRate);
+	return 0;
 }
 
 void sound_exit(void)
 {
-	IExec->FreeVec(buffer);
-	IDOS->Close(audioh);
-
-	if(IUtility)
-	{
-		IExec->DropInterface((struct Interface *)IUtility);
-		IExec->CloseLibrary(UtilityBase);
-	}
+//	IExec->FreeVec(buffer);
+	Close(audioh);
 }

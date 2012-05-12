@@ -29,16 +29,8 @@
 
 #include "dagstandalone.h"
 #include "armdefs.h"
-#include "armrdi.h"
-#include "dbg_conf.h"
-#include "dbg_hif.h"
-#include "dbg_rdi.h"
 
 #include "ArcemConfig.h"
-
-/* RDI interface */
-
-static int rdi_state = 0;
 
 /**************************************************************/
 /* Signal handler that terminates excecution in the ARMulator */
@@ -57,41 +49,16 @@ static void dagstandalone_handlesignal(int sig) {
     fprintf(stderr,"Unsupported signal.\n");
     return;
   }
-  armul_rdi.info(RDISignal_Stop, NULL, NULL);
+  exit(0); /* ??? */
 }
 #endif
 #endif
 
-/* Functions to be called by the emulator core - based on gdbhost.* */
-static void myprint(void *arg,const char *format, va_list ap) {
-  vfprintf(stderr,format, ap);
-};
-
-
-static void mypause(void *arg) {
-  /* Should wait for the user to do something */
-};
-
-
-static void mywritec(void *arg, int c) {
-  putchar(c);
-};
-
-
-static int myreadc(void *arg) {
-  return(getchar());
-};
-
-
-/* I don't quite understand what's going on here! */
-static int mywrite(void *arg, char const *buffer, int len) {
-  return 0;
-};
-
-
-static char *mygets(void *arg, char *buffer, int len) {
-  return buffer;
-};
+static void InitFail(int exitcode, char const *which) {
+  fprintf(stderr, "%s interface failed to initialise. Exiting\n",
+                            which);
+  exit(exitcode);
+}
 
 /**
  * dagstandalone
@@ -102,17 +69,13 @@ static char *mygets(void *arg, char *buffer, int len) {
  *
  */
  void dagstandalone(void) {
-  int i;
 #ifndef WIN32
+#ifndef AMIGA
   struct sigaction action;
 #endif
-  PointHandle point;
-  Dbg_ConfigBlock config;
-  Dbg_HostosInterface hostif;
-  struct Dbg_MCState *MCState = NULL;
-  
-  ARMword RegVals[] = { 0 }; /* PC - reset*/
-  
+#endif
+  ARMul_State *emu_state = NULL;
+
 #ifndef WIN32
 #ifndef AMIGA
   /* Setup a signal handler for SIGUSR1 */
@@ -124,72 +87,20 @@ static char *mygets(void *arg, char *buffer, int len) {
 #endif
 #endif
 
-  config.processor = ARM2;
-  
-  switch(hArcemConfig.eMemSize) {
-    case MemSize_256K:
-    case MemSize_512K:
-    case MemSize_1M:
-      fprintf(stderr, "256K, 512K and 1M memory size not yet supported, rounding up to 2M\n");
-      config.memorysize = 2 * 1024 * 1024;
-      break;
-
-    case MemSize_2M:
-      config.memorysize = 2 * 1024 * 1024;
-      break;
-
-    case MemSize_4M:
-      config.memorysize = 4 * 1024 * 1024;
-      break;
-
-    case MemSize_8M:
-      config.memorysize = 8 * 1024 * 1024;
-      break;
-
-    case MemSize_12M:
-      config.memorysize = 12 * 1024 * 1024;
-      break;
-
-    case MemSize_16M:
-      config.memorysize = 16 * 1024 * 1024;
-      break;
-
-    default:
-      fprintf(stderr, "Unsupported memory size");
-      exit(EXIT_FAILURE);
-  }
-
-  config.bytesex = RDISex_Little;
-
-  hostif.dbgprint = myprint;
-  hostif.dbgpause = mypause;
-  hostif.dbgarg = stdout;
-  hostif.writec = mywritec;
-  hostif.readc = myreadc;
-  hostif.write = mywrite;
-  hostif.gets = mygets;
-  hostif.reset = mypause; /* do nothing */
-  hostif.resetarg = "Do I love resetting or what!\n";
-
-  if (rdi_state)
-  {
-    /* we have restarted, so kill off the existing run.  */
-    /* armul_rdi.close(); */
-  }
-  i = armul_rdi.open(0, &config, &hostif, MCState);
-  rdi_state = 1;
-
-  armul_rdi.CPUwrite(3 /* That should just about be svc 26 */, RDIReg_PC,
-      RegVals);
-  /*x = ~0x4;
-  armul_rdi.info(RDIVector_Catch, &x, 0); */
-
+  ARMul_EmulateInit();
+  emu_state = ARMul_NewState();
+  ARMul_Reset(emu_state);
+  if (ARMul_MemoryInit(emu_state) == FALSE)
+    InitFail(1, "Memory");
+  if (ARMul_CoProInit(emu_state) == FALSE)
+    InitFail(2, "Co-Processor");
+  ARMul_Reset(emu_state);
 
   /* Excecute */
-  i = armul_rdi.execute(&point);
+  ARMul_DoProg(emu_state);
+  emu_state->Reg[15] -= 8; /* undo the pipeline (bogus?) */
 
   /* Close and Finalise */
-  i = armul_rdi.close();
-  rdi_state = 0;
-  emu_state = NULL;
+  ARMul_CoProExit(emu_state);
+  ARMul_MemoryExit(emu_state);
 }

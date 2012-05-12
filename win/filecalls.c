@@ -28,27 +28,27 @@
  *
  * @param sPath Location of directory to scan
  * @param hDir Pointer to a Directory struct to fill in
- * @returns 1 on success 0 on failure
+ * @returns true on success false on failure
  */
-unsigned Directory_Open(const char *sPath, Directory *hDir)
+bool Directory_Open(const char *sPath, Directory *hDir)
 {
-  unsigned char bNeedsEndSlash = 0;
+  bool bNeedsEndSlash = 0;
   WIN32_FIND_DATA w32fd = {0};
 
   assert(sPath);
   assert(*sPath);
 
   if(sPath[strlen(sPath)] != '/') {
-    bNeedsEndSlash = 1;
+    bNeedsEndSlash = true;
   }
 
-  hDir->bFirstEntry = 1;
+  hDir->bFirstEntry = true;
   hDir->hFile       = NULL;
 
   hDir->sPath = calloc(strlen(sPath) + (bNeedsEndSlash ? 1 : 0 ) + 3 + 1, 1); /* Path + Endslash (if needed) + *.* + terminator */
   if(NULL == hDir->sPath) {
     fprintf(stderr, "Failed to allocate memory for directory handle path\n");
-    return 0;
+    return false;
   }
 
   strcpy(hDir->sPath, sPath);
@@ -57,7 +57,7 @@ unsigned Directory_Open(const char *sPath, Directory *hDir)
   }
   strcat(hDir->sPath, "*.*");
 
-  return 1;
+  return true;
 }
 
 /**
@@ -87,7 +87,7 @@ char *Directory_GetNextEntry(Directory *hDirectory)
 
   if(hDirectory->bFirstEntry) {
   	hDirectory->hFile = FindFirstFile(hDirectory->sPath, &hDirectory->w32fd);
-    hDirectory->bFirstEntry = 0;
+    hDirectory->bFirstEntry = false;
 
     if(INVALID_HANDLE_VALUE == hDirectory->hFile) {
       return NULL;
@@ -111,9 +111,9 @@ char *Directory_GetNextEntry(Directory *hDirectory)
  *
  * @param sPath Path to file to check
  * @param phFileInfo pointer to FileInfo struct to fill in
- * @returns 0 on failure 1 on success
+ * @returns false on failure true on success
  */
-unsigned char File_GetInfo(const char *sPath, FileInfo *phFileInfo)
+bool File_GetInfo(const char *sPath, FileInfo *phFileInfo)
 {
   WIN32_FILE_ATTRIBUTE_DATA w32fad = {0};
 
@@ -122,27 +122,27 @@ unsigned char File_GetInfo(const char *sPath, FileInfo *phFileInfo)
   assert(phFileInfo);
 
   /* Initialise contents */
-  phFileInfo->bIsDirectory   = 0;
-  phFileInfo->bIsRegularFile = 0;
+  phFileInfo->bIsDirectory   = false;
+  phFileInfo->bIsRegularFile = false;
 
   /* Read the details */
   if (!GetFileAttributesEx(sPath, GetFileExInfoStandard, &w32fad))
   {
     fprintf(stderr, "Failed to stat '%s'\n", sPath);
-    return 0;
+    return false;
   }
   
   /* Fill in entries */
   phFileInfo->ulFilesize = w32fad.nFileSizeLow;
 
   if (w32fad.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-    phFileInfo->bIsDirectory = 1;
+    phFileInfo->bIsDirectory = true;
   } else {
     /* IMPROVE guess, if not a directory then we are a regular file */
-    phFileInfo->bIsRegularFile = 1;
+    phFileInfo->bIsRegularFile = true;
   }
   
   /* Success! */
-  return 1;
+  return true;
 }
 

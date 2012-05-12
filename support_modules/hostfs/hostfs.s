@@ -1,9 +1,8 @@
-	@
-	@ $Id$
-	@
-
 	@ ARM constants
 	VBIT = 1 << 28
+	CBIT = 1 << 29
+	ZBIT = 1 << 30
+	NBIT = 1 << 31
 
 	@ RISC OS constants
 	XOS_Write0          = 0x20002
@@ -18,21 +17,22 @@
 
 	Service_FSRedeclare = 0x40
 
-	@ Constants for ArcEm memory-mapped IO
-	AIO_BASE   = 0x03000000
-	AIO_HOSTFS = AIO_BASE | (0x001 << 12)
+	@ ArcEm SWI chunk
+	ARCEM_SWI_CHUNK  = 0x56ac0
+	ARCEM_SWI_CHUNKX = ARCEM_SWI_CHUNK | 0x20000
+	ArcEm_HostFS    = ARCEM_SWI_CHUNKX + 1
 
-	AIO_HOSTFS_OPEN     = 0x000
-	AIO_HOSTFS_GETBYTES = 0x001
-	AIO_HOSTFS_PUTBYTES = 0x002
-	AIO_HOSTFS_ARGS     = 0x003
-	AIO_HOSTFS_CLOSE    = 0x004
-	AIO_HOSTFS_FILE     = 0x005
-	AIO_HOSTFS_FUNC     = 0x006
-	AIO_HOSTFS_GBPB     = 0x007
+	HOSTFS_PROTOCOL_VERSION = 1
 
 	@ Filing system error codes
-	FILECORE_ERROR_DISCFULL = 0xc6
+	FILECORE_ERROR_DIRNOTEMPTY	= 0xb4
+	FILECORE_ERROR_ACCESS		= 0xbd           
+	FILECORE_ERROR_ALREADYOPEN	= 0xc2
+	FILECORE_ERROR_DISCFULL		= 0xc6
+	FILECORE_ERROR_BADDISC		= 0xc8
+	FILECORE_ERROR_DISCPROT		= 0xc9
+	FILECORE_ERROR_NOTFOUND		= 0xd6
+	HOSTFS_ERROR_UNKNOWN		= 0x100
 
 	@ Filing system properties
 	FILING_SYSTEM_NUMBER = 0x99	@ TODO choose unique value
@@ -58,13 +58,17 @@ module_start:
 	.int	0		@ SWI handler code
 	.int	0		@ SWI decoding table
 	.int	0		@ SWI decoding code
+	.int    0		@ Message File
+	.int	modflags	@ Module Flags
 
+modflags:
+	.int	1		@ 32 bit compatible
 
 title:
-	.string	"ArcEmHostFS"
+	.string	"RPCEmuHostFS"
 
 help:
-	.string	"ArcEm HostFS\t0.03 (01 Feb 2006)"
+	.string	"RPCEmu HostFS\t0.08 (05 Nov 2011)"
 
 	.align
 
@@ -105,7 +109,7 @@ fs_name:
 	.string	"HostFS"
 
 fs_text:
-	.string "ArcEm Host Filing System"
+	.string	"RPCEmu Host Filing System"
 	.align
 
 
@@ -119,18 +123,47 @@ fs_text:
 	 *   other may be corrupted
 	 */
 init:
-	@ Declare filing system
-	stmfd	sp!, {lr}
+	stmfd	sp!, {r9, lr}
 
+	@ Register with emulator
+	mov	r0, #HOSTFS_PROTOCOL_VERSION
+	mov	r9, #0xffffffff		@ HostFS operation for Register
+	swi	ArcEm_HostFS
+	cmp	r0, #0xffffffff		@ Look for acknowledge response
+	bne	init_failed_registration
+
+	@ Declare filing system
 	mov	r0, #FSControl_AddFS
 	adr	r1, module_start
 	mov	r2, #(fs_info_block - module_start)
 	mov	r3, r12
 	swi	XOS_FSControl
 
-	ldmfd	sp!, {pc}^
+	ldmfd	sp!, {r9, pc}
+
+init_failed_registration:
+	adr	r0, err_failed_registration
+	cmp	r0, #NBIT	@ compare r0 with most negative number (r0-1<<31)
+	cmnvc	r0, #NBIT	@ no overflow then compare R0 with most non existent positive number (r0+1<<31)
+	ldmfd	sp!, {r9, pc}	@ exit init with V set
+
+err_failed_registration:
+	.int	0
+	.string	"Failed registration with emulator"
+	.align
 
 
+
+	/* Entry:
+	 *   r10 = fatality indication: 0 is non-fatal, 1 is fatal
+	 *   r11 = instantiation number
+	 *   r12 = pointer to private word for this instantiation of the module.
+	 *   r13 = supervisor stack pointer
+	 * Exit:
+	 *   preserve processor mode and interrupt state
+	 *   r7-r11, r13 preserved
+	 *   other and flags may be corrupted
+	 */
 final:
 	@ Remove filing system
 	stmfd	sp!, {lr}
@@ -153,14 +186,24 @@ final:
 	 *   registers must be preserved if not returning a result
 	 *   r12 may be corrupted
 	 */
-service:
-	teq	r1, #Service_FSRedeclare
-	movnes	pc, lr
 
+	@ RISC OS 4 Service codetable
+service_codetable:
+	.int	0		@ no special flags enabled
+	.int	service_main
+	.int	Service_FSRedeclare
+	.int	0		@ table terminator
+
+	.int	service_codetable
+service:
+	mov	r0, r0		@ magic instruction, pointer to service table at (current - 4)
+	teq	r1, #Service_FSRedeclare
+	movne	pc, lr
+service_main:
 	teq	r1, #Service_FSRedeclare
 	beq	service_fsredeclare
 
-	movs	pc, lr		@ should never reach here
+	mov	pc, lr		@ should never reach here
 
 	@ Filing system reinitialise
 service_fsredeclare:
@@ -173,7 +216,7 @@ service_fsredeclare:
 	mov	r3, r12
 	swi	XOS_FSControl
 
-	ldmfd	sp!, {r0-r3, pc}^
+	ldmfd	sp!, {r0-r3, pc}
 
 
 	/* Entry (for all *Commands):
@@ -196,87 +239,127 @@ command_hostfs:
 	adr	r1, fs_name
 	swi	XOS_FSControl
 
-	ldmfd	sp!, {pc}^
+	ldmfd	sp!, {pc}
 
 
 
 	/* FSEntry_Open (Open a file)
 	 */
 fs_open:
-	ldr	r9, = AIO_HOSTFS
-	str	r9, [r9, #AIO_HOSTFS_OPEN]
+	stmfd	sp!, {lr}
 
-	movs	pc, lr
+	mov	r9, #0
+	swi	ArcEm_HostFS
+
+	cmp	r9, #0xb0
+	bhs	hostfs_error
+
+	ldmfd	sp!, {pc}
 
 
 	/* FSEntry_GetBytes (Get bytes from a file)
 	 */
 fs_getbytes:
-	ldr	r9, = AIO_HOSTFS
-	str	r9, [r9, #AIO_HOSTFS_GETBYTES]
+	stmfd	sp!, {lr}
 
-	movs	pc, lr
+	mov	r9, #1
+	swi	ArcEm_HostFS
+
+	cmp	r9, #0xb0
+	bhs	hostfs_error
+
+	ldmfd	sp!, {pc}
 
 
 	/* FSEntry_PutBytes (Put bytes to a file)
 	 */
 fs_putbytes:
-	ldr	r9, = AIO_HOSTFS
-	str	r9, [r9, #AIO_HOSTFS_PUTBYTES]
+	stmfd	sp!, {lr}
 
-	movs	pc, lr
+	mov	r9, #2
+	swi	ArcEm_HostFS
+
+	cmp	r9, #0xb0
+	bhs	hostfs_error
+
+	ldmfd	sp!, {pc}
 
 
 	/* FSEntry_Args (Control open files)
 	 */
 fs_args:
-	ldr	r9, = AIO_HOSTFS
-	str	r9, [r9, #AIO_HOSTFS_ARGS]
+	stmfd	sp!, {lr}
 
-	movs	pc, lr
+	mov	r9, #3
+	swi	ArcEm_HostFS
+
+	cmp	r9, #0xb0
+	bhs	hostfs_error
+
+	ldmfd	sp!, {pc}
 
 
 	/* FSEntry_Close (Close an open file)
 	 */
 fs_close:
-	ldr	r9, = AIO_HOSTFS
-	str	r9, [r9, #AIO_HOSTFS_CLOSE]
+	stmfd	sp!, {lr}
 
-	movs	pc, lr
+	mov	r9, #4
+	swi	ArcEm_HostFS
+
+	cmp	r9, #0xb0
+	bhs	hostfs_error
+
+	ldmfd	sp!, {pc}
 
 
 	/* FSEntry_File (Whole-file operations)
 	 */
 fs_file:
-	ldr	r9, = AIO_HOSTFS
-	str	r9, [r9, #AIO_HOSTFS_FILE]
+	stmfd	sp!, {lr}
 
-	teq	r9, #FILECORE_ERROR_DISCFULL
-	beq	disc_is_full
+	mov	r9, #5
+	swi	ArcEm_HostFS
 
-	movs	pc, lr
+	cmp	r9, #0xb0
+	bhs	hostfs_error
+
+	ldmfd	sp!, {pc}
 
 
 	/* FSEntry_Func (Various operations)
 	 */
 fs_func:
+	stmfd	sp!, {lr}
+
 	@ Test if operation is FSEntry_Func 10 (Boot filing system)...
 	teq	r0, #10
 	beq	boot
 
-	ldr	r9, = AIO_HOSTFS
-	str	r9, [r9, #AIO_HOSTFS_FUNC]
+	mov	r9, #6
+	swi	ArcEm_HostFS
 
-	teq	r9, #255
-	beq	not_implemented
+	cmp	r9, #0xb0
+	bhs	hostfs_error
 
-	teq	r9, #FILECORE_ERROR_DISCFULL
-	beq	disc_is_full
+	ldmfd	sp!, {pc}
 
-	movs	pc, lr
+
+        /* FSEntry_GBPB (Multi-byte operations)
+         */
+fs_gbpb:
+	stmfd	sp!, {lr}
+
+	mov	r9, #7
+	swi	ArcEm_HostFS
+
+	cmp	r9, #0xb0
+	bhs	hostfs_error
+
+	ldmfd	sp!, {pc}
+
 
 boot:
-	stmfd	sp!, {lr}
 	adr	r0, 1f
 	swi	XOS_CLI
 	ldmfd	sp!, {pc}	@ Don't preserve flags - return XOS_CLI's error (if any)
@@ -286,34 +369,96 @@ boot:
 	.align
 
 not_implemented:
-	stmfd	sp!, {lr}
 	adr	r0, err_badfsop
 	mov	r1, #0
 	mov	r2, #0
 	adr	r4, title
-	swi	XMessageTrans_ErrorLookup
-	ldmfd	sp!, {lr}
-	orrs	pc, lr, #VBIT
+	swi	XMessageTrans_ErrorLookup	@ V always set when SWI returns
+	ldmfd	sp!, {pc}
 
-disc_is_full:
-	adr	r0, err_discfull
-	orrs	pc, lr, #VBIT
+
+	/* Entry: 
+	 * R9 = error number
+	 * Exit:
+	 * Return function with error
+	 */
+hostfs_error:
+	teq	r9, #FILECORE_ERROR_DIRNOTEMPTY
+	adreq	r0, err_dirnotempty
+	beq	hostfs_return_error
+
+	teq	r9, #FILECORE_ERROR_ACCESS
+	adreq	r0, err_access
+	beq	hostfs_return_error
+
+	teq	r9, #FILECORE_ERROR_ALREADYOPEN
+	adreq	r0, err_alreadyopen
+	beq	hostfs_return_error
+
+	teq	r9, #FILECORE_ERROR_DISCFULL
+	adreq	r0, err_discfull
+	beq	hostfs_return_error
+
+	teq	r9, #FILECORE_ERROR_BADDISC
+	adreq	r0, err_baddisc
+	beq	hostfs_return_error
+
+	teq	r9, #FILECORE_ERROR_DISCPROT
+	adreq	r0, err_discprot
+	beq	hostfs_return_error
+
+	teq	r9, #FILECORE_ERROR_NOTFOUND
+	adreq	r0, err_notfound
+	beq	hostfs_return_error
+
+	adr	r0, err_unknown
+
+hostfs_return_error:
+	cmp	r0, #NBIT	@ compare r0 with most negative number (r0-1<<31)
+	cmnvc	r0, #NBIT	@ no overflow then compare R0 with most non existent positive number (r0+1<<31)
+	ldmfd	sp!, {pc}	@ exit error function with V set
 
 err_badfsop:
 	.int	0x100a0 | (FILING_SYSTEM_NUMBER << 8)
 	.string	"BadFSOp"
 	.align
 
-err_discfull:
-	.int	0x10000 | (FILING_SYSTEM_NUMBER << 8) | FILECORE_ERROR_DISCFULL
-	.string	"Disc full"
+err_dirnotempty:
+	.int	0x10000 | (FILING_SYSTEM_NUMBER << 8) | FILECORE_ERROR_DIRNOTEMPTY
+	.string	"Directory not empty"
 	.align
 
+err_access:
+	.int	0x10000 | (FILING_SYSTEM_NUMBER << 8) | FILECORE_ERROR_ACCESS
+	.string	"The access details set for this item do not allow this"
+	.align
 
-	/* FSEntry_GBPB (Multi-byte operations)
-	 */
-fs_gbpb:
-	ldr	r9, = AIO_HOSTFS
-	str	r9, [r9, #AIO_HOSTFS_GBPB]
+err_alreadyopen:
+	.int	0x10000 | (FILING_SYSTEM_NUMBER << 8) | FILECORE_ERROR_ALREADYOPEN
+	.string	"This file is already open"
+	.align
 
-	movs	pc, lr
+err_discfull:
+	.int	0x10000 | (FILING_SYSTEM_NUMBER << 8) | FILECORE_ERROR_DISCFULL
+	.string	"Disc is full"
+	.align
+
+err_baddisc:
+	.int	0x10000 | (FILING_SYSTEM_NUMBER << 8) | FILECORE_ERROR_BADDISC
+	.string	"Disc not found"
+	.align
+
+err_discprot:
+	.int	0x10000 | (FILING_SYSTEM_NUMBER << 8) | FILECORE_ERROR_DISCPROT
+	.string	"Disc is protected for changes"
+	.align
+
+err_notfound:
+	.int	0x10000 | (FILING_SYSTEM_NUMBER << 8) | FILECORE_ERROR_NOTFOUND
+	.string	"Not found"
+	.align
+
+err_unknown:
+	.int	0x10000 | (FILING_SYSTEM_NUMBER << 8)
+	.string	"An unknown error occured"
+	.align
