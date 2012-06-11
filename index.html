@@ -119,22 +119,6 @@
        </dd>
       </dl>
 
-      <p><b>GP2X:</b></p>
-
-      <dl>
-       <dd>
-         Work has begun on a port to the Gamepark Holdings GP2X hand held console.
-         To date, the emulator builds and can boot RISC OS.  It's terribly slow
-         (around 3x slower than on a RiscPC) - no clues why yet.  We use the GP2X
-         RGB hardware scaler which is functional but ugly -- a better bet would
-         be to try using the overlay surface, or use the ARM940 2nd processor to
-         be a video scaler.  The mouse cursor is emulated via the GP2X hardware
-         cursor, and the joystick operates as mouse input.  Keyboard input is
-         via the few buttons available, and simplistically via the serial port.
-         Latest version <a href="http://ian.jeffray.co.uk/gp2x/arcem001.zip">here</a>
-
-       </dd>
-      </dl>
     </td>
   </tr>
 </table>
@@ -237,23 +221,6 @@ doing so will be burnt at the stake.
    the 'vc' directory.
  </dd>
 </dl>
-
-
-<p><b>GP2X:</b></p>
-
-<dl>
- <dd>
-   The Makefile assumes that you have DevKitGP2X installed in D:/gp2x/<br>
-   You can build by simply:
-
-   <pre>
-
-     make SYSTEM=gp2x
-   </pre>
-
- </dd>
-</dl>
-
 
 
 <hr>

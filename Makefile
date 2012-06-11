@@ -126,16 +126,6 @@ CFLAGS += -D__amigaos3__ -noixemul
 LDFLAGS += -noixemul
 endif
 
-ifeq (${SYSTEM},gp2x)
-CC=arm-linux-gcc
-LD=$(CC)
-SYSROOT = D:/gp2x/devkitGP2X/sysroot
-CFLAGS += -DSYSTEM_gp2x -Igp2x -I$(SYSROOT)/usr/include
-LIBS += -L$(SYSROOT)/usr/lib -static
-LD=$(CC)
-TARGET=arcem.gpe
-endif
-
 ifeq (${SYSTEM},riscos-single)
 # HostFS
 HOSTFS_SUPPORT=yes
@@ -203,7 +193,7 @@ endif
 
 
 TARED = *.c *.s *.h README COPYING Makefile \
-        X riscos riscos-single gp2x arch
+        X riscos riscos-single arch
 
 MODEL = arch/armarc
 
