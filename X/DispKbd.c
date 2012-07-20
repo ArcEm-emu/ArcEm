@@ -55,6 +55,9 @@
     }
 
 /* ------------------------------------------------------------------ */
+static int lastmousemode=0, lastmousex=0, lastmousey=0;
+
+/* ------------------------------------------------------------------ */
 
 static void store_colour(Colormap map, unsigned long pixel,
     unsigned short r, unsigned short g, unsigned short b);
@@ -345,6 +348,11 @@ DisplayDev_Init(ARMul_State *state)
   if (getenv("ARCEMXSYNC")) {
     XSynchronize(PD.disp, 1);
     fputs("arcem: synchronous X protocol selected.\n", stderr);
+  }
+
+  if (getenv("ARCEMNOWARP")) {
+    lastmousemode=1;
+    fputs("arcem: no-XWarpPointer mode selected.\n", stderr);
   }
 
   if ((s = getenv("ARCEMXMOUSEKEY"))) {
@@ -683,7 +691,7 @@ void UpdateCursorPos(ARMul_State *state,int xscale,int xoffset,int yscale,int yo
   DisplayDev_GetCursorPos(state,&HorizPos,&VertPos);
   HorizPos = HorizPos*xscale+xoffset;
   VertPos = VertPos*yscale+yoffset;
-  
+
   if (Height < 1)
     Height = 1;
 
@@ -703,31 +711,44 @@ void UpdateCursorPos(ARMul_State *state,int xscale,int xoffset,int yscale,int yo
 static void MouseMoved(ARMul_State *state,XMotionEvent *xmotion)
 {
   int xdiff, ydiff;
-  unsigned ScreenWidth  = (VIDC.Horiz_DisplayEnd - VIDC.Horiz_DisplayStart) * 2;
-  unsigned ScreenHeight = VIDC.Vert_DisplayEnd - VIDC.Vert_DisplayStart;
 
-  /* Well the coordinates of the mouse cursor are now in xmotion->x and
-     xmotion->y, I'm going to compare those against the cursor position
-     and transmit the difference.  This can't possibly take care of the OS's
-     hotspot offsets */
+  if ( lastmousemode )
+  {
+    xdiff=(xmotion->x-lastmousex)*4;
+    ydiff=(lastmousey-xmotion->y)*4;
+    lastmousex=xmotion->x;
+    lastmousey=xmotion->y;
+  }
+  else
+  {
+    unsigned ScreenWidth  = (VIDC.Horiz_DisplayEnd - VIDC.Horiz_DisplayStart) * 2;
+    unsigned ScreenHeight = VIDC.Vert_DisplayEnd - VIDC.Vert_DisplayStart;
 
-  /* We are now only using differences from the reference position */
-  if ((xmotion->x == ScreenWidth / 2) && (xmotion->y == ScreenHeight / 2))
-    return;
+    /* Well the coordinates of the mouse cursor are now in xmotion->x and
+       xmotion->y, I'm going to compare those against the cursor position
+       and transmit the difference.  This can't possibly take care of the OS's
+       hotspot offsets */
 
-  /* Keep the mouse pointer under our window */
-  XWarpPointer(PD.disp,
-               None,                               /* src window for relative coords (NOT USED) */
-               PD.MainPane,                        /* Destination window to move cursor in */
-               0, 0,                               /* relative coords (NOT USED) */
-               9999, 9999,                         /* src width and height (NOT USED) */
-               ScreenWidth / 2, ScreenHeight / 2); /* Coordinates in the destination window */
+    /* We are now only using differences from the reference position */
+    if ((xmotion->x == ScreenWidth / 2) && (xmotion->y == ScreenHeight / 2))
+      return;
+
+    /* Keep the mouse pointer under our window */
+    XWarpPointer(PD.disp,
+                 None,                               /* src window for relative coords (NOT USED) */
+                 PD.MainPane,                        /* Destination window to move cursor in */
+                 0, 0,                               /* relative coords (NOT USED) */
+                 9999, 9999,                         /* src width and height (NOT USED) */
+                 ScreenWidth / 2, ScreenHeight / 2); /* Coordinates in the destination window */
 
 #ifdef DEBUG_MOUSEMOVEMENT
-  fprintf(stderr,"MouseMoved: CursorStart=%d xmotion->x=%d\n",
-          VIDC.Horiz_CursorStart,xmotion->x);
+    fprintf(stderr,"MouseMoved: CursorStart=%d xmotion->x=%d\n",
+            VIDC.Horiz_CursorStart,xmotion->x);
 #endif
-  xdiff = xmotion->x - ScreenWidth / 2;
+    xdiff = xmotion->x - ScreenWidth / 2;
+    ydiff = ScreenHeight / 2 - xmotion->y;
+  }
+
   if (KBD.MouseXCount != 0) {
     if (KBD.MouseXCount & 64) {
       signed char tmpC;
@@ -745,7 +766,6 @@ static void MouseMoved(ARMul_State *state,XMotionEvent *xmotion)
   if (xdiff < -63)
     xdiff = -63;
 
-  ydiff = ScreenHeight / 2 - xmotion->y;
   if (KBD.MouseYCount & 64) {
     signed char tmpC;
     tmpC = KBD.MouseYCount | 128; /* Sign extend */
@@ -774,6 +794,8 @@ static void MainPane_Event(ARMul_State *state,XEvent *e) {
     case EnterNotify:
       /*fprintf(stderr,"MainPane: Enter notify!\n"); */
         hostdisplay_change_focus(TRUE);
+        lastmousex=e->xcrossing.x;
+        lastmousey=e->xcrossing.y;
       break;
 
     case LeaveNotify:
@@ -966,7 +988,7 @@ static void *emalloc(size_t n, const char *use)
 static void *ecalloc(size_t n, const char *use)
 {
     void *p;
-    
+
     p = emalloc(n, use);
     memset(p, 0, n);
 
