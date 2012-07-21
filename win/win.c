@@ -14,7 +14,7 @@ HBITMAP cbmp = NULL;
 BITMAPINFO pbmi;
 BITMAPINFO cbmi;
 
-static char	szWindowClass[32] = "GenericClass";
+static char szWindowClass[32] = "GenericClass";
 
 
 static BOOL captureMouse = FALSE;
@@ -28,9 +28,9 @@ static RECT rcOldClip;        // previous area for ClipCursor
 
 int xSize, ySize;
 
-ATOM			MyRegisterClass(HINSTANCE hInstance);
-BOOL			InitInstance(HINSTANCE, int);
-LRESULT CALLBACK	WndProc(HWND, UINT, WPARAM, LPARAM);
+ATOM            MyRegisterClass(HINSTANCE hInstance);
+BOOL            InitInstance(HINSTANCE, int);
+LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 BOOL    CALLBACK AboutDlgProc (HWND, UINT, WPARAM, LPARAM);
 
 static MSG msg;
@@ -55,44 +55,44 @@ int buttF = 0;
 
 static DWORD WINAPI threadWindow(LPVOID param)
 {
-	hInst = GetModuleHandle(NULL);
+    hInst = GetModuleHandle(NULL);
 
-	MyRegisterClass((HINSTANCE)hInst);
+    MyRegisterClass((HINSTANCE)hInst);
 
-	// Perform application initialization:
-	if (!InitInstance ((HINSTANCE) hInst, SW_SHOWDEFAULT)) {
-		return FALSE;
-	}
+    // Perform application initialization:
+    if (!InitInstance ((HINSTANCE) hInst, SW_SHOWDEFAULT)) {
+        return FALSE;
+    }
 
 
-	// Main message loop:
-	while (GetMessage(&msg, NULL, 0, 0)) {
-		TranslateMessage(&msg);
-		DispatchMessage(&msg);
-	}
+    // Main message loop:
+    while (GetMessage(&msg, NULL, 0, 0)) {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
 
-	return 0;
+    return 0;
 }
 
 ATOM MyRegisterClass(HINSTANCE hInstance)
 {
-	WNDCLASSEX wcex;
+    WNDCLASSEX wcex;
 
-	wcex.cbSize = sizeof(WNDCLASSEX); 
+    wcex.cbSize = sizeof(WNDCLASSEX);
 
-	wcex.style         = CS_HREDRAW | CS_VREDRAW;
-	wcex.lpfnWndProc   = (WNDPROC)WndProc;
-	wcex.cbClsExtra    = 0;
-	wcex.cbWndExtra    = 0;
-	wcex.hInstance     = hInstance;
-	wcex.hIcon         = LoadIcon(hInstance, "GuiIcon");
-	wcex.hCursor       = LoadCursor(NULL, IDC_ARROW);
-	wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW+1);
-	wcex.lpszMenuName  = "GuiMenu";
-	wcex.lpszClassName = szWindowClass;
-	wcex.hIconSm       = NULL; //LoadIcon(wcex.hInstance, (LPCTSTR)IDI_SMALL);
+    wcex.style         = CS_HREDRAW | CS_VREDRAW;
+    wcex.lpfnWndProc   = (WNDPROC)WndProc;
+    wcex.cbClsExtra    = 0;
+    wcex.cbWndExtra    = 0;
+    wcex.hInstance     = hInstance;
+    wcex.hIcon         = LoadIcon(hInstance, "GuiIcon");
+    wcex.hCursor       = LoadCursor(NULL, IDC_ARROW);
+    wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW+1);
+    wcex.lpszMenuName  = "GuiMenu";
+    wcex.lpszClassName = szWindowClass;
+    wcex.hIconSm       = NULL; //LoadIcon(wcex.hInstance, (LPCTSTR)IDI_SMALL);
 
-	return RegisterClassEx(&wcex);
+    return RegisterClassEx(&wcex);
 }
 
 //
@@ -108,18 +108,18 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
    mainWin = CreateWindow( szWindowClass,
-			"Archimedes Emulator",
-			WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX, //WS_OVERLAPPEDWINDOW,
-			CW_USEDEFAULT, 
-			CW_USEDEFAULT,
-			xSize + GetSystemMetrics(SM_CXFIXEDFRAME) * 2,
-			ySize + GetSystemMetrics(SM_CYFIXEDFRAME) * 2
-			+ GetSystemMetrics(SM_CYCAPTION)
-			+ GetSystemMetrics(SM_CYMENU),
-			NULL,
-			NULL,
-			hInstance,
-			NULL);
+            "Archimedes Emulator",
+            WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX, //WS_OVERLAPPEDWINDOW,
+            CW_USEDEFAULT,
+            CW_USEDEFAULT,
+            xSize + GetSystemMetrics(SM_CXFIXEDFRAME) * 2,
+            ySize + GetSystemMetrics(SM_CYFIXEDFRAME) * 2
+            + GetSystemMetrics(SM_CYCAPTION)
+            + GetSystemMetrics(SM_CYMENU),
+            NULL,
+            NULL,
+            hInstance,
+            NULL);
 
    if (!mainWin)
    {
@@ -137,9 +137,9 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 //
 //  PURPOSE:  Processes messages for the main window.
 //
-//  WM_COMMAND	- process the application menu
-//  WM_PAINT	- Paint the main window
-//  WM_DESTROY	- post a quit message and return
+//  WM_COMMAND  - process the application menu
+//  WM_PAINT    - Paint the main window
+//  WM_DESTROY  - post a quit message and return
 //
 //
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -148,11 +148,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
   PAINTSTRUCT ps;
   HDC hdc;
 
-  switch (message) 
+  switch (message)
   {
     case WM_COMMAND:
-      wmId    = LOWORD(wParam); 
-      wmEvent = HIWORD(wParam); 
+      wmId    = LOWORD(wParam);
+      wmEvent = HIWORD(wParam);
       // Parse the menu selections:
       switch (wmId)
       {
@@ -189,8 +189,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
       }
 
       EndPaint(hWnd, &ps);
-		}
-		break;
+        }
+        break;
 
 
     case WM_DESTROY:
@@ -199,98 +199,98 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
       break;
 
 
-		case WM_KEYDOWN:
-			nVirtKey = (TCHAR) wParam;    // character code 
+        case WM_KEYDOWN:
+            nVirtKey = (TCHAR) wParam;    // character code
 
       if (nVirtKey == VK_ADD) {
         captureMouse = !captureMouse;
         if (captureMouse) {
-          GetClipCursor(&rcOldClip); 
-          GetWindowRect(hWnd, &rcClip); 
+          GetClipCursor(&rcOldClip);
+          GetWindowRect(hWnd, &rcClip);
           ClipCursor(&rcClip);
           SetCursor(NULL);
         } else {
-          ClipCursor(&rcOldClip); 	
+          ClipCursor(&rcOldClip);
         }
-        break;  
+        break;
       }
 
-			lKeyData = lParam;              // key data 
-			nKeyStat = 0;
-			keyF = 1;
-			break;
+            lKeyData = lParam;              // key data
+            nKeyStat = 0;
+            keyF = 1;
+            break;
 
 
-		case WM_KEYUP:
-			nVirtKey = (TCHAR) wParam;    // character code 
-			lKeyData = lParam;              // key data 
-			nKeyStat = 1;
-			keyF = 1;
-			break;
+        case WM_KEYUP:
+            nVirtKey = (TCHAR) wParam;    // character code
+            lKeyData = lParam;              // key data
+            nKeyStat = 1;
+            keyF = 1;
+            break;
 
 
-		case WM_MOUSEMOVE:						
+        case WM_MOUSEMOVE:
 
-			if (mouseMF == 0) {
-			  nMouseX = LOWORD(lParam);  // horizontal position of cursor 
+            if (mouseMF == 0) {
+              nMouseX = LOWORD(lParam);  // horizontal position of cursor
         if (captureMouse) {
           nMouseX *= 2;
         }
 
-        nMouseY = HIWORD(lParam);  // vertical position of cursor 
+        nMouseY = HIWORD(lParam);  // vertical position of cursor
         if (captureMouse) {
           nMouseY *= 2;
         }
-			}
+            }
 
-			if (captureMouse) {
-			  SetCursor(NULL);
-			}
+            if (captureMouse) {
+              SetCursor(NULL);
+            }
 
-			mouseMF = 1;
+            mouseMF = 1;
 
-			break;
-
-
-		case WM_LBUTTONDOWN:
-			nButton = 0x00;
-			buttF = 1;
-			break;
+            break;
 
 
-		case WM_MBUTTONDOWN:
-			nButton = 0x01;
-			buttF = 1;
-			break;
+        case WM_LBUTTONDOWN:
+            nButton = 0x00;
+            buttF = 1;
+            break;
 
 
-		case WM_RBUTTONDOWN:
-			nButton = 0x02;
-			buttF = 1;
-			break;
+        case WM_MBUTTONDOWN:
+            nButton = 0x01;
+            buttF = 1;
+            break;
 
 
-		case WM_LBUTTONUP:
-			nButton = 0x80;
-			buttF = 1;
-			break;
+        case WM_RBUTTONDOWN:
+            nButton = 0x02;
+            buttF = 1;
+            break;
 
 
-		case WM_MBUTTONUP:
-			nButton = 0x81;
-			buttF = 1;
-			break;
+        case WM_LBUTTONUP:
+            nButton = 0x80;
+            buttF = 1;
+            break;
 
 
-		case WM_RBUTTONUP:
-			nButton = 0x82;
-			buttF = 1;
-			break;
+        case WM_MBUTTONUP:
+            nButton = 0x81;
+            buttF = 1;
+            break;
+
+
+        case WM_RBUTTONUP:
+            nButton = 0x82;
+            buttF = 1;
+            break;
 
     case 0x020A: //WM_MOUSEWHEEL:
       {
         int iMouseWheelValue = wParam;
-  
+
         // You can tell whether it's up or down by checking it's
         // positive or negative, to work out the extent you use
         // HIWORD(wParam), but we don't need that.
@@ -308,18 +308,18 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
       }
       break;
 
-		case WM_SETCURSOR:
+        case WM_SETCURSOR:
 
       if (captureMouse) {
-			  SetCursor(NULL);
+              SetCursor(NULL);
       } else {
-			  SetCursor(LoadCursor(NULL, IDC_ARROW));
+              SetCursor(LoadCursor(NULL, IDC_ARROW));
       }
-			break;
+            break;
 
 
-		default:
-			return DefWindowProc(hWnd, message, wParam, lParam);
+        default:
+            return DefWindowProc(hWnd, message, wParam, lParam);
    }
    return TRUE;
 }
@@ -330,23 +330,23 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
  */
 BOOL CALLBACK AboutDlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam)
 {
-	switch (iMsg)
-	{
-	case WM_INITDIALOG :
-		return TRUE ;
-		
-	case WM_COMMAND :
-		switch (LOWORD (wParam))
-		{
-		case IDOK :
-		case IDCANCEL :
-			EndDialog (hDlg, 0) ;
-			return TRUE ;
-		}
-		break ;
-	}
-	return FALSE ;
-} 
+    switch (iMsg)
+    {
+    case WM_INITDIALOG :
+        return TRUE ;
+
+    case WM_COMMAND :
+        switch (LOWORD (wParam))
+        {
+        case IDOK :
+        case IDCANCEL :
+            EndDialog (hDlg, 0) ;
+            return TRUE ;
+        }
+        break ;
+    }
+    return FALSE ;
+}
 
 /**
  * createWindow (IMPROVE rename, as it doesn't create a window)
@@ -441,10 +441,10 @@ int resizeWindow(int hWidth, int hHeight)
 
   w = hWidth  + GetSystemMetrics(SM_CXFIXEDFRAME) * 2;
   h = hHeight + GetSystemMetrics(SM_CYFIXEDFRAME) * 2
-	    + GetSystemMetrics(SM_CYCAPTION)
+        + GetSystemMetrics(SM_CYCAPTION)
       + GetSystemMetrics(SM_CYMENU);
 
-  MoveWindow(mainWin, r.left,	r.top, w, h, TRUE);
+  MoveWindow(mainWin, r.left,   r.top, w, h, TRUE);
 
   return 0;
 }
