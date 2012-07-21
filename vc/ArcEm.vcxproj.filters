@@ -1,0 +1,149 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="arch">
+      <UniqueIdentifier>{476c4bd5-d3b6-4413-95a3-52db2bfb2451}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="win">
+      <UniqueIdentifier>{bd6365f3-4e60-41c7-b7c6-df4c786223c8}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\armcopro.c" />
+    <ClCompile Include="..\armemu.c" />
+    <ClCompile Include="..\arminit.c" />
+    <ClCompile Include="..\armsupp.c" />
+    <ClCompile Include="..\eventq.c" />
+    <ClCompile Include="..\main.c" />
+    <ClCompile Include="..\arch\ArcemConfig.c">
+      <Filter>arch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\archio.c">
+      <Filter>arch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\armarc.c">
+      <Filter>arch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\cp15.c">
+      <Filter>arch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\displaydev.c">
+      <Filter>arch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\extnrom.c">
+      <Filter>arch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\fdc1772.c">
+      <Filter>arch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\filecommon.c">
+      <Filter>arch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\hdc63463.c">
+      <Filter>arch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\i2c.c">
+      <Filter>arch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\keyboard.c">
+      <Filter>arch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\newsound.c">
+      <Filter>arch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\ReadConfig.c">
+      <Filter>arch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\win\ControlPane.c">
+      <Filter>win</Filter>
+    </ClCompile>
+    <ClCompile Include="..\win\DispKbd.c">
+      <Filter>win</Filter>
+    </ClCompile>
+    <ClCompile Include="..\win\filecalls.c">
+      <Filter>win</Filter>
+    </ClCompile>
+    <ClCompile Include="..\win\win.c">
+      <Filter>win</Filter>
+    </ClCompile>
+    <ClCompile Include="..\dagstandalone.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\armdefs.h" />
+    <ClInclude Include="..\armemu.h" />
+    <ClInclude Include="..\c99.h" />
+    <ClInclude Include="..\eventq.h" />
+    <ClInclude Include="..\arch\ArcemConfig.h">
+      <Filter>arch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\arch\archio.h">
+      <Filter>arch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\arch\armarc.h">
+      <Filter>arch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\arch\ControlPane.h">
+      <Filter>arch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\arch\cp15.h">
+      <Filter>arch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\arch\dbugsys.h">
+      <Filter>arch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\arch\displaydev.h">
+      <Filter>arch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\arch\extnrom.h">
+      <Filter>arch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\arch\fdc1772.h">
+      <Filter>arch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\arch\filecalls.h">
+      <Filter>arch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\arch\hdc63463.h">
+      <Filter>arch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\arch\i2c.h">
+      <Filter>arch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\arch\keyboard.h">
+      <Filter>arch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\arch\ReadConfig.h">
+      <Filter>arch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\arch\sound.h">
+      <Filter>arch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\arch\Version.h">
+      <Filter>arch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\win\filecalls_internal.h">
+      <Filter>win</Filter>
+    </ClInclude>
+    <ClInclude Include="..\win\gui.h">
+      <Filter>win</Filter>
+    </ClInclude>
+    <ClInclude Include="..\win\KeyTable.h">
+      <Filter>win</Filter>
+    </ClInclude>
+    <ClInclude Include="..\win\win.h">
+      <Filter>win</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dagstandalone.h" />
+    <ClInclude Include="..\win\resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\win\arc.ico">
+      <Filter>win</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="..\win\gui.rc">
+      <Filter>win</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>

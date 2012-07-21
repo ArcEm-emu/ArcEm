@@ -1,0 +1,143 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{FFDD4A41-730E-4BB4-BEF2-187A5D158ACC}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>ArcEm</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v100</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>NOOS;NOFPE;EXTNROM_SUPPORT;SYSTEM_win;_CRT_SECURE_NO_WARNINGS;WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\arch;..\win;..</AdditionalIncludeDirectories>
+      <CompileAs>Default</CompileAs>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>NOOS;NOFPE;EXTNROM_SUPPORT;SYSTEM_win;_CRT_SECURE_NO_WARNINGS;WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <AdditionalIncludeDirectories>..\arch;..\win;..</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\arch\ArcemConfig.c" />
+    <ClCompile Include="..\arch\archio.c" />
+    <ClCompile Include="..\arch\armarc.c" />
+    <ClCompile Include="..\arch\cp15.c" />
+    <ClCompile Include="..\arch\displaydev.c" />
+    <ClCompile Include="..\arch\extnrom.c" />
+    <ClCompile Include="..\arch\fdc1772.c" />
+    <ClCompile Include="..\arch\filecommon.c" />
+    <ClCompile Include="..\arch\hdc63463.c" />
+    <ClCompile Include="..\arch\i2c.c" />
+    <ClCompile Include="..\arch\keyboard.c" />
+    <ClCompile Include="..\arch\newsound.c" />
+    <ClCompile Include="..\arch\ReadConfig.c" />
+    <ClCompile Include="..\armcopro.c" />
+    <ClCompile Include="..\armemu.c" />
+    <ClCompile Include="..\arminit.c" />
+    <ClCompile Include="..\armsupp.c" />
+    <ClCompile Include="..\dagstandalone.c" />
+    <ClCompile Include="..\eventq.c" />
+    <ClCompile Include="..\main.c" />
+    <ClCompile Include="..\win\ControlPane.c" />
+    <ClCompile Include="..\win\DispKbd.c" />
+    <ClCompile Include="..\win\filecalls.c" />
+    <ClCompile Include="..\win\win.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\arch\ArcemConfig.h" />
+    <ClInclude Include="..\arch\archio.h" />
+    <ClInclude Include="..\arch\armarc.h" />
+    <ClInclude Include="..\arch\ControlPane.h" />
+    <ClInclude Include="..\arch\cp15.h" />
+    <ClInclude Include="..\arch\dbugsys.h" />
+    <ClInclude Include="..\arch\displaydev.h" />
+    <ClInclude Include="..\arch\extnrom.h" />
+    <ClInclude Include="..\arch\fdc1772.h" />
+    <ClInclude Include="..\arch\filecalls.h" />
+    <ClInclude Include="..\arch\hdc63463.h" />
+    <ClInclude Include="..\arch\i2c.h" />
+    <ClInclude Include="..\arch\keyboard.h" />
+    <ClInclude Include="..\arch\ReadConfig.h" />
+    <ClInclude Include="..\arch\sound.h" />
+    <ClInclude Include="..\arch\Version.h" />
+    <ClInclude Include="..\armdefs.h" />
+    <ClInclude Include="..\armemu.h" />
+    <ClInclude Include="..\c99.h" />
+    <ClInclude Include="..\dagstandalone.h" />
+    <ClInclude Include="..\eventq.h" />
+    <ClInclude Include="..\win\filecalls_internal.h" />
+    <ClInclude Include="..\win\gui.h" />
+    <ClInclude Include="..\win\KeyTable.h" />
+    <ClInclude Include="..\win\resource.h" />
+    <ClInclude Include="..\win\win.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\win\arc.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="..\win\gui.rc" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
