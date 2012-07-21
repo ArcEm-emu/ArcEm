@@ -320,11 +320,12 @@ void Kbd_CodeFromHost(ARMul_State *state, uint8_t FromHost)
 
 void Keyboard_Poll(ARMul_State *state,CycleCount nowtime)
 {
+  int KbdSerialVal;
   EventQ_RescheduleHead(state,nowtime+12500,Keyboard_Poll); /* TODO - Should probably be realtime */
   /* Call host-specific routine */
   Kbd_PollHostKbd(state);
   /* Keyboard check */
-  int KbdSerialVal = IOC_ReadKbdTx(state);
+  KbdSerialVal = IOC_ReadKbdTx(state);
   if (KbdSerialVal != -1) {
     Kbd_CodeFromHost(state, (uint8_t) KbdSerialVal);
   } else {

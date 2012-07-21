@@ -217,12 +217,12 @@ void BitCopy(ARMword *dest,int destalign,const ARMword *src,int srcalign,int cou
   ARMword tempsrc2 = *src++;
   if(destalign)
   {
-    ARMword tempdest = EndianSwap(*dest);
+    ARMword tempsrc3, tempdest = EndianSwap(*dest);
 
     ARMword mask = (count<=invdestalign?(1<<count):0)-1;
     mask = mask<<destalign;
     tempdest &= ~mask;
-    ARMword tempsrc3 = (tempsrc1>>srcalign);
+    tempsrc3 = (tempsrc1>>srcalign);
     if(srcalign)
       tempsrc3 |= (tempsrc2<<invsrcalign);
     tempdest |= (tempsrc1<<destalign) & mask;
@@ -295,8 +295,7 @@ int GetExpandTableSize(unsigned int srcbpp,unsigned int factor)
   unsigned int pixels = 1;
   while((destbpp*pixels < 32) && (srcbpp*pixels < 8))
     pixels <<= 1; /* Should only need to consider powers of two */
-  unsigned int srcbits = 1<<(srcbpp*pixels);
-  return srcbits;
+  return 1<<(srcbpp*pixels);
 }
 
 /*
@@ -312,12 +311,12 @@ int GetExpandTableSize(unsigned int srcbpp,unsigned int factor)
 
 void GenExpandTable(ARMword *dest,unsigned int srcbpp,unsigned int factor,ARMword mul)
 {
-  unsigned int destbpp = srcbpp<<factor;
+  ARMword i,j;
+  unsigned int srcbits, destbpp = srcbpp<<factor;
   unsigned int pixels = 1;
   while((destbpp*pixels < 32) && (srcbpp*pixels < 8))
     pixels <<= 1;
-  unsigned int srcbits = 1<<(srcbpp*pixels);
-  ARMword i,j;
+  srcbits = 1<<(srcbpp*pixels);
   for(i=0;i<srcbits;i++)
   {
     ARMword out = 0;
@@ -346,25 +345,28 @@ void GenExpandTable(ARMword *dest,unsigned int srcbpp,unsigned int factor,ARMwor
 
 void BitCopyExpand(ARMword *dest,int destalign,const ARMword *src,int srcalign,int count,const ARMword *expandtable,unsigned int srcbpp,unsigned int factor)
 {
+  int invdestalign, invsrcalign; 
+  ARMword srcmask, tempsrc1, tempsrc2;
+  unsigned int srcbits, destbits;
   unsigned int destbpp = srcbpp<<factor;
   unsigned int pixels = 1;
   while((destbpp*pixels < 32) && (srcbpp*pixels < 8))
     pixels <<= 1;
-  unsigned int srcbits = srcbpp*pixels;
-  unsigned int destbits = destbpp*pixels;
-  ARMword srcmask = (1<<srcbits)-1;
+  srcbits = srcbpp*pixels;
+  destbits = destbpp*pixels;
+  srcmask = (1<<srcbits)-1;
   /* Get the destination word aligned */
-  int invdestalign = 32-destalign;
-  int invsrcalign = 32-srcalign;
-  ARMword tempsrc1 = *src++;
-  ARMword tempsrc2 = *src++;
+  invdestalign = 32-destalign;
+  invsrcalign = 32-srcalign;
+  tempsrc1 = *src++;
+  tempsrc2 = *src++;
   if(destalign)
   {
-    ARMword tempdest = EndianSwap(*dest);
+    ARMword tempsrc3, tempdest = EndianSwap(*dest);
     ARMword destmask = (count<=invdestalign?(1<<count):0)-1;
     destmask = destmask<<destalign;
     tempdest &= ~destmask;
-    ARMword tempsrc3 = (tempsrc1>>srcalign);
+    tempsrc3 = (tempsrc1>>srcalign);
     if(srcalign)
       tempsrc3 |= (tempsrc2<<invsrcalign);
     while(destalign < 32)
@@ -389,13 +391,13 @@ void BitCopyExpand(ARMword *dest,int destalign,const ARMword *src,int srcalign,i
   {
     /* Table isn't big enough for us to get one full word per entry */
     ARMword tempsrc3 = (tempsrc1>>srcalign);
-    if(srcalign)
-      tempsrc3 |= (tempsrc2<<invsrcalign);
     int remaining = 32;
     ARMword tempdest = 0;
     int outshift = 0;
     /* There will be (count<<factor)>>5 full words available, and we want to stop when there's less than one full word left */
     int bitsleft = (count<<factor)&0x1f; 
+    if(srcalign)
+      tempsrc3 |= (tempsrc2<<invsrcalign);
     while(count > bitsleft)
     {
       tempdest |= expandtable[tempsrc3 & srcmask]<<outshift;
@@ -428,12 +430,12 @@ void BitCopyExpand(ARMword *dest,int destalign,const ARMword *src,int srcalign,i
   }
   else
   {
+    int remaining = 32;
     /* One output word for every srcbits */
     ARMword tempsrc3 = (tempsrc1>>srcalign);
     if(srcalign)
       tempsrc3 |= (tempsrc2<<invsrcalign);
-    int remaining = 32;
-    while(count >= srcbits)
+    while(count >= (int)srcbits)
     {
       *dest++ = EndianSwap(expandtable[tempsrc3 & srcmask]);
       tempsrc3 >>= srcbits;
@@ -461,11 +463,11 @@ void BitCopyExpand(ARMword *dest,int destalign,const ARMword *src,int srcalign,i
     /* End bits */
     ARMword tempdest = EndianSwap(*dest);
     ARMword destmask = 0xffffffff<<(count<<factor);
-    tempdest &= destmask;
     ARMword tempsrc3 = (tempsrc1>>srcalign);
+    int outshift = 0;
+    tempdest &= destmask;
     if(srcalign)
       tempsrc3 |= (tempsrc2<<invsrcalign);
-    int outshift = 0;
     while(count)
     {    
       ARMword in = expandtable[tempsrc3 & ((1<<srcbpp)-1)]; /* One pixel at a time for simplicity */

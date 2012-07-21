@@ -476,17 +476,19 @@ static void Sound_Process(ARMul_State *state,int32_t avail)
 
 static void Sound_DMAEvent(ARMul_State *state,CycleCount nowtime)
 {
+  int32_t srcbatchsize, avail;
+  CycleCount next;
   Sound_UpdateDMARate(state);
 #ifdef SOUND_SUPPORT
   /* Work out how many source samples are required to generate Sound_BatchSize dest samples */
-  int32_t srcbatchsize = (Sound_BatchSize*soundTimeStep)>>TIMESHIFT;
+  srcbatchsize = (Sound_BatchSize*soundTimeStep)>>TIMESHIFT;
   if(!srcbatchsize)
     srcbatchsize = 1;
 #else
-  int srcbatchsize = 4;
+  srcbatchsize = 4;
 #endif
   /* How many DMA fetches are possible? */
-  int32_t avail = 0;
+  avail = 0;
   if(MEMC.ControlReg & (1 << 11))
   {
     /* Trigger any pending buffer swap */
@@ -528,7 +530,7 @@ static void Sound_DMAEvent(ARMul_State *state,CycleCount nowtime)
 #endif
   /* Work out when to reschedule the event
      TODO - This is wrong; there's no guarantee the host accepted all the data we wanted to give him */
-  CycleCount next = Sound_DMARate*(avail?avail:srcbatchsize)+Sound_FudgeRate;
+  next = Sound_DMARate*(avail?avail:srcbatchsize)+Sound_FudgeRate;
   /* Clamp to a safe minimum value */
   if(next < 100)
     next = 100;

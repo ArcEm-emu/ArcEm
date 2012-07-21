@@ -1,7 +1,7 @@
 #ifndef FASTMAP_INLINE
 #define FASTMAP_FUNC
 #else
-#define FASTMAP_FUNC static inline
+#define FASTMAP_FUNC static
 #endif
 
 /**
@@ -15,11 +15,14 @@
  */
 FASTMAP_FUNC ARMword ARMul_LoadWordS(ARMul_State *state,ARMword address)
 {
+    FastMapEntry *entry;
+    FastMapRes res;
+
 	state->NumCycles++;
 	address &= UINT32_C(0x3ffffff);
 
-	FastMapEntry *entry = FastMap_GetEntryNoWrap(state,address);
-	FastMapRes res = FastMap_DecodeRead(entry,state->FastMapMode);
+	entry = FastMap_GetEntryNoWrap(state,address);
+	res = FastMap_DecodeRead(entry,state->FastMapMode);
 	ARMul_CLEARABORT; /* More likely to clear the abort than not */
 	if(FASTMAP_RESULT_DIRECT(res))
 	{
@@ -47,11 +50,14 @@ FASTMAP_FUNC ARMword ARMul_LoadWordS(ARMul_State *state,ARMword address)
  */
 FASTMAP_FUNC ARMword ARMul_LoadByte(ARMul_State *state,ARMword address)
 {
+    FastMapEntry *entry;
+    FastMapRes res;
+
 	state->NumCycles++;
 	address &= UINT32_C(0x3ffffff);
 
-	FastMapEntry *entry = FastMap_GetEntryNoWrap(state,address);
-	FastMapRes res = FastMap_DecodeRead(entry,state->FastMapMode);
+	entry = FastMap_GetEntryNoWrap(state,address);
+	res = FastMap_DecodeRead(entry,state->FastMapMode);
 	ARMul_CLEARABORT; /* More likely to clear the abort than not */
 	if(FASTMAP_RESULT_DIRECT(res))
 	{
@@ -82,11 +88,14 @@ FASTMAP_FUNC ARMword ARMul_LoadByte(ARMul_State *state,ARMword address)
  */
 FASTMAP_FUNC void ARMul_StoreWordS(ARMul_State *state, ARMword address, ARMword data)
 {
+    FastMapEntry *entry;
+    FastMapRes res;
+
 	state->NumCycles++;
 	address &= UINT32_C(0x3ffffff);
 
-	FastMapEntry *entry = FastMap_GetEntryNoWrap(state,address);
-	FastMapRes res = FastMap_DecodeWrite(entry,state->FastMapMode);
+	entry = FastMap_GetEntryNoWrap(state,address);
+	res = FastMap_DecodeWrite(entry,state->FastMapMode);
 //  fprintf(stderr,"StoreWordS: %08x maps to entry %08x res %08x (mode %08x pc %08x)\n",address,entry,res,MEMC.FastMapMode,state->Reg[15]);
 	ARMul_CLEARABORT;
 	if(FASTMAP_RESULT_DIRECT(res))
@@ -116,11 +125,14 @@ FASTMAP_FUNC void ARMul_StoreWordS(ARMul_State *state, ARMword address, ARMword 
  */
 FASTMAP_FUNC void ARMul_StoreByte(ARMul_State *state, ARMword address, ARMword data)
 {
+    FastMapEntry *entry;
+    FastMapRes res;
+
 	state->NumCycles++;
 	address &= UINT32_C(0x3ffffff);
 
-	FastMapEntry *entry = FastMap_GetEntryNoWrap(state,address);
-	FastMapRes res = FastMap_DecodeWrite(entry,state->FastMapMode);
+	entry = FastMap_GetEntryNoWrap(state,address);
+	res = FastMap_DecodeWrite(entry,state->FastMapMode);
 	ARMul_CLEARABORT;
 	if(FASTMAP_RESULT_DIRECT(res))
 	{
@@ -153,13 +165,15 @@ FASTMAP_FUNC void ARMul_StoreByte(ARMul_State *state, ARMword address, ARMword d
  */
 FASTMAP_FUNC ARMword ARMul_SwapWord(ARMul_State *state, ARMword address, ARMword data)
 {
+    FastMapEntry *entry;
+    FastMapRes res;
 	ARMword temp;
 
 	state->NumCycles+=2;
 	address &= UINT32_C(0x3ffffff);
 
-	FastMapEntry *entry = FastMap_GetEntryNoWrap(state,address);
-	FastMapRes res = FastMap_DecodeWrite(entry,state->FastMapMode);
+	entry = FastMap_GetEntryNoWrap(state,address);
+	res = FastMap_DecodeWrite(entry,state->FastMapMode);
 	ARMul_CLEARABORT;
 	if(FASTMAP_RESULT_DIRECT(res))
 	{
@@ -180,6 +194,7 @@ FASTMAP_FUNC ARMword ARMul_SwapWord(ARMul_State *state, ARMword address, ARMword
 	{
 		state->NumCycles--;
 		ARMul_DATAABORT(address);
+        return -1;
 	}
 }
 
@@ -195,13 +210,15 @@ FASTMAP_FUNC ARMword ARMul_SwapWord(ARMul_State *state, ARMword address, ARMword
  */
 FASTMAP_FUNC ARMword ARMul_SwapByte(ARMul_State *state, ARMword address, ARMword data)
 {
+    FastMapEntry *entry;
+    FastMapRes res;
 	ARMword temp;
 
 	state->NumCycles+=2;
 	address &= UINT32_C(0x3ffffff);
 
-	FastMapEntry *entry = FastMap_GetEntryNoWrap(state,address);
-	FastMapRes res = FastMap_DecodeWrite(entry,state->FastMapMode);
+	entry = FastMap_GetEntryNoWrap(state,address);
+	res = FastMap_DecodeWrite(entry,state->FastMapMode);
 	ARMul_CLEARABORT;
 	if(FASTMAP_RESULT_DIRECT(res))
 	{
@@ -225,5 +242,6 @@ FASTMAP_FUNC ARMword ARMul_SwapByte(ARMul_State *state, ARMword address, ARMword
 	{
 		state->NumCycles--;
 		ARMul_DATAABORT(address);
+        return -1;
 	}
 }

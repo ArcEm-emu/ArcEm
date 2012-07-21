@@ -16,6 +16,14 @@
 /* For now, assume we're using a C99 compiler */
 
 #include <stdint.h>
+
+#ifdef _MSC_VER
+#define inline __inline
+typedef unsigned char bool;
+#define true 1
+#define false 0
+#else
 #include <stdbool.h>
+#endif
 
 #endif

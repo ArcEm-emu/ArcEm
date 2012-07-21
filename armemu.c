@@ -41,13 +41,15 @@ extern PipelineEntry abortpipe;
 static inline void
 ARMul_LoadInstr(ARMul_State *state,ARMword addr, PipelineEntry *p)
 {
+  FastMapEntry *entry;
+  FastMapRes res;
   state->NumCycles++;
   addr &= 0x3fffffc;
 
   ARMul_CLEARABORT;
   
-  FastMapEntry *entry = FastMap_GetEntryNoWrap(state,addr);
-  FastMapRes res = FastMap_DecodeRead(entry,state->FastMapMode);
+  entry = FastMap_GetEntryNoWrap(state,addr);
+  res = FastMap_DecodeRead(entry,state->FastMapMode);
 //  fprintf(stderr,"LoadInstr: %08x maps to entry %08x res %08x (mode %08x pc %08x)\n",addr,entry,res,MEMC.FastMapMode,state->Reg[15]);
   if(FASTMAP_RESULT_DIRECT(res))
   {
@@ -89,6 +91,9 @@ ARMul_LoadInstr(ARMul_State *state,ARMword addr, PipelineEntry *p)
 static void
 ARMul_LoadInstrTriplet(ARMul_State *state,ARMword addr,PipelineEntry *p)
 {
+  FastMapEntry *entry;
+  FastMapRes res;
+
   if (((uint32_t) (addr << 20)) > 0xff000000) {
     ARMul_LoadInstr(state,addr,p);
     ARMul_LoadInstr(state,addr+4,p+1);
@@ -101,8 +106,8 @@ ARMul_LoadInstrTriplet(ARMul_State *state,ARMword addr,PipelineEntry *p)
 
   ARMul_CLEARABORT;
   
-  FastMapEntry *entry = FastMap_GetEntryNoWrap(state,addr);
-  FastMapRes res = FastMap_DecodeRead(entry,state->FastMapMode);
+  entry = FastMap_GetEntryNoWrap(state,addr);
+  res = FastMap_DecodeRead(entry,state->FastMapMode);
   if(FASTMAP_RESULT_DIRECT(res))
   {
     ARMword *data = FastMap_Log2Phy(entry,addr);
@@ -221,69 +226,73 @@ typedef ARMword (*RHSFunc)(ARMul_State *state,ARMword instr,ARMword base);
 
 static ARMword RHSFunc_LSL_Imm(ARMul_State *state,ARMword instr,ARMword base)
 {
-  base = state->Reg[base];
   ARMword shamt = BITS(7,11);
+  base = state->Reg[base];
   return base<<shamt;
 }
 
 static ARMword RHSFunc_LSR_Imm(ARMul_State *state,ARMword instr,ARMword base)
 {
-  base = state->Reg[base];
   ARMword shamt = BITS(7,11);
+  base = state->Reg[base];
   return (shamt?base>>shamt:0);
 }
 
 static ARMword RHSFunc_ASR_Imm(ARMul_State *state,ARMword instr,ARMword base)
 {
-  base = state->Reg[base];
   ARMword shamt = BITS(7,11);
+  base = state->Reg[base];
   return (shamt?((ARMword)((int32_t)base>>(int)shamt)):((ARMword)((int32_t)base>>31L)));
 }
 
 static ARMword RHSFunc_ROR_Imm(ARMul_State *state,ARMword instr,ARMword base)
 {
-  base = state->Reg[base];
   ARMword shamt = BITS(7,11);
+  base = state->Reg[base];
   return (shamt?((base << (32 - shamt)) | (base >> shamt)):((base >> 1) | (CFLAG << 31)));
 }
 
 static ARMword RHSFunc_LSL_Reg(ARMul_State *state,ARMword instr,ARMword base)
 {
+    ARMword shamt;
     UNDEF_Shift;
     INCPC;
     base = state->Reg[base];
     ARMul_Icycles(state,1);
-    ARMword shamt = state->Reg[BITS(8,11)] & 0xff;
+    shamt = state->Reg[BITS(8,11)] & 0xff;
   return (shamt>=32?0:base<<shamt);
 }
 
 static ARMword RHSFunc_LSR_Reg(ARMul_State *state,ARMword instr,ARMword base)
 {
+    ARMword shamt;
     UNDEF_Shift;
     INCPC;
     base = state->Reg[base];
     ARMul_Icycles(state,1);
-    ARMword shamt = state->Reg[BITS(8,11)] & 0xff;
+    shamt = state->Reg[BITS(8,11)] & 0xff;
   return (shamt>=32?0:base>>shamt);
 }
 
 static ARMword RHSFunc_ASR_Reg(ARMul_State *state,ARMword instr,ARMword base)
 {
+    ARMword shamt;
     UNDEF_Shift;
     INCPC;
     base = state->Reg[base];
     ARMul_Icycles(state,1);
-    ARMword shamt = state->Reg[BITS(8,11)] & 0xff;
+    shamt = state->Reg[BITS(8,11)] & 0xff;
   return (shamt<32?((ARMword)((int32_t)base>>(int)shamt)):((ARMword)((int32_t)base>>31L)));
 }
 
 static ARMword RHSFunc_ROR_Reg(ARMul_State *state,ARMword instr,ARMword base)
 {
+    ARMword shamt;
     UNDEF_Shift;
     INCPC;
     base = state->Reg[base];
     ARMul_Icycles(state,1);
-    ARMword shamt = state->Reg[BITS(8,11)] & 0x1f;
+    shamt = state->Reg[BITS(8,11)] & 0x1f;
   return ((base << (32 - shamt)) | (base >> shamt));
 }
 
@@ -645,11 +654,12 @@ static void LoadMult(ARMul_State *state, ARMword instr,
        FastMapRes res = FastMap_DecodeRead(entry,state->FastMapMode);
        if(FASTMAP_RESULT_DIRECT(res))
        {
+           ARMword *data, count;
           /* Do it fast
              This assumes we don't differentiate between N & S cycles */
           ARMul_CLEARABORT;
-          ARMword *data = FastMap_Log2Phy(entry,address&~3);
-          ARMword count=0;
+          data = FastMap_Log2Phy(entry,address&~3);
+          count=0;
           for(temp=0;temp<16;temp++)
             if(BIT(temp))
             {
@@ -735,11 +745,12 @@ static void LoadSMult(ARMul_State *state, ARMword instr,
        FastMapRes res = FastMap_DecodeRead(entry,state->FastMapMode);
        if(FASTMAP_RESULT_DIRECT(res))
        {
+          ARMword *data, count;
           /* Do it fast
              This assumes we don't differentiate between N & S cycles */
           ARMul_CLEARABORT;
-          ARMword *data = FastMap_Log2Phy(entry,address&~3);
-          ARMword count=0;
+          data = FastMap_Log2Phy(entry,address&~3);
+          count=0;
           for(temp=0;temp<16;temp++)
             if(BIT(temp))
             {
@@ -823,12 +834,14 @@ static void StoreMult(ARMul_State *state, ARMword instr,
        FastMapRes res = FastMap_DecodeWrite(entry,state->FastMapMode);
        if(FASTMAP_RESULT_DIRECT(res))
        {
+          ARMword *data, count;
+          ARMEmuFunc *pfunc;
           /* Do it fast
              This assumes we don't differentiate between N & S cycles */
           ARMul_CLEARABORT;
-          ARMword *data = FastMap_Log2Phy(entry,address&~3);
-          ARMEmuFunc *pfunc = FastMap_Phy2Func(state,data);
-          ARMword count=1;
+          data = FastMap_Log2Phy(entry,address&~3);
+          pfunc = FastMap_Phy2Func(state,data);
+          count=1;
           *(data++) = state->Reg[temp++];
           *(pfunc++) = FASTMAP_CLOBBEREDFUNC;
           if (BIT(21) && LHSReg != 15)
@@ -910,12 +923,14 @@ static void StoreSMult(ARMul_State *state, ARMword instr,
        FastMapRes res = FastMap_DecodeWrite(entry,state->FastMapMode);
        if(FASTMAP_RESULT_DIRECT(res))
        {
+          ARMword *data, count;
+          ARMEmuFunc *pfunc;
           /* Do it fast
              This assumes we don't differentiate between N & S cycles */
           ARMul_CLEARABORT;
-          ARMword *data = FastMap_Log2Phy(entry,address&~3);
-          ARMEmuFunc *pfunc = FastMap_Phy2Func(state,data);
-          ARMword count=1;
+          data = FastMap_Log2Phy(entry,address&~3);
+          pfunc = FastMap_Phy2Func(state,data);
+          count=1;
           *(data++) = state->Reg[temp++];
           *(pfunc++) = FASTMAP_CLOBBEREDFUNC;
           if (BIT(21) && LHSReg != 15)
@@ -987,13 +1002,15 @@ void EmuRate_Reset(ARMul_State *state)
 
 void EmuRate_Update(ARMul_State *state)
 {
+  uint64_t iocrate;
+  clock_t nowtime, timediff;
   CycleCount nowcycle = ARMul_Time;
   CycleDiff cycles = nowcycle-EmuRate_LastUpdateCycle;
   /* Ignore if not much time has passed */
   if(cycles < 40000)
     return;
-  clock_t nowtime = clock();
-  clock_t timediff = nowtime-EmuRate_LastUpdateTime;
+  nowtime = clock();
+  timediff = nowtime-EmuRate_LastUpdateTime;
   if(timediff < 10)
     return;
 
@@ -1009,18 +1026,21 @@ void EmuRate_Update(ARMul_State *state)
   /* Force 8MHz when profiling is on */
   ARMul_EmuRate = 8000000;
 #else
+  {
   uint32_t newrate = (uint32_t) ((((double)cycles)*CLOCKS_PER_SEC)/timediff);
   /* Clamp to a sensible minimum value, just in case something crazy happens */
   if(newrate < 1000000)
     newrate = 1000000;
   /* Smooth the value a bit, in case of sudden jumps, and to cope with systems with poor clock() granularity */
   ARMul_EmuRate = (ARMul_EmuRate*3+newrate)>>2;
+  }
 #endif
 
   /* Recalculate IOC rates */
 
+  iocrate = (((uint64_t) 2000000)<<16)/ARMul_EmuRate;
   ioc.InvIOCRate = (((uint64_t) ARMul_EmuRate)<<16)/2000000;
-  ioc.IOCRate = (((uint64_t) 2000000)<<16)/ARMul_EmuRate;
+  ioc.IOCRate = (uint32_t) iocrate;
 
   /* Update IOC timers again, to ensure the next interrupt occurs at the right time */
   UpdateTimerRegisters(state);
@@ -1194,6 +1214,8 @@ ARMul_Emulate26(ARMul_State *state)
       }
 #else
 /* pipeidx = 0 */
+      CycleCount local_time;
+      ARMword excep, instr;
       ARMword r15 = state->Reg[15];
       Prof_Begin("Fetch/decode");
       switch (state->NextInstr) {
@@ -1208,7 +1230,7 @@ ARMul_Emulate26(ARMul_State *state)
       }
       Prof_End("Fetch/decode");
 
-      CycleCount local_time = ARMul_Time;
+      local_time = ARMul_Time;
       while(((CycleDiff) (local_time-state->EventQ[0].Time)) >= 0)
       {
         EventQ_Func func = state->EventQ[0].Func;
@@ -1217,7 +1239,7 @@ ARMul_Emulate26(ARMul_State *state)
         Prof_EndFunc(func);
       }
 
-      ARMword excep = state->Exception &~r15;
+      excep = state->Exception &~r15;
       
       /* Write back updated PC before handling exception/instruction */
       state->Reg[15] = r15;
@@ -1236,7 +1258,7 @@ ARMul_Emulate26(ARMul_State *state)
         break;
       }
 
-      ARMword instr = pipe[1].instr;
+      instr = pipe[1].instr;
       if(ARMul_CCCheck(instr,(r15 & CCBITS)))
       {
         Prof_BeginFunc(pipe[1].func);

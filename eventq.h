@@ -40,12 +40,12 @@ static inline void EventQ_Remove(ARMul_State *state,int idx)
 /* Reschedule an arbitrary entry, returns new index */
 static inline int EventQ_Reschedule(ARMul_State *state,CycleCount eventtime,EventQ_Func func,int idx)
 {
+	int top = state->NumEvents-1;
 	while((idx > 0) && (((CycleDiff) (state->EventQ[idx-1].Time-eventtime)) > 0))
 	{
 		state->EventQ[idx] = state->EventQ[idx-1];
 		idx--;
 	}
-	int top = state->NumEvents-1;
 	while((idx < top) && (((CycleDiff) (state->EventQ[idx+1].Time-eventtime)) < 0))
 	{
 		state->EventQ[idx] = state->EventQ[idx+1];

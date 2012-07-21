@@ -58,7 +58,8 @@ static ARMword ARMul_ManglePhysAddr(ARMword phy);
 static void DumpHandler(int sig) {
   ARMul_State *state = &statestr;
   FILE *res;
-  int i;
+  int i, idx;
+  ARMword size;
 
   fprintf(stderr,"SIGUSR2 at PC=0x%x\n",ARMul_GetPC(state));
 #ifndef WIN32
@@ -116,8 +117,7 @@ static void DumpHandler(int sig) {
 
   /* Memory map */
   fprintf(stderr,"MEMC using %dKB page size\n",4<<MEMC.PageSizeFlags);
-  ARMword size=1<<(12+MEMC.PageSizeFlags);
-  int idx;
+  size=1<<(12+MEMC.PageSizeFlags);
   for(idx=0;idx<512;idx++)
   {
     int32_t pt = MEMC.PageTable[idx];
@@ -190,6 +190,7 @@ static void DumpHandler(int sig) {
 unsigned
 ARMul_MemoryInit(ARMul_State *state)
 {
+  ARMword RAMChunkSize;
   FILE *ROMFile;
   int PresPage;
   unsigned int i;
@@ -274,11 +275,7 @@ ARMul_MemoryInit(ARMul_State *state)
     arcem_exit("Couldn't open ROM file");
   }
 #else
-#ifdef SYSTEM_gp2x
-  if (ROMFile = fopen("/mnt/sd/arcem/rom", "rb"), ROMFile == NULL) {
-#else
   if (ROMFile = fopen(hArcemConfig.sRomImageName, "rb"), ROMFile == NULL) {
-#endif
     fprintf(stderr, "Couldn't open ROM file\n");
     exit(2);
   }
@@ -307,7 +304,7 @@ ARMul_MemoryInit(ARMul_State *state)
        (MEMC.ROMHighSize + extnrom_size) / 1024);
 
   /* Now allocate ROMs & RAM in one chunk */
-  ARMword RAMChunkSize = MAX(MEMC.RAMSize,512*1024); /* Ensure at least 512K RAM allocated to avoid any issues caused by DMA pointers going out of range */
+  RAMChunkSize = MAX(MEMC.RAMSize,512*1024); /* Ensure at least 512K RAM allocated to avoid any issues caused by DMA pointers going out of range */
   MEMC.ROMRAMChunk = calloc(RAMChunkSize+MEMC.ROMHighSize+extnrom_size+256,1);
   MEMC.EmuFuncChunk = calloc(RAMChunkSize+MEMC.ROMHighSize+extnrom_size+256,sizeof(FastMapUInt)/4);
   if((MEMC.ROMRAMChunk == NULL) || (MEMC.EmuFuncChunk == NULL)) {
@@ -415,9 +412,11 @@ static ARMword ARMul_ManglePhysAddr(ARMword phy)
      the mangling. This corresponds to row bits 0-7 and column bits 0-1, 4-8.
      So all we need to do is calculate row bits 8,9 and column bits 2,3,9.
   */
+  ARMword bank;
 
   if(MEMC.PageSizeFlags != MEMC.DRAMPageSize)
   {
+    ARMword b12=0,b13=0,b19=0,b20=0,b21=0;
     ARMword r8=0,r9=0,c2=0,c3=0,c9=0;
   
     switch(MEMC.PageSizeFlags)
@@ -449,8 +448,6 @@ static ARMword ARMul_ManglePhysAddr(ARMword phy)
     phy &= 0xffc7cfff; /* Mask off the bits extracted above */
   
     /* Now translate back */
-  
-    ARMword b12=0,b13=0,b19=0,b20=0,b21=0;
   
     switch(MEMC.DRAMPageSize)
     {
@@ -487,7 +484,7 @@ static ARMword ARMul_ManglePhysAddr(ARMword phy)
      will wrap back to bank 0.
   */
 
-  ARMword bank = phy>>22;
+  bank = phy>>22;
 
   phy &= MEMC.RAMMask;
 
@@ -527,10 +524,14 @@ static void ARMul_RebuildFastMapPTIdx(ARMword idx);
 
 static void ARMul_PurgeFastMapPTIdx(ARMword idx)
 {
+  FastMapEntry *entry;
+  FastMapUInt addr;
+  ARMword size;
+  int32_t pt;
   if(MEMC.ROMMapFlag)
     return; /* Still in ROM mode, abort */
     
-  int32_t pt = MEMC.PageTable[idx];
+  pt = MEMC.PageTable[idx];
   if(pt>0)
   {
     ARMword logadr,phys,mask;
@@ -561,17 +562,17 @@ static void ARMul_PurgeFastMapPTIdx(ARMword idx)
         mask = 0x7f8c00;
         break;
     }
-    ARMword size=12+MEMC.PageSizeFlags;
+    size=12+MEMC.PageSizeFlags;
     phys = ARMul_ManglePhysAddr(phys<<size);
     size = 1<<size;
-    FastMapEntry *entry = FastMap_GetEntryNoWrap(&statestr,logadr);
+    entry = FastMap_GetEntryNoWrap(&statestr,logadr);
     
     /* To cope with multiply mapped pages (i.e. multiple physical pages mapping to the same logical page) we need to check if the page we're about to unmap is still owned by us
        If it is owned by us, we'll have to search the page tables for a replacement (if any)
        Otherwise we don't need to do anything at all
        Note that we only need to check the first page for ownership, because any change to the page size will result in the full map being rebuilt */
        
-    FastMapUInt addr = ((FastMapUInt)(MEMC.PhysRam+(phys>>2)))-logadr; /* Address part of FlagsAndData */
+    addr = ((FastMapUInt)(MEMC.PhysRam+(phys>>2)))-logadr; /* Address part of FlagsAndData */
     if((entry->FlagsAndData<<8) == addr)
     {
       /* We own this page */
@@ -630,8 +631,9 @@ static ARMword FastMap_LogRamFunc(ARMul_State *state, ARMword addr,ARMword data,
 
 static void ARMul_RebuildFastMapPTIdx(ARMword idx)
 {
-  if(MEMC.ROMMapFlag)
-    return; /* Still in ROM mode, abort */
+  int32_t pt;
+  ARMword size;
+  FastMapUInt flags;
 
   static const FastMapUInt PPL_To_Flags[4] = {
   FASTMAP_R_USR|FASTMAP_R_OS|FASTMAP_R_SVC|FASTMAP_W_USR|FASTMAP_W_OS|FASTMAP_W_SVC, /* PPL 00 */
@@ -640,7 +642,10 @@ static void ARMul_RebuildFastMapPTIdx(ARMword idx)
   FASTMAP_R_OS|FASTMAP_R_SVC|FASTMAP_W_SVC,  /* PPL 11 */
   };
 
-  int32_t pt = MEMC.PageTable[idx];
+  if(MEMC.ROMMapFlag)
+    return; /* Still in ROM mode, abort */
+
+  pt = MEMC.PageTable[idx];
   if(pt>0)
   {
     ARMword logadr,phys;
@@ -667,10 +672,10 @@ static void ARMul_RebuildFastMapPTIdx(ARMword idx)
               | ((pt & 0x000c00)<<13);
         break;
     }
-    ARMword size=12+MEMC.PageSizeFlags;
+    size=12+MEMC.PageSizeFlags;
     phys = ARMul_ManglePhysAddr(phys<<size);
     size = 1<<size;
-    FastMapUInt flags = PPL_To_Flags[(pt>>8)&3];
+    flags = PPL_To_Flags[(pt>>8)&3];
     if((phys<512*1024) && DisplayDev_UseUpdateFlags)
     {
       /* DMAable, must use func on write */
@@ -795,13 +800,14 @@ static ARMword FastMap_ROMMap1Func(ARMul_State *state, ARMword addr,ARMword data
 
 static ARMword FastMap_PhysRamFuncROMMap2(ARMul_State *state, ARMword addr,ARMword data,ARMword flags)
 {
+  ARMword *phy;
   /* Read/write from phys RAM, switching to ROMMapFlag 0 if necessary */
   if(MEMC.ROMMapFlag == 2)
   {
     MEMC.ROMMapFlag = 0;
     ARMul_RebuildFastMap();
   }
-  ARMword *phy = FastMap_Log2Phy(FastMap_GetEntry(state,addr),addr&~3);
+  phy = FastMap_Log2Phy(FastMap_GetEntry(state,addr),addr&~3);
   if(!(flags & FASTMAP_ACCESSFUNC_WRITE))
     return *phy;
   if(flags & FASTMAP_ACCESSFUNC_BYTE)
@@ -820,10 +826,11 @@ static ARMword FastMap_PhysRamFuncROMMap2(ARMul_State *state, ARMword addr,ARMwo
 
 static ARMword FastMap_PhysRamFunc(ARMul_State *state, ARMword addr,ARMword data,ARMword flags)
 {
+  ARMword *phy, orig;
   /* Write to direct-mapped phys RAM. Address guaranteed to be valid. */
   addr -= MEMORY_0x2000000_RAM_PHYS;
-  ARMword *phy = &MEMC.PhysRam[addr>>2];
-  ARMword orig = *phy;
+  phy = &MEMC.PhysRam[addr>>2];
+  orig = *phy;
   if(flags & FASTMAP_ACCESSFUNC_BYTE)
   {
     ARMword shift = ((addr&3)<<3);
@@ -933,6 +940,7 @@ static ARMword FastMap_MEMCFunc(ARMul_State *state, ARMword addr,ARMword data,AR
 void ARMul_RebuildFastMap(void)
 {
   ARMword i;
+  FastMapEntry *entry;
   
   /* completely rebuild the fast map */
   switch(MEMC.ROMMapFlag)
@@ -1003,7 +1011,7 @@ void ARMul_RebuildFastMap(void)
     FastMap_SetEntries(MEMORY_0x3400000_R_ROM_LOW,0,FastMap_DMAFunc,FASTMAP_R_USR|FASTMAP_R_SVC|FASTMAP_R_OS|FASTMAP_W_SVC|FASTMAP_W_FUNC|FASTMAP_R_FUNC,0x400000);
 
   /* Overwrite with VIDC */
-  FastMapEntry *entry = FastMap_GetEntryNoWrap(&statestr,MEMORY_0x3400000_W_VIDEOCON);
+  entry = FastMap_GetEntryNoWrap(&statestr,MEMORY_0x3400000_W_VIDEOCON);
   for(i=0;i<MEMORY_0x3600000_W_DMA_GEN-MEMORY_0x3400000_W_VIDEOCON;i+=4096)
   {
     entry->AccessFunc = FastMap_VIDCFunc;

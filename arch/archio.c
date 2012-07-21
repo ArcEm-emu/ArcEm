@@ -31,14 +31,12 @@ static void UpdateTimerRegisters_Event(ARMul_State *state,CycleCount time);
 
 /*-----------------------------------------------------------------------------*/
 
-#ifndef SYSTEM_gp2x
 static void FDCHDC_Poll(ARMul_State *state,CycleCount nowtime)
 {
   EventQ_RescheduleHead(state,nowtime+250,FDCHDC_Poll); /* TODO - This probably needs to be made realtime */
   FDC_Regular(state);
   HDC_Regular(state);
 }
-#endif
 
 /*-----------------------------------------------------------------------------*/
 void
@@ -72,9 +70,7 @@ IO_Init(ARMul_State *state)
   FDC_Init(state);
   HDC_Init(state);
   Kbd_Init(state);
-#ifndef SYSTEM_gp2x
   EventQ_Insert(state,ARMul_Time+250,FDCHDC_Poll);
-#endif
 } /* IO_Init */
 
 /*------------------------------------------------------------------------------*/
@@ -155,12 +151,13 @@ GetCurrentTimerVal(ARMul_State *state,int toget)
 /*------------------------------------------------------------------------------*/
 static void UpdateTimerRegisters_Internal(ARMul_State *state,CycleCount nowtime,int idx)
 {
+  uint32_t tmpL;
+  CycleDiff scaledTimeSlip, nextTrigger;
   CycleDiff timeSinceLastUpdate = nowtime - ioc.TimersLastUpdated;
   /* Take into account any lost fractions of an IOC tick */
   uint64_t TimeSlip = (((uint64_t) timeSinceLastUpdate) * ioc.IOCRate)+ioc.TimerFracBit;
   ioc.TimerFracBit = TimeSlip & 0xffff;
-  CycleDiff scaledTimeSlip = TimeSlip>>16;
-  uint32_t tmpL;
+  scaledTimeSlip = (CycleDiff) (TimeSlip>>16);
 
   /* In theory we should be able to use MAX_CYCLES_INTO_FUTURE as our default
      next trigger time. But some software (e.g. Lotus Turbo Challenge II) seems
@@ -168,7 +165,7 @@ static void UpdateTimerRegisters_Internal(ARMul_State *state,CycleCount nowtime,
      happens (presumably due a bug in ArcEm somewhere).
      So use a failsafe default next trigger time of 65536 IOC cycles from now
      (i.e. the max possible timer period) */
-  CycleDiff nextTrigger = ioc.InvIOCRate; /* a.k.a. 65536 IOC cycles from now */
+  nextTrigger = ioc.InvIOCRate; /* a.k.a. 65536 IOC cycles from now */
 
   /* ----------------------------------------------------------------- */
   tmpL = ioc.TimerInputLatch[0]+1;
@@ -183,7 +180,7 @@ static void UpdateTimerRegisters_Internal(ARMul_State *state,CycleCount nowtime,
 
   if (ioc.Timer0CanInt) {
     tmpL = (((uint64_t) (ioc.TimerCount[0]+1)) * ioc.InvIOCRate) >> 16;
-    if (tmpL < nextTrigger) nextTrigger = tmpL;
+    if ((int)tmpL < nextTrigger) nextTrigger = tmpL;
   }
 
   /* ----------------------------------------------------------------- */
@@ -198,7 +195,7 @@ static void UpdateTimerRegisters_Internal(ARMul_State *state,CycleCount nowtime,
 
   if (ioc.Timer1CanInt) {
     tmpL = (((uint64_t) (ioc.TimerCount[1]+1)) * ioc.InvIOCRate) >> 16;
-    if (tmpL < nextTrigger) nextTrigger = tmpL;
+    if ((int)tmpL < nextTrigger) nextTrigger = tmpL;
   }
 
   /* ----------------------------------------------------------------- */

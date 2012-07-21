@@ -49,7 +49,7 @@ store_16bit_le(void *address, uint16_t data)
 
   assert(address != NULL);
 
-  addr[0] = data;
+  addr[0] = data & 255;
   addr[1] = data >> 8;
 }
 

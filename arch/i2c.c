@@ -3,7 +3,6 @@
 #include <signal.h>
 #include <stdio.h>
 #include <time.h>
-#include <inttypes.h>
 #include "../armdefs.h"
 
 #ifdef MACOSX
@@ -177,11 +176,7 @@ static void SaveCMOS(ARMul_State *state) {
       OutFile = fopen("hexcmos","w");
   }
 #else
-#ifdef SYSTEM_gp2x
-  OutFile = fopen("/mnt/sd/arcem/hexcmos","w");
-#else
   OutFile = fopen("hexcmos","w");
-#endif
 #endif
   if (OutFile == NULL) {
     fprintf(stderr,"SaveCMOS: Could not open (hexcmos.updated) CMOS settings file\n");
@@ -268,12 +263,12 @@ void I2C_Update(ARMul_State *state) {
                bit we are going to ignore it; the last bit tells us rNw */
             I2C.LastrNw=I2C.DataBuffer & 1;
             dbug_i2c("I2C simulator got slave address "
-                "%#" PRIxFAST16 "\n", I2C.DataBuffer);
+                "%d\n", (int) I2C.DataBuffer);
             if ((I2C.DataBuffer & 0xfe)!=0xa0) {
               /* Hey - its a request for a different I2C peripheral - like an A500's timer
                  chip */
               fprintf(stderr, "I2C simulator got wierd slave address "
-                  "%#" PRIxFAST16 "\n", I2C.DataBuffer);
+                  "%d\n", (int) I2C.DataBuffer);
               I2C.IAmTransmitter=false;
               I2C.NumberOfBitsSoFar=0;
               I2C.state=I2CChipState_Idle;
@@ -440,8 +435,6 @@ static void SetUpCMOS(ARMul_State *state)
 #elif defined(MACOSX)
     chdir(arcemDir);
     path = "hexcmos";
-#elif defined(SYSTEM_gp2x)
-    path = "/mnt/sd/arcem/hexcmos";
 #else
     path = "hexcmos";
 #endif

@@ -146,6 +146,7 @@ static void RefreshMouse(ARMul_State *state) {
   int Height = ((int)VIDC.Vert_CursorEnd - (int)VIDC.Vert_CursorStart)*HD.YScale;
   int VertPos;
   int diboffs;
+  SDD_HostColour cursorPal[4];
 
   DisplayDev_GetCursorPos(state,&HorizPos,&VertPos);
   HorizPos = HorizPos*HD.XScale+HD.XOffset;
@@ -159,7 +160,6 @@ static void RefreshMouse(ARMul_State *state) {
   rMouseHeight = Height;
 
   /* Cursor palette */
-  SDD_HostColour cursorPal[4];
   cursorPal[0] = 0;
   for(x=0; x<3; x++) {
     cursorPal[x+1] = SDD_Name(Host_GetColour)(state,VIDC.CursorPalette[x]);

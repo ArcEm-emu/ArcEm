@@ -147,7 +147,10 @@ static inline void FastMap_RebuildMapMode(ARMul_State *state)
 
 /* ------------------- inlined higher-level memory funcs ---------------------- */
 
+#ifndef _MSC_VER
 #define FASTMAP_INLINE
+#endif
+
 #ifdef FASTMAP_INLINE
 #define FASTMAP_PROTO static
 #else
