@@ -57,10 +57,7 @@ int __riscosify_control = 0;
 #define HOST_DIR_SEP_CHAR '.'
 #define HOST_DIR_SEP_STR "."
 
-/* ftello64/fseeko64 don't exist, but ftello/fseeko do. Likewise, we need to use regular fopen. */
-#define ftello64 ftello
-#define fseeko64 fseeko
-#define fopen64 fopen
+#define NO_OPEN64
 
 #else /* __riscos__ */
 
@@ -70,6 +67,14 @@ int __riscosify_control = 0;
 #endif /* !__riscos__ */
 
 #include "hostfs.h"
+
+#if defined NO_OPEN64 || defined __MACH__
+/* ftello64/fseeko64 don't exist, but ftello/fseeko do. Likewise, we need to use regular fopen. */
+#define ftello64 ftello
+#define fseeko64 fseeko
+#define fopen64 fopen
+#define off64_t uint32_t
+#endif
 
 #ifdef HOSTFS_ARCEM
 
@@ -88,7 +93,7 @@ static char HOSTFS_ROOT[512];
 
 #endif /* !HOSTFS_ARCEM */
 
-#define HOSTFS_PROTOCOL_VERSION	1
+#define HOSTFS_PROTOCOL_VERSION 1
 
 /* Windows mkdir() function only takes one argument name, and
    name clashes with Posix mkdir() function taking two. This
@@ -99,9 +104,9 @@ static char HOSTFS_ROOT[512];
 
 /** Registration states of HostFS module with backend code */
 typedef enum {
-  HOSTFS_STATE_UNREGISTERED,	/**< Module not yet registered */
-  HOSTFS_STATE_REGISTERED,	/**< Module successfully registered */
-  HOSTFS_STATE_IGNORE,		/**< Ignoring activity after failing to register */
+  HOSTFS_STATE_UNREGISTERED,    /**< Module not yet registered */
+  HOSTFS_STATE_REGISTERED,  /**< Module successfully registered */
+  HOSTFS_STATE_IGNORE,      /**< Ignoring activity after failing to register */
 } HostFSState;
 
 enum OBJECT_TYPE {
@@ -1760,10 +1765,10 @@ hostfs_cache_dir(const char *directory_name)
       cache_entries[entry_ptr].object_info.attribs = gbpb_buffer.attribs;
 
       unsigned string_space;
-  
+
       /* Calculate space required to store name (+ terminator) */
       string_space = strlen(gbpb_buffer.name) + 1;
-  
+
       /* Check whether cache_names[] is large enough; increase if required */
       if (string_space > (cache_names_capacity - name_ptr)) {
         cache_names_capacity *= 2;
@@ -1773,14 +1778,14 @@ hostfs_cache_dir(const char *directory_name)
           exit(1);
         }
       }
-  
+
       /* Copy string into cache_names[]. Put offset ptr into local_entries[] */
       strcpy(cache_names + name_ptr, gbpb_buffer.name);
       cache_entries[entry_ptr].name_offset = name_ptr;
-  
+
       /* Advance name_ptr */
       name_ptr += string_space;
-  
+
       /* Advance entry_ptr, increasing space of cache_entries[] if required */
       entry_ptr++;
       if (entry_ptr == cache_entries_capacity) {

@@ -151,7 +151,10 @@ TARGET=!ArcEm/arcem
 endif
 
 ifeq (${SYSTEM},X)
-CFLAGS += -DSYSTEM_X -I/usr/X11R6/include -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
+CFLAGS += -DSYSTEM_X -I/usr/X11R6/include
+ifneq ($(shell uname),Darwin)
+CFLAGS += -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
+endif
 LIBS += -L/usr/X11R6/lib -lXext -lX11
 OBJS += X/true.o X/pseudo.o
 #SOUND_SUPPORT = yes
