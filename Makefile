@@ -49,7 +49,7 @@ LDFLAGS=
 WARN = -Wall -Wno-return-type -Wno-unknown-pragmas -Wshadow \
    -Wpointer-arith -Wcast-align -Wstrict-prototypes \
    -Wmissing-prototypes -Wmissing-declarations -Wnested-externs \
-   -Wcast-qual -Wwrite-strings
+   -Wcast-qual -Wwrite-strings -Wno-unused
 
 ifeq ($(PROFILE),yes)
 CFLAGS = -O -g -pg -ftest-coverage -fprofile-arcs
