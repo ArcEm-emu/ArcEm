@@ -1,6 +1,6 @@
-Archimedes Emulator
-===================
-Homepage: http://arcem.sf.net/
+=============================================================================
+ArcEm: Archimedes Emulator                               http://arcem.sf.net/
+=============================================================================
 
 Version X.XX
 
@@ -8,22 +8,29 @@ Version X.XX
 Requirements
 ------------
 
-* A suitable ROM image. See below for details.
-* Iyonix or better (ARMv5+ CPU). BeagleBoard-xM recommended for best performance.
-* Somewhere between 8MB and 64MB of RAM, depending on options
-* SharedSound if you want sound
-* SharedUnixLibrary
++ A suitable ROM image. See below for details.
++ Iyonix or better (ARMv5+ CPU).
+  BeagleBoard-xM recommended for best performance.
++ Somewhere between 8MB and 64MB of RAM, depending on options
++ SharedSound if you want sound
++ SharedUnixLibrary
 
 
 ROM images
 ----------
 
-ArcEm is known to be compatible with both RISC OS (3.1 and below) and ARM Linux ROM images. A suitable ARM Linux ROM image can be downloaded from the ArcEm website at http://arcem.sf.net/
+ArcEm is known to be compatible with both RISC OS (3.1 and below) and ARM
+Linux ROM images. A suitable ARM Linux ROM image can be downloaded from the
+ArcEm website:
+
+    http://arcem.sf.net/
 
 RISC OS ROM images can be obtained from two sources:
 
-* Making a copy of the ROMs found in a real machine. See !ArcEm.manual/htm for details.
-* Buying the "RISC OS Classic ROM Collection CD" from RISCOS Ltd: http://www.riscos.com/
++ Making a copy of the ROMs found in a real machine. See !ArcEm.manual/htm
+  for details.
++ Buying the "RISC OS Classic ROM Collection CD" from RISCOS Ltd:
+  http://www.riscos.com/
 
 Once you have your ROM image, save it as the file 'ROM' within !ArcEm.
 
@@ -31,7 +38,9 @@ Once you have your ROM image, save it as the file 'ROM' within !ArcEm.
 Quiting the emulator
 --------------------
 
-ArcEm passes almost all keypresses straight through to the emulated machine. Therefore Escape, F12, Ctrl-Break, etc. won't allow you to quit the emulator. Instead, you must use one of the following methods:
+ArcEm passes almost all keypresses straight through to the emulated machine.
+Therefore Escape, F12, Ctrl-Break, etc. won't allow you to quit the emulator.
+Instead, you must use one of the following methods:
 
 1. Quit via the tweak menu (see below for how to access)
 2. Quit via Alt-Break
@@ -41,25 +50,36 @@ ArcEm passes almost all keypresses straight through to the emulated machine. The
 HostFS
 ------
 
-When running RISC OS 2 or RISC OS 3, any files placed in the 'hostfs' folder will be accessible by the emulated machine. This is usually the best way of getting files into and out of the emulator. However not all software will work with HostFS (e.g. Lemmings 2), so you may also want to make use of floppy and/or hard disc images where appropriate.
+When running RISC OS 2 or RISC OS 3, any files placed in the 'hostfs' folder
+will be accessible by the emulated machine. This is usually the best way of
+getting files into and out of the emulator. However not all software will
+work with HostFS (e.g. Lemmings 2), so you may also want to make use of
+floppy and/or hard disc images where appropriate.
 
 
 Floppy disc images
 ------------------
 
-ArcEm supports the use of up to four emulated floppy drives, via the use of standard .adf floppy images. Place your images in the same directory as !ArcEm, with names such as FloppyImage0, FloppyImage1, FloppyImage2, etc. Floppies can be made write-protected by making the file read-only. Note that there's currently no way of swapping floppies while in the emulator, and 1600K images aren't supported.
+ArcEm supports the use of up to four emulated floppy drives, via the use of
+standard .adf floppy images. Place your images in the same directory as
+!ArcEm, with names such as FloppyImage0, FloppyImage1, FloppyImage2, etc.
+Floppies can be made write-protected by making the file read-only. Note that
+there's currently no way of swapping floppies while in the emulator, and
+1600K images aren't supported.
 
 
 Hard disc images
 ----------------
 
-ArcEm is able to use ST506 hard disc images, see the "Hard disc parameters" section for more details.
+ArcEm is able to use ST506 hard disc images, see the "Hard disc parameters"
+section for more details.
 
 
 Configuration
 -------------
 
-The RISC OS version of ArcEm currently lacks any configuration frontend. Instead, configuration is performed in three places:
+The RISC OS version of ArcEm currently lacks any configuration frontend.
+Instead, configuration is performed in three places:
 
 1. Specifying command line parameters in the !ArcEm.!Run file
 2. Specifying hard disc parameters in the !ArcEm./arcemrc file
@@ -101,8 +121,8 @@ Command line parameters
 
   'pal' selects the palettised display driver, which uses the least amount
   of memory and provides the best performance. However it doesn't support the
-  use of mid-frame palette swaps (as used by games such as Lotus II & Lemmings
-  2). For these games it's recommended you use the '16bpp' driver.
+  use of mid-frame palette swaps (as used by games such as Lotus II &
+  Lemmings 2). For these games it's recommended you use the '16bpp' driver.
 
 --rbswap
 
@@ -110,9 +130,9 @@ Command line parameters
 
 --nolowcolour
 
-  Prevent ArcEm from trying to use 1/2/4bpp modes. Recommended for Iyonix users
-  with Aemulor running (it's quicker for ArcEm to use an 8bpp mode directly
-  than to go via Aemulor's low-colour emulation)
+  Prevent ArcEm from trying to use 1/2/4bpp modes. Recommended for Iyonix
+  users with Aemulor running (it's quicker for ArcEm to use an 8bpp mode
+  directly than to go via Aemulor's low-colour emulation)
 
 --noaspect
 
@@ -126,62 +146,88 @@ Command line parameters
 
   Specify minimum screen resolution to use. Any modes with a resolution lower
   than this won't be used by ArcEm. Use this to filter out any low-res modes
-  (e.g. 320x256) which have entries in your MDF but don't really work properly
-  with your monitor.
+  (e.g. 320x256) which have entries in your MDF but don't really work
+  properly with your monitor.
 
 --lcdres <x> <y>
 
-  Specify the native resolution of your monitor. If specified, ArcEm will only
-  ever use screen modes that will scale perfectly to fit your monitor, so you
-  won't have ugly LCD scaling artifacts.
+  Specify the native resolution of your monitor. If specified, ArcEm will
+  only ever use screen modes that will scale perfectly to fit your monitor,
+  so you won't have ugly LCD scaling artifacts.
 
 
 Hard disc parameters
 --------------------
 
-Hard disc parameters are specified in the !ArcEm./arcemrc file. The file should contain entries of the form:
+Hard disc parameters are specified in the !ArcEm./arcemrc file. The file
+should contain entries of the form:
 
 MFM disc
 <drive> <numcyl> <numheads> <numsect> <reclength>
 
-Where <drive> is the drive number (0-3), <numcyl> is the number of cylinders, <numheads> is the number of heads, <numsect> is the number of sectors, and <reclength> is the record (i.e. sector) length. Note that RISC OS only ever uses drive numbers 1 and 2.
+Where:
+  <drive> is the drive number (0-3),
+  <numcyl> is the number of cylinders,
+  <numheads> is the number of heads,
+  <numsect> is the number of sectors, and
+  <reclength> is the record (i.e. sector) length.
 
-Note that after creating or modifying an entry, it's important to remember to make sure that the relevant disc image file exists and is the correct size. The image files are located within !ArcEm and named 'HardImage0', 'HardImage1', etc. An easy way to create an image of the correct size is to use the *Create command (from within the host OS). For example, the default /arcemrc file contains the following:
+Note that RISC OS only ever uses drive numbers 1 and 2.
+
+Note that after creating or modifying an entry, it's important to remember
+to make sure that the relevant disc image file exists and is the correct
+size. The image files are located within !ArcEm and named 'HardImage0',
+'HardImage1', etc. An easy way to create an image of the correct size is to
+use the *Create command (from within the host OS). For example, the
+default /arcemrc file contains the following:
 
 MFM disc
 1 612 4 32 256
 
-This defines HardImage1 as being a 20MB hard disc image. An appropriate blank image can be created as follows (Where '1320000' is the result of 612*4*32*256, in hex):
+This defines HardImage1 as being a 20MB hard disc image. An appropriate
+blank image can be created as follows (Where '1320000' is the result of
+612*4*32*256, in hex):
 
 *Create <ArcEm$Dir>.HardImage1 1320000
 
-Remember that modifying the parameters of an existing image will most likely result in the loss of all data.
+Remember that modifying the parameters of an existing image will most likely
+result in the loss of all data.
 
 
 The tweak menu
 --------------
 
-The tweak menu can be accessed by simultaneously pressing both Windows keys on the keyboard. This menu allows you to change the following options:
+The tweak menu can be accessed by simultaneously pressing both Windows keys
+on the keyboard. This menu allows you to change the following options:
 
-* Switch between the two display drivers (--display command line option)
-* Toggle red/blue swapping in the 16bpp driver (--rbswap command line option)
-* Control the display driver performance options (see below)
-* Enable/disable aspect ratio correction & upscaling (--noaspect and --noupscale options)
-* Enable the ability to take screenshots when Print Screen is pressed. Screenshots will be saved to the directory !ArcEm is in.
-* Toggle the display of some stats to the top-left corner of the screen. The stats show (from left to right):
++ Switch between the two display drivers (--display command line option)
++ Toggle red/blue swapping in the 16bpp driver (--rbswap command line option)
++ Control the display driver performance options (see below)
++ Enable/disable aspect ratio correction & upscaling (--noaspect and
+  --noupscale options)
++ Enable the ability to take screenshots when Print Screen is pressed.
+  Screenshots will be saved to the directory !ArcEm is in.
++ Toggle the display of some stats to the top-left corner of the screen.
+  The stats show (from left to right):
   - The emulator performance in MHz
   - The resolution, refresh rate, and bits-per-pixel of the Arc display
   - The display scale factors
   - The estimated framerate of whichever game is running
-  Note that games or software which doesn't make use of multiple screen banks will report a framerate of zero. If the UpdateFlags option is on, the framerate counter will also drop if the frameskip value is set too high (since you will no longer be seeing all the frames that the software is attempting to display).
+  Note that games or software which doesn't make use of multiple screen
+  banks will report a framerate of zero. If the UpdateFlags option is on,
+  the framerate counter will also drop if the frameskip value is set too
+  high (since you will no longer be seeing all the frames that the software
+  is attempting to display).
 
-To resume the emulator from the tweak menu, press 'R'. To quit the emulator, press 'Q'.
+To resume the emulator from the tweak menu, press 'R'. To quit the emulator,
+press 'Q'.
 
 
 Display driver performance options
 --------------------------------
 
-As mentioned above, there are several options available in the tweak menu to help boost the performance of the display driver. These options are:
+As mentioned above, there are several options available in the tweak menu to
+help boost the performance of the display driver. These options are:
 
   "Display auto UpdateFlags"
 
@@ -194,63 +240,72 @@ As mentioned above, there are several options available in the tweak menu to hel
     If the "auto UpdateFlags" option is on, these options will be set and
     adjusted automatically by the emulator, and must be left alone.
 
-    If the "auto UpdateFlags" option is off, you can set these values manually
-    to fine-tune performance. Briefly, the UpdateFlags option controls whether
-    ArcEm redraws the entire screen or only the changed areas. Turning it on
-    selects the latter, but causes some memory writes to have a significant
-    performance overhead, since ArcEm must track all writes to screen memory.
-    In games which make use of multiple screen banks, it's usually best to turn
-    this option off, as it will avoid the unnecessary performance penalty of
-    tracking memory writes (since the entire screen will have to be redrawn
-    each time the game switches screen banks). However if the option is off the
-    correct frameskip value must be set otherwise you won't see any performance
-    benefits.
+    If the "auto UpdateFlags" option is off, you can set these values
+    manually to fine-tune performance. Briefly, the UpdateFlags option
+    controls whether ArcEm redraws the entire screen or only the changed
+    areas. Turning it on selects the latter, but causes some memory writes
+    to have a significant performance overhead, since ArcEm must track all
+    writes to screen memory. In games which make use of multiple screen
+    banks, it's usually best to turn this option off, as it will avoid the
+    unnecessary performance penalty of tracking memory writes (since the
+    entire screen will have to be redrawn each time the game switches
+    screen banks). However if the option is off the correct frameskip value
+    must be set otherwise you won't see any performance benefits.
 
-    The frameskip option behaves slightly differently depending on whether the
-    UpdateFlags option is on or off. If the UpdateFlags option is on, the
-    frameskip value acts like the frameskip value you'd find in any other
+    The frameskip option behaves slightly differently depending on whether
+    the UpdateFlags option is on or off. If the UpdateFlags option is on,
+    the frameskip value acts like the frameskip value you'd find in any other
     emulator. A value of 0 causes the screen to be updated every frame; 1
     causes it to be updated every 2nd frame, etc. E.g. if you're in a 50Hz
     screen mode, and a game is running at 25fps, a frameskip value of 1 will
-    give you a slight performance boost without hurting framerate. Values of 2
-    or more will give greater performance boosts, but will result in the screen
-    being redrawn less often.
+    give you a slight performance boost without hurting framerate. Values
+    of 2 or more will give greater performance boosts, but will result in the
+    screen being redrawn less often.
 
     If the UpdateFlags option is off, then there are generally two situations
     in which the screen will be redrawn: when the running game switches to a
     different screen bank, or when the frameskip counter runs down. Assuming
     the game keeps running and keeps swapping screen banks, the frame skip
-    counter is irrelevant, as it will never run down. However if the game stops
-    running, or switches to a mode where it doesn't use multiple screen banks
-    (e.g. in menu screens) the screen will stop being redrawn. This is where
-    the frameskip counter becomes important. If you're in a 50Hz mode, and
-    the game is running at 25fps, a frameskip counter of 2 would likely be
-    the most appropriate. This means that ArcEm will only force the screen to
-    be redrawn if the framerate drops to below 17fps. 
+    counter is irrelevant, as it will never run down. However if the game
+    stops running, or switches to a mode where it doesn't use multiple screen
+    banks (e.g. in menu screens) the screen will stop being redrawn. This is
+    where the frameskip counter becomes important. If you're in a 50Hz mode,
+    and the game is running at 25fps, a frameskip counter of 2 would likely
+    be the most appropriate. This means that ArcEm will only force the screen
+    to be redrawn if the framerate drops to below 17fps. 
 
 
 Other notes/known issues
 ------------------------
 
-* If your monitor complains about a bad signal, or the screen is distorted, etc. then it's probable that ArcEm is trying to use a screen mode that your monitor doesn't support. Check your MDF and remove modes that don't function correctly, or use the --minres option to prevent ArcEm from trying to use the bad modes.
++ If your monitor complains about a bad signal, or the screen is distorted,
+  etc. then it's probable that ArcEm is trying to use a screen mode that your
+  monitor doesn't support. Check your MDF and remove modes that don't
+  function correctly, or use the --minres option to prevent ArcEm from trying
+  to use the bad modes.
 
-* Sound may break up if there are sudden changes in emulator load/performance, or when performing slow operations via HostFS
++ Sound may break up if there are sudden changes in emulator
+  load/performance, or when performing slow operations via HostFS
 
-* Sound quality isn't great if ArcEm has to mix down to a lower sample rate
++ Sound quality isn't great if ArcEm has to mix down to a lower sample rate
 
-* Music tempo tends to fluctuate a bit with some music players
++ Music tempo tends to fluctuate a bit with some music players.
 
-* Sometimes there'll be a lot of audio lag, which doesn't clear up, even after a few seconds. Opening & closing the tweak menu should fix it.
++ Sometimes there'll be a lot of audio lag, which doesn't clear up, even
+  after a few seconds. Opening & closing the tweak menu should fix it.
 
-* If the emulator can't find a suitable screen mode, it will quit
++ If the emulator can't find a suitable screen mode, it will quit.
 
-* Software which adjusts the size of the display/border areas might not look correct
++ Software which adjusts the size of the display/border areas might not look
+  correct.
 
-* If the display is being scaled, the mouse pointer image may not always be scaled correctly, or (due to improper scaling) the hotspot may not be in the correct position
++ If the display is being scaled, the mouse pointer image may not always be
+  scaled correctly, or (due to improper scaling) the hotspot may not be in
+  the correct position.
 
-* Formatting floppies seems to be broken
++ Formatting floppies seems to be broken.
 
-* Empty floppy drives aren't emulated correctly
++ Empty floppy drives aren't emulated correctly.
 
 
 Contact/copyright/etc.
@@ -258,10 +313,13 @@ Contact/copyright/etc.
 
 ArcEm is distributed under the GPL. See the COPYING file for details.
 
-Many people have contributed to the development of ArcEm over the years. Main contributors for this version are:
+Many people have contributed to the development of ArcEm over the years.
+Main contributors for this version are:
 
-* Dave Alan Gilbert - orignal author
-* Alex Macfarlane Smith & Peter Naulls - original RISC OS port
-* Jeffrey Lee - significant optimisation & enhancements
++ Dave Alan Gilbert - orignal author
++ Alex Macfarlane Smith & Peter Naulls - original RISC OS port
++ Jeffrey Lee - significant optimisation & enhancements
 
-To contact the developers or access the source code, visit ArcEm's homepage at http://arcem.sf.net/
+To contact the developers or access the source code, visit ArcEm's homepage:
+
+    http://arcem.sf.net/
