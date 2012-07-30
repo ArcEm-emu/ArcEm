@@ -67,6 +67,7 @@
       <Filter>win</Filter>
     </ClCompile>
     <ClCompile Include="..\dagstandalone.c" />
+    <ClCompile Include="..\hostfs.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\armdefs.h" />
@@ -135,6 +136,7 @@
     </ClInclude>
     <ClInclude Include="..\dagstandalone.h" />
     <ClInclude Include="..\win\resource.h" />
+    <ClInclude Include="..\hostfs.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\win\arc.ico">

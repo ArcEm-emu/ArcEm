@@ -49,7 +49,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>NOOS;NOFPE;EXTNROM_SUPPORT;SYSTEM_win;_CRT_SECURE_NO_WARNINGS;WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NOOS;NOFPE;EXTNROM_SUPPORT;HOSTFS_SUPPORT;SYSTEM_win;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\arch;..\win;..</AdditionalIncludeDirectories>
       <CompileAs>Default</CompileAs>
     </ClCompile>
@@ -65,7 +65,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>NOOS;NOFPE;EXTNROM_SUPPORT;SYSTEM_win;_CRT_SECURE_NO_WARNINGS;WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NOOS;NOFPE;EXTNROM_SUPPORT;HOSTFS_SUPPORT;SYSTEM_win;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <AdditionalIncludeDirectories>..\arch;..\win;..</AdditionalIncludeDirectories>
@@ -97,6 +97,7 @@
     <ClCompile Include="..\armsupp.c" />
     <ClCompile Include="..\dagstandalone.c" />
     <ClCompile Include="..\eventq.c" />
+    <ClCompile Include="..\hostfs.c" />
     <ClCompile Include="..\main.c" />
     <ClCompile Include="..\win\ControlPane.c" />
     <ClCompile Include="..\win\DispKbd.c" />
@@ -125,6 +126,7 @@
     <ClInclude Include="..\c99.h" />
     <ClInclude Include="..\dagstandalone.h" />
     <ClInclude Include="..\eventq.h" />
+    <ClInclude Include="..\hostfs.h" />
     <ClInclude Include="..\win\filecalls_internal.h" />
     <ClInclude Include="..\win\gui.h" />
     <ClInclude Include="..\win\KeyTable.h" />

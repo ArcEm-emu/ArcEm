@@ -1,7 +1,7 @@
 #ifndef FASTMAP_INLINE
 #define FASTMAP_FUNC
 #else
-#define FASTMAP_FUNC static
+#define FASTMAP_FUNC static inline
 #endif
 
 /**

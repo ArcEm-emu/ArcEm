@@ -671,7 +671,7 @@ static int SDD_Name(RowFunc8bpp1X)(ARMul_State *state,int row,SDD_Row drow,int f
       uint32_t Shift;
       ARMword Data;
       VIDEO_STAT(DisplayRedraw,1,1);
-      VIDEO_STAT(DisplayRedrawForced,force,1);
+      VIDEO_STAT(DisplayRedrawForced,(flags & ROWFUNC_FORCE),1);
       VIDEO_STAT(DisplayRedrawUpdated,(HD_UpdateFlags[FlagsOffset] != MEMC_UpdateFlags[FlagsOffset]),1);
       VIDEO_STAT(DisplayBits,1,Available);
       flags |= ROWFUNC_UPDATED;

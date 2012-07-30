@@ -25,10 +25,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <dirent.h>
 #ifdef _MSC_VER
 #define PATH_MAX 1024
+#include "win/dirent.h" /* Thanks http://www.softagalleria.net/dirent.php! */
+#include <direct.h>
+#include <io.h>
+#define rmdir _rmdir
 #else
+#include <dirent.h>
 #include <unistd.h>
 #endif
 #if defined __unix || defined __MACH__ || defined __riscos__
@@ -42,7 +46,9 @@
 #ifdef AMIGA
 #include <sys/syslimits.h>
 #endif
+#ifndef _MSC_VER
 #include <stdbool.h>
+#endif
 #include <sys/types.h>
 
 #ifdef __riscos__
@@ -100,6 +106,11 @@ static char HOSTFS_ROOT[512];
    macro allows us to use one API to work with both variants */
 #if (defined _WIN32 || defined __WIN32__) && ! defined __CYGWIN__
 # define mkdir(name, mode) _mkdir(name)
+#endif
+
+/* Visual Studio doesn't have ftruncate; use _chsize instead */
+#if defined _MSC_VER
+# define ftruncate _chsize
 #endif
 
 /** Registration states of HostFS module with backend code */
@@ -170,7 +181,11 @@ typedef struct {
 #define ROUND_UP_TO_4(x) (((x) + 3) & (~3))
 
 #define STREQ(x,y)     (strcmp(x,y) == 0)
+#ifdef _MSC_VER
+#define STRCASEEQ(x,y) (stricmp(x,y) == 0)
+#else
 #define STRCASEEQ(x,y) (strcasecmp(x,y) == 0)
+#endif
 
 #define MAX_OPEN_FILES 255
 
@@ -1215,6 +1230,7 @@ hostfs_write_file(ARMul_State *state, bool with_data)
   ARMword length, ptr;
   risc_os_object_info object_info;
   FILE *f;
+  size_t bytes_written=0;
 
   assert(state);
 
@@ -1267,7 +1283,6 @@ hostfs_write_file(ARMul_State *state, bool with_data)
     return;
   }
 
-  size_t bytes_written=0;
   if (with_data) {
     bytes_written = File_WriteRAM(f,ptr,length);
   } else {
@@ -1513,6 +1528,7 @@ hostfs_file_255_load_file(ARMul_State *state)
   risc_os_object_info object_info;
   FILE *f;
   ARMword ptr;
+  ARMword bytes_read;
 
   assert(state);
 
@@ -1541,7 +1557,7 @@ hostfs_file_255_load_file(ARMul_State *state)
     return;
   }
 
-  ARMword bytes_read = File_ReadRAM(f,ptr,state->Reg[4]);
+  bytes_read = File_ReadRAM(f,ptr,state->Reg[4]);
   if(bytes_read != state->Reg[4])
   {
     fprintf(stderr,"hostfs_file_255_load_file(): Failed to read full extent of file\n");
@@ -1691,7 +1707,7 @@ hostfs_directory_entry_compare(const void *e1, const void *e2)
   const char *name1 = cache_names + entry1->name_offset;
   const char *name2 = cache_names + entry2->name_offset;
 
-  return strcasecmp(name1, name2);
+  return STRCASEEQ(name1, name2);
 }
 
 /**
