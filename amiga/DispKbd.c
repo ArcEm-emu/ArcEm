@@ -14,6 +14,7 @@
 #include "arexx.h"
 #include "../armemu.h"
 #include "arch/displaydev.h"
+#include "ControlPane.h"
 
 #include <proto/intuition.h>
 #include <intuition/pointerclass.h>
@@ -73,8 +74,7 @@ int changemode(int width,int height,int log2bpp,int *xscale,int *yscale)
 
 	if((width<=0) || (height <= 0) || (log2bpp < 0))
 	{
-		printf("-> Invalid mode\n");
-		exit(EXIT_FAILURE);
+		ControlPane_Error(EXIT_FAILURE,"Invalid mode\n");
 	}
 
 	*xscale = 1;
@@ -160,14 +160,12 @@ int changemode(int width,int height,int log2bpp,int *xscale,int *yscale)
 	}
 	else
 	{
-		printf("-> Failed to create screen\n");
-		exit(EXIT_FAILURE);
+		ControlPane_Error(EXIT_FAILURE,"Failed to create screen\n");
 	}
 
 	if(!window)
 	{
-		printf("-> Failed to create window\n");
-		exit(EXIT_FAILURE);
+		ControlPane_Error(EXIT_FAILURE,"Failed to create window\n");
 	}
 
 	PubScreenStatus(screen,0);

@@ -22,6 +22,7 @@
 #include <time.h>
 #include "prof.h"
 #include "arch/archio.h"
+#include "ControlPane.h"
 
 ARMul_State statestr;
 
@@ -68,7 +69,7 @@ ARMul_LoadInstr(ARMul_State *state,ARMword addr, PipelineEntry *p)
       fprintf(stderr,"LoadInstr: %08x maps to entry %08x res %08x (mode %08x pc %08x)\n",addr,entry,res,MEMC.FastMapMode,state->Reg[15]);
       fprintf(stderr,"-> data %08x pfunc %08x instr %08x func %08x using ofs %08x\n",data,pfunc,instr,temp,MEMC.FastMapInstrFuncOfs);
       fprintf(stderr,"But should be %08x!\n",ARMul_Emulate_DecodeInstr(instr));
-      exit(5);
+      ControlPane_Error(5,"AMul_LoadInstr failure\n");
     }
 #endif
     p->func = temp;
@@ -1185,8 +1186,7 @@ ARMul_Emulate26(ARMul_State *state)
       }
       if(!loops)
       {
-        fprintf(stderr,"Runaway loop in EventQ. Head event func %08x time %08x (local_time %08x)\n",state->EventQ[0].Func,state->EventQ[0].Time,loops);
-        exit(1);
+        ControlPane_Error(1,"Runaway loop in EventQ. Head event func %08x time %08x (local_time %08x)\n",state->EventQ[0].Func,state->EventQ[0].Time,loops);
       }
 #endif
 

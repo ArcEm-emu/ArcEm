@@ -1041,8 +1041,7 @@ static void PDD_Name(Shutdown)(ARMul_State *state)
     EventQ_Remove(state,idx);
   else
   {
-    fprintf(stderr,"Couldn't find PDD_Name(EventFunc)!\n");
-    exit(EXIT_FAILURE);
+    ControlPane_Error(EXIT_FAILURE,"Couldn't find PDD_Name(EventFunc)!\n");
   }
   free(state->Display);
   state->Display = NULL;

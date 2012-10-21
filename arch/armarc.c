@@ -31,12 +31,12 @@
 #include "sound.h"
 #include "displaydev.h"
 #include "filecalls.h"
+#include "ControlPane.h"
 
 
 #ifdef MACOSX
 #include <unistd.h>
 extern char arcemDir[256];
-void arcem_exit(char* msg);
 #endif
 
 /* Page size flags */
@@ -198,7 +198,7 @@ ARMul_MemoryInit(ARMul_State *state)
 #if defined(EXTNROM_SUPPORT)
   uint32_t extnrom_entry_count;
 #endif
-  uint32_t initmemsize;
+  uint32_t initmemsize = 0;
   
   MEMC.DRAMPageSize = MEMC_PAGESIZE_3_32K;
   switch(hArcemConfig.eMemSize) {
@@ -244,8 +244,7 @@ ARMul_MemoryInit(ARMul_State *state)
       break;
 
     default:
-      fprintf(stderr, "Unsupported memory size");
-      exit(EXIT_FAILURE);
+      ControlPane_Error(EXIT_FAILURE,"Unsupported memory size");
   }
 
   dbug("Reading config file....\n");
@@ -271,15 +270,10 @@ ARMul_MemoryInit(ARMul_State *state)
   {
     chdir(arcemDir);
   }
-  if (ROMFile = fopen(hArcemConfig.sRomImageName, "rb"), ROMFile == NULL) {
-    arcem_exit("Couldn't open ROM file");
-  }
-#else
-  if (ROMFile = fopen(hArcemConfig.sRomImageName, "rb"), ROMFile == NULL) {
-    fprintf(stderr, "Couldn't open ROM file\n");
-    exit(2);
-  }
 #endif
+  if (ROMFile = fopen(hArcemConfig.sRomImageName, "rb"), ROMFile == NULL) {
+    ControlPane_Error(2,"Couldn't open ROM file");
+  }
 
   /* Find the rom file size */
   fseek(ROMFile, 0l, SEEK_END);
@@ -288,8 +282,7 @@ ARMul_MemoryInit(ARMul_State *state)
   MEMC.ROMHighMask = MEMC.ROMHighSize-1;
 
   if(MEMC.ROMHighSize & MEMC.ROMHighMask) {
-    fprintf(stderr,"ROM High isn't power of 2 in size\n");
-    exit(3);
+    ControlPane_Error(3,"ROM High isn't power of 2 in size\n");
   }
 
   fseek(ROMFile, 0l, SEEK_SET);
@@ -308,8 +301,7 @@ ARMul_MemoryInit(ARMul_State *state)
   MEMC.ROMRAMChunk = calloc(RAMChunkSize+MEMC.ROMHighSize+extnrom_size+256,1);
   MEMC.EmuFuncChunk = calloc(RAMChunkSize+MEMC.ROMHighSize+extnrom_size+256,sizeof(FastMapUInt)/4);
   if((MEMC.ROMRAMChunk == NULL) || (MEMC.EmuFuncChunk == NULL)) {
-    fprintf(stderr,"Couldn't allocate ROMRAMChunk/EmuFuncChunk\n");
-    exit(3);
+    ControlPane_Error(3,"Couldn't allocate ROMRAMChunk/EmuFuncChunk\n");
   }
 #ifdef FASTMAP_64
   /* On 64bit systems, ROMRAMChunk needs shifting to account for the shift that occurs in FastMap_Phy2Func */
@@ -334,8 +326,7 @@ ARMul_MemoryInit(ARMul_State *state)
     MEMC.ROMLowMask = MEMC.ROMLowSize-1;
   
     if(MEMC.ROMLowSize & MEMC.ROMLowMask) {
-      fprintf(stderr,"ROM Low isn't power of 2 in size\n");
-      exit(3);
+      ControlPane_Error(3,"ROM Low isn't power of 2 in size\n");
     }
 
     /* calloc() now used to ensure that Extension ROM space is zero'ed */
@@ -355,14 +346,12 @@ ARMul_MemoryInit(ARMul_State *state)
 
   if (DisplayDev_Init(state)) {
     /* There was an error of some sort - it will already have been reported */
-    fprintf(stderr, "Could not initialise display - exiting\n");
-    exit(EXIT_FAILURE);
+    ControlPane_Error(EXIT_FAILURE,"Could not initialise display - exiting\n");
   }
 
   if (Sound_Init(state)) {
     /* There was an error of some sort - it will already have been reported */
-    fprintf(stderr, "Could not initialise sound output - exiting\n");
-    exit(EXIT_FAILURE);
+    ControlPane_Error(EXIT_FAILURE,"Could not initialise sound output - exiting\n");
   }
 
   for (i = 0; i < 512 * 1024 / UPDATEBLOCKSIZE; i++) {

@@ -28,6 +28,7 @@
 #include "dbugsys.h"
 #include "hdc63463.h"
 #include "ArcemConfig.h"
+#include "ControlPane.h"
 
 struct HDCReadDataStr {
   uint8_t US,PHA,LCAH,LCAL,LHA,LSA,SCNTH,SCNTL;
@@ -444,9 +445,8 @@ static int SetFilePtr(ARMul_State *state, int drive, uint32_t head,
     dbug("SetFilePtr: drive=%d head=%u cyl=%u sec=%u\n", drive, head, cyl, sect);
 
     if (drive < 0 || drive > DIM(hArcemConfig.aST506DiskShapes)) {
-        fprintf(stderr, "SetFilePtr: drive %d out of range 0..%d\n",
+        ControlPane_Error(1,"SetFilePtr: drive %d out of range 0..%d\n",
             drive, (int) DIM(hArcemConfig.aST506DiskShapes));
-        exit(1);
     }
 
     disc = hArcemConfig.aST506DiskShapes + drive;
@@ -1300,8 +1300,7 @@ static void WriteFormat_DoNextBufferFull(ARMul_State *state) {
   char *fillbuffer; /* A buffer which holds a block of data to write */
 
   if (fillbuffer=malloc(8192),fillbuffer==NULL) {
-    fprintf(stderr,"HDC:WriteFormat_DoNextBufferFull: Couldn't allocate memory for fillbuffer\n");
-    exit(1);
+    ControlPane_Error(1,"HDC:WriteFormat_DoNextBufferFull: Couldn't allocate memory for fillbuffer\n");
   }
 
   memset(fillbuffer,0x4e,8192);

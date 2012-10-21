@@ -8,7 +8,20 @@
 #include "DispKbd.h"
 #include "ControlPane.h"
 
+#include <stdarg.h>
+#include <stdio.h>
+
 void ControlPane_Init(ARMul_State *state)
 {
 
+}
+
+void ControlPane_Error(int code,const char *fmt,...)
+{
+  va_list args;
+  va_start(args,fmt);
+  /* Log it */
+  vfprintf(stderr,fmt,args);
+  /* Quit */
+  exit(code);
 }

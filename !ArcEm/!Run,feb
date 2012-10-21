@@ -8,9 +8,6 @@ WimpSlot -min 1500k -max 1500k
 Set ArcEm$Dir <Obey$Dir>
 
 RMLoad <ArcEm$Dir>.ArcEmKey
-<ArcEm$Dir>.arcem --rom <ArcEm$Dir>.ROM --hostfsdir <ArcEm$Dir>.^.hostfs --extnromdir /<ArcEm$Dir>/extnrom 2>null: >null:
-
-If "<Sys$ReturnCode>" = "2" Then Error Unable to open ROM file for ArcEm
-If "<Sys$ReturnCode>" = "3" Then Error ArcEm was unable to claim enough memory.  Please try and make more memory available.  ArcEm requires from 8MB to 64MB free depending on options.
+<ArcEm$Dir>.arcem --rom <ArcEm$Dir>.ROM --hostfsdir <ArcEm$Dir>.^.hostfs --extnromdir /<ArcEm$Dir>/extnrom 2>null:
 
 RMKill ArcEmKey

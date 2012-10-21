@@ -1647,7 +1647,7 @@ static void SDD_Name(BorderRow)(ARMul_State *state,int row)
   }
 }
 
-static const SDD_Name(RowFunc) RowFuncs[2][4] = {
+static const SDD_Name(RowFunc) SDD_Name(RowFuncs)[2][4] = {
  { /* 1X horizontal scaling */
    SDD_Name(RowFunc1bpp1X),
    SDD_Name(RowFunc2bpp1X),
@@ -1719,7 +1719,7 @@ static void SDD_Name(DisplayRow)(ARMul_State *state,int row)
   }
 
   drow = SDD_Name(Host_BeginRow)(state,hoststart++,HD.XOffset);
-  rf = &RowFuncs[HD.XScale-1][(DC.VIDC_CR&0xc)>>2];
+  rf = &SDD_Name(RowFuncs)[HD.XScale-1][(DC.VIDC_CR&0xc)>>2];
   if(hoststart == hostend)
   {
     if((*rf)(state,row,drow,rowflags | ROWFUNC_UPDATEFLAGS))
@@ -1751,7 +1751,7 @@ static void SDD_Name(DisplayRow)(ARMul_State *state,int row)
   }
 }
 
-static const SDD_Name(RowFuncNoFlags) RowFuncsNoFlags[2][4] = {
+static const SDD_Name(RowFuncNoFlags) SDD_Name(RowFuncsNoFlags)[2][4] = {
  { /* 1X horizontal scaling */
    SDD_Name(RowFunc1bpp1XNoFlags),
    SDD_Name(RowFunc2bpp1XNoFlags),
@@ -1810,7 +1810,7 @@ static void SDD_Name(DisplayRowNoFlags)(ARMul_State *state,int row)
 
   /* Display area */
 
-  rf = &RowFuncsNoFlags[HD.XScale-1][(DC.VIDC_CR&0xc)>>2];
+  rf = &SDD_Name(RowFuncsNoFlags)[HD.XScale-1][(DC.VIDC_CR&0xc)>>2];
   /* Remember current Vptr */
   Vptr = DC.Vptr;
   do
@@ -2451,8 +2451,7 @@ static void SDD_Name(Shutdown)(ARMul_State *state)
     EventQ_Remove(state,idx);
   else
   {
-    fprintf(stderr,"Couldn't find SDD event func!\n");
-    exit(EXIT_FAILURE);
+    ControlPane_Error(EXIT_FAILURE,"Couldn't find SDD event func!\n");
   }
   free(state->Display);
   state->Display = NULL;

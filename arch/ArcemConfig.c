@@ -18,6 +18,7 @@
 
 #include "ArcemConfig.h"
 #include "Version.h"
+#include "ControlPane.h"
 
 #ifdef AMIGA
 #include <workbench/startup.h>
@@ -49,8 +50,7 @@ void ArcemConfig_SetupDefaults(void)
   hArcemConfig.sRomImageName = arcemconfig_StringDuplicate("ROM");
   // If we've run out of memory this early, something is very wrong
   if(NULL == hArcemConfig.sRomImageName) {
-    fprintf(stderr, "Failed to allocate memory for initial configuration. Please free up more memory.\n");
-    exit(EXIT_FAILURE);
+    ControlPane_Error(EXIT_FAILURE,"Failed to allocate memory for initial configuration. Please free up more memory.\n");
   }
 
 #if defined(EXTNROM_SUPPORT)
@@ -58,8 +58,7 @@ void ArcemConfig_SetupDefaults(void)
   hArcemConfig.sEXTNDirectory = arcemconfig_StringDuplicate("extnrom");
   // If we've run out of memory this early, something is very wrong
   if(NULL == hArcemConfig.sEXTNDirectory) {
-    fprintf(stderr, "Failed to allocate memory for initial configuration. Please free up more memory.\n");
-    exit(EXIT_FAILURE);
+    ControlPane_Error(EXIT_FAILURE,"Failed to allocate memory for initial configuration. Please free up more memory.\n");
   }
 #endif /* EXTNROM_SUPPORT */
 
@@ -72,8 +71,7 @@ void ArcemConfig_SetupDefaults(void)
 #endif
   // If we've run out of memory this early, something is very wrong
   if(NULL == hArcemConfig.sHostFSDirectory) {
-    fprintf(stderr, "Failed to allocate memory for initial configuration. Please free up more memory.\n");
-    exit(EXIT_FAILURE);
+    ControlPane_Error(EXIT_FAILURE,"Failed to allocate memory for initial configuration. Please free up more memory.\n");
   }
 
 #endif /* HOSTFS_SUPPORT */
@@ -92,6 +90,8 @@ void ArcemConfig_SetupDefaults(void)
   hArcemConfig.iMinResY = 0;
   hArcemConfig.iLCDResX = 0;
   hArcemConfig.iLCDResY = 0;
+  hArcemConfig.iTweakMenuKey1 = 104; /* Left windows key */
+  hArcemConfig.iTweakMenuKey2 = 105; /* Right windows key */
 #endif
 }
 
@@ -127,7 +127,7 @@ void ArcemConfig_ParseCommandLine(int argc, char *argv[])
     "  --processor <value> - Set the emulated CPU\n"
     "     Where value is one of 'ARM2', 'ARM250', 'ARM3'\n"
 #if defined(SYSTEM_riscos_single)
-    "  --display <mode> - Select display driver, 'pal' or '16bpp'\n"
+    "  --display <mode> - Select display driver, 'pal' or 'std'\n"
     "  --rbswap - Swap red & blue in 16bpp mode (e.g. for Iyonix with GeForce FX)\n"
     "  --noaspect - Disable aspect ratio correction\n"
     "  --noupscale - Disable upscaling\n"
@@ -135,6 +135,7 @@ void ArcemConfig_ParseCommandLine(int argc, char *argv[])
     "  --minres <x> <y> - Specify dimensions of smallest screen mode to use\n"
     "  --lcdres <x> <y> - Specify native resolution of your monitor (to avoid using\n"
     "     modes that won't scale well on an LCD)\n"
+    "  --menukeys <a> <b> - Specify which key numbers open the tweak menu\n"
 #endif /* SYSTEM_riscos_single */
     ;
 
@@ -182,9 +183,7 @@ void ArcemConfig_ParseCommandLine(int argc, char *argv[])
         iArgument += 2;
       } else {
         // No argument following the --rom option
-        fprintf(stderr, "No argument following the --rom option\n");
-
-        exit(EXIT_FAILURE);
+        ControlPane_Error(EXIT_FAILURE,"No argument following the --rom option\n");
       }
     }
 #if defined(EXTNROM_SUPPORT)
@@ -203,9 +202,7 @@ void ArcemConfig_ParseCommandLine(int argc, char *argv[])
         iArgument += 2;
       } else {
         // No argument following the --extnromdir option
-        fprintf(stderr, "No argument following the --extnromdir option\n");
-
-        exit(EXIT_FAILURE);
+        ControlPane_Error(EXIT_FAILURE,"No argument following the --extnromdir option\n");
       }
     }
 #endif /* EXTNROM_SUPPORT */
@@ -225,9 +222,7 @@ void ArcemConfig_ParseCommandLine(int argc, char *argv[])
         iArgument += 2;
       } else {
         // No argument following the --hostfsdir option
-        fprintf(stderr, "No argument following the --hostfsdir option\n");
-
-        exit(EXIT_FAILURE);
+        ControlPane_Error(EXIT_FAILURE,"No argument following the --hostfsdir option\n");
       }
     }
 #endif /* HOSTFS_SUPPORT */
@@ -274,16 +269,12 @@ void ArcemConfig_ParseCommandLine(int argc, char *argv[])
           iArgument += 2;
         }
         else {
-          fprintf(stderr, "Unrecognised value to the --memory option\n");
-
-          exit(EXIT_FAILURE);
+          ControlPane_Error(EXIT_FAILURE,"Unrecognised value to the --memory option\n");
         }
 
       } else {
         // No argument following the --memory option
-        fprintf(stderr, "No argument following the --memory option\n");
-
-        exit(EXIT_FAILURE);
+        ControlPane_Error(EXIT_FAILURE,"No argument following the --memory option\n");
       }
     }
     else if(0 == strcmp("--processor", argv[iArgument])) {
@@ -304,15 +295,11 @@ void ArcemConfig_ParseCommandLine(int argc, char *argv[])
           iArgument += 2;
         }
         else {
-          fprintf(stderr, "Unrecognised value to the --processor option\n");
-
-          exit(EXIT_FAILURE);
+          ControlPane_Error(EXIT_FAILURE,"Unrecognised value to the --processor option\n");
         }
       } else {
         // No argument following the --processor option
-        fprintf(stderr, "No argument following the --processor option\n");
-
-        exit(EXIT_FAILURE);
+        ControlPane_Error(EXIT_FAILURE,"No argument following the --processor option\n");
       }
     }
 #if defined(SYSTEM_riscos_single)
@@ -322,17 +309,15 @@ void ArcemConfig_ParseCommandLine(int argc, char *argv[])
           hArcemConfig.eDisplayDriver = DisplayDriver_Palettised;
           iArgument += 2;
         }
-        else if(0 == strcmp("16bpp", argv[iArgument + 1])) {
+        else if(0 == strcmp("std", argv[iArgument + 1])) {
           hArcemConfig.eDisplayDriver = DisplayDriver_Standard;
           iArgument += 2;
         }
         else {
-          fprintf(stderr, "Unrecognised value to the --display option\n");
-          exit(EXIT_FAILURE);
+          ControlPane_Error(EXIT_FAILURE,"Unrecognised value to the --display option\n");
         }
       } else {
-        fprintf(stderr, "No argument following the --display option\n");
-        exit(EXIT_FAILURE);
+        ControlPane_Error(EXIT_FAILURE,"No argument following the --display option\n");
       }
     } else if(0 == strcmp("--rbswap",argv[iArgument])) {
       hArcemConfig.bRedBlueSwap = true;
@@ -352,8 +337,7 @@ void ArcemConfig_ParseCommandLine(int argc, char *argv[])
         hArcemConfig.iMinResY = atoi(argv[iArgument+2]);
         iArgument += 3;
       } else {
-        fprintf(stderr, "Not enough arguments following the --minres option\n");
-        exit(EXIT_FAILURE);
+        ControlPane_Error(EXIT_FAILURE,"Not enough arguments following the --minres option\n");
       }
     } else if(0 == strcmp("--lcdres",argv[iArgument])) {
       if(iArgument+2 < argc) {
@@ -361,15 +345,20 @@ void ArcemConfig_ParseCommandLine(int argc, char *argv[])
         hArcemConfig.iLCDResY = atoi(argv[iArgument+2]);
         iArgument += 3;
       } else {
-        fprintf(stderr, "Not enough arguments following the --lcdres option\n");
-        exit(EXIT_FAILURE);
+        ControlPane_Error(EXIT_FAILURE,"Not enough arguments following the --lcdres option\n");
+      }
+    } else if(0 == strcmp("--menukeys",argv[iArgument])) {
+      if(iArgument+2 < argc) {
+        hArcemConfig.iTweakMenuKey1 = atoi(argv[iArgument+1]);
+        hArcemConfig.iTweakMenuKey2 = atoi(argv[iArgument+2]);
+        iArgument += 3;
+      } else {
+        ControlPane_Error(EXIT_FAILURE,"Not enough arguments following the --menukeys option\n");
       }
     }
 #endif /* SYSTEM_riscos_single */
     else {
-      fprintf(stderr, "Unrecognised option '%s', try --help\n", argv[iArgument]);
-
-      exit(EXIT_FAILURE);
+      ControlPane_Error(EXIT_FAILURE,"Unrecognised option '%s', try --help\n", argv[iArgument]);
     }
   }
 }

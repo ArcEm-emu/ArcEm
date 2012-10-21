@@ -16,6 +16,7 @@
 
 #define rpclog(...) fprintf(stderr,__VA_ARGS__)
 #define error(...) fprintf(stderr,__VA_ARGS__)
+#define hostfs_error(code,...) ControlPane_Error(code,__VA_ARGS__)
 
 #define HOSTFS_ARCEM /* Build ArcEm version, not RPCEmu */
 

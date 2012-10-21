@@ -13,4 +13,7 @@ void ControlPane_Init(ARMul_State *state);
 void ControlPane_Event(ARMul_State *state, XEvent *e);
 #endif
 
+/* Report an error and exit */
+void ControlPane_Error(int code,const char *fmt,...);
+
 #endif

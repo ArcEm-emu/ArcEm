@@ -16,6 +16,8 @@
 #include "arch/keyboard.h"
 
 #include <string.h>
+#include <stdarg.h>
+#include <stdio.h>
 
 #define CTRLPANEWIDTH 640
 #define CTRLPANEHEIGHT 100
@@ -205,8 +207,7 @@ void ControlPane_Init(ARMul_State *state) {
   tmpptr = strdup("Arc emulator - Control panel");
 
   if (XStringListToTextProperty(&tmpptr, 1, &name) == 0) {
-    fprintf(stderr, "Could not allocate window name\n");
-    exit(1);
+    ControlPane_Error(1,"Could not allocate window name\n");
   }
 
   XSetWMName(PD.disp, PD.ControlPane, &name);
@@ -219,8 +220,7 @@ void ControlPane_Init(ARMul_State *state) {
   PD.ButtonFont = XLoadQueryFont(PD.disp, "fixed");
 
   if (PD.ButtonFont == NULL) {
-    fprintf(stderr, "Couldn't get font for buttons\n");
-    exit(1);
+    ControlPane_Error(1,"Couldn't get font for buttons\n");
   }
 
   XSetFont(PD.disp, PD.ControlPaneGC, PD.ButtonFont->fid);
@@ -240,6 +240,18 @@ void ControlPane_Init(ARMul_State *state) {
   }
 } /* ControlPane_Init */
 
+
+/*----------------------------------------------------------------------------*/
+
+void ControlPane_Error(int code,const char *fmt,...)
+{
+  va_list args;
+  va_start(args,fmt);
+  /* Log it */
+  vfprintf(stderr,fmt,args);
+  /* Quit */
+  exit(code);
+}
 
 
 

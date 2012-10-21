@@ -31,6 +31,7 @@
 #include "arch/DispKbd.h"
 #include "win.h"
 #include "KeyTable.h"
+#include "ControlPane.h"
 
 #ifndef BIG_ENDIAN
 #define BIG_ENDIAN
@@ -762,15 +763,13 @@ DisplayKbd_InitHost(ARMul_State *state)
 {
   HD.ImageData=malloc(4*(MonitorWidth+32)*MonitorHeight);
   if (HD.ImageData==NULL) {
-    fprintf(stderr,"DisplayKbd_Init: Couldn't allocate image memory\n");
-    exit(1);
+    ControlPane_Error(1,"DisplayKbd_Init: Couldn't allocate image memory\n");
   };
 
   /* Now the same for the cursor image */
   HD.CursorImageData=malloc(4*64*MonitorHeight);
   if (HD.CursorImageData==NULL) {
-    fprintf(stderr,"DisplayKbd_Init: Couldn't allocate cursor image memory\n");
-    exit(1);
+    ControlPane_Error(1,"DisplayKbd_Init: Couldn't allocate cursor image memory\n");
   };
 
   GenerateInvertedKeyTable();

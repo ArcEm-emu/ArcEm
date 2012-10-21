@@ -1048,9 +1048,8 @@ FDC_EjectFloppy(int drive)
 static void efseek(FILE *fp, int32_t offset, int whence)
 {
   if (fseek(fp, offset, whence)) {
-    fprintf(stderr, "efseek(%p, %ld, %d) failed.\n", fp, (long int) offset,
+    ControlPane_Error(1,"efseek(%p, %ld, %d) failed.\n", fp, (long int) offset,
             whence);
-    exit(1);
   }
 
   return;

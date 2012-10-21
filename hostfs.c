@@ -87,6 +87,7 @@ int __riscosify_control = 0;
 #include "arch/armarc.h"
 #include "arch/ArcemConfig.h"
 #include "arch/filecalls.h"
+#include "ControlPane.h"
 
 #define HOSTFS_ROOT hArcemConfig.sHostFSDirectory
 
@@ -228,8 +229,7 @@ errno_to_hostfs_error(const char *filename,const char *function,const char *op)
 {
   switch(errno) {
   case ENOMEM: /* Out of memory */
-    fprintf(stderr, "HostFS out of memory in %s: \'%s\'\n",function,strerror(errno));
-    exit(EXIT_FAILURE);
+    hostfs_error(EXIT_FAILURE,"HostFS out of memory in %s: \'%s\'\n",function,strerror(errno));
     break;
 
   case ENOENT: /* Object not found */
@@ -279,9 +279,8 @@ hostfs_ensure_buffer_size(size_t buffer_size_needed)
   if (buffer_size_needed > buffer_size) {
     buffer = realloc(buffer, buffer_size_needed);
     if (!buffer) {
-      fprintf(stderr, "HostFS could not increase buffer size to %lu bytes\n",
+      hostfs_error(EXIT_FAILURE,"HostFS could not increase buffer size to %lu bytes\n",
               (unsigned long) buffer_size_needed);
-      exit(EXIT_FAILURE);
     }
     buffer_size = buffer_size_needed;
   }
@@ -1751,8 +1750,7 @@ hostfs_cache_dir(const char *directory_name)
     cache_names = malloc(cache_names_capacity);
   }
   if ((!cache_entries) || (!cache_names)) {
-    fprintf(stderr, "hostfs_cache_dir(): Out of memory\n");
-    exit(1);
+    hostfs_error(1,"hostfs_cache_dir(): Out of memory\n");
   }
 
   /* Read each of the directory entries one at a time.
@@ -1790,8 +1788,7 @@ hostfs_cache_dir(const char *directory_name)
         cache_names_capacity *= 2;
         cache_names = realloc(cache_names, cache_names_capacity);
         if (!cache_names) {
-          fprintf(stderr, "hostfs_cache_dir(): Out of memory\n");
-          exit(1);
+          hostfs_error(1,"hostfs_cache_dir(): Out of memory\n");
         }
       }
 
@@ -1808,8 +1805,7 @@ hostfs_cache_dir(const char *directory_name)
         cache_entries_capacity *= 2;
         cache_entries = realloc(cache_entries, cache_entries_capacity * sizeof(cache_directory_entry));
         if (!cache_entries) {
-          fprintf(stderr, "hostfs_cache_dir(): Out of memory\n");
-          exit(1);
+          hostfs_error(1,"hostfs_cache_dir(): Out of memory\n");
         }
       }
     }
@@ -1850,8 +1846,7 @@ hostfs_cache_dir(const char *directory_name)
       cache_names_capacity *= 2;
       cache_names = realloc(cache_names, cache_names_capacity);
       if (!cache_names) {
-        fprintf(stderr, "hostfs_cache_dir(): Out of memory\n");
-        exit(1);
+        hostfs_error(1,"hostfs_cache_dir(): Out of memory\n");
       }
     }
 
@@ -1868,8 +1863,7 @@ hostfs_cache_dir(const char *directory_name)
       cache_entries_capacity *= 2;
       cache_entries = realloc(cache_entries, cache_entries_capacity * sizeof(cache_directory_entry));
       if (!cache_entries) {
-        fprintf(stderr, "hostfs_cache_dir(): Out of memory\n");
-        exit(1);
+        hostfs_error(1,"hostfs_cache_dir(): Out of memory\n");
       }
     }
   }

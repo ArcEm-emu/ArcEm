@@ -87,6 +87,7 @@ typedef struct ArcemConfig_s {
   bool bNoLowColour; /* Disable 1/2/4bpp modes */
   int iMinResX,iMinResY;
   int iLCDResX,iLCDResY;
+  int iTweakMenuKey1,iTweakMenuKey2;
 #endif
 
 } ArcemConfig;

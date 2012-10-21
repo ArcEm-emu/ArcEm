@@ -26,6 +26,7 @@
 #include "../armemu.h"
 #include "arch/displaydev.h"
 #include "platform.h"
+#include "ControlPane.h"
 
 typedef unsigned int SDD_HostColour;
 #define SDD_Name(x) true_##x
@@ -87,9 +88,8 @@ static void SDD_Name(Host_PollDisplay)(ARMul_State *state);
 static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,int hz)
 {
   if (width > MaxVideoWidth || height > MaxVideoHeight) {
-      fprintf(stderr, "Resize_Window: new size (%d, %d) exceeds maximum (%d, %d)\n",
+      ControlPane_Error(EXIT_FAILURE,"Resize_Window: new size (%d, %d) exceeds maximum (%d, %d)\n",
           width, height, MaxVideoWidth, MaxVideoHeight);
-          exit(EXIT_FAILURE);
   }
 
   HD.XScale = 1;

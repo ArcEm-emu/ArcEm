@@ -31,6 +31,7 @@
 #include "armdefs.h"
 
 #include "ArcemConfig.h"
+#include "ControlPane.h"
 
 /**************************************************************/
 /* Signal handler that terminates excecution in the ARMulator */
@@ -55,9 +56,8 @@ static void dagstandalone_handlesignal(int sig) {
 #endif
 
 static void InitFail(int exitcode, char const *which) {
-  fprintf(stderr, "%s interface failed to initialise. Exiting\n",
+  ControlPane_Error(exitcode,"%s interface failed to initialise. Exiting\n",
                             which);
-  exit(exitcode);
 }
 
 /**

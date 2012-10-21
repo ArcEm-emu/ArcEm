@@ -9,6 +9,7 @@
 #include "win.h"
 #include "KeyTable.h"
 #include "../armemu.h"
+#include "ControlPane.h"
 
 
 #define MonitorWidth 1600
@@ -79,8 +80,7 @@ static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,in
 {
   if((width > MonitorWidth) || (height > MonitorHeight))
   {
-    fprintf(stderr,"Mode %dx%d too big\n",width,height);
-    exit(EXIT_FAILURE);
+    ControlPane_Error(EXIT_FAILURE,"Mode %dx%d too big\n",width,height);
   }
   HD.Width = width;
   HD.Height = height;

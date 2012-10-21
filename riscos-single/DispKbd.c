@@ -60,10 +60,13 @@ typedef struct {
   int aspect; /* Aspect ratio: 1 = wide pixels, 2 = square pixels, 4 = tall pixels */
   int depths; /* Bitmask of supported display depths */
 } HostMode;
-HostMode *ModeList;
-int NumModes;
+static HostMode *ModeList;
+static int NumModes;
+static int colourdepths_available = 0;
 
 static int current_hz;
+static const HostMode *current_mode=NULL;
+static int current_depth=-1;
 
 static HostMode *SelectROScreenMode(int x, int y, int aspect, int depths, int *outxscale, int *outyscale);
 
@@ -97,8 +100,6 @@ static int CursorYOffset=0; /* How many rows were skipped from the top of the cu
 
 static int ChangeMode(const HostMode *mode,int depth)
 {
-  static const HostMode *current_mode=NULL;
-  static int current_depth=-1;
   while(!(mode->depths & (1<<depth)) && ((1<<depth) < mode->depths))
     depth++;
   if((mode != current_mode) || (depth != current_depth))
@@ -125,8 +126,7 @@ static int ChangeMode(const HostMode *mode,int depth)
     _kernel_oserror *err = _swix(OS_ScreenMode, _INR(0,1), 0, &block);
     if(err)
     {
-      fprintf(stderr,"Failed to change screen mode: Error %d %s\n",err->errnum,err->errmess);
-      exit(EXIT_FAILURE);
+      ControlPane_Error(EXIT_FAILURE,"Failed to change screen mode: Error %d %s\n",err->errnum,err->errmess);
     }
   
     /* Remove text cursor from real RO */
@@ -143,12 +143,13 @@ static int ChangeMode(const HostMode *mode,int depth)
 
 /* ------------------------------------------------------------------ */
 
-/* Standard display device */
+/* Standard display device, 16bpp */
 
-typedef unsigned short SDD_HostColour;
-#define SDD_Name(x) sdd_##x
+#define SDD_HostColour uint16_t
+#define SDD_Name(x) sdd16_##x
 static const int SDD_RowsAtOnce = 1;
-typedef SDD_HostColour *SDD_Row;
+#define SDD_Row SDD_HostColour *
+#define SDD_DisplayDev SDD16_DisplayDev
 
 
 static SDD_HostColour SDD_Name(Host_GetColour)(ARMul_State *state,unsigned int col)
@@ -227,6 +228,96 @@ SDD_Name(Host_PollDisplay)(ARMul_State *state)
   params.YScale = HD.YScale;
   Host_PollDisplay_Common(state,&params);
 }
+
+#undef SDD_HostColour
+#undef SDD_Name
+#undef SDD_Row
+#undef SDD_DisplayDev
+
+/* ------------------------------------------------------------------ */
+
+/* Standard display device, 32bpp */
+
+#define SDD_HostColour uint32_t
+#define SDD_Name(x) sdd32_##x
+#define SDD_Row SDD_HostColour *
+#define SDD_DisplayDev SDD32_DisplayDev
+
+
+static SDD_HostColour SDD_Name(Host_GetColour)(ARMul_State *state,unsigned int col)
+{
+  int r = col & 0x00f;
+  int g = (col & 0x0f0) << 4;
+  int b = (col & 0xf00) << 8;
+  SDD_HostColour col2 = r | g | b;
+  return col2 | (col2<<4);
+}  
+
+static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,int hz);
+
+static inline SDD_Row SDD_Name(Host_BeginRow)(ARMul_State *state,int row,int offset)
+{
+  return ((SDD_Row) (ModeVarsOut[MODE_VAR_ADDR] + ModeVarsOut[MODE_VAR_BPL]*row))+offset;
+}
+
+static inline void SDD_Name(Host_EndRow)(ARMul_State *state,SDD_Row *row) { /* nothing */ };
+
+static inline void SDD_Name(Host_BeginUpdate)(ARMul_State *state,SDD_Row *row,unsigned int count) { /* nothing */ };
+
+static inline void SDD_Name(Host_EndUpdate)(ARMul_State *state,SDD_Row *row) { /* nothing */ };
+
+static inline void SDD_Name(Host_SkipPixels)(ARMul_State *state,SDD_Row *row,unsigned int count) { (*row) += count; }
+
+static inline void SDD_Name(Host_WritePixel)(ARMul_State *state,SDD_Row *row,SDD_HostColour pix) { *(*row)++ = pix; }
+
+static inline void SDD_Name(Host_WritePixels)(ARMul_State *state,SDD_Row *row,SDD_HostColour pix,unsigned int count) { while(count--) *(*row)++ = pix; }
+
+static void
+SDD_Name(Host_PollDisplay)(ARMul_State *state);
+
+#include "../arch/stddisplaydev.c"
+
+static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,int hz)
+{
+  current_hz = hz;
+
+  /* Search the mode list for the best match */
+  int aspect;
+  if(width <= height)
+    aspect = 1;
+  else if(width >= height*2)
+    aspect = 4;
+  else
+    aspect = 2;
+
+  HostMode *mode = SelectROScreenMode(width,height,aspect,1<<5,&HD.XScale,&HD.YScale);
+  ChangeMode(mode,5);
+  HD.Width = ModeVarsOut[MODE_VAR_WIDTH]+1; /* Should match mode->w, mode->h, but use these just to make sure */
+  HD.Height = ModeVarsOut[MODE_VAR_HEIGHT]+1;
+  
+  fprintf(stderr,"Emu mode %dx%d aspect %.1f mapped to real mode %dx%d aspect %.1f, with scale factors %dx%d\n",width,height,((float)aspect)/2.0f,mode->w,mode->h,((float)mode->aspect)/2.0f,HD.XScale,HD.YScale);
+
+  /* Screen is expected to be cleared */
+  _swi(OS_WriteC,_IN(0),12);
+}
+
+static void
+SDD_Name(Host_PollDisplay)(ARMul_State *state)
+{
+  DisplayParams params;
+  params.Width = HD.Width;
+  params.Height = HD.Height;
+  params.XOffset = HD.XOffset;
+  params.YOffset = HD.YOffset;
+  params.XScale = HD.XScale;
+  params.YScale = HD.YScale;
+  Host_PollDisplay_Common(state,&params);
+}
+
+#undef SDD_HostColour
+#undef SDD_Name
+#undef SDD_Row
+#undef SDD_DisplayDev
 
 /* ------------------------------------------------------------------ */
 
@@ -322,7 +413,7 @@ static void PDD_Name(Host_DrawBorderRect)(ARMul_State *state,int x,int y,int wid
   height = height<<ModeVarsOut[MODE_VAR_YEIG];
 
   _swi(OS_Plot,_INR(0,2),4,x,y);
-  _swi(OS_Plot,_INR(0,2),96+1,width,height);
+  _swi(OS_Plot,_INR(0,2),96+1,width-1,height-1);
 }
 
 #include "../arch/paldisplaydev.c"
@@ -679,7 +770,7 @@ static void restorebreak(void)
 
 /*-----------------------------------------------------------------------------*/
 
-static const DisplayDev *displays[2] = {&PDD_DisplayDev,&SDD_DisplayDev};
+static const DisplayDev *displays[2] = {&PDD_DisplayDev,&SDD16_DisplayDev};
 
 int
 DisplayDev_Init(ARMul_State *state)
@@ -688,6 +779,8 @@ DisplayDev_Init(ARMul_State *state)
   leds_changed(KBD.Leds);
 
   InitModeTable();
+  if(!(colourdepths_available & (1<<4)))
+    displays[DisplayDriver_Standard] = &SDD32_DisplayDev;
 
   /* Disable escape & break. Have to use alt-break, or ArcEm_Shutdown, to quit the emulator. */
   _swi(OS_Byte,_INR(0,2)|_OUT(1),200,1,0xfe,&old_escape);
@@ -792,16 +885,16 @@ Kbd_PollHostKbd(ARMul_State *state)
       //printf("Processing key %d, transition %d\n",key, transition);
       ProcessKey(state, key, transition);
 #ifdef ENABLE_MENU
-      static int left_down = 0;
-      static int right_down = 0;
+      static int key1_down = 0;
+      static int key2_down = 0;
       static int both_down = 0;
-      if(key == 104) /* Left windows key */
-        left_down = transition;
-      else if(key == 105) /* Right windows key */
-        right_down = transition;
-      if(left_down & right_down)
+      if(key == hArcemConfig.iTweakMenuKey1)
+        key1_down = transition;
+      else if(key == hArcemConfig.iTweakMenuKey2)
+        key2_down = transition;
+      if(key1_down & key2_down)
         both_down = 1;
-      if(both_down && !left_down && !right_down)
+      if(both_down && !key1_down && !key2_down)
       {
         both_down = 0;
         GoMenu();
@@ -838,8 +931,7 @@ static void InitModeTable(void)
   mode_list = (int *) malloc(size);
   if(!mode_list)
   {
-    fprintf(stderr,"Failed to get memory for mode list\n");
-    exit(EXIT_FAILURE);
+    ControlPane_Error(EXIT_FAILURE,"Failed to get memory for mode list\n");
   }
   _swi(OS_ScreenMode,_IN(0)|_IN(2)|_INR(6,7)|_OUT(2),2,0,mode_list,size,&count);
   count = -count;
@@ -869,6 +961,9 @@ static void InitModeTable(void)
       if(floor(xscale) != xscale)
         goto next;
     }
+
+    colourdepths_available |= 1<<mode[4];
+
     /* Already got this entry? (i.e. due to multiple framerates) */
     int i;
     for(i=NumModes-1;i>=0;i--)
@@ -966,8 +1061,7 @@ static HostMode *SelectROScreenMode(int x, int y, int aspect, int depths, int *o
   }
   if(!bestmode)
   {
-    fprintf(stderr,"Failed to find suitable screen mode for %dx%d, aspect %.1f, depths %x\n",x,y,((float)aspect)/2.0f,depths);
-    exit(EXIT_FAILURE);
+    ControlPane_Error(EXIT_FAILURE,"Failed to find suitable screen mode for %dx%d, aspect %.1f, depths %x\n",x,y,((float)aspect)/2.0f,depths);
   }
   *outxscale = bestxscale;
   *outyscale = bestyscale;
@@ -984,7 +1078,7 @@ typedef struct {
 } menu_item;
 
 static const char *values_bool[] = {"Off","On",NULL};
-static const char *values_display[] = {"Palettised","16bpp",NULL};
+static const char *values_display[] = {"Palettised","Standard",NULL};
 static const char *values_skip[] = {"0","1","2","3","4","5","6","7","8","9","10",NULL};
 
 #define XX(X) &X,sizeof(X)
@@ -1058,10 +1152,10 @@ static void GoMenu(void)
     Prof_Dump(stderr);
   }
 #endif
-  /* Switch to a known-good screen mode. Just use the first in the list. */
-  ChangeMode(ModeList,3);
-  /* Make sure palette is correct (we may not have changed mode above!) */
-  _swi(OS_WriteI+20,0);
+  /* Switch to a known-good screen mode. Assume mode 28 available. */
+  _swix(OS_ScreenMode,_INR(0,1),0,28);
+  current_mode = NULL;
+  _swi(OS_RemoveCursors,0);
   /* Flush input buffer */
   _swi(OS_Byte,_INR(0,1),15,1);
   do {
@@ -1097,8 +1191,7 @@ static void GoMenu(void)
   /* (re)start display device. Even if we haven't changed anything, this is needed to force the screen to be redrawn (and the mode to be reset) */
   if(DisplayDev_Set(&statestr,displays[hArcemConfig.eDisplayDriver]))
   {
-    fprintf(stderr,"Failed to reinitialise display\n");
-    exit(EXIT_FAILURE);
+    ControlPane_Error(EXIT_FAILURE,"Failed to reinitialise display\n");
   }
   /* Ensure DisplayDev_UseUpdateFlags is on for SDD */
   if(hArcemConfig.eDisplayDriver == DisplayDriver_Standard)

@@ -2,7 +2,7 @@
 ArcEm: Archimedes Emulator                               http://arcem.sf.net/
 =============================================================================
 
-Version X.XX
+Version 1.50 alpha 2
 
 
 Requirements
@@ -117,12 +117,12 @@ Command line parameters
 
   Select the display driver to use on startup. Valid values are:
 
-  pal (default), 16bpp
+  pal (default), std
 
   'pal' selects the palettised display driver, which uses the least amount
   of memory and provides the best performance. However it doesn't support the
   use of mid-frame palette swaps (as used by games such as Lotus II &
-  Lemmings 2). For these games it's recommended you use the '16bpp' driver.
+  Lemmings 2). For these games it's recommended you use the 'std' driver.
 
 --rbswap
 
@@ -154,6 +154,15 @@ Command line parameters
   Specify the native resolution of your monitor. If specified, ArcEm will
   only ever use screen modes that will scale perfectly to fit your monitor,
   so you won't have ugly LCD scaling artifacts.
+
+--menukeys <a> <b>
+
+  Specify the key numbers of the two keys used to access the tweak menu. These
+  are "low-level internal key numbers" - for a reference, see the ROOL wiki:
+
+  http://www.riscosopen.org/wiki/documentation/show/Low-Level%20Internal%20Key%20Numbers
+
+  Default values are 104 and 105 (left & right Windows keys).
 
 
 Hard disc parameters
@@ -201,7 +210,7 @@ The tweak menu can be accessed by simultaneously pressing both Windows keys
 on the keyboard. This menu allows you to change the following options:
 
 + Switch between the two display drivers (--display command line option)
-+ Toggle red/blue swapping in the 16bpp driver (--rbswap command line option)
++ Toggle red/blue swapping in 16bpp modes (--rbswap command line option)
 + Control the display driver performance options (see below)
 + Enable/disable aspect ratio correction & upscaling (--noaspect and
   --noupscale options)
@@ -221,6 +230,9 @@ on the keyboard. This menu allows you to change the following options:
 
 To resume the emulator from the tweak menu, press 'R'. To quit the emulator,
 press 'Q'.
+
+The --menukeys command line option can be used to change which keys are used
+to open the menu (e.g. if your keyboard doesn't have both Windows keys).
 
 
 Display driver performance options
