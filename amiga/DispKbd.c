@@ -14,7 +14,6 @@
 #include "arexx.h"
 #include "../armemu.h"
 #include "arch/displaydev.h"
-#include "ControlPane.h"
 
 #include <proto/intuition.h>
 #include <intuition/pointerclass.h>
@@ -55,6 +54,8 @@ static ULONG OldMouseY = 0;
 static int redraw_miny = INT_MAX;
 static int redraw_maxy = 0; 
 
+static ULONG monitor_tag = TAG_IGNORE;
+static ULONG monitor_data = TAG_IGNORE;
 
 void writepixel(struct RastPort *,ULONG,ULONG,ULONG);
 void ChangeDisplayMode(ARMul_State *,long,long,int);
@@ -74,7 +75,8 @@ int changemode(int width,int height,int log2bpp,int *xscale,int *yscale)
 
 	if((width<=0) || (height <= 0) || (log2bpp < 0))
 	{
-		ControlPane_Error(EXIT_FAILURE,"Invalid mode\n");
+		printf("-> Invalid mode\n");
+		exit(EXIT_FAILURE);
 	}
 
 	*xscale = 1;
@@ -105,6 +107,7 @@ int changemode(int width,int height,int log2bpp,int *xscale,int *yscale)
 								BIDTAG_DesiredWidth,width,
 								BIDTAG_DesiredHeight,height,
 								BIDTAG_Depth,1<<log2bpp,
+								monitor_tag, monitor_data,
 								TAG_DONE);
 
 	if(id == INVALID_ID)
@@ -160,12 +163,14 @@ int changemode(int width,int height,int log2bpp,int *xscale,int *yscale)
 	}
 	else
 	{
-		ControlPane_Error(EXIT_FAILURE,"Failed to create screen\n");
+		printf("-> Failed to create screen\n");
+		exit(EXIT_FAILURE);
 	}
 
 	if(!window)
 	{
-		ControlPane_Error(EXIT_FAILURE,"Failed to create window\n");
+		printf("-> Failed to create window\n");
+		exit(EXIT_FAILURE);
 	}
 
 	PubScreenStatus(screen,0);
@@ -864,6 +869,8 @@ DisplayDev_Init(ARMul_State *state)
 {
   /* Setup display and cursor bitmaps */
 
+	struct Screen *wb = NULL;
+
 /* Need to add some error messages here, although if these aren't available you have bigger problems */
 
 #ifdef __amigaos4__
@@ -911,7 +918,15 @@ DisplayDev_Init(ARMul_State *state)
 	InitRastPort(&mouse_rp);
 	InitRastPort(&friend);
 	mask = AllocRaster(32,32);
-
+	
+	if(anymonitor == FALSE) {
+		if(wb = LockPubScreen(NULL)) {
+			monitor_tag = BIDTAG_MonitorID;
+			monitor_data = GetVPModeID(&wb->ViewPort) & MONITOR_ID_MASK;
+			UnlockPubScreen(NULL, wb);
+		}
+	}
+	
 	/* blank mouse pointer image */
 	mouseptr.BitMap = AllocBitMap(1,1,1,BMF_CLEAR,NULL);
 	mouseobj = NewObject(NULL,"pointerclass",POINTERA_BitMap,mouseptr.BitMap,POINTERA_WordWidth,2,POINTERA_XOffset,0,POINTERA_YOffset,0,POINTERA_XResolution,POINTERXRESN_SCREENRES,POINTERA_YResolution,POINTERYRESN_SCREENRESASPECT,TAG_DONE);

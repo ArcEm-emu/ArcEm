@@ -40,6 +40,8 @@ FORCE8BIT: Force ArcEm to only open 8-bit screens.  This potentially avoids some
 SWAPMOUSEBUTTONS: Swaps MMB and RMB, most useful to allow two button mice to get into RISC OS menus.
 
 NOCONSOLEOUTPUT: Stops console output.
+
+ANYMONITOR: Allow ArcEm to open screens on any monitor, not just the one Workbench is using.
 @endnode
 
 @node ARexx
