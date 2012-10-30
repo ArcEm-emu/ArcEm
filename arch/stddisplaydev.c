@@ -366,7 +366,7 @@ static int SDD_Name(RowFunc1bpp1X)(ARMul_State *state,int row,SDD_Row drow,int f
 
   /* Sanity checks to avoid looping forever */
   if(Vend == Vstart)
-    Vend = Vstart+16;
+    Vend = Vstart+128;
   if(Vptr >= Vend)
     Vptr = Vstart;
 
@@ -458,7 +458,7 @@ static int SDD_Name(RowFunc2bpp1X)(ARMul_State *state,int row,SDD_Row drow,int f
 
   /* Sanity checks to avoid looping forever */
   if(Vend == Vstart)
-    Vend = Vstart+16;
+    Vend = Vstart+128;
   if(Vptr >= Vend)
     Vptr = Vstart;
 
@@ -552,7 +552,7 @@ static int SDD_Name(RowFunc4bpp1X)(ARMul_State *state,int row,SDD_Row drow,int f
 
   /* Sanity checks to avoid looping forever */
   if(Vend == Vstart)
-    Vend = Vstart+16;
+    Vend = Vstart+128;
   if(Vptr >= Vend)
     Vptr = Vstart;
 
@@ -650,7 +650,7 @@ static int SDD_Name(RowFunc8bpp1X)(ARMul_State *state,int row,SDD_Row drow,int f
 
   /* Sanity checks to avoid looping forever */
   if(Vend == Vstart)
-    Vend = Vstart+16;
+    Vend = Vstart+128;
   if(Vptr >= Vend)
     Vptr = Vstart;
 
@@ -759,7 +759,7 @@ static int SDD_Name(RowFunc1bpp2X)(ARMul_State *state,int row,SDD_Row drow,int f
 
   /* Sanity checks to avoid looping forever */
   if(Vend == Vstart)
-    Vend = Vstart+16;
+    Vend = Vstart+128;
   if(Vptr >= Vend)
     Vptr = Vstart;
 
@@ -851,7 +851,7 @@ static int SDD_Name(RowFunc2bpp2X)(ARMul_State *state,int row,SDD_Row drow,int f
 
   /* Sanity checks to avoid looping forever */
   if(Vend == Vstart)
-    Vend = Vstart+16;
+    Vend = Vstart+128;
   if(Vptr >= Vend)
     Vptr = Vstart;
 
@@ -945,7 +945,7 @@ static int SDD_Name(RowFunc4bpp2X)(ARMul_State *state,int row,SDD_Row drow,int f
 
   /* Sanity checks to avoid looping forever */
   if(Vend == Vstart)
-    Vend = Vstart+16;
+    Vend = Vstart+128;
   if(Vptr >= Vend)
     Vptr = Vstart;
 
@@ -1043,7 +1043,7 @@ static int SDD_Name(RowFunc8bpp2X)(ARMul_State *state,int row,SDD_Row drow,int f
 
   /* Sanity checks to avoid looping forever */
   if(Vend == Vstart)
-    Vend = Vstart+16;
+    Vend = Vstart+128;
   if(Vptr >= Vend)
     Vptr = Vstart;
 
@@ -1150,7 +1150,7 @@ static void SDD_Name(RowFunc1bpp1XNoFlags)(ARMul_State *state,int row,SDD_Row dr
 
   /* Sanity checks to avoid looping forever */
   if(Vend == Vstart)
-    Vend = Vstart+16;
+    Vend = Vstart+128;
   if(Vptr >= Vend)
     Vptr = Vstart;
 
@@ -1204,7 +1204,7 @@ static void SDD_Name(RowFunc2bpp1XNoFlags)(ARMul_State *state,int row,SDD_Row dr
 
   /* Sanity checks to avoid looping forever */
   if(Vend == Vstart)
-    Vend = Vstart+16;
+    Vend = Vstart+128;
   if(Vptr >= Vend)
     Vptr = Vstart;
 
@@ -1261,7 +1261,7 @@ static void SDD_Name(RowFunc4bpp1XNoFlags)(ARMul_State *state,int row,SDD_Row dr
 
   /* Sanity checks to avoid looping forever */
   if(Vend == Vstart)
-    Vend = Vstart+16;
+    Vend = Vstart+128;
   if(Vptr >= Vend)
     Vptr = Vstart;
 
@@ -1322,7 +1322,7 @@ static void SDD_Name(RowFunc8bpp1XNoFlags)(ARMul_State *state,int row,SDD_Row dr
 
   /* Sanity checks to avoid looping forever */
   if(Vend == Vstart)
-    Vend = Vstart+16;
+    Vend = Vstart+128;
   if(Vptr >= Vend)
     Vptr = Vstart;
 
@@ -1394,7 +1394,7 @@ static void SDD_Name(RowFunc1bpp2XNoFlags)(ARMul_State *state,int row,SDD_Row dr
 
   /* Sanity checks to avoid looping forever */
   if(Vend == Vstart)
-    Vend = Vstart+16;
+    Vend = Vstart+128;
   if(Vptr >= Vend)
     Vptr = Vstart;
 
@@ -1449,7 +1449,7 @@ static void SDD_Name(RowFunc2bpp2XNoFlags)(ARMul_State *state,int row,SDD_Row dr
 
   /* Sanity checks to avoid looping forever */
   if(Vend == Vstart)
-    Vend = Vstart+16;
+    Vend = Vstart+128;
   if(Vptr >= Vend)
     Vptr = Vstart;
 
@@ -1506,7 +1506,7 @@ static void SDD_Name(RowFunc4bpp2XNoFlags)(ARMul_State *state,int row,SDD_Row dr
 
   /* Sanity checks to avoid looping forever */
   if(Vend == Vstart)
-    Vend = Vstart+16;
+    Vend = Vstart+128;
   if(Vptr >= Vend)
     Vptr = Vstart;
 
@@ -1567,7 +1567,7 @@ static void SDD_Name(RowFunc8bpp2XNoFlags)(ARMul_State *state,int row,SDD_Row dr
 
   /* Sanity checks to avoid looping forever */
   if(Vend == Vstart)
-    Vend = Vstart+16;
+    Vend = Vstart+128;
   if(Vptr >= Vend)
     Vptr = Vstart;
 
