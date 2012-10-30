@@ -365,8 +365,8 @@ static int SDD_Name(RowFunc1bpp1X)(ARMul_State *state,int row,SDD_Row drow,int f
   Remaining = DC.LastHostWidth;
 
   /* Sanity checks to avoid looping forever */
-  if((Vptr >= Vend) || (Vstart >= Vend))
-    return 0;
+  if(Vend == Vstart)
+    Vend = Vstart+16;
   if(Vptr >= Vend)
     Vptr = Vstart;
 
@@ -457,8 +457,8 @@ static int SDD_Name(RowFunc2bpp1X)(ARMul_State *state,int row,SDD_Row drow,int f
   Remaining = DC.LastHostWidth*2; /* Scale up to account for everything else counting in bits */
 
   /* Sanity checks to avoid looping forever */
-  if((Vptr >= Vend) || (Vstart >= Vend))
-    return 0;
+  if(Vend == Vstart)
+    Vend = Vstart+16;
   if(Vptr >= Vend)
     Vptr = Vstart;
 
@@ -551,8 +551,8 @@ static int SDD_Name(RowFunc4bpp1X)(ARMul_State *state,int row,SDD_Row drow,int f
   Remaining = DC.LastHostWidth*4; /* Scale up to account for everything else counting in bits */
 
   /* Sanity checks to avoid looping forever */
-  if((Vptr >= Vend) || (Vstart >= Vend))
-    return 0;
+  if(Vend == Vstart)
+    Vend = Vstart+16;
   if(Vptr >= Vend)
     Vptr = Vstart;
 
@@ -649,8 +649,8 @@ static int SDD_Name(RowFunc8bpp1X)(ARMul_State *state,int row,SDD_Row drow,int f
   Remaining = DC.LastHostWidth*8; /* Scale up to account for everything else counting in bits */
 
   /* Sanity checks to avoid looping forever */
-  if((Vptr >= Vend) || (Vstart >= Vend))
-    return 0;
+  if(Vend == Vstart)
+    Vend = Vstart+16;
   if(Vptr >= Vend)
     Vptr = Vstart;
 
@@ -758,8 +758,8 @@ static int SDD_Name(RowFunc1bpp2X)(ARMul_State *state,int row,SDD_Row drow,int f
   Remaining = DC.LastHostWidth;
 
   /* Sanity checks to avoid looping forever */
-  if((Vptr >= Vend) || (Vstart >= Vend))
-    return 0;
+  if(Vend == Vstart)
+    Vend = Vstart+16;
   if(Vptr >= Vend)
     Vptr = Vstart;
 
@@ -850,8 +850,8 @@ static int SDD_Name(RowFunc2bpp2X)(ARMul_State *state,int row,SDD_Row drow,int f
   Remaining = DC.LastHostWidth*2; /* Scale up to account for everything else counting in bits */
 
   /* Sanity checks to avoid looping forever */
-  if((Vptr >= Vend) || (Vstart >= Vend))
-    return 0;
+  if(Vend == Vstart)
+    Vend = Vstart+16;
   if(Vptr >= Vend)
     Vptr = Vstart;
 
@@ -944,8 +944,8 @@ static int SDD_Name(RowFunc4bpp2X)(ARMul_State *state,int row,SDD_Row drow,int f
   Remaining = DC.LastHostWidth*4; /* Scale up to account for everything else counting in bits */
 
   /* Sanity checks to avoid looping forever */
-  if((Vptr >= Vend) || (Vstart >= Vend))
-    return 0;
+  if(Vend == Vstart)
+    Vend = Vstart+16;
   if(Vptr >= Vend)
     Vptr = Vstart;
 
@@ -1042,8 +1042,8 @@ static int SDD_Name(RowFunc8bpp2X)(ARMul_State *state,int row,SDD_Row drow,int f
   Remaining = DC.LastHostWidth*8; /* Scale up to account for everything else counting in bits */
 
   /* Sanity checks to avoid looping forever */
-  if((Vptr >= Vend) || (Vstart >= Vend))
-    return 0;
+  if(Vend == Vstart)
+    Vend = Vstart+16;
   if(Vptr >= Vend)
     Vptr = Vstart;
 
@@ -1149,8 +1149,8 @@ static void SDD_Name(RowFunc1bpp1XNoFlags)(ARMul_State *state,int row,SDD_Row dr
   Remaining = DC.LastHostWidth;
 
   /* Sanity checks to avoid looping forever */
-  if((Vptr >= Vend) || (Vstart >= Vend))
-    return;
+  if(Vend == Vstart)
+    Vend = Vstart+16;
   if(Vptr >= Vend)
     Vptr = Vstart;
 
@@ -1203,8 +1203,8 @@ static void SDD_Name(RowFunc2bpp1XNoFlags)(ARMul_State *state,int row,SDD_Row dr
   Remaining = DC.LastHostWidth*2; /* Scale up to account for everything else counting in bits */
 
   /* Sanity checks to avoid looping forever */
-  if((Vptr >= Vend) || (Vstart >= Vend))
-    return;
+  if(Vend == Vstart)
+    Vend = Vstart+16;
   if(Vptr >= Vend)
     Vptr = Vstart;
 
@@ -1260,8 +1260,8 @@ static void SDD_Name(RowFunc4bpp1XNoFlags)(ARMul_State *state,int row,SDD_Row dr
   Remaining = DC.LastHostWidth*4; /* Scale up to account for everything else counting in bits */
 
   /* Sanity checks to avoid looping forever */
-  if((Vptr >= Vend) || (Vstart >= Vend))
-    return;
+  if(Vend == Vstart)
+    Vend = Vstart+16;
   if(Vptr >= Vend)
     Vptr = Vstart;
 
@@ -1321,8 +1321,8 @@ static void SDD_Name(RowFunc8bpp1XNoFlags)(ARMul_State *state,int row,SDD_Row dr
   Remaining = DC.LastHostWidth*8; /* Scale up to account for everything else counting in bits */
 
   /* Sanity checks to avoid looping forever */
-  if((Vptr >= Vend) || (Vstart >= Vend))
-    return;
+  if(Vend == Vstart)
+    Vend = Vstart+16;
   if(Vptr >= Vend)
     Vptr = Vstart;
 
@@ -1393,8 +1393,8 @@ static void SDD_Name(RowFunc1bpp2XNoFlags)(ARMul_State *state,int row,SDD_Row dr
   Remaining = DC.LastHostWidth;
 
   /* Sanity checks to avoid looping forever */
-  if((Vptr >= Vend) || (Vstart >= Vend))
-    return;
+  if(Vend == Vstart)
+    Vend = Vstart+16;
   if(Vptr >= Vend)
     Vptr = Vstart;
 
@@ -1448,8 +1448,8 @@ static void SDD_Name(RowFunc2bpp2XNoFlags)(ARMul_State *state,int row,SDD_Row dr
   Remaining = DC.LastHostWidth*2; /* Scale up to account for everything else counting in bits */
 
   /* Sanity checks to avoid looping forever */
-  if((Vptr >= Vend) || (Vstart >= Vend))
-    return;
+  if(Vend == Vstart)
+    Vend = Vstart+16;
   if(Vptr >= Vend)
     Vptr = Vstart;
 
@@ -1505,8 +1505,8 @@ static void SDD_Name(RowFunc4bpp2XNoFlags)(ARMul_State *state,int row,SDD_Row dr
   Remaining = DC.LastHostWidth*4; /* Scale up to account for everything else counting in bits */
 
   /* Sanity checks to avoid looping forever */
-  if((Vptr >= Vend) || (Vstart >= Vend))
-    return;
+  if(Vend == Vstart)
+    Vend = Vstart+16;
   if(Vptr >= Vend)
     Vptr = Vstart;
 
@@ -1566,8 +1566,8 @@ static void SDD_Name(RowFunc8bpp2XNoFlags)(ARMul_State *state,int row,SDD_Row dr
   Remaining = DC.LastHostWidth*8; /* Scale up to account for everything else counting in bits */
 
   /* Sanity checks to avoid looping forever */
-  if((Vptr >= Vend) || (Vstart >= Vend))
-    return;
+  if(Vend == Vstart)
+    Vend = Vstart+16;
   if(Vptr >= Vend)
     Vptr = Vstart;
 
