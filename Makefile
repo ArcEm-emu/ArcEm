@@ -37,6 +37,10 @@ HOSTFS_SUPPORT=yes
 # of MIPS set this flag
 HOST_BIGENDIAN=no
 
+# Which version of the manual to include in the RiscPkg archive
+# development, arcem-1.50, etc.
+MANUAL?=development
+
 # Windowing System
 ifeq ($(SYSTEM),)
 SYSTEM=X
@@ -148,6 +152,24 @@ CFLAGS += -mno-poke-function-name
 #CFLAGS += -mpoke-function-name -DPROFILE_ENABLED
 #OBJS += riscos-single/prof.o
 TARGET=!ArcEm/arcem
+# Create RiscPkg archive directory structure
+# Final step to turn it into a zip archive must be done manually, either on RISC OS or via GCCSDK's native-zip
+riscpkg: $(TARGET)
+	rm -rf ArcEm
+	mkdir -p ArcEm/Apps/Misc
+	cp -r riscos-single/RiscPkg ArcEm
+	cp -r !ArcEm ArcEm/Apps/Misc
+	rm ArcEm/Apps/Misc/!ArcEm/arcem
+	elf2aif !ArcEm/arcem ArcEm/Apps/Misc/!ArcEm/arcem,ff8
+	cp arcemrc ArcEm/Apps/Misc/!ArcEm/.arcemrc
+	cp -r docs ArcEm/Apps/Misc/!ArcEm
+	mkdir -p ArcEm/Apps/Misc/!ArcEm/extnrom
+	find support_modules -name *,ffa -exec cp '{}' ArcEm/Apps/Misc/!ArcEm/extnrom \;
+	find ArcEm -type d | grep CVS | xargs rm -r
+	find ArcEm -name .cvsignore | xargs -0 rm -r
+	wget http://arcem.sf.net/manual/$(MANUAL).html -O ArcEm/Apps/Misc/!ArcEm/manual.html
+	cp docs/COPYING ArcEm/Apps/Misc
+	mkdir ArcEm/Apps/Misc/hostfs
 endif
 
 ifeq (${SYSTEM},X)

@@ -1,0 +1,12 @@
+Package: ArcEm
+Version: 1.50-1
+Section: Emulation
+Priority: Optional
+Maintainer: ArcEm developers <arcem-devel@lists.sourceforge.net>
+Standards-Version: 0.1.0
+Licence: Free
+Description: Acorn Archimedes emulator
+ ArcEm is a portable open-source emulator for the Acorn Archimedes. It's capable of running multiple operating systems including RISC OS and ARM Linux.
+ .
+ Homepage: http://arcem.sf.net/
+Depends: SharedUnixLibrary (>=1.07)
