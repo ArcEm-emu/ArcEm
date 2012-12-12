@@ -162,11 +162,12 @@ riscpkg: $(TARGET)
 	rm ArcEm/Apps/Misc/!ArcEm/arcem
 	elf2aif !ArcEm/arcem ArcEm/Apps/Misc/!ArcEm/arcem,ff8
 	cp arcemrc ArcEm/Apps/Misc/!ArcEm/.arcemrc
+	cp hexcmos ArcEm/Apps/Misc/!ArcEm/hexcmos
 	cp -r docs ArcEm/Apps/Misc/!ArcEm
 	mkdir -p ArcEm/Apps/Misc/!ArcEm/extnrom
 	find support_modules -name *,ffa -exec cp '{}' ArcEm/Apps/Misc/!ArcEm/extnrom \;
-	find ArcEm -type d | grep CVS | xargs rm -r
-	find ArcEm -name .cvsignore | xargs -0 rm -r
+	find ArcEm -name CVS -type d | xargs rm -r
+	find ArcEm -name .cvsignore -type f | xargs rm
 	wget http://arcem.sf.net/manual/$(MANUAL).html -O ArcEm/Apps/Misc/!ArcEm/manual.html
 	cp docs/COPYING ArcEm/Apps/Misc
 	mkdir ArcEm/Apps/Misc/hostfs
@@ -252,7 +253,8 @@ arcem.tar.gz:
 	for file in $(TARED) ; do \
 	  cp -a ../$${file} . ; \
 	done ; \
-	find -type d | grep CVS | xargs rm -r; \
+	find -name CVS -type d | xargs rm -r; \
+	find -name .cvsignore -type f | xargs rm; \
 	touch dummy.o ; find -type f | grep '\.o$$' | xargs rm -r 2>/dev/null
 	tar cf arcem.tar arcem-$(VER)
 	gzip arcem.tar
