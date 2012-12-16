@@ -21,8 +21,8 @@ BEGIN
 END
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,0,0,1
- PRODUCTVERSION 1,0,0,1
+ FILEVERSION 1,5,0,0
+ PRODUCTVERSION 1,5,0,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -37,17 +37,17 @@ BEGIN
     BEGIN
         BLOCK "080904b0"
         BEGIN
-            VALUE "Comments", "Built by Jasper Renow-Clarke\0"
+            VALUE "Comments", "Built by Jeffrey Lee\0"
             VALUE "CompanyName", "\0"
             VALUE "FileDescription", "Archimedes Emulator\0"
-            VALUE "FileVersion", "1, 0, 0, 1\0"
+            VALUE "FileVersion", "1, 5, 0, 0\0"
             VALUE "InternalName", "arcem\0"
-            VALUE "LegalCopyright", "Copyright © 2003\0"
+            VALUE "LegalCopyright", "Copyright © 2012\0"
             VALUE "LegalTrademarks", "\0"
             VALUE "OriginalFilename", "arcem.exe\0"
             VALUE "PrivateBuild", "\0"
             VALUE "ProductName", "Arcem\0"
-            VALUE "ProductVersion", "1, 0, 0, 1\0"
+            VALUE "ProductVersion", "1, 5, 0, 0\0"
             VALUE "SpecialBuild", "\0"
         END
     END
@@ -66,11 +66,10 @@ BEGIN
     ICON            "GUIICON",IDC_STATIC,7,7,20,20
     LTEXT           "Original version by Dr. Dave Gilbert",IDC_STATIC,35,39,
                     111,8
-    LTEXT           "Maintained by Peter Naulls",IDC_STATIC,35,81,85,8
+    LTEXT           "Maintained by the ArcEm developers",IDC_STATIC,35,81,121,8
     LTEXT           "http://arcem.sf.net",IDC_STATIC,35,92,60,8
-    LTEXT           "Updates: Jasper Renow-Clarke",IDC_STATIC,35,64,99,8
     LTEXT           "Windows version by eQRD",IDC_STATIC,35,54,86,8
     LTEXT           "Archimedes Emulator",IDC_STATIC,35,15,67,8
-    LTEXT           "May 2003",IDC_STATIC,35,109,32,8
+    LTEXT           "16th Dec 2012",IDC_STATIC,35,109,111,8
     DEFPUSHBUTTON   "OK",IDOK,54,135,50,14
 END
