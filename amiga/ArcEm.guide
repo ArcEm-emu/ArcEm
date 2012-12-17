@@ -2,8 +2,8 @@
 @wordwrap
 
 @node Main "ArcEm"
-ArcEm 1.10+CVS
-==============
+ArcEm 1.50
+==========
 
 ArcEm is a GPL emulator for Acorn Archimedes computers.  This guide contains notes pertaining only to the AmigaOS port, the general documentation should be referenced in all other cases.
 
