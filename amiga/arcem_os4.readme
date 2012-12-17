@@ -1,0 +1,13 @@
+Short:        Acorn Archimedes A400 emulator
+Author:       Various, Amiga port by Chris Young, icons by Martin Merz
+Uploader:     chris@unsatisfactorysoftware.co.uk (Chris Young)
+Type:         misc/emu
+Version:      1.50
+Requires:     Suitable ROM image (RISC OS 3.11, ARM Linux etc)
+Architecture: ppc-amigaos >= 4.0.0
+URL:          http://arcem.sourceforge.net
+
+This is a port of ArcEm, the Archimedes emulator.
+
+A RISC OS or ARM Linux ROM file must be placed in ArcEm's directory under
+the name "ROM".  Further details can be found on the ArcEm website.
