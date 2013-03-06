@@ -25,7 +25,11 @@ static void ami_easyrequest(const char *err)
 	es.es_TextFormat = err;
 	es.es_GadgetFormat = "OK";
 
-	EasyRequestArgs(NULL, &es, NULL, NULL);
+	if(IntuitionBase != NULL) {
+		EasyRequestArgs(NULL, &es, NULL, NULL);
+	} else {
+		printf("%s\n", err);
+	}
 }
 
 void ControlPane_Error(int code,const char *fmt,...)

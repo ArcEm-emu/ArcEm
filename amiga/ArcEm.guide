@@ -42,6 +42,8 @@ SWAPMOUSEBUTTONS: Swaps MMB and RMB, most useful to allow two button mice to get
 NOCONSOLEOUTPUT: Stops console output.
 
 ANYMONITOR: Allow ArcEm to open screens on any monitor, not just the one Workbench is using.
+
+ENABLEOCM: Allows ArcEm to use the APM460ex (SAM460) on-chip memory to attempt to speed up emulation.
 @endnode
 
 @node ARexx

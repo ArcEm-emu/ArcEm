@@ -21,6 +21,8 @@
 #include "armarc.h"
 #include "hostfs.h"
 
+FastMapEntry FastMap[FASTMAP_SIZE];
+
 /***************************************************************************\
 *                 Definitions for the emulator architecture                 *
 \***************************************************************************/
@@ -96,7 +98,7 @@ ARMul_State *ARMul_NewState(void)
 {ARMul_State *state;
  unsigned i, j;
 
- state = &statestr;
+ state = state_alloc(sizeof(ARMul_State));
 
  for (i = 0; i < 16; i++) {
     state->Reg[i] = 0;
@@ -105,9 +107,9 @@ ARMul_State *ARMul_NewState(void)
     }
 
  state->Aborted = FALSE;
-
  state->Display = NULL;
-
+ state->FastMap = FastMap;
+ 
  ARMul_Reset(state);
  EventQ_Init(state);
  return(state);
@@ -148,7 +150,7 @@ ARMword ARMul_DoProg(ARMul_State *state) {
 
 void ARMul_Abort(ARMul_State *state, ARMword vector) {
   ARMword temp;
-
+  int exit_code;
   state->Aborted = FALSE;
 
 #ifdef DEBUG
@@ -191,10 +193,9 @@ void ARMul_Abort(ARMul_State *state, ARMword vector) {
          if ((instr & 0xfdffc0) == ARCEM_SWI_CHUNK) {
            switch (instr & 0x3f) {
            case ARCEM_SWI_SHUTDOWN-ARCEM_SWI_CHUNK:
-#ifdef AMIGA
-             cleanup();
-#endif
-             exit(state->Reg[0] & 0xff);
+             exit_code = state->Reg[0] & 0xff;
+			 state_free(state);
+             exit(exit_code);
              break;
 #ifdef HOSTFS_SUPPORT
            case ARCEM_SWI_HOSTFS-ARCEM_SWI_CHUNK:

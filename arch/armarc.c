@@ -358,7 +358,7 @@ ARMul_MemoryInit(ARMul_State *state)
     MEMC.UpdateFlags[i] = 1;
   }
 
-  ARMul_RebuildFastMap();
+  ARMul_RebuildFastMap(state);
   FastMap_RebuildMapMode(state);
 
 #ifdef HOSTFS_SUPPORT
@@ -483,9 +483,9 @@ static ARMword ARMul_ManglePhysAddr(ARMword phy)
   return phy | (bank<<22);
 }    
 
-static void FastMap_SetEntries(ARMword addr,ARMword *data,FastMapAccessFunc func,FastMapUInt flags,ARMword size)
+static void FastMap_SetEntries(ARMul_State *state, ARMword addr,ARMword *data,FastMapAccessFunc func,FastMapUInt flags,ARMword size)
 {
-  FastMapEntry *entry = FastMap_GetEntryNoWrap(&statestr,addr);
+  FastMapEntry *entry = FastMap_GetEntryNoWrap(state,addr);
 //  fprintf(stderr,"FastMap_SetEntries(%08x,%08x,%08x,%08x,%08x)\n",addr,data,func,flags,size);
   FastMapUInt offset = ((FastMapUInt)data)-addr; /* Offset so we can just add the phy addr to get a pointer back */
   flags |= offset>>8;
@@ -498,20 +498,20 @@ static void FastMap_SetEntries(ARMword addr,ARMword *data,FastMapAccessFunc func
   }
 }
 
-static void FastMap_SetEntries_Repeat(ARMword addr,ARMword *data,FastMapAccessFunc func,FastMapUInt flags,ARMword size,ARMword totsize)
+static void FastMap_SetEntries_Repeat(ARMul_State *state,ARMword addr,ARMword *data,FastMapAccessFunc func,FastMapUInt flags,ARMword size,ARMword totsize)
 {
   while(totsize > size) {
-    FastMap_SetEntries(addr,data,func,flags,size);
+    FastMap_SetEntries(state,addr,data,func,flags,size);
     addr += size;
     totsize -= size;
   }
   /* Should always be something left */
-  FastMap_SetEntries(addr,data,func,flags,totsize);
+  FastMap_SetEntries(state,addr,data,func,flags,totsize);
 }
 
-static void ARMul_RebuildFastMapPTIdx(ARMword idx);
+static void ARMul_RebuildFastMapPTIdx(ARMul_State *state, ARMword idx);
 
-static void ARMul_PurgeFastMapPTIdx(ARMword idx)
+static void ARMul_PurgeFastMapPTIdx(ARMul_State *state,ARMword idx)
 {
   FastMapEntry *entry;
   FastMapUInt addr;
@@ -554,7 +554,7 @@ static void ARMul_PurgeFastMapPTIdx(ARMword idx)
     size=12+MEMC.PageSizeFlags;
     phys = ARMul_ManglePhysAddr(phys<<size);
     size = 1<<size;
-    entry = FastMap_GetEntryNoWrap(&statestr,logadr);
+    entry = FastMap_GetEntryNoWrap(state,logadr);
     
     /* To cope with multiply mapped pages (i.e. multiple physical pages mapping to the same logical page) we need to check if the page we're about to unmap is still owned by us
        If it is owned by us, we'll have to search the page tables for a replacement (if any)
@@ -575,7 +575,7 @@ static void ARMul_PurgeFastMapPTIdx(ARMword idx)
           if((pt2 > 0) && ((pt2 & mask) == pt))
           {
             /* We've found a suitable replacement */
-            ARMul_RebuildFastMapPTIdx(idx2); /* Take the easy way out */
+            ARMul_RebuildFastMapPTIdx(state, idx2); /* Take the easy way out */
             return;
           }
         }
@@ -618,7 +618,7 @@ static ARMword FastMap_LogRamFunc(ARMul_State *state, ARMword addr,ARMword data,
   return 0;
 } 
 
-static void ARMul_RebuildFastMapPTIdx(ARMword idx)
+static void ARMul_RebuildFastMapPTIdx(ARMul_State *state, ARMword idx)
 {
   int32_t pt;
   ARMword size;
@@ -668,12 +668,12 @@ static void ARMul_RebuildFastMapPTIdx(ARMword idx)
     if((phys<512*1024) && DisplayDev_UseUpdateFlags)
     {
       /* DMAable, must use func on write */
-      FastMap_SetEntries(logadr,MEMC.PhysRam+(phys>>2),FastMap_LogRamFunc,flags|FASTMAP_W_FUNC,size);
+      FastMap_SetEntries(state,logadr,MEMC.PhysRam+(phys>>2),FastMap_LogRamFunc,flags|FASTMAP_W_FUNC,size);
     }
     else
     {
       /* Normal */
-      FastMap_SetEntries(logadr,MEMC.PhysRam+(phys>>2),0,flags,size);
+      FastMap_SetEntries(state,logadr,MEMC.PhysRam+(phys>>2),0,flags,size);
     }
   }
 }
@@ -760,12 +760,12 @@ static void DMA_PutVal(ARMul_State *state,ARMword address)
         MEMC.ControlReg = address;
         MEMC.PageSizeFlags = (MEMC.ControlReg & 12) >> 2;
         FastMap_RebuildMapMode(state);
-        ARMul_RebuildFastMap();
+        ARMul_RebuildFastMap(state);
         break;
     }
 }
 
-static void MEMC_PutVal(ARMword address)
+static void MEMC_PutVal(ARMul_State *state, ARMword address)
 {
     /* Logical-to-physical address translation */
     unsigned tmp;
@@ -774,16 +774,16 @@ static void MEMC_PutVal(ARMword address)
 
     address = ((address >> 4) & 0x100) | (address & 0xff);
 
-    ARMul_PurgeFastMapPTIdx(address); /* Unmap old value */
+    ARMul_PurgeFastMapPTIdx(state,address); /* Unmap old value */
     MEMC.PageTable[address] = tmp & 0x0fffffff;
-    ARMul_RebuildFastMapPTIdx(address); /* Map in new value */
+    ARMul_RebuildFastMapPTIdx(state, address); /* Map in new value */
 }
 
 static ARMword FastMap_ROMMap1Func(ARMul_State *state, ARMword addr,ARMword data,ARMword flags)
 {
   /* Does nothing more than set ROMMapFlag to 2 and read a word of ROM */
   MEMC.ROMMapFlag = 2;
-  ARMul_RebuildFastMap();
+  ARMul_RebuildFastMap(state);
   return MEMC.ROMHigh[(addr & MEMC.ROMHighMask)>>2];
 }
 
@@ -794,7 +794,7 @@ static ARMword FastMap_PhysRamFuncROMMap2(ARMul_State *state, ARMword addr,ARMwo
   if(MEMC.ROMMapFlag == 2)
   {
     MEMC.ROMMapFlag = 0;
-    ARMul_RebuildFastMap();
+    ARMul_RebuildFastMap(state);
   }
   phy = FastMap_Log2Phy(FastMap_GetEntry(state,addr),addr&~3);
   if(!(flags & FASTMAP_ACCESSFUNC_WRITE))
@@ -844,7 +844,7 @@ static ARMword FastMap_ConIOFunc(ARMul_State *state, ARMword addr,ARMword data,A
   if(MEMC.ROMMapFlag == 2)
   {
     MEMC.ROMMapFlag = 0;
-    ARMul_RebuildFastMap();
+    ARMul_RebuildFastMap(state);
   }
   if(flags & FASTMAP_ACCESSFUNC_WRITE)
   {
@@ -862,7 +862,7 @@ static ARMword FastMap_VIDCFunc(ARMul_State *state, ARMword addr,ARMword data,AR
   if(MEMC.ROMMapFlag == 2)
   {
     MEMC.ROMMapFlag = 0;
-    ARMul_RebuildFastMap();
+    ARMul_RebuildFastMap(state);
   }
   if(flags & FASTMAP_ACCESSFUNC_WRITE)
   {
@@ -886,7 +886,7 @@ static ARMword FastMap_DMAFunc(ARMul_State *state, ARMword addr,ARMword data,ARM
   if(MEMC.ROMMapFlag == 2)
   {
     MEMC.ROMMapFlag = 0;
-    ARMul_RebuildFastMap();
+    ARMul_RebuildFastMap(state);
   }
   if(flags & FASTMAP_ACCESSFUNC_WRITE)
   {
@@ -910,11 +910,11 @@ static ARMword FastMap_MEMCFunc(ARMul_State *state, ARMword addr,ARMword data,AR
   if(MEMC.ROMMapFlag == 2)
   {
     MEMC.ROMMapFlag = 0;
-    ARMul_RebuildFastMap();
+    ARMul_RebuildFastMap(state);
   }
   if(flags & FASTMAP_ACCESSFUNC_WRITE)
   {
-    MEMC_PutVal(addr);
+    MEMC_PutVal(state, addr);
     return 0;
   }
   if(MEMC.ROMHigh)
@@ -926,7 +926,7 @@ static ARMword FastMap_MEMCFunc(ARMul_State *state, ARMword addr,ARMword data,AR
   return data;
 }
 
-void ARMul_RebuildFastMap(void)
+void ARMul_RebuildFastMap(ARMul_State *state)
 {
   ARMword i;
   FastMapEntry *entry;
@@ -937,21 +937,21 @@ void ARMul_RebuildFastMap(void)
   case 0:
     {
       /* Map in logical RAM using the page tables */
-      FastMap_SetEntries(0,0,0,0,0x2000000);
+      FastMap_SetEntries(state,0,0,0,0,0x2000000);
 
       for(i=0;i<512;i++)
-        ARMul_RebuildFastMapPTIdx(i);
+        ARMul_RebuildFastMapPTIdx(state, i);
     }
     break;
   case 1:
     /* Map ROM to 0x0, using access func, even though we know the very first thing the processor will do is fetch from 0x0 and transition us away... */
-    FastMap_SetEntries_Repeat(0,0,FastMap_ROMMap1Func,FASTMAP_R_USR|FASTMAP_R_OS|FASTMAP_R_SVC|FASTMAP_R_FUNC,MEMC.ROMHighSize,0x800000);
-    FastMap_SetEntries(0x800000,0,0,0,0x1800000);
+    FastMap_SetEntries_Repeat(state,0,0,FastMap_ROMMap1Func,FASTMAP_R_USR|FASTMAP_R_OS|FASTMAP_R_SVC|FASTMAP_R_FUNC,MEMC.ROMHighSize,0x800000);
+    FastMap_SetEntries(state,0x800000,0,0,0,0x1800000);
     break;
   case 2:
     /* Map ROM to 0x0 */
-    FastMap_SetEntries_Repeat(0,MEMC.ROMHigh,0,FASTMAP_R_USR|FASTMAP_R_OS|FASTMAP_R_SVC,MEMC.ROMHighSize,0x800000);
-    FastMap_SetEntries(0x800000,0,0,0,0x1800000);
+    FastMap_SetEntries_Repeat(state,0,MEMC.ROMHigh,0,FASTMAP_R_USR|FASTMAP_R_OS|FASTMAP_R_SVC,MEMC.ROMHighSize,0x800000);
+    FastMap_SetEntries(state,0x800000,0,0,0,0x1800000);
     break;
   }
 
@@ -959,7 +959,7 @@ void ARMul_RebuildFastMap(void)
   if(MEMC.ROMMapFlag == 2)
   {
     /* Use access func for all of it */
-    FastMap_SetEntries(MEMORY_0x2000000_RAM_PHYS,0,FastMap_PhysRamFuncROMMap2,FASTMAP_R_SVC|FASTMAP_W_SVC|FASTMAP_R_FUNC|FASTMAP_W_FUNC,16*1024*1024);
+    FastMap_SetEntries(state,MEMORY_0x2000000_RAM_PHYS,0,FastMap_PhysRamFuncROMMap2,FASTMAP_R_SVC|FASTMAP_W_SVC|FASTMAP_R_FUNC|FASTMAP_W_FUNC,16*1024*1024);
   }
   else
   {
@@ -973,34 +973,34 @@ void ARMul_RebuildFastMap(void)
         if(i == phy)
         {
           /* Direct mapping, use fast func */
-          FastMap_SetEntries(MEMORY_0x2000000_RAM_PHYS+i,MEMC.PhysRam+(phy>>2),FastMap_PhysRamFunc,FASTMAP_R_SVC|FASTMAP_W_SVC|FASTMAP_W_FUNC,4096);
+          FastMap_SetEntries(state,MEMORY_0x2000000_RAM_PHYS+i,MEMC.PhysRam+(phy>>2),FastMap_PhysRamFunc,FASTMAP_R_SVC|FASTMAP_W_SVC|FASTMAP_W_FUNC,4096);
         }
         else
         {
           /* Indirect mapping, reuse LogRamFunc */
-          FastMap_SetEntries(MEMORY_0x2000000_RAM_PHYS+i,MEMC.PhysRam+(phy>>2),FastMap_LogRamFunc,FASTMAP_R_SVC|FASTMAP_W_SVC|FASTMAP_W_FUNC,4096);
+          FastMap_SetEntries(state,MEMORY_0x2000000_RAM_PHYS+i,MEMC.PhysRam+(phy>>2),FastMap_LogRamFunc,FASTMAP_R_SVC|FASTMAP_W_SVC|FASTMAP_W_FUNC,4096);
         }
       }
       else
       {
         /* Remainder can use direct access for read/write */
-        FastMap_SetEntries(MEMORY_0x2000000_RAM_PHYS+i,MEMC.PhysRam+(phy>>2),0,FASTMAP_R_SVC|FASTMAP_W_SVC,4096);
+        FastMap_SetEntries(state,MEMORY_0x2000000_RAM_PHYS+i,MEMC.PhysRam+(phy>>2),0,FASTMAP_R_SVC|FASTMAP_W_SVC,4096);
       }
     }
   }
 
   /* I/O space */
-  FastMap_SetEntries(MEMORY_0x3000000_CON_IO,0,FastMap_ConIOFunc,FASTMAP_R_SVC|FASTMAP_W_SVC|FASTMAP_R_FUNC|FASTMAP_W_FUNC,0x400000);
+  FastMap_SetEntries(state,MEMORY_0x3000000_CON_IO,0,FastMap_ConIOFunc,FASTMAP_R_SVC|FASTMAP_W_SVC|FASTMAP_R_FUNC|FASTMAP_W_FUNC,0x400000);
 
   /* ROM Low/VIDC/DMA */
   /* Make life easier for ourselves by mapping in everything as DMA then overwriting with VIDC */
   if(MEMC.ROMLow && (MEMC.ROMMapFlag != 2))
-    FastMap_SetEntries_Repeat(MEMORY_0x3400000_R_ROM_LOW,MEMC.ROMLow,FastMap_DMAFunc,FASTMAP_R_USR|FASTMAP_R_SVC|FASTMAP_R_OS|FASTMAP_W_SVC|FASTMAP_W_FUNC,MEMC.ROMLowSize,0x400000);
+    FastMap_SetEntries_Repeat(state,MEMORY_0x3400000_R_ROM_LOW,MEMC.ROMLow,FastMap_DMAFunc,FASTMAP_R_USR|FASTMAP_R_SVC|FASTMAP_R_OS|FASTMAP_W_SVC|FASTMAP_W_FUNC,MEMC.ROMLowSize,0x400000);
   else
-    FastMap_SetEntries(MEMORY_0x3400000_R_ROM_LOW,0,FastMap_DMAFunc,FASTMAP_R_USR|FASTMAP_R_SVC|FASTMAP_R_OS|FASTMAP_W_SVC|FASTMAP_W_FUNC|FASTMAP_R_FUNC,0x400000);
+    FastMap_SetEntries(state,MEMORY_0x3400000_R_ROM_LOW,0,FastMap_DMAFunc,FASTMAP_R_USR|FASTMAP_R_SVC|FASTMAP_R_OS|FASTMAP_W_SVC|FASTMAP_W_FUNC|FASTMAP_R_FUNC,0x400000);
 
   /* Overwrite with VIDC */
-  entry = FastMap_GetEntryNoWrap(&statestr,MEMORY_0x3400000_W_VIDEOCON);
+  entry = FastMap_GetEntryNoWrap(state,MEMORY_0x3400000_W_VIDEOCON);
   for(i=0;i<MEMORY_0x3600000_W_DMA_GEN-MEMORY_0x3400000_W_VIDEOCON;i+=4096)
   {
     entry->AccessFunc = FastMap_VIDCFunc;
@@ -1009,9 +1009,9 @@ void ARMul_RebuildFastMap(void)
 
   /* ROM High/MEMC */
   if(MEMC.ROMHigh && (MEMC.ROMMapFlag != 2))
-    FastMap_SetEntries_Repeat(MEMORY_0x3800000_R_ROM_HIGH,MEMC.ROMHigh,FastMap_MEMCFunc,FASTMAP_R_USR|FASTMAP_R_SVC|FASTMAP_R_OS|FASTMAP_W_SVC|FASTMAP_W_FUNC,MEMC.ROMHighSize,0x800000);
+    FastMap_SetEntries_Repeat(state,MEMORY_0x3800000_R_ROM_HIGH,MEMC.ROMHigh,FastMap_MEMCFunc,FASTMAP_R_USR|FASTMAP_R_SVC|FASTMAP_R_OS|FASTMAP_W_SVC|FASTMAP_W_FUNC,MEMC.ROMHighSize,0x800000);
   else
-    FastMap_SetEntries(MEMORY_0x3800000_R_ROM_HIGH,0,FastMap_MEMCFunc,FASTMAP_R_USR|FASTMAP_R_SVC|FASTMAP_R_OS|FASTMAP_W_SVC|FASTMAP_W_FUNC|FASTMAP_R_FUNC,0x800000);
+    FastMap_SetEntries(state,MEMORY_0x3800000_R_ROM_HIGH,0,FastMap_MEMCFunc,FASTMAP_R_USR|FASTMAP_R_SVC|FASTMAP_R_OS|FASTMAP_W_SVC|FASTMAP_W_FUNC|FASTMAP_R_FUNC,0x800000);
 }
 
 #ifndef FASTMAP_INLINE

@@ -44,6 +44,7 @@ void gettooltypes(struct WBArg *wbarg)
 	force8bit = 0;
 	swapmousebuttons = 0;
 	anymonitor = FALSE;
+	use_ocm = FALSE;
 
 	if((*wbarg->wa_Name) && (dobj=GetDiskObject(wbarg->wa_Name)))
 	{
@@ -137,6 +138,7 @@ void gettooltypes(struct WBArg *wbarg)
 		if(FindToolType(toolarray,"FORCE8BIT")) force8bit=1;
 		if(FindToolType(toolarray,"SWAPBUTTONS")) swapmousebuttons=1;
 		if(FindToolType(toolarray,"ANYMONITOR")) anymonitor = TRUE;
+		if(FindToolType(toolarray,"ENABLEOCM")) use_ocm = TRUE;
 
 		if(FindToolType(toolarray, "USEUPDATEFLAGS"))
 			DisplayDev_UseUpdateFlags = 1;

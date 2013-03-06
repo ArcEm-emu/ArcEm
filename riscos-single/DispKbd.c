@@ -1197,7 +1197,7 @@ static void GoMenu(void)
   if(hArcemConfig.eDisplayDriver == DisplayDriver_Standard)
     DisplayDev_UseUpdateFlags = 1;
   /* Rebuild fastmap for DisplayDev_UseUpdateFlags changes */
-  ARMul_RebuildFastMap();
+  ARMul_RebuildFastMap(&statestr);
   /* Gobble any keyboard input */
   while(_swi (ArcEmKey_GetKey, _RETURN(0))) {};
   /* Reset EmuRate */

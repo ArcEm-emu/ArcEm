@@ -2042,7 +2042,7 @@ static void SDD_Name(FrameStart)(ARMul_State *state,CycleCount nowtime)
           /* Disable */
           DisplayDev_UseUpdateFlags = 0;
           DisplayDev_FrameSkip = DC.Auto_FrameCount/DC.Auto_ForceRefresh;
-          ARMul_RebuildFastMap();
+          ARMul_RebuildFastMap(state);
         }
         DC.Auto_FrameCount = 0;
         DC.Auto_ForceRefresh = 0;
@@ -2059,7 +2059,7 @@ static void SDD_Name(FrameStart)(ARMul_State *state,CycleCount nowtime)
           /* Enable */        
           DisplayDev_UseUpdateFlags = 1;
           DisplayDev_FrameSkip = 0;
-          ARMul_RebuildFastMap();
+          ARMul_RebuildFastMap(state);
           /* Ensure the updateflags get reset */
           DC.ForceRefresh = true;
           DC.FrameSkip = 0;

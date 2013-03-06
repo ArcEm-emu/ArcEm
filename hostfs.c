@@ -1036,7 +1036,7 @@ hostfs_getbytes(ARMul_State *state)
 
   fseeko64(f, (off64_t) state->Reg[4], SEEK_SET);
 
-  File_ReadRAM(f, ptr, state->Reg[3]);
+  File_ReadRAM(state, f, ptr, state->Reg[3]);
 }
 
 static void
@@ -1056,7 +1056,7 @@ hostfs_putbytes(ARMul_State *state)
 
   fseeko64(f, (off64_t) state->Reg[4], SEEK_SET);
 
-  File_WriteRAM(f, ptr, state->Reg[3]);
+  File_WriteRAM(state, f, ptr, state->Reg[3]);
 }
 
 static void
@@ -1283,7 +1283,7 @@ hostfs_write_file(ARMul_State *state, bool with_data)
   }
 
   if (with_data) {
-    bytes_written = File_WriteRAM(f,ptr,length);
+    bytes_written = File_WriteRAM(state,f,ptr,length);
   } else {
     /* Fill the data buffer with 0's if we are not saving supplied data */
     hostfs_ensure_buffer_size(BUFSIZE);
@@ -1556,7 +1556,7 @@ hostfs_file_255_load_file(ARMul_State *state)
     return;
   }
 
-  bytes_read = File_ReadRAM(f,ptr,state->Reg[4]);
+  bytes_read = File_ReadRAM(state, f,ptr,state->Reg[4]);
   if(bytes_read != state->Reg[4])
   {
     fprintf(stderr,"hostfs_file_255_load_file(): Failed to read full extent of file\n");

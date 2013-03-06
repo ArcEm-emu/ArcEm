@@ -199,6 +199,6 @@ int ArmArc_ReadKbdTx(ARMul_State *state);
 int ArmArc_WriteKbdRx(ARMul_State *state, unsigned char value);
 
 
-void ARMul_RebuildFastMap(void);
+void ARMul_RebuildFastMap(ARMul_State *state);
 
 #endif

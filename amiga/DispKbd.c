@@ -24,8 +24,13 @@
 #ifdef __amigaos4__
 #include <libraries/keymap.h>
 #include <graphics/blitattr.h>
+#include <proto/onchipmem.h>
+
+struct Library *ocmb;
+struct OCMIFace *IOCM = NULL;
 #endif
 
+BOOL using_ocm = FALSE;
 
 struct Window *window = NULL;
 struct Screen *screen = NULL;
@@ -60,6 +65,42 @@ static ULONG monitor_data = TAG_IGNORE;
 void writepixel(struct RastPort *,ULONG,ULONG,ULONG);
 void ChangeDisplayMode(ARMul_State *,long,long,int);
 void CloseDisplay(void);
+
+void *state_alloc(int s)
+{
+	void *p = NULL;
+#ifdef __amigaos4__
+	if((use_ocm == TRUE) && (s <= 65536)) {
+		/* This is a 64K block. ARMul_State is a little over 1K without FastMap */
+		if((ocmb = OpenResource("onchipmem.resource"))) {
+			if((IOCM = (struct OCMIFace *)GetInterface((struct Library *)ocmb, "main", 1, NULL))) {
+				p = ObtainOnChipMem();
+				using_ocm = TRUE;
+			}
+		}
+	}
+#endif
+
+	if(p == NULL) {
+		p = AllocVec(s, MEMF_PRIVATE);
+	}
+	
+	return p;
+}
+
+void state_free(void *p)
+{
+	if(using_ocm) {
+#ifdef __amigaos4__
+		ReleaseOnChipMem();
+		DropInterface((struct Interface *)IOCM);
+#endif
+	} else {
+		FreeVec(p);
+	}
+	
+	cleanup();
+}
 
 int changemode(int width,int height,int log2bpp,int *xscale,int *yscale)
 {

@@ -241,7 +241,7 @@ struct ARMul_State {
    /* Fastmap stuff */
    FastMapUInt FastMapMode;   /* Current access mode flags */
    FastMapUInt FastMapInstrFuncOfs; /* Offset between the RAM/ROM data and the ARMEmuFunc data */
-   FastMapEntry FastMap[FASTMAP_SIZE];
+   FastMapEntry *FastMap;
 
    /* Less common stuff */   
    ARMword RegBank[4][16];    /* all the registers */
@@ -262,7 +262,24 @@ struct ARMul_State {
 
  };
 
+#ifdef AMIGA
+extern void *state_alloc(int s);
+extern void state_free(void *p);
+#else
+/* If you need special allocation for the state rather than
+ * using the usual static global, you can override these functions
+ * and provide your own.
+ */
+static inline void *state_alloc(int s)
+{
+	return &statestr;
+}
 
+static inline void state_free(void *p)
+{
+}
+#endif
+ 
 /***************************************************************************\
 *                  Definitons of things in the emulator                     *
 \***************************************************************************/

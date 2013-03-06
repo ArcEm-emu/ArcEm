@@ -99,7 +99,7 @@ size_t File_WriteEmu(FILE *pFile,const uint8_t *pBuffer,size_t uCount);
  * @param uCount Number of bytes to read
  * @returns Number of bytes read
  */
-size_t File_ReadRAM(FILE *pFile,ARMword uAddress,size_t uCount);
+size_t File_ReadRAM(ARMul_State *state,FILE *pFile,ARMword uAddress,size_t uCount);
 
 /**
  * File_WriteRAM
@@ -112,6 +112,6 @@ size_t File_ReadRAM(FILE *pFile,ARMword uAddress,size_t uCount);
  * @param uCount Number of bytes to write
  * @returns Number of bytes written
  */
-size_t File_WriteRAM(FILE *pFile,ARMword uAddress,size_t uCount);
+size_t File_WriteRAM(ARMul_State *state,FILE *pFile,ARMword uAddress,size_t uCount);
 
 #endif /* __FILECALLS_H */
