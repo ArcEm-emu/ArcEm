@@ -139,7 +139,7 @@ SOUND_PTHREAD=no
 OBJS += riscos-single/soundbuf.o
 # General
 EXTNROM_SUPPORT=yes
-CFLAGS += -I@ -DSYSTEM_riscos_single -Iriscos-single -mtune=cortex-a8 -march=armv5te -mthrowback -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
+CFLAGS += -I@ -DSYSTEM_riscos_single -Iriscos-single -mtune=cortex-a8 -march=armv5te -mthrowback -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -mfpu=fpa
 LDFLAGS += -static
 # Disable stack limit checks. -ffixed-sl required to prevent sl being used as temp storage, breaking unixlib and any other code that does do stack checks
 CFLAGS += -mno-apcs-stack-check -ffixed-sl -DUSE_FAKEMAIN

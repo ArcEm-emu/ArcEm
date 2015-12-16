@@ -58,7 +58,11 @@ typedef struct {
   int w;
   int h;
   int aspect; /* Aspect ratio: 1 = wide pixels, 2 = square pixels, 4 = tall pixels */
-  int depths; /* Bitmask of supported display depths */
+  uint32_t depths; /* Bitmask of supported display depths */
+  uint32_t modeflags_16bpp; /* Preferred modeflags & ncolour values for 16 & 32bpp */
+  uint32_t ncolour_16bpp;
+  uint32_t modeflags_32bpp;
+  uint32_t ncolour_32bpp;
 } HostMode;
 static HostMode *ModeList;
 static int NumModes;
@@ -98,6 +102,9 @@ static ARMword ModeVarsOut[7];
 static int CursorXOffset=0; /* How many columns were skipped from the left edge of the cursor image */
 static int CursorYOffset=0; /* How many rows were skipped from the top of the cursor image */
 
+/* Lookup table for 16/32bpp display drivers - populated on mode change to avoid any SWI overheads in Host_GetColour */
+static uint32_t sdd_palette[4096];
+
 static int ChangeMode(const HostMode *mode,int depth)
 {
   while(!(mode->depths & (1<<depth)) && ((1<<depth) < mode->depths))
@@ -111,18 +118,37 @@ static int ChangeMode(const HostMode *mode,int depth)
     block[2] = mode->h;
     block[3] = depth;
     block[4] = -1;
-    if(depth == 3)
+    switch(depth)
     {
-      block[5] = 0;
-      block[6] = 128;
-      block[7] = 3;
-      block[8] = 255;
-      block[9] = -1;
+      case 3:
+        /* Request full 256 entry palette */
+        block[5] = 0;
+        block[6] = 128;
+        block[7] = 3;
+        block[8] = 255;
+        block[9] = -1;
+        break;
+      case 4:
+        /* Request correct pixel format */
+        block[5] = 0;
+        block[6] = mode->modeflags_16bpp;
+        block[7] = 3;
+        block[8] = mode->ncolour_16bpp;
+        block[9] = -1;
+        break;
+      case 5:
+        /* Request correct pixel format */
+        block[5] = 0;
+        block[6] = mode->modeflags_32bpp;
+        block[7] = 3;
+        block[8] = mode->ncolour_32bpp;
+        block[9] = -1;
+        break;
+      default:
+        block[5] = -1;
+        break;
     }
-    else
-    {
-      block[5] = -1;
-    }
+    
     _kernel_oserror *err = _swix(OS_ScreenMode, _INR(0,1), 0, &block);
     if(err)
     {
@@ -134,6 +160,29 @@ static int ChangeMode(const HostMode *mode,int depth)
 
     current_mode = mode;
     current_depth = depth;
+
+    if(depth > 3)
+    {
+      /* Populate palette */
+      int i;
+      for(i=0;i<4096;i++)
+      {
+        int r = (i & 0xf);
+        int g = (i & 0xf0) >> 4;
+        int b = (i & 0xf00) >> 4;
+        uint32_t col;
+        if(hArcemConfig.bRedBlueSwap && (depth == 4))
+        {
+          col = (r<<24) | (g<<16) | (b<<8);
+        }
+        else
+        {
+          col = (r<<8) | (g<<16) | (b<<24);
+        }
+        col |= col<<4;
+        _swix(ColourTrans_ReturnColourNumber,_IN(0)|_OUT(0),col,&sdd_palette[i]);
+      }
+    }
   }
   
   _swi(OS_ReadVduVariables,_INR(0,1),ModeVarsIn,ModeVarsOut);
@@ -154,18 +203,7 @@ static const int SDD_RowsAtOnce = 1;
 
 static SDD_HostColour SDD_Name(Host_GetColour)(ARMul_State *state,unsigned int col)
 {
-  /* Convert to 5-bit component values */
-  int r = (col & 0x00f) << 1;
-  int g = (col & 0x0f0) >> 3;
-  int b = (col & 0xf00) >> 7;
-  /* May want to tweak this a bit at some point? */
-  r |= r>>4;
-  g |= g>>4;
-  b |= b>>4;
-  if(hArcemConfig.bRedBlueSwap)
-    return (r<<10) | (g<<5) | (b);
-  else
-    return (r) | (g<<5) | (b<<10);
+  return sdd_palette[col & ~0x1000];
 }  
 
 static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,int hz);
@@ -246,11 +284,7 @@ SDD_Name(Host_PollDisplay)(ARMul_State *state)
 
 static SDD_HostColour SDD_Name(Host_GetColour)(ARMul_State *state,unsigned int col)
 {
-  int r = col & 0x00f;
-  int g = (col & 0x0f0) << 4;
-  int b = (col & 0xf00) << 8;
-  SDD_HostColour col2 = r | g | b;
-  return col2 | (col2<<4);
+  return sdd_palette[col & ~0x1000];
 }  
 
 static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,int hz);
@@ -936,16 +970,41 @@ static void InitModeTable(void)
   _swi(OS_ScreenMode,_IN(0)|_IN(2)|_INR(6,7)|_OUT(2),2,0,mode_list,size,&count);
   count = -count;
   ModeList = (HostMode *) malloc(sizeof(HostMode)*count);
+  if(!ModeList)
+  {
+    ControlPane_Error(EXIT_FAILURE,"Failed to get memory for mode list\n");
+  }
+  memset(ModeList,0,sizeof(HostMode)*count);
   NumModes = 0;
   int *mode = mode_list;
   /* Convert the OS mode list into one in our own format */
   while(count--)
   {
+    /* Check block format */
+    if (((mode[1] & 0xff) != 1) && ((mode[1] & 0xff) != 3))
+      goto next;
     /* Too small? */
     if((mode[2] < hArcemConfig.iMinResX) || (mode[3] < hArcemConfig.iMinResY))
       goto next;
+    /* Determine pixel format */
+    uint32_t ncolour,modeflags,log2bpp;
+    if ((mode[1] & 0xff) == 1)
+    {
+      log2bpp = mode[4];
+      ncolour = (1<<(1<<log2bpp))-1;
+      modeflags = (log2bpp==3?128:0);
+    }
+    else
+    {
+      ncolour = mode[4];
+      modeflags = mode[5];
+      log2bpp = mode[6];
+    }
+    /* Discard non-RGB or other tricky formats */
+    if ((ncolour == 63) || (log2bpp > 5) || (modeflags & (3<<12)))
+      goto next;
     /* Low colour not allowed? */
-    if(hArcemConfig.bNoLowColour && (mode[4] < 3))
+    if(hArcemConfig.bNoLowColour && (log2bpp < 3))
       goto next;
     /* Not exact scale for an LCD? */
     if(hArcemConfig.iLCDResX)
@@ -962,26 +1021,77 @@ static void InitModeTable(void)
         goto next;
     }
 
-    colourdepths_available |= 1<<mode[4];
+    colourdepths_available |= 1<<log2bpp;
 
     /* Already got this entry? (i.e. due to multiple framerates) */
     int i;
     for(i=NumModes-1;i>=0;i--)
       if((ModeList[i].w == mode[2]) && (ModeList[i].h == mode[3]))
       {
-        ModeList[i].depths |= 1<<mode[4];
+        /* If we get multiple modes for the same BPP, try and pick the best pixel format */
+        if (ModeList[i].depths & (1<<log2bpp))
+        {
+          if (log2bpp == 4)
+          {
+            /* Prefer non-alpha modes if possible - might lighten the load on the hardware */
+            if ((ModeList[i].modeflags_16bpp & (8<<12)) && !(modeflags & (8<<12)))
+            {
+              ModeList[i].modeflags_16bpp = modeflags;
+              ModeList[i].ncolour_16bpp = ncolour;
+            }
+            /* Prefer 4K colour mode if possible, for best colour reproduction */
+            else if (((ModeList[i].modeflags_16bpp & (8<<12)) == (modeflags & (8<<12))) && (ncolour == 4095))
+            {
+              ModeList[i].modeflags_16bpp = modeflags;
+              ModeList[i].ncolour_16bpp = ncolour;
+            }
+          }
+          else if (log2bpp == 5)
+          {
+            /* Prefer non-alpha modes if possible - might lighten the load on the hardware */
+            if ((ModeList[i].modeflags_32bpp & (8<<12)) && !(modeflags & (8<<12)))
+            {
+              ModeList[i].modeflags_32bpp = modeflags;
+              ModeList[i].ncolour_32bpp = ncolour;
+            }
+          }
+        }
+        else
+        {
+          ModeList[i].depths |= 1<<log2bpp;
+          if(log2bpp == 4)
+          {
+            ModeList[i].modeflags_16bpp = modeflags;
+            ModeList[i].ncolour_16bpp = ncolour;
+          }
+          else if(log2bpp == 5)
+          {
+            ModeList[i].modeflags_32bpp = modeflags;
+            ModeList[i].ncolour_32bpp = ncolour;
+          }
+        }
         goto next;
       }
     /* Add it to our list */
     ModeList[NumModes].w = mode[2];
     ModeList[NumModes].h = mode[3];
-    ModeList[NumModes].depths = 1<<mode[4];
+    ModeList[NumModes].depths = 1<<log2bpp;
     if(mode[2] <= mode[3])
       ModeList[NumModes].aspect = 1;
     else if(mode[2] >= mode[3]*2)
       ModeList[NumModes].aspect = 4;
     else
       ModeList[NumModes].aspect = 2;
+    if(log2bpp == 4)
+    {
+      ModeList[NumModes].modeflags_16bpp = modeflags;
+      ModeList[NumModes].ncolour_16bpp = ncolour;
+    }
+    else if(log2bpp == 5)
+    {
+      ModeList[NumModes].modeflags_32bpp = modeflags;
+      ModeList[NumModes].ncolour_32bpp = ncolour;
+    }
     fprintf(stderr,"Added mode %dx%d aspect %.1f\n",ModeList[NumModes].w,ModeList[NumModes].h,((float)ModeList[NumModes].aspect)/2.0f);
     NumModes++;
 
