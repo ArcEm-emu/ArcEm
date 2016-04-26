@@ -344,6 +344,11 @@ static void EMFUNCDECL26(TstRegMrs1SwpNorm) (ARMul_State *state, ARMword instr) 
 
   EMFUNC_CONDTEST
              if (BITS(4,11) == 9) { /* SWP */
+                if (Processor_ARM2 == hArcemConfig.eProcessor) {
+                  ARMul_UndefInstr(state,instr);
+                  return;
+                }
+
                 temp = LHS;
                 BUSUSEDINCPCS;
 
@@ -395,6 +400,11 @@ static void EMFUNCDECL26(CmpRegMrs2SwpNorm) (ARMul_State *state, ARMword instr) 
   EMFUNC_CONDTEST
 
              if (BITS(4,11) == 9) { /* SWP */
+                if (Processor_ARM2 == hArcemConfig.eProcessor) {
+                  ARMul_UndefInstr(state,instr);
+                  return;
+                }
+
                 temp = LHS;
                 BUSUSEDINCPCS;
                 if (ADDREXCEPT(temp)) {
@@ -524,6 +534,11 @@ static void EMFUNCDECL26(TstRegMrs1SwpPC) (ARMul_State *state, ARMword instr) {
 
   EMFUNC_CONDTEST
              if (BITS(4,11) == 9) { /* SWP */
+                if (Processor_ARM2 == hArcemConfig.eProcessor) {
+                  ARMul_UndefInstr(state,instr);
+                  return;
+                }
+
                 temp = LHS;
                 BUSUSEDINCPCS;
                 if (ADDREXCEPT(temp)) {
@@ -570,6 +585,11 @@ static void EMFUNCDECL26(CmpRegMrs2SwpPC) (ARMul_State *state, ARMword instr) {
   EMFUNC_CONDTEST
 
              if (BITS(4,11) == 9) { /* SWP */
+                if (Processor_ARM2 == hArcemConfig.eProcessor) {
+                  ARMul_UndefInstr(state,instr);
+                  return;
+                }
+
                 temp = LHS;
                 BUSUSEDINCPCS;
                 if (ADDREXCEPT(temp)) {

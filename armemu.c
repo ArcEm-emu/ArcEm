@@ -22,6 +22,7 @@
 #include <time.h>
 #include "prof.h"
 #include "arch/archio.h"
+#include "arch/ArcemConfig.h"
 #include "ControlPane.h"
 
 ARMul_State statestr;
