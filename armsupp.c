@@ -284,30 +284,29 @@ void ARMul_MCR(ARMul_State *state,ARMword instr, ARMword source)
 *        This function does the Busy-Waiting for an MRC instruction.        *
 \***************************************************************************/
 
-ARMword ARMul_MRC(ARMul_State *state,ARMword instr)
+unsigned ARMul_MRC(ARMul_State *state,ARMword instr,ARMword *result)
 {unsigned cpab;
- ARMword result = 0;
 
- cpab = (state->MRC[CPNum])(state,ARMul_FIRST,instr,&result);
+ cpab = (state->MRC[CPNum])(state,ARMul_FIRST,instr,result);
  while (cpab == ARMul_BUSY) {
     ARMul_Icycles(state,1);
     if (IntPending(state)) {
        cpab = (state->MRC[CPNum])(state,ARMul_INTERRUPT,instr,0);
-       return(0);
+       return(FALSE);
        }
     else
-       cpab = (state->MRC[CPNum])(state,ARMul_BUSY,instr,&result);
+       cpab = (state->MRC[CPNum])(state,ARMul_BUSY,instr,result);
     }
  if (cpab == ARMul_CANT) {
     ARMul_Abort(state,ARMul_UndefinedInstrV);
-    result = ECC; /* Parent will destroy the flags otherwise */
+    return(FALSE);
     }
  else {
     BUSUSEDINCPCN;
     ARMul_Icycles(state,1);
     ARMul_Icycles(state,1);
     }
- return(result);
+ return(TRUE);
 }
 
 /***************************************************************************\

@@ -1931,16 +1931,17 @@ static void EMFUNCDECL26(CoMCRDataOp) (ARMul_State *state, ARMword instr) {
 }
 
 static void EMFUNCDECL26(CoMRCDataOp) (ARMul_State *state, ARMword instr) {
-  register ARMword temp;
+  ARMword temp;
   EMFUNC_CONDTEST
 
              if (BIT(4)) { /* MRC */
-                temp = ARMul_MRC(state,instr);
-                if (DESTReg == 15) {
-                   state->Reg[15] = (state->Reg[15]&~CCBITS) | (temp&CCBITS);
-                   }
-                else
-                   DEST = temp;
+                if (ARMul_MRC(state,instr,&temp)) {
+                  if (DESTReg == 15) {
+                     state->Reg[15] = (state->Reg[15]&~CCBITS) | (temp&CCBITS);
+                     }
+                  else
+                     DEST = temp;
+                  }
                 }
              else /* CDP Part 2 */
                 ARMul_CDP(state,instr);
