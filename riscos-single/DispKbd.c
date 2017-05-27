@@ -24,6 +24,9 @@
 #include "../prof.h"
 
 #include "ControlPane.h"
+#ifdef DEBUG_JIT_METRICS
+#include "jit/metrics.h"
+#endif
 
 #define ENABLE_MENU
 
@@ -1261,6 +1264,9 @@ static void GoMenu(void)
     /* And dump */
     Prof_Dump(stderr);
   }
+#endif
+#ifdef DEBUG_JIT_METRICS
+  JITMetrics_Dump();
 #endif
   /* Switch to a known-good screen mode. Assume mode 28 available. */
   _swix(OS_ScreenMode,_INR(0,1),0,28);

@@ -24,15 +24,22 @@
 #include "arch/archio.h"
 #include "arch/ArcemConfig.h"
 #include "ControlPane.h"
+#ifdef DEBUG_JIT_METRICS
+#include "jit/metrics.h"
+#endif
 
+#ifndef AMIGA
 ARMul_State statestr;
+#endif
 
 /* global used to terminate the emulator */
 static bool kill_emulator;
 
 typedef struct {
   ARMword instr;
+#ifdef ARMUL_INSTR_FUNC_CACHE
   ARMEmuFunc func;
+#endif
 } PipelineEntry;
 
 extern PipelineEntry abortpipe;
@@ -57,6 +64,7 @@ ARMul_LoadInstr(ARMul_State *state,ARMword addr, PipelineEntry *p)
   {
     ARMword *data = FastMap_Log2Phy(entry,addr);
     ARMword instr = p->instr = *data;
+#ifdef ARMUL_INSTR_FUNC_CACHE
     ARMEmuFunc *pfunc = FastMap_Phy2Func(state,data);
     ARMEmuFunc temp = *pfunc;
     if(temp == FASTMAP_CLOBBEREDFUNC)
@@ -74,12 +82,15 @@ ARMul_LoadInstr(ARMul_State *state,ARMword addr, PipelineEntry *p)
     }
 #endif
     p->func = temp;
+#endif
   }
   else if(FASTMAP_RESULT_FUNC(res))
   {
     /* Use function, means we can't write back the decode result */
     ARMword instr = p->instr = FastMap_LoadFunc(entry,state,addr);
+#ifdef ARMUL_INSTR_FUNC_CACHE
     p->func = ARMul_Emulate_DecodeInstr(instr);
+#endif
   }
   else
   {
@@ -113,11 +124,14 @@ ARMul_LoadInstrTriplet(ARMul_State *state,ARMword addr,PipelineEntry *p)
   if(FASTMAP_RESULT_DIRECT(res))
   {
     ARMword *data = FastMap_Log2Phy(entry,addr);
+#ifdef ARMUL_INSTR_FUNC_CACHE
     ARMEmuFunc *pfunc = FastMap_Phy2Func(state,data);
+#endif
     int i;
     for(i=0;i<3;i++)
     {
       ARMword instr = p->instr = *data;
+#ifdef ARMUL_INSTR_FUNC_CACHE
       ARMEmuFunc temp = *pfunc;
       if(temp == FASTMAP_CLOBBEREDFUNC)
       {
@@ -125,8 +139,9 @@ ARMul_LoadInstrTriplet(ARMul_State *state,ARMword addr,PipelineEntry *p)
         temp = *pfunc = ARMul_Emulate_DecodeInstr(instr);
       }
       p->func = temp;
-      data++;
       pfunc++;
+#endif
+      data++;
       p++;
     }
   }
@@ -842,17 +857,25 @@ static void StoreMult(ARMul_State *state, ARMword instr,
              This assumes we don't differentiate between N & S cycles */
           ARMul_CLEARABORT;
           data = FastMap_Log2Phy(entry,address&~3);
-          pfunc = FastMap_Phy2Func(state,data);
           count=1;
-          *(data++) = state->Reg[temp++];
+#ifdef ARMUL_INSTR_FUNC_CACHE
+          pfunc = FastMap_Phy2Func(state,data);
           *(pfunc++) = FASTMAP_CLOBBEREDFUNC;
+#else
+          FastMap_PhyClobberFunc(state,data);
+#endif
+          *(data++) = state->Reg[temp++];
           if (BIT(21) && LHSReg != 15)
              LSBase = WBBase;
           for(;temp<16;temp++)
             if(BIT(temp))
             {
-              *(data++) = state->Reg[temp];
+#ifdef ARMUL_INSTR_FUNC_CACHE
               *(pfunc++) = FASTMAP_CLOBBEREDFUNC;
+#else
+              FastMap_PhyClobberFunc(state,data);
+#endif
+              *(data++) = state->Reg[temp];
               count++;
             }
           state->NumCycles += count;
@@ -931,17 +954,25 @@ static void StoreSMult(ARMul_State *state, ARMword instr,
              This assumes we don't differentiate between N & S cycles */
           ARMul_CLEARABORT;
           data = FastMap_Log2Phy(entry,address&~3);
-          pfunc = FastMap_Phy2Func(state,data);
           count=1;
-          *(data++) = state->Reg[temp++];
+#ifdef ARMUL_INSTR_FUNC_CACHE
+          pfunc = FastMap_Phy2Func(state,data);
           *(pfunc++) = FASTMAP_CLOBBEREDFUNC;
+#else
+          FastMap_PhyClobberFunc(state,data);
+#endif
+          *(data++) = state->Reg[temp++];
           if (BIT(21) && LHSReg != 15)
              LSBase = WBBase;
           for(;temp<16;temp++)
             if(BIT(temp))
             {
-              *(data++) = state->Reg[temp];
+#ifdef ARMUL_INSTR_FUNC_CACHE
               *(pfunc++) = FASTMAP_CLOBBEREDFUNC;
+#else
+              FastMap_PhyClobberFunc(state,data);
+#endif
+              *(data++) = state->Reg[temp];
               count++;
             }
           state->NumCycles += count;
@@ -1075,8 +1106,10 @@ ARMEmuFunc ARMul_Emulate_DecodeInstr(ARMword instr) {
 
 /* Pipeline entry used for prefetch aborts */
 PipelineEntry abortpipe = {
-  ARMul_ABORTWORD,
-  EMFUNCDECL26(SWI)
+  ARMul_ABORTWORD
+#ifdef ARMUL_INSTR_FUNC_CACHE
+  , EMFUNCDECL26(SWI)
+#endif
 };
 
 #define FLATPIPE
@@ -1087,6 +1120,31 @@ PipelineEntry abortpipe = {
 #define PIPESIZE 4 /* 3 or 4. 4 seems to be slightly faster? */
 #endif
 
+static inline void execute_instruction(ARMul_State *state,const PipelineEntry *entry,ARMword r15)
+{
+  ARMword instr = entry->instr;
+  if(ARMul_CCCheck(instr,(r15 & CCBITS)))
+  {
+#ifdef ARMUL_INSTR_FUNC_CACHE
+    ARMEmuFunc func = entry->func;
+#else
+    ARMEmuFunc func = ARMul_Emulate_DecodeInstr(instr);
+#endif
+    Prof_BeginFunc(func);
+    (func)(state, instr);
+    Prof_EndFunc(func);
+  }
+}
+
+#ifdef DEBUG_JIT_TEST_EXEC
+void extern_execute_instruction(ARMul_State *state,ARMword instr,ARMword r15)
+{
+  PipelineEntry p = {instr};
+  execute_instruction(state,&p,r15);
+}
+#endif
+
+#ifndef JIT
 void
 ARMul_Emulate26(ARMul_State *state)
 {
@@ -1111,8 +1169,10 @@ ARMul_Emulate26(ARMul_State *state)
       pc            = state->pc;
 #endif
 
+#ifdef ARMUL_INSTR_FUNC_CACHE
       pipe[1].func = ARMul_Emulate_DecodeInstr(pipe[1].instr);
       pipe[2].func = ARMul_Emulate_DecodeInstr(pipe[2].instr);
+#endif
 #ifndef FLATPIPE
       pipeidx = 0;
 #endif
@@ -1205,18 +1265,12 @@ ARMul_Emulate26(ARMul_State *state)
         break;
       }
 
-      ARMword instr = pipe[pipeidx].instr;
-      /*fprintf(stderr, "exec: pc=0x%08x instr=0x%08x\n", pc, instr);*/
-      if(ARMul_CCCheck(instr,ECC))
-      {
-        Prof_BeginFunc(pipe[pipeidx].func);
-        (pipe[pipeidx].func)(state, instr);
-        Prof_EndFunc(pipe[pipeidx].func);
-      }
+      /*fprintf(stderr, "exec: pc=0x%08x instr=0x%08x\n", pc, pipe[pipeidx].instr);*/
+      execute_instruction(state,&pipe[pipeidx],state->Reg[15]);
 #else
 /* pipeidx = 0 */
       CycleCount local_time;
-      ARMword excep, instr;
+      ARMword excep;
       ARMword r15 = state->Reg[15];
       Prof_Begin("Fetch/decode");
       switch (state->NextInstr) {
@@ -1259,13 +1313,7 @@ ARMul_Emulate26(ARMul_State *state)
         break;
       }
 
-      instr = pipe[1].instr;
-      if(ARMul_CCCheck(instr,(r15 & CCBITS)))
-      {
-        Prof_BeginFunc(pipe[1].func);
-        (pipe[1].func)(state, instr);
-        Prof_EndFunc(pipe[1].func);
-      }
+      execute_instruction(state,&pipe[1],r15);
 
 /* pipeidx = 1 */
       r15 = state->Reg[15];
@@ -1310,13 +1358,7 @@ ARMul_Emulate26(ARMul_State *state)
         break;
       }
 
-      instr = pipe[2].instr;
-      if(ARMul_CCCheck(instr,(r15 & CCBITS)))
-      {
-        Prof_BeginFunc(pipe[2].func);
-        (pipe[2].func)(state, instr);
-        Prof_EndFunc(pipe[2].func);
-      }
+      execute_instruction(state,&pipe[2],r15);
 
 /* pipeidx = 2 */
       r15 = state->Reg[15];
@@ -1365,13 +1407,7 @@ ARMul_Emulate26(ARMul_State *state)
         break;
       }
 
-      instr = pipe[0].instr;
-      if(ARMul_CCCheck(instr,(r15 & CCBITS)))
-      {
-        Prof_BeginFunc(pipe[0].func);
-        (pipe[0].func)(state, instr);
-        Prof_EndFunc(pipe[0].func);
-      }
+      execute_instruction(state,&pipe[0],r15);
 #endif
     } /* for loop */
 
@@ -1384,3 +1420,146 @@ ARMul_Emulate26(ARMul_State *state)
 #endif
   }
 } /* Emulate 26 in instruction based mode */
+
+#else /* JIT */
+
+#ifdef DEBUG_JIT_TEST_ALL_EXEC
+extern JITResult test_exec(JITEmuState *state,ARMword *addr);
+#endif
+
+void ARMul_Emulate26(ARMul_State *state)
+{
+  EmuRate_Reset(state);
+  kill_emulator = false;
+  while (kill_emulator == false) {
+    for (;;) { /* just keep going */
+      CycleCount local_time;
+      ARMword excep;
+      ARMword r15 = state->Reg[15];
+      PipelineEntry p;
+      switch (state->NextInstr) {
+        case NORMAL:
+          r15 += 4;
+        case PCINCED:
+          break;
+        default:
+          state->Aborted = 0;
+          r15 += 8;
+          state->NumCycles += 2;
+          break;
+      }
+      NORMALCYCLE; /* state->NextInstr = NORMAL */
+      /* r15-8 = instruction to execute */
+  
+      local_time = ARMul_Time;
+      while(((CycleDiff) (local_time-state->EventQ[0].Time)) >= 0)
+      {
+        EventQ_Func func = state->EventQ[0].Func;
+        Prof_BeginFunc(func);
+        (func)(state,local_time);
+        Prof_EndFunc(func);
+      }
+  
+      excep = state->Exception &~r15;
+      
+      /* Write back updated PC before handling exception/instruction */
+      state->Reg[15] = r15;
+  
+      if (excep) { /* Any exceptions */
+        if (excep & Exception_FIQ) {
+          Prof_BeginFunc(ARMul_Abort);
+          ARMul_Abort(state, ARMul_FIQV);
+          Prof_EndFunc(ARMul_Abort);
+        } else {
+          Prof_BeginFunc(ARMul_Abort);
+          ARMul_Abort(state, ARMul_IRQV);
+          Prof_EndFunc(ARMul_Abort);
+        }
+        break;
+      }
+
+      /* Call into JIT if possible */
+      {
+        ARMword addr = (r15-8) & 0x3fffffc;
+        FastMapEntry *entry;
+        FastMapRes res;
+        entry = FastMap_GetEntryNoWrap(state,addr);
+        res = FastMap_DecodeRead(entry,state->FastMapMode);
+        if(FASTMAP_RESULT_DIRECT(res))
+        {
+          ARMword *data = FastMap_Log2Phy(entry,addr);
+          JITFunc *func = JIT_Phy2Func(JIT_GetState(state),data);
+#ifdef JIT_DEBUG
+          fprintf(stderr,"%08x %08x %08x\n",r15,addr,*data);
+#endif
+          JITResult jres;
+#ifdef DEBUG_JIT_METRICS_EXEC
+          state->jit.exec_count=0;
+#endif
+#ifdef DEBUG_JIT_TRACE
+          fprintf(stderr,"E %08x\n",addr);
+#endif
+#ifdef DEBUG_JIT_TEST_ALL_EXEC
+          if (*func != &JIT_Generate) {
+            jres = test_exec(state,data);
+          }
+          else
+#endif
+          {
+            jres = (*func)(state,data);
+          }
+
+#ifdef DEBUG_JIT_METRICS
+          {
+            TerminateReason terminate = TerminateReason_Normal;
+#ifdef DEBUG_JIT_METRICS_EXEC
+            /* Work out how many instructions were executed by the JIT (if any) */
+            uint32_t length = state->jit.exec_count-1;
+            if (length < JITPAGE_SIZE/4)
+            {
+              jitmetrics.execute_histogram[length]++;
+            }
+#endif
+            if (jres == JITResult_Interpret)
+            {
+              /* What instruction caused this result? */
+              addr = R15PC-8;
+              entry = FastMap_GetEntryNoWrap(state,addr);
+              res = FastMap_DecodeRead(entry,state->FastMapMode);
+              if (FASTMAP_RESULT_DIRECT(res))
+              {
+                ARMword *data = FastMap_Log2Phy(entry,addr);
+                Instruction instr;
+                Decoder_Decode(&instr,*data);
+                terminate = (TerminateReason) instr.type;
+              }
+              else
+              {
+                terminate = TerminateReason_Special;
+              }
+            }
+            jitmetrics.terminate_reason[terminate]++;
+          }
+#endif
+
+          if (jres == JITResult_Normal)
+          {
+            continue;
+          }
+          r15 = state->Reg[15];
+#ifdef JIT_DEBUG
+           fprintf(stderr,"%08xI\n",r15);
+#endif
+        }
+      }
+
+#ifdef DEBUG_JIT_METRICS
+      jitmetrics.interpret_count++;
+#endif
+      ARMul_LoadInstr(state,r15-8,&p);
+      execute_instruction(state,&p,r15);
+    }
+  }
+}
+
+#endif /* JIT */

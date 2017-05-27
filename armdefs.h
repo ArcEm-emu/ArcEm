@@ -24,11 +24,19 @@
 #include <limits.h>
 
 #include "c99.h"
+#ifdef JIT
+#include "jit/jitstate.h"
+#endif
+
+/* Control caching of instruction handler functions */
+//#define ARMUL_INSTR_FUNC_CACHE
 
 typedef uint32_t ARMword; /* must be 32 bits wide */
 
 typedef struct ARMul_State ARMul_State;
+#ifndef AMIGA
 extern ARMul_State statestr;
+#endif
 
 #define FALSE 0
 #define TRUE 1
@@ -134,7 +142,9 @@ typedef uintptr_t FastMapUInt;
 #define FASTMAP_ACCESSFUNC_BYTE        0x02UL /* Only relevant for writes */
 #define FASTMAP_ACCESSFUNC_STATECHANGE 0x04UL /* Only relevant for writes */
 
+#ifdef ARMUL_INSTR_FUNC_CACHE
 #define FASTMAP_CLOBBEREDFUNC 0 /* Value written when a func gets clobbered */
+#endif
 
 typedef FastMapInt FastMapRes; /* Result of a DecodeRead/DecodeWrite function */
 
@@ -234,13 +244,20 @@ struct ARMul_State {
    unsigned NtransSig;        /* MEMC USR/SVC flag, somewhat redundant with FastMapMode */
    ARMword Base;              /* extra hand for base writeback */
 
+#ifdef JIT
+   /* JIT */
+   JITState jit;
+#endif
+
    /* Event queue */
    EventQ_Entry EventQ[EVENTQ_SIZE];
    uint_fast8_t NumEvents;
 
    /* Fastmap stuff */
    FastMapUInt FastMapMode;   /* Current access mode flags */
+#ifdef ARMUL_INSTR_FUNC_CACHE
    FastMapUInt FastMapInstrFuncOfs; /* Offset between the RAM/ROM data and the ARMEmuFunc data */
+#endif
    FastMapEntry *FastMap;
 
    /* Less common stuff */   
@@ -358,6 +375,9 @@ pascal void SpinCursor(short increment);        /* copied from CursorCtl.h */
 # define HOURGLASS_RATE      1023   /* 2^n - 1 */
 #endif
 
+#ifdef JIT
+#include "jit/jitstate2.h"
+#endif
 #include "arch/archio.h"
 #include "arch/armarc.h"
 #include "eventq.h"

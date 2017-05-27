@@ -102,7 +102,7 @@ FASTMAP_FUNC void ARMul_StoreWordS(ARMul_State *state, ARMword address, ARMword 
 	{
 		ARMword *phy = FastMap_Log2Phy(entry,address&~UINT32_C(3));
 		*phy = data;
-		*(FastMap_Phy2Func(state,phy)) = FASTMAP_CLOBBEREDFUNC; 
+		FastMap_PhyClobberFunc(state,phy); 
 	}
 	else if(FASTMAP_RESULT_FUNC(res))
 	{
@@ -141,7 +141,7 @@ FASTMAP_FUNC void ARMul_StoreByte(ARMul_State *state, ARMword address, ARMword d
 #endif
 		ARMword *phy = FastMap_Log2Phy(entry,address);
 		*((uint8_t *)phy) = data;
-		*(FastMap_Phy2Func(state,(ARMword*)(((FastMapUInt)phy)&~((FastMapUInt)3)))) = FASTMAP_CLOBBEREDFUNC;
+		FastMap_PhyClobberFunc(state,(ARMword*)(((FastMapUInt)phy)&~((FastMapUInt)3)));
 	}
 	else if(FASTMAP_RESULT_FUNC(res))
 	{
@@ -180,7 +180,7 @@ FASTMAP_FUNC ARMword ARMul_SwapWord(ARMul_State *state, ARMword address, ARMword
 		ARMword *phy = FastMap_Log2Phy(entry,address&~UINT32_C(3));
 		temp = *phy;
 		*phy = data;
-		*(FastMap_Phy2Func(state,phy)) = FASTMAP_CLOBBEREDFUNC;
+		FastMap_PhyClobberFunc(state,phy);
 		return temp;
 	}
 	else if(FASTMAP_RESULT_FUNC(res))
@@ -228,7 +228,7 @@ FASTMAP_FUNC ARMword ARMul_SwapByte(ARMul_State *state, ARMword address, ARMword
 		ARMword *phy = FastMap_Log2Phy(entry,address);
 		temp = *((uint8_t *)phy);
 		*((uint8_t *)phy) = data;
-		*(FastMap_Phy2Func(state,(ARMword*)(((FastMapUInt)phy)&~((FastMapUInt)3)))) = FASTMAP_CLOBBEREDFUNC;
+		FastMap_PhyClobberFunc(state,(ARMword*)(((FastMapUInt)phy)&~((FastMapUInt)3)));
 		return temp;
 	}
 	else if(FASTMAP_RESULT_FUNC(res))

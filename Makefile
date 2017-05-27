@@ -41,9 +41,16 @@ HOST_BIGENDIAN=no
 # development, arcem-1.50, etc.
 MANUAL?=development
 
+# Whether you want the JIT enabled
+JIT?=yes
+
 # Windowing System
 ifeq ($(SYSTEM),)
 SYSTEM=X
+endif
+
+ifneq ($(SYSTEM),riscos-single)
+JIT=no
 endif
 
 CC=gcc
@@ -77,6 +84,21 @@ INSTALL_DIR = $(prefix)/bin
 INSTALL=cp
 
 
+# JIT debug flags
+# DEBUG_JIT_TEST_EXEC: Test single-stepping instruction sequences against the JIT
+# DEBUG_JIT_SINGLE_INSTR: Only generate code sequences one instruction long
+# DEBUG_JIT_FAKE: Don't execute JIT code, fake it (requires DEBUG_JIT_TEST_EXEC)
+# JIT_DEBUG: stderr spam
+# DEBUG_JIT_TEST_ALL_EXEC: Test all code block executions, not just on first generate (requires DEBUG_JIT_TEST_EXEC)
+# DEBUG_JIT_FORCE_NORMAL: Force all non-empty code blocks to return JITResult_Normal
+# DEBUG_JIT_METRICS: Collect and report metrics
+# DEBUG_JIT_METRICS_EXEC: Measure number of instructions executed by JIT (affects JIT code generation)
+# DEBUG_JIT_DUMP: Dump disassembly of JIT code sequences
+# DEBUG_JIT_TRACE: Trace PC, as seen by main loop (i.e. interpreted instructions + code block starts)
+#CFLAGS += -DDEBUG_JIT_METRICS -DDEBUG_JIT_METRICS_EXEC
+#CFLAGS += -DDEBUG_JIT_TEST_EXEC -DDEBUG_JIT_TEST_ALL_EXEC
+#CFLAGS += -DDEBUG_JIT_DUMP -DDEBUG_JIT_TRACE
+
 # Everything else should be ok as it is.
 
 OBJS = armcopro.o armemu.o arminit.o \
@@ -97,6 +119,12 @@ SRCS = armcopro.c armemu.c arminit.c arch/armarc.c \
 INCS = armdefs.h armemu.h $(SYSTEM)/KeyTable.h \
   arch/i2c.h arch/archio.h arch/fdc1772.h arch/ControlPane.h \
   arch/hdc63463.h arch/keyboard.h arch/ArcemConfig.h arch/cp15.h
+
+ifeq ($(JIT),yes)
+OBJS += jit/codeblocks.o jit/decoder.o jit/dirtyranges.o jit/emuinterf.o jit/jit.o jit/jitpage.o jit/memattr.o jit/metrics.o jit/regalloc.o
+SRCS += jit/codeblocks.c jit/decoder.c jit/dirtyranges.c jit/emuinterf.c jit/jit.c jit/jitpage.c jit/memattr.c jit/metrics.c jit/regalloc.c
+CFLAGS += -DJIT
+endif
 
 TARGET=arcem
 
@@ -342,6 +370,33 @@ X/true.o: X/true.c
 
 X/pseudo.o: X/pseudo.c
 	$(CC) $(CFLAGS) -c $*.c -o X/pseudo.o
+
+jit/codeblocks.o: jit/codeblocks.c
+	$(CC) $(CFLAGS) -c $*.c -o $@
+
+jit/decoder.o: jit/decoder.c
+	$(CC) $(CFLAGS) -c $*.c -o $@
+
+jit/dirtyranges.o: jit/dirtyranges.c
+	$(CC) $(CFLAGS) -c $*.c -o $@
+
+jit/emuinterf.o: jit/emuinterf.c
+	$(CC) $(CFLAGS) -c $*.c -o $@
+
+jit/jit.o: jit/jit.c
+	$(CC) $(CFLAGS) -c $*.c -o $@
+
+jit/jitpage.o: jit/jitpage.c
+	$(CC) $(CFLAGS) -c $*.c -o $@
+
+jit/memattr.o: jit/memattr.c
+	$(CC) $(CFLAGS) -c $*.c -o $@
+
+jit/metrics.o: jit/metrics.c
+	$(CC) $(CFLAGS) -c $*.c -o $@
+
+jit/regalloc.o: jit/regalloc.c
+	$(CC) $(CFLAGS) -c $*.c -o $@
 
 
 # DO NOT DELETE

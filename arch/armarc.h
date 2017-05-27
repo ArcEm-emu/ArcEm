@@ -8,6 +8,9 @@
 #ifdef SOUND_SUPPORT
 #include "sound.h"
 #endif
+#ifdef JIT
+#include "jit/jit.h"
+#endif
 
 /* Memory map locations */
 #define MEMORY_0x3800000_R_ROM_HIGH   0x3800000  /* Some sections of the memory map    */
@@ -35,6 +38,7 @@ struct MEMCStruct {
   ARMword *PhysRam;
   ARMword RAMSize;
   ARMword RAMMask;
+  ARMword ROMRAMChunkSize;    /* Size of the combined ROM+RAM memory chunk, guaranteed to be 4KB multiple */
 
   int32_t PageTable[512]; /* Good old fashioned MEMC1 page table */
   ARMword ControlReg;
@@ -62,7 +66,9 @@ struct MEMCStruct {
 
   /* Fastmap memory block pointers */
   void *ROMRAMChunk;
+#ifdef ARMUL_INSTR_FUNC_CACHE
   void *EmuFuncChunk;
+#endif
 };
 
 
@@ -111,6 +117,7 @@ static inline ARMword *FastMap_Log2Phy(const FastMapEntry *entry,ARMword addr)
 	return (ARMword*)(((FastMapUInt)addr)+(entry->FlagsAndData<<8));
 }
 
+#ifdef ARMUL_INSTR_FUNC_CACHE
 static inline ARMEmuFunc *FastMap_Phy2Func(ARMul_State *state,ARMword *addr)
 {
 	/* Return ARMEmuFunc * for an address returned by Log2Phy */
@@ -121,6 +128,17 @@ static inline ARMEmuFunc *FastMap_Phy2Func(ARMul_State *state,ARMword *addr)
 	return (ARMEmuFunc*)(((FastMapUInt)addr)+state->FastMapInstrFuncOfs);
 #endif
 }
+#endif
+
+static inline void FastMap_PhyClobberFunc(ARMul_State *state,ARMword *addr)
+{
+#ifdef ARMUL_INSTR_FUNC_CACHE
+	*(FastMap_Phy2Func(state,addr)) = FASTMAP_CLOBBEREDFUNC;
+#elif defined(JIT)
+	JIT_ClobberCode(state,addr);
+#endif
+}
+
 
 static inline ARMword FastMap_LoadFunc(const FastMapEntry *entry,ARMul_State *state,ARMword addr)
 {

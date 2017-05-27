@@ -32,6 +32,9 @@
 #include "displaydev.h"
 #include "filecalls.h"
 #include "ControlPane.h"
+#ifdef JIT
+#include "../jit/jit.h"
+#endif
 
 
 #ifdef MACOSX
@@ -298,20 +301,33 @@ ARMul_MemoryInit(ARMul_State *state)
 
   /* Now allocate ROMs & RAM in one chunk */
   RAMChunkSize = MAX(MEMC.RAMSize,512*1024); /* Ensure at least 512K RAM allocated to avoid any issues caused by DMA pointers going out of range */
-  MEMC.ROMRAMChunk = calloc(RAMChunkSize+MEMC.ROMHighSize+extnrom_size+256,1);
-  MEMC.EmuFuncChunk = calloc(RAMChunkSize+MEMC.ROMHighSize+extnrom_size+256,sizeof(FastMapUInt)/4);
-  if((MEMC.ROMRAMChunk == NULL) || (MEMC.EmuFuncChunk == NULL)) {
+  MEMC.ROMRAMChunkSize = RAMChunkSize+MEMC.ROMHighSize+extnrom_size;
+  MEMC.ROMRAMChunk = calloc(MEMC.ROMRAMChunkSize+256,1);
+#ifdef ARMUL_INSTR_FUNC_CACHE
+  MEMC.EmuFuncChunk = calloc(MEMC.ROMRAMChunkSize+256,sizeof(FastMapUInt)/4);
+#endif
+  if((MEMC.ROMRAMChunk == NULL)
+#ifdef ARMUL_INSTR_FUNC_CACHE
+   || (MEMC.EmuFuncChunk == NULL)
+#endif
+   ) {
     ControlPane_Error(3,"Couldn't allocate ROMRAMChunk/EmuFuncChunk\n");
   }
+#ifdef ARMUL_INSTR_FUNC_CACHE
 #ifdef FASTMAP_64
   /* On 64bit systems, ROMRAMChunk needs shifting to account for the shift that occurs in FastMap_Phy2Func */
   state->FastMapInstrFuncOfs = ((FastMapUInt)MEMC.EmuFuncChunk)-(((FastMapUInt)MEMC.ROMRAMChunk)<<1);
 #else
   state->FastMapInstrFuncOfs = ((FastMapUInt)MEMC.EmuFuncChunk)-((FastMapUInt)MEMC.ROMRAMChunk);
 #endif
+#endif
   /* Get everything 256 byte aligned for FastMap to work */
   MEMC.PhysRam = (ARMword*) ((((FastMapUInt)MEMC.ROMRAMChunk)+255)&~255); /* RAM must come first for FastMap_LogRamFunc to work! */
   MEMC.ROMHigh = MEMC.PhysRam + (RAMChunkSize>>2);
+
+#ifdef JIT
+  JIT_Init(&state->jit,(uintptr_t) MEMC.PhysRam,MEMC.ROMRAMChunkSize);
+#endif
 
   dbug(" Loading ROM....\n ");
 
@@ -378,7 +394,9 @@ ARMul_MemoryInit(ARMul_State *state)
 void ARMul_MemoryExit(ARMul_State *state)
 {
   free(MEMC.ROMRAMChunk);
+#ifdef ARMUL_INSTR_FUNC_CACHE
   free(MEMC.EmuFuncChunk);
+#endif
   free(state->Display);
 }
 
@@ -610,7 +628,7 @@ static ARMword FastMap_LogRamFunc(ARMul_State *state, ARMword addr,ARMword data,
   if(orig != data)
   {
     *phy = data;
-    *(FastMap_Phy2Func(state,phy)) = FASTMAP_CLOBBEREDFUNC;
+    FastMap_PhyClobberFunc(state,phy);
     /* Convert pointer to physical addr, then update DMA flags */
     addr = (ARMword) (((FastMapUInt)phy)-((FastMapUInt)MEMC.PhysRam));
     FastMap_DMAAbleWrite(addr,data);
@@ -807,7 +825,7 @@ static ARMword FastMap_PhysRamFuncROMMap2(ARMul_State *state, ARMword addr,ARMwo
     data |= (*phy) &~ (0xff<<shift);
   }
   *phy = data;
-  *(FastMap_Phy2Func(state,phy)) = FASTMAP_CLOBBEREDFUNC;
+  FastMap_PhyClobberFunc(state,phy);
   if(addr < 512*1024)
     FastMap_DMAAbleWrite(addr,data);
   return 0;
@@ -829,7 +847,7 @@ static ARMword FastMap_PhysRamFunc(ARMul_State *state, ARMword addr,ARMword data
   if(orig != data)
   {
     *phy = data;
-    *(FastMap_Phy2Func(state,phy)) = FASTMAP_CLOBBEREDFUNC;
+    FastMap_PhyClobberFunc(state,phy);
     /* Update DMA flags */
     FastMap_DMAAbleWrite(addr,data);
   }
