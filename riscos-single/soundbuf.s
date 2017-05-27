@@ -112,11 +112,11 @@ endloop:
 mixloop:
 	AND R8,R4,R6 @ Pos to read from
 	LDR R14,[R1] @ dest data
-	ADD R4,R4,#4 @ Increment out pos
+	ADD R4,R4,#2 @ Increment out pos
 	LDR R7,[R0,R8,LSL #1] @ Get input pair
 	SUBS R3,R3,#2
 	ADD R14,R14,R7 @ Mix in (no overflow checks!)
-	STR R14,[R1],#2
+	STR R14,[R1],#4
 	@ Check for buffer ends
 	BLE mix_done
 	CMP R1,R2
@@ -129,9 +129,9 @@ mix_done:
 
 copyloop:
 	AND R8,R4,R6 @ Pos to read from
-	LDR R9,[R0,R8,LSL #1] @ Get input pair
+	LDR R14,[R0,R8,LSL #1] @ Get input pair
 	ADD R4,R4,#2 @ Increment out pos
-	STR R9,[R1],#4
+	STR R14,[R1],#4
 	@ Check for buffer ends
 	SUBS R3,R3,#2
 	BLE zeroloop
