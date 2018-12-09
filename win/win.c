@@ -102,6 +102,51 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
     return RegisterClassEx(&wcex);
 }
 
+static void insert_floppy(int drive, char *image)
+{
+	static char got_disc[4];
+	const char *err;
+
+	if (got_disc[drive]) {
+		err = FDC_EjectFloppy(drive);
+		fprintf(stderr, "ejecting drive %d: %s\n", drive,
+		        err ? err : "ok");
+		got_disc[drive] ^= !err;
+	}
+
+	err = FDC_InsertFloppy(drive, image);
+		fprintf(stderr, "inserting floppy image %s into drive %d: %s\n",
+		        image, drive, err ? err : "ok");
+
+	got_disc[drive] ^= !err;
+}
+
+void OpenFloppyImageDialog(int drive) {
+	OPENFILENAME ofn;       // common dialog box structure
+	char szFile[260];       // buffer for file name
+
+	// Initialize OPENFILENAME
+	ZeroMemory(&ofn, sizeof(ofn));
+	ofn.lStructSize = sizeof(ofn);
+	ofn.hwndOwner = mainWin;
+	ofn.lpstrFile = szFile;
+	// Set lpstrFile[0] to '\0' so that GetOpenFileName does not
+	// use the contents of szFile to initialize itself.
+	ofn.lpstrFile[0] = '\0';
+	ofn.nMaxFile = sizeof(szFile);
+	ofn.lpstrFilter = "ADF files (*.adf)\0*.ADF\0All\0*.*\0";
+	ofn.nFilterIndex = 1;
+	ofn.lpstrFileTitle = NULL;
+	ofn.nMaxFileTitle = 0;
+	ofn.lpstrInitialDir = NULL;
+	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
+
+	// Display the Open dialog box.
+	if (GetOpenFileName(&ofn)==TRUE) {
+		insert_floppy(drive, szFile);
+	}
+}
+
 //
 //   FUNCTION: InitInstance(HANDLE, int)
 //
@@ -167,6 +212,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
           DialogBox(hInst, (LPCTSTR)IDD_ABOUTBOX, hWnd, (DLGPROC)AboutDlgProc);
           break;
         case IDM_COPY:
+          break;
+        case IDM_OPEN:
+          OpenFloppyImageDialog(0);
           break;
         case IDM_EXIT:
           DestroyWindow(hWnd);
