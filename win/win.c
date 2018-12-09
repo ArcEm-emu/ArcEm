@@ -7,6 +7,13 @@
 
 #define NR_THREADS (0x1000)
 
+#ifndef WM_XBUTTONDOWN
+#define WM_XBUTTONDOWN 0x20B
+#endif
+#ifndef WM_XBUTTONUP
+#define WM_XBUTTONUP 0x20C
+#endif
+
 HBITMAP hbmp = NULL;
 HBITMAP cbmp = NULL;
 
@@ -259,6 +266,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 
         case WM_MBUTTONDOWN:
+        case WM_XBUTTONDOWN:
             nButton = 0x01;
             buttF = 1;
             break;
@@ -277,6 +285,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 
         case WM_MBUTTONUP:
+        case WM_XBUTTONUP:
             nButton = 0x81;
             buttF = 1;
             break;
