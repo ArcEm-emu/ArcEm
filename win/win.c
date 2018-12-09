@@ -37,12 +37,12 @@ static MSG msg;
 static HANDLE hInst;
 static HWND mainWin;
 static DWORD tid;
-static int lKeyData;
 
 WORD *dibbmp;
 WORD *curbmp;
 
 int nVirtKey;
+int lKeyData;
 int nKeyStat;
 int keyF = 0;
 
