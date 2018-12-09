@@ -27,7 +27,7 @@
 
 #ifdef _MSC_VER
 #define PATH_MAX 1024
-#include "win/dirent.h" /* Thanks http://www.softagalleria.net/dirent.php! */
+#include "vc/dirent.h" /* Thanks http://www.softagalleria.net/dirent.php! */
 #include <direct.h>
 #include <io.h>
 #define rmdir _rmdir
