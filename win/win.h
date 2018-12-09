@@ -16,6 +16,7 @@ extern int rMouseHeight;
 extern int nButton;
 extern int buttF;
 
+extern void OpenFloppyImageDialog(int drive);
 extern int createWindow(int w, int h);
 extern int updateDisplay(void);
 extern int resizeWindow(int hWidth, int hHeight);
