@@ -1,4 +1,5 @@
 #include <windows.h>
+#include <windowsx.h>
 #include <stdio.h>
 #include "win.h"
 #include "gui.h"
@@ -7,6 +8,9 @@
 
 #define NR_THREADS (0x1000)
 
+#ifndef WM_MOUSEWHEEL
+#define WM_MOUSEWHEEL 0x020A
+#endif
 #ifndef WM_XBUTTONDOWN
 #define WM_XBUTTONDOWN 0x20B
 #endif
@@ -47,18 +51,6 @@ static DWORD tid;
 
 WORD *dibbmp;
 WORD *curbmp;
-
-int nVirtKey;
-int lKeyData;
-int nKeyStat;
-int keyF = 0;
-
-int nMouseX;
-int nMouseY;
-int mouseMF = 0;
-
-int nButton = 0;
-int buttF = 0;
 
 static DWORD WINAPI threadWindow(LPVOID param)
 {
@@ -196,9 +188,10 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 //
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-  int wmId, wmEvent;
+  int wmId, wmEvent, nVirtKey, nMouseX, nMouseY;
   PAINTSTRUCT ps;
   HDC hdc;
+  ARMul_State *state = &statestr;
 
   switch (message)
   {
@@ -254,131 +247,119 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
       break;
 
 
+        case WM_SYSKEYDOWN:
         case WM_KEYDOWN:
             nVirtKey = (TCHAR) wParam;    // character code
+            if (wParam == VK_SHIFT || wParam == VK_CONTROL || wParam == VK_MENU)
+                nVirtKey = MapVirtualKey((lParam & 0xff0000) >> 16, MAPVK_VSC_TO_VK_EX);
 
-      if (nVirtKey == VK_ADD) {
-        captureMouse = !captureMouse;
-        if (captureMouse) {
-          GetClipCursor(&rcOldClip);
-          GetWindowRect(hWnd, &rcClip);
-          ClipCursor(&rcClip);
-          SetCursor(NULL);
-        } else {
-          ClipCursor(&rcOldClip);
-        }
-        break;
-      }
-
-            lKeyData = lParam;              // key data
-            nKeyStat = 0;
-            keyF = 1;
+            if (wParam == VK_ADD) {
+                captureMouse = !captureMouse;
+                if (captureMouse) {
+                    GetClipCursor(&rcOldClip);
+                    GetWindowRect(hWnd, &rcClip);
+                    ClipCursor(&rcClip);
+                    SetCursor(NULL);
+                } else {
+                    ClipCursor(&rcOldClip);
+                }
+                break;
+            }
+            ProcessKey(state, nVirtKey & 255, lParam, 0);
             break;
 
 
+        case WM_SYSKEYUP:
         case WM_KEYUP:
             nVirtKey = (TCHAR) wParam;    // character code
-            lKeyData = lParam;              // key data
-            nKeyStat = 1;
-            keyF = 1;
+            if (wParam == VK_SHIFT || wParam == VK_CONTROL || wParam == VK_MENU)
+                nVirtKey = MapVirtualKey((lParam & 0xff0000) >> 16, MAPVK_VSC_TO_VK_EX);
+
+            ProcessKey(state, nVirtKey & 255, lParam, 1);
             break;
 
 
         case WM_MOUSEMOVE:
 
-            if (mouseMF == 0) {
-              nMouseX = LOWORD(lParam);  // horizontal position of cursor
-        if (captureMouse) {
-          nMouseX *= 2;
-        }
-
-        nMouseY = HIWORD(lParam);  // vertical position of cursor
-        if (captureMouse) {
-          nMouseY *= 2;
-        }
-            }
+            nMouseX = GET_X_LPARAM(lParam);  // horizontal position of cursor
+            nMouseY = GET_Y_LPARAM(lParam);  // vertical position of cursor
 
             if (captureMouse) {
-              SetCursor(NULL);
+                SetCursor(NULL);
+                nMouseX *= 2;
+                nMouseY *= 2;
             }
 
-            mouseMF = 1;
+            MouseMoved(state, nMouseX, nMouseY);
 
             break;
 
 
         case WM_LBUTTONDOWN:
-            nButton = 0x00;
-            buttF = 1;
+            keyboard_key_changed(&KBD, ARCH_KEY_button_1, 0);
             break;
 
 
         case WM_MBUTTONDOWN:
         case WM_XBUTTONDOWN:
-            nButton = 0x01;
-            buttF = 1;
+            keyboard_key_changed(&KBD, ARCH_KEY_button_2, 0);
             break;
 
 
         case WM_RBUTTONDOWN:
-            nButton = 0x02;
-            buttF = 1;
+            keyboard_key_changed(&KBD, ARCH_KEY_button_3, 0);
             break;
 
 
         case WM_LBUTTONUP:
-            nButton = 0x80;
-            buttF = 1;
+            keyboard_key_changed(&KBD, ARCH_KEY_button_1, 1);
             break;
 
 
         case WM_MBUTTONUP:
         case WM_XBUTTONUP:
-            nButton = 0x81;
-            buttF = 1;
+            keyboard_key_changed(&KBD, ARCH_KEY_button_2, 1);
             break;
 
 
         case WM_RBUTTONUP:
-            nButton = 0x82;
-            buttF = 1;
+            keyboard_key_changed(&KBD, ARCH_KEY_button_3, 1);
             break;
 
-    case 0x020A: //WM_MOUSEWHEEL:
-      {
-        int iMouseWheelValue = wParam;
+        case WM_MOUSEWHEEL:
+            {
+                int iMouseWheelValue = wParam;
 
-        // You can tell whether it's up or down by checking it's
-        // positive or negative, to work out the extent you use
-        // HIWORD(wParam), but we don't need that.
-        ARMul_State *state = &statestr;
+                // You can tell whether it's up or down by checking it's
+                // positive or negative, to work out the extent you use
+                // HIWORD(wParam), but we don't need that.
 
-        if(iMouseWheelValue > 0) {
-          // Fire our fake button_4 wheelup event, this'll get picked up
-          // by the scrollwheel module in RISC OS
-          keyboard_key_changed(&KBD, ARCH_KEY_button_4, 1);
-        } else if(iMouseWheelValue < 0) {
-          // Fire our fake button_5 wheeldown event, this'll get picked up
-          // by the scrollwheel module in RISC OS
-          keyboard_key_changed(&KBD, ARCH_KEY_button_5, 1);
-        }
-      }
-      break;
+                if(iMouseWheelValue > 0) {
+                    // Fire our fake button_4 wheelup event, this'll get picked up
+                    // by the scrollwheel module in RISC OS
+                    keyboard_key_changed(&KBD, ARCH_KEY_button_4, 1);
+                } else if(iMouseWheelValue < 0) {
+                    // Fire our fake button_5 wheeldown event, this'll get picked up
+                    // by the scrollwheel module in RISC OS
+                    keyboard_key_changed(&KBD, ARCH_KEY_button_5, 1);
+                }
+            }
+            break;
 
         case WM_SETCURSOR:
 
-      if (captureMouse) {
-              SetCursor(NULL);
-      } else {
-              SetCursor(LoadCursor(NULL, IDC_ARROW));
-      }
+            if (captureMouse) {
+                SetCursor(NULL);
+            } else {
+                SetCursor(LoadCursor(NULL, IDC_ARROW));
+            }
             break;
 
 
         default:
             return DefWindowProc(hWnd, message, wParam, lParam);
-   }
-   return TRUE;
+    }
+    return TRUE;
 }
 
 /**
