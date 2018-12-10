@@ -28,10 +28,6 @@ int oldMouseY = 0;
 
 
 
-static void ProcessKey(ARMul_State *state);
-static void ProcessButton(ARMul_State *state);
-
-
 /* Standard display device */
 
 typedef unsigned short SDD_HostColour;
@@ -104,7 +100,7 @@ static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,in
 
 /*-----------------------------------------------------------------------------*/
 
-static void MouseMoved(ARMul_State *state) {
+void MouseMoved(ARMul_State *state, int nMouseX, int nMouseY) {
   int xdiff, ydiff;
 
   xdiff = -(oldMouseX - nMouseX);
@@ -131,7 +127,6 @@ static void MouseMoved(ARMul_State *state) {
   KBD.MouseXCount = xdiff & 127;
   KBD.MouseYCount = ydiff & 127;
 
-  mouseMF = 0;
 #ifdef DEBUG_MOUSEMOVEMENT
   fprintf(stderr,"MouseMoved: generated counts %d,%d xdiff=%d ydifff=%d\n",KBD.MouseXCount,KBD.MouseYCount,xdiff,ydiff);
 #endif
@@ -194,77 +189,18 @@ static void RefreshMouse(ARMul_State *state) {
 
 
 /*-----------------------------------------------------------------------------*/
-static void ProcessKey(ARMul_State *state) {
-  struct ArcKeyTrans *PresPtr;
-  int sym;
-
-  sym = nVirtKey & 255;
-  keyF = 0;
-
-  if (KBD.BuffOcc>=KBDBUFFLEN) {
-#ifdef DEBUG_KBD
-    fprintf(stderr,"KBD: Missed key - still busy sending another one\n");
-#endif
-    return;
-  };
-
-  /* Should set up KeyColToSend and KeyRowToSend and KeyUpNDown */
-  for(PresPtr = transTable; PresPtr->row != -1; PresPtr++) {
-    if (PresPtr->sym==sym) {
-      /* Found the key */
-      /* Now add it to the buffer */
-      KBD.Buffer[KBD.BuffOcc].KeyColToSend=PresPtr->col;
-      KBD.Buffer[KBD.BuffOcc].KeyRowToSend=PresPtr->row;
-      KBD.Buffer[KBD.BuffOcc].KeyUpNDown=nKeyStat;
-      KBD.BuffOcc++;
-#ifdef DEBUG_KBD
-      fprintf(stderr,"ProcessKey: Got Col,Row=%d,%d UpNDown=%d BuffOcc=%d\n",
-              KBD.Buffer[KBD.BuffOcc].KeyColToSend,
-              KBD.Buffer[KBD.BuffOcc].KeyRowToSend,
-              KBD.Buffer[KBD.BuffOcc].KeyUpNDown,
-              KBD.BuffOcc);
-#endif
+void ProcessKey(ARMul_State *state, int nVirtKey, int lKeyData, int nKeyStat) {
+  const vk_to_arch_key *ktak;
+  for (ktak = vk_to_arch_key_map; ktak->sym; ktak++) {
+    if (ktak->sym == nVirtKey) {
+      keyboard_key_changed(&KBD, ktak->kid, nKeyStat == 1);
       return;
-    };
-  }; /* Key search loop */
+    }
+  }
 
-#ifdef DEBUG_KBD
-  fprintf(stderr,"ProcessKey: Unknown key sym=%04X!\n",sym);
-#endif
+  fprintf(stderr, "ProcessKey: unknown key: keysym=%u\n", nVirtKey);
 }; /* ProcessKey */
 
-
-/*-----------------------------------------------------------------------------*/
-static void ProcessButton(ARMul_State *state) {
-  int UpNDown   = nButton >> 7;
-  int ButtonNum = nButton & 3;
-
-  /* Hey if you've got a 4 or more buttoned mouse hard luck! */
-  if (ButtonNum < 0)  {
-    return;
-  }
-
-  if (KBD.BuffOcc >= KBDBUFFLEN) {
-#ifdef DEBUG_KBD
-    fprintf(stderr, "KBD: Missed mouse event - buffer full\n");
-#endif
-    return;
-  }
-
-  /* Now add it to the buffer */
-  KBD.Buffer[KBD.BuffOcc].KeyColToSend = ButtonNum;
-  KBD.Buffer[KBD.BuffOcc].KeyRowToSend = 7;
-  KBD.Buffer[KBD.BuffOcc].KeyUpNDown   = UpNDown;
-  KBD.BuffOcc++;
-#ifdef DEBUG_KBD
-  fprintf(stderr,"ProcessButton: Got Col,Row=%d,%d UpNDown=%d BuffOcc=%d\n",
-          KBD.Buffer[KBD.BuffOcc].KeyColToSend,
-          KBD.Buffer[KBD.BuffOcc].KeyRowToSend,
-          KBD.Buffer[KBD.BuffOcc].KeyUpNDown,
-          KBD.BuffOcc);
-#endif
-  buttF = 0;
-} /* ProcessButton */
 
 /*-----------------------------------------------------------------------------*/
 int
@@ -287,15 +223,7 @@ SDD_Name(Host_PollDisplay)(ARMul_State *state)
 int
 Kbd_PollHostKbd(ARMul_State *state)
 {
-  if (keyF) {
-    ProcessKey(state);
-  }
-  if (buttF) {
-    ProcessButton(state);
-  }
-  if (mouseMF) {
-    MouseMoved(state);
-  }
+  /* Keyboard and mouse input is handled in WndProc */
   return 0;
 }
 
