@@ -100,7 +100,7 @@ extern ARMul_State statestr;
 */
 
 #ifndef FASTMAP_64
-#ifdef __LP64__
+#if defined(__LP64__) || defined(_WIN64)
 #define FASTMAP_64
 #endif
 #endif
