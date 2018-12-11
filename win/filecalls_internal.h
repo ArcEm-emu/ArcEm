@@ -5,7 +5,7 @@
 #ifndef __FILECALLS_INTERNAL_H
 #define __FILECALLS_INTERNAL_H
 
-#include <Windows.h>
+#include <windows.h>
 
 struct Directory_s {
   char *sPath;

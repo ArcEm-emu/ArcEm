@@ -46,8 +46,10 @@ ifeq ($(SYSTEM),)
 SYSTEM=X
 endif
 
-CC=gcc
-LD=gcc
+CROSS=
+CC=$(CROSS)gcc
+LD=$(CROSS)gcc
+WINDRES=$(CROSS)windres
 LDFLAGS=
 
 WARN = -Wall -Wno-return-type -Wno-unknown-pragmas -Wshadow \
@@ -117,8 +119,7 @@ LDFLAGS += -mcrt=newlib
 endif
 
 ifeq (${SYSTEM},amigaos3)
-CC=m68k-amigaos-gcc
-LD=$(CC)
+CROSS=m68k-amigaos-
 HOST_BIGENDIAN=yes
 HOSTFS_SUPPORT=yes
 EXTNROM_SUPPORT=yes
@@ -182,6 +183,7 @@ OBJS += X/true.o X/pseudo.o
 endif
 
 ifeq (${SYSTEM},win)
+TARGET = ArcEm.exe
 CFLAGS += -DSYSTEM_win
 OBJS += win/gui.o win/win.o
 LIBS += -luser32 -lgdi32
@@ -231,7 +233,7 @@ $(TARGET): $(OBJS) $(MODEL).o
 	$(LD) $(LDFLAGS) $(OBJS) $(LIBS) $(MODEL).o -o $@
 
 clean:
-	rm -f *.o arch/*.o $(SYSTEM)/*.o arcem core *.bb *.bbg *.da
+	rm -f *.o arch/*.o $(SYSTEM)/*.o $(TARGET) core *.bb *.bbg *.da
 
 distclean: clean
 	rm -f *~
@@ -330,7 +332,7 @@ arch/displaydev.o: arch/displaydev.c arch/displaydev.h
 	$(CC) $(CFLAGS) -c $*.c -o arch/displaydev.o
 
 win/gui.o: win/gui.rc win/gui.h win/arc.ico
-	windres $*.rc -o win/gui.o
+	$(WINDRES) $*.rc -o win/gui.o
 
 X/true.o: X/true.c
 	$(CC) $(CFLAGS) -c $*.c -o X/true.o
