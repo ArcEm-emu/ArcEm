@@ -10,7 +10,11 @@
  */
 
 #define DEBUG_FDC1772 0
-#define DBG(a) if (DEBUG_FDC1772) fprintf a
+#if DEBUG_FDC1772
+#define DBG(a) fprintf a
+#else
+#define DBG(a)
+#endif
 
 #include <stdlib.h>
 #include <string.h>

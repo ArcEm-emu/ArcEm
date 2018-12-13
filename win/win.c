@@ -265,7 +265,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 }
                 break;
             }
-            ProcessKey(state, nVirtKey & 255, lParam, 0);
+            ProcessKey(state, nVirtKey & 255, (int)lParam, 0);
             break;
 
 
@@ -275,7 +275,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             if (wParam == VK_SHIFT || wParam == VK_CONTROL || wParam == VK_MENU)
                 nVirtKey = MapVirtualKey((lParam & 0xff0000) >> 16, MAPVK_VSC_TO_VK_EX);
 
-            ProcessKey(state, nVirtKey & 255, lParam, 1);
+            ProcessKey(state, nVirtKey & 255, (int)lParam, 1);
             break;
 
 
@@ -328,11 +328,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
         case WM_MOUSEWHEEL:
             {
-                int iMouseWheelValue = wParam;
-
-                // You can tell whether it's up or down by checking it's
-                // positive or negative, to work out the extent you use
-                // HIWORD(wParam), but we don't need that.
+                int iMouseWheelValue = GET_WHEEL_DELTA_WPARAM(wParam);
 
                 if(iMouseWheelValue > 0) {
                     // Fire our fake button_4 wheelup event, this'll get picked up

@@ -33,7 +33,6 @@
 bool Directory_Open(const char *sPath, Directory *hDir)
 {
   bool bNeedsEndSlash = 0;
-  WIN32_FIND_DATA w32fd = {0};
 
   assert(sPath);
   assert(*sPath);

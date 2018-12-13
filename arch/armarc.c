@@ -14,6 +14,9 @@
 #include <string.h>
 //#include <unistd.h>
 #include <math.h>
+#ifdef __riscos__
+#include <unixlib/local.h>
+#endif
 
 #include "../armdefs.h"
 #include "../hostfs.h"
@@ -25,7 +28,6 @@
 #include "archio.h"
 #include "fdc1772.h"
 #include "ReadConfig.h"
-#include "Version.h"
 #include "extnrom.h"
 #include "ArcemConfig.h"
 #include "sound.h"
