@@ -817,80 +817,81 @@ done:
 
 static void StoreMult(ARMul_State *state, ARMword instr,
                       ARMword address, ARMword WBBase)
-{ARMword temp;
+{
+    ARMword temp;
 
- UNDEF_LSMNoRegs;
- UNDEF_LSMPCBase;
- UNDEF_LSMBaseInListWb;
- BUSUSEDINCPCN;
- if (ADDREXCEPT(address)) {
-    INTERNALABORT(address);
+    UNDEF_LSMNoRegs;
+    UNDEF_LSMPCBase;
+    UNDEF_LSMBaseInListWb;
+    BUSUSEDINCPCN;
+    if (ADDREXCEPT(address)) {
+        INTERNALABORT(address);
     }
 
- for (temp = 0; !BIT(temp); temp++); /* N cycle first */
+    for (temp = 0; !BIT(temp); temp++); /* N cycle first */
 
     /* Check if we can use the fastmap */
     if((((uint32_t) (address<<20)) <= 0xfc000000) && !state->Aborted)
     {
-       FastMapEntry *entry = FastMap_GetEntry(state,address);
-       FastMapRes res = FastMap_DecodeWrite(entry,state->FastMapMode);
-       if(FASTMAP_RESULT_DIRECT(res))
-       {
-          ARMword *data, count;
-          ARMEmuFunc *pfunc;
-          /* Do it fast
-             This assumes we don't differentiate between N & S cycles */
-          ARMul_CLEARABORT;
-          data = FastMap_Log2Phy(entry,address&~3);
-          pfunc = FastMap_Phy2Func(state,data);
-          count=1;
-          *(data++) = state->Reg[temp++];
-          *(pfunc++) = FASTMAP_CLOBBEREDFUNC;
-          if (BIT(21) && LHSReg != 15)
-             LSBase = WBBase;
-          for(;temp<16;temp++)
-            if(BIT(temp))
-            {
-              *(data++) = state->Reg[temp];
-              *(pfunc++) = FASTMAP_CLOBBEREDFUNC;
-              count++;
-            }
-          state->NumCycles += count;
-          return;
-       }
+        FastMapEntry *entry = FastMap_GetEntry(state,address);
+        FastMapRes res = FastMap_DecodeWrite(entry,state->FastMapMode);
+        if(FASTMAP_RESULT_DIRECT(res))
+        {
+            ARMword *data, count;
+            ARMEmuFunc *pfunc;
+            /* Do it fast
+               This assumes we don't differentiate between N & S cycles */
+            ARMul_CLEARABORT;
+            data = FastMap_Log2Phy(entry,address&~3);
+            pfunc = FastMap_Phy2Func(state,data);
+            count=1;
+            *(data++) = state->Reg[temp++];
+            *(pfunc++) = FASTMAP_CLOBBEREDFUNC;
+            if (BIT(21) && LHSReg != 15)
+                LSBase = WBBase;
+            for(;temp<16;temp++)
+                if(BIT(temp))
+                {
+                    *(data++) = state->Reg[temp];
+                    *(pfunc++) = FASTMAP_CLOBBEREDFUNC;
+                    count++;
+                }
+            state->NumCycles += count;
+            return;
+        }
     }
 
- if (state->Aborted) {
-    (void)ARMul_LoadWordN(state,address);
-    for (; temp < 16; temp++) /* Fake the Stores as Loads */
-       if (BIT(temp)) { /* save this register */
-          address += 4;
-          (void)ARMul_LoadWordS(state,address);
-          }
-    if (BIT(21) && LHSReg != 15)
-       LSBase = WBBase;
-    TAKEABORT;
-    return;
-    }
- else
-    ARMul_StoreWordN(state,address,state->Reg[temp++]);
- if (state->abortSig && !state->Aborted)
-    state->Aborted = ARMul_DataAbortV;
-
- if (BIT(21) && LHSReg != 15)
-    LSBase = WBBase;
-
- for (; temp < 16; temp++) /* S cycles from here on */
-    if (BIT(temp)) { /* save this register */
-       address += 4;
-       ARMul_StoreWordS(state,address,state->Reg[temp]);
-       if (state->abortSig && !state->Aborted)
-             state->Aborted = ARMul_DataAbortV;
-       }
     if (state->Aborted) {
-       TAKEABORT;
-       }
- }
+        (void)ARMul_LoadWordN(state,address);
+        for (; temp < 16; temp++) /* Fake the Stores as Loads */
+            if (BIT(temp)) { /* save this register */
+                address += 4;
+                (void)ARMul_LoadWordS(state,address);
+            }
+        if (BIT(21) && LHSReg != 15)
+            LSBase = WBBase;
+            TAKEABORT;
+            return;
+        }
+    else
+        ARMul_StoreWordN(state,address,state->Reg[temp++]);
+    if (state->abortSig && !state->Aborted)
+        state->Aborted = ARMul_DataAbortV;
+
+    if (BIT(21) && LHSReg != 15)
+        LSBase = WBBase;
+
+    for (; temp < 16; temp++) /* S cycles from here on */
+        if (BIT(temp)) { /* save this register */
+            address += 4;
+            ARMul_StoreWordS(state,address,state->Reg[temp]);
+            if (state->abortSig && !state->Aborted)
+                state->Aborted = ARMul_DataAbortV;
+        }
+    if (state->Aborted) {
+        TAKEABORT;
+    }
+}
 
 /***************************************************************************\
 * This function does the work of storing the registers listed in an STM     *
@@ -901,88 +902,89 @@ static void StoreMult(ARMul_State *state, ARMword instr,
 
 static void StoreSMult(ARMul_State *state, ARMword instr,
                        ARMword address, ARMword WBBase)
-{ARMword temp;
+{
+    ARMword temp;
 
- UNDEF_LSMNoRegs;
- UNDEF_LSMPCBase;
- UNDEF_LSMBaseInListWb;
- BUSUSEDINCPCN;
- if (ADDREXCEPT(address)) {
-    INTERNALABORT(address);
+    UNDEF_LSMNoRegs;
+    UNDEF_LSMPCBase;
+    UNDEF_LSMBaseInListWb;
+    BUSUSEDINCPCN;
+    if (ADDREXCEPT(address)) {
+        INTERNALABORT(address);
     }
 
- if (state->Bank != USERBANK) {
-    (void)ARMul_SwitchMode(state,state->Reg[15],USER26MODE); /* Force User Bank */
-    UNDEF_LSMUserBankWb;
+    if (state->Bank != USERBANK) {
+        (void)ARMul_SwitchMode(state,state->Reg[15],USER26MODE); /* Force User Bank */
+        UNDEF_LSMUserBankWb;
     }
 
- for (temp = 0; !BIT(temp); temp++); /* N cycle first */
+    for (temp = 0; !BIT(temp); temp++); /* N cycle first */
 
     /* Check if we can use the fastmap */
     if((((uint32_t) (address<<20)) <= 0xfc000000) && !state->Aborted)
     {
-       FastMapEntry *entry = FastMap_GetEntry(state,address);
-       FastMapRes res = FastMap_DecodeWrite(entry,state->FastMapMode);
-       if(FASTMAP_RESULT_DIRECT(res))
-       {
-          ARMword *data, count;
-          ARMEmuFunc *pfunc;
-          /* Do it fast
-             This assumes we don't differentiate between N & S cycles */
-          ARMul_CLEARABORT;
-          data = FastMap_Log2Phy(entry,address&~3);
-          pfunc = FastMap_Phy2Func(state,data);
-          count=1;
-          *(data++) = state->Reg[temp++];
-          *(pfunc++) = FASTMAP_CLOBBEREDFUNC;
-          if (BIT(21) && LHSReg != 15)
-             LSBase = WBBase;
-          for(;temp<16;temp++)
-            if(BIT(temp))
-            {
-              *(data++) = state->Reg[temp];
-              *(pfunc++) = FASTMAP_CLOBBEREDFUNC;
-              count++;
+        FastMapEntry *entry = FastMap_GetEntry(state,address);
+        FastMapRes res = FastMap_DecodeWrite(entry,state->FastMapMode);
+        if(FASTMAP_RESULT_DIRECT(res))
+        {
+            ARMword *data, count;
+            ARMEmuFunc *pfunc;
+            /* Do it fast
+               This assumes we don't differentiate between N & S cycles */
+            ARMul_CLEARABORT;
+            data = FastMap_Log2Phy(entry,address&~3);
+            pfunc = FastMap_Phy2Func(state,data);
+            count=1;
+            *(data++) = state->Reg[temp++];
+            *(pfunc++) = FASTMAP_CLOBBEREDFUNC;
+            if (BIT(21) && LHSReg != 15)
+                LSBase = WBBase;
+            for(;temp<16;temp++)
+                if(BIT(temp))
+                {
+                    *(data++) = state->Reg[temp];
+                    *(pfunc++) = FASTMAP_CLOBBEREDFUNC;
+                    count++;
+                }
+            state->NumCycles += count;
+            goto done;
+        }
+    }
+
+    if (state->Aborted) {
+        (void)ARMul_LoadWordN(state,address);
+        for (; temp < 16; temp++) /* Fake the Stores as Loads */
+            if (BIT(temp)) { /* save this register */
+                address += 4;
+                (void)ARMul_LoadWordS(state,address);
             }
-          state->NumCycles += count;
-          goto done;
-       }
+        if (BIT(21) && LHSReg != 15)
+            LSBase = WBBase;
+        TAKEABORT;
+        return;
     }
+    else
+        ARMul_StoreWordN(state,address,state->Reg[temp++]);
+    if (state->abortSig && !state->Aborted)
+        state->Aborted = ARMul_DataAbortV;
 
- if (state->Aborted) {
-    (void)ARMul_LoadWordN(state,address);
-    for (; temp < 16; temp++) /* Fake the Stores as Loads */
-       if (BIT(temp)) { /* save this register */
-          address += 4;
-          (void)ARMul_LoadWordS(state,address);
-          }
     if (BIT(21) && LHSReg != 15)
-       LSBase = WBBase;
-    TAKEABORT;
-    return;
-    }
- else
-    ARMul_StoreWordN(state,address,state->Reg[temp++]);
- if (state->abortSig && !state->Aborted)
-    state->Aborted = ARMul_DataAbortV;
+        LSBase = WBBase;
 
- if (BIT(21) && LHSReg != 15)
-    LSBase = WBBase;
-
- for (; temp < 16; temp++) /* S cycles from here on */
-    if (BIT(temp)) { /* save this register */
-       address += 4;
-       ARMul_StoreWordS(state,address,state->Reg[temp]);
-       if (state->abortSig && !state->Aborted)
-             state->Aborted = ARMul_DataAbortV;
-       }
+    for (; temp < 16; temp++) /* S cycles from here on */
+        if (BIT(temp)) { /* save this register */
+            address += 4;
+            ARMul_StoreWordS(state,address,state->Reg[temp]);
+            if (state->abortSig && !state->Aborted)
+                state->Aborted = ARMul_DataAbortV;
+        }
 
 done:
- if (R15MODE != USER26MODE)
-    (void)ARMul_SwitchMode(state,USER26MODE,state->Reg[15]); /* restore the correct bank */
+    if (R15MODE != USER26MODE)
+        (void)ARMul_SwitchMode(state,USER26MODE,state->Reg[15]); /* restore the correct bank */
 
- if (state->Aborted) {
-    TAKEABORT;
+    if (state->Aborted) {
+        TAKEABORT;
     }
 }
 

@@ -4,7 +4,11 @@
 #include "keyboard.h"
 
 #define DEBUG_KEYBOARD 0
-#define DBG(a) if (DEBUG_KEYBOARD) fprintf a
+#if DEBUG_KEYBOARD
+#define DBG(a) fprintf a
+#else
+#define DBG(a)
+#endif
 
 /* ------------------------------------------------------------------ */
 

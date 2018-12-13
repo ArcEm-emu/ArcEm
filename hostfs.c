@@ -28,12 +28,13 @@
 #ifdef _MSC_VER
 #define PATH_MAX 1024
 #include "vc/dirent.h" /* Thanks http://www.softagalleria.net/dirent.php! */
-#include <direct.h>
-#include <io.h>
 #define rmdir _rmdir
 #else
 #include <dirent.h>
-#include <unistd.h>
+#endif
+#ifdef WIN32
+#include <direct.h>
+#include <io.h>
 #endif
 #if defined __unix || defined __MACH__ || defined __riscos__
 #include <utime.h>
@@ -48,6 +49,7 @@
 #endif
 #ifndef _MSC_VER
 #include <stdbool.h>
+#include <unistd.h>
 #endif
 #include <sys/types.h>
 
@@ -230,7 +232,7 @@ errno_to_hostfs_error(const char *filename,const char *function,const char *op)
   switch(errno) {
   case ENOMEM: /* Out of memory */
     hostfs_error(EXIT_FAILURE,"HostFS out of memory in %s: \'%s\'\n",function,strerror(errno));
-    break;
+    return HOSTFS_ERROR_UNKNOWN;
 
   case ENOENT: /* Object not found */
     return FILECORE_ERROR_NOTFOUND;

@@ -42,6 +42,7 @@ enum OS_ID_BYTE {
   OS_ID_BYTE_DEVICE_DESCR  = 0xf5,
 };
 
+#ifdef HOST_BIGENDIAN
 static void
 store_16bit_le(void *address, uint16_t data)
 {
@@ -94,7 +95,6 @@ get_32bit_le(const void *address)
   return result;
 }
 
-#ifdef HOST_BIGENDIAN
 static void
 extnrom_endian_correct(ARMword *start_addr, uint32_t size)
 {
