@@ -25,7 +25,7 @@ extern void hostfs_reset(void);
 typedef _off64_t off64_t;
 #endif
 
-#if defined __amigaos3__ || defined _MSC_VER
+#if defined __amigaos3__ || defined _MSC_VER || defined __WATCOMC__
 typedef long off64_t;
 
 #define ftello64 ftell

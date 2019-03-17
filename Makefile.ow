@@ -1,0 +1,72 @@
+system = nt_win
+CC = wcc386
+RC = wrc
+LINK = wlink
+
+EXTNROM_SUPPORT=yes
+HOSTFS_SUPPORT=yes
+SOUND_SUPPORT=yes
+
+SRCS = armcopro.c armemu.c arminit.c armarc.c &
+	armsupp.c main.c dagstandalone.c eventq.c &
+	arch/i2c.c arch/archio.c &
+	arch/fdc1772.c arch/hdc63463.c arch/ReadConfig.c &
+	arch/keyboard.c arch/filecommon.c &
+	arch/ArcemConfig.c arch/cp15.c arch/newsound.c arch/displaydev.c
+
+CFLAGS += -DWIN32 -DSYSTEM_win -Iwin
+SRCS += win/ControlPane.c win/DispKbd.c win/filecalls.c win/win.c
+RCSRCS += win/gui.rc
+resources = win/arc.ico win/gui.ico
+
+CFLAGS += -bt=nt -I"$(%WATCOM)/h" -I"$(%WATCOM)/h/nt"
+RCFLAGS += -bt=nt -I"$(%WATCOM)/h/nt" -Iwin
+
+!ifeq HOSTFS_SUPPORT yes
+CFLAGS += -DHOSTFS_SUPPORT
+SRCS += hostfs.c
+!endif
+
+!ifeq EXTNROM_SUPPORT yes
+CFLAGS += -DEXTNROM_SUPPORT
+SRCS += arch/extnrom.c
+!endif
+
+CFLAGS += -zq -otanxh -d0 -wx -I. -Iarch
+OBJS = $(SRCS:.c=.obj)
+RCOBJS = $(RCSRCS:.rc=.res)
+name = ArcEm
+LNK = $(name).lnk
+
+$(name).exe : $(OBJS) $(RCOBJS) $(LNK)
+	$(LINK) @$(LNK)
+	$(RC) $(RCOBJS) $^@
+
+$(LNK):
+	%create $(LNK)
+	@%append $(LNK) debug all
+	@%append $(LNK) name $(name)
+	@%append $(LNK) op map, quiet
+	@%append $(LNK) system $(system)
+	@%append $(LNK) option stack=64k
+	@for %i in ($(OBJS)) do @%append $(LNK) file %i
+	@for %i in ($(LIBS)) do @%append $(LNK) lib %i
+
+.EXTENSIONS:
+.EXTENSIONS: .exe
+.EXTENSIONS: .obj .res
+.EXTENSIONS: .c .h .rc .ico
+
+.c:.;./arch;./win
+.ico:./win
+.rc:./win
+
+.c.obj :
+	$(CC) $(CFLAGS) -fo=$^@ $<
+
+.rc.res : $(resources)
+	$(RC) -q -r $(RCFLAGS) -fo=$^@ $<
+
+clean: .symbolic
+	rm -f $(name).exe $(name).map $(LNK) *.err
+	rm -f $(OBJS) $(RCOBJS)
