@@ -39,6 +39,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
   // Setup the default values for the config system
   ArcemConfig_SetupDefaults();
 
+  // Parse any commandline arguments given to the program
+  // to overrule the defaults
+#if defined(__GNUC__) && defined(__MINGW32__) && !defined(__MINGW64_VERSION_MAJOR)
+  ArcemConfig_ParseCommandLine(_argc, _argv);
+#else
+  ArcemConfig_ParseCommandLine(__argc, __argv);
+#endif
+
   dagstandalone();
 
   return EXIT_SUCCESS;
@@ -63,7 +71,7 @@ int main(int argc, char *argv[])
   ArcemConfig_SetupDefaults();
 
   // Parse any commandline arguments given to the program
-  // to overrule the defautls
+  // to overrule the defaults
   ArcemConfig_ParseCommandLine(argc, argv);
 
   dagstandalone();
