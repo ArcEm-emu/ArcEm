@@ -29,7 +29,7 @@
 #define PATH_MAX 1024
 #include "vc/dirent.h" /* Thanks http://www.softagalleria.net/dirent.php! */
 #define rmdir _rmdir
-#else
+#elif !defined(__WATCOMC__)
 #include <dirent.h>
 #endif
 #ifdef WIN32
@@ -107,12 +107,12 @@ static char HOSTFS_ROOT[512];
 /* Windows mkdir() function only takes one argument name, and
    name clashes with Posix mkdir() function taking two. This
    macro allows us to use one API to work with both variants */
-#if (defined _WIN32 || defined __WIN32__) && ! defined __CYGWIN__
+#if (defined _WIN32 || defined __WIN32__ || defined __WATCOMC__) && ! defined __CYGWIN__
 # define mkdir(name, mode) _mkdir(name)
 #endif
 
 /* Visual Studio doesn't have ftruncate; use _chsize instead */
-#if defined _MSC_VER
+#if defined _MSC_VER || defined __WATCOMC__
 # define ftruncate _chsize
 #endif
 
