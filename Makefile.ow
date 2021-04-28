@@ -22,6 +22,12 @@ resources = win/arc.ico win/gui.ico
 CFLAGS += -bt=nt -I"$(%WATCOM)/h" -I"$(%WATCOM)/h/nt"
 RCFLAGS += -bt=nt -I"$(%WATCOM)/h/nt" -Iwin
 
+!ifeq SOUND_SUPPORT yes
+CFLAGS += -DSOUND_SUPPORT
+SRCS += win/sound.c
+LIBS += winmm.lib
+!endif
+
 !ifeq HOSTFS_SUPPORT yes
 CFLAGS += -DHOSTFS_SUPPORT
 SRCS += hostfs.c

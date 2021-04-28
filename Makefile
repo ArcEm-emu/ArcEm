@@ -189,9 +189,11 @@ ifeq (${SYSTEM},win)
 TARGET = ArcEm.exe
 CFLAGS += -DSYSTEM_win
 OBJS += win/gui.o win/win.o
-LIBS += -luser32 -lgdi32 -lcomdlg32
+LIBS += -luser32 -lgdi32 -lcomdlg32 -lwinmm
 # Comment the following line to have a console window
 LIBS += -mwindows
+SOUND_SUPPORT = yes
+SOUND_PTHREAD = no
 endif
 
 ifeq (${SOUND_SUPPORT},yes)

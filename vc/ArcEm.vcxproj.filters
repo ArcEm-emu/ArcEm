@@ -63,6 +63,9 @@
     <ClCompile Include="..\win\filecalls.c">
       <Filter>win</Filter>
     </ClCompile>
+    <ClCompile Include="..\win\sound.c">
+      <Filter>win</Filter>
+    </ClCompile>
     <ClCompile Include="..\win\win.c">
       <Filter>win</Filter>
     </ClCompile>
