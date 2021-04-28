@@ -43,12 +43,10 @@
 #endif
 #include <sys/stat.h>
 #include <limits.h>
-#include <stdint.h>
 #ifdef AMIGA
 #include <sys/syslimits.h>
 #endif
 #ifndef _MSC_VER
-#include <stdbool.h>
 #include <unistd.h>
 #endif
 #include <sys/types.h>
@@ -90,6 +88,7 @@ int __riscosify_control = 0;
 #include "arch/ArcemConfig.h"
 #include "arch/filecalls.h"
 #include "ControlPane.h"
+#include "c99.h"
 
 #define HOSTFS_ROOT hArcemConfig.sHostFSDirectory
 

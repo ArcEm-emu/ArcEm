@@ -50,7 +50,7 @@
 				Optimization="2"
 				InlineFunctionExpansion="1"
 				AdditionalIncludeDirectories="../arch,../win,.."
-				PreprocessorDefinitions="NOOS;NOFPE;EXTNROM_SUPPORT;SYSTEM_win;WIN32;_WINDOWS;_CRT_SECURE_NO_DEPRECATE"
+				PreprocessorDefinitions="NOOS;NOFPE;EXTNROM_SUPPORT;HOSTFS_SUPPORT;SOUND_SUPPORT;SYSTEM_win;WIN32;_WINDOWS;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE"
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
@@ -76,6 +76,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="comdlg32.lib winmm.lib gdi32.lib user32.lib"
 				OutputFile="../ArcEm.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
@@ -145,7 +146,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="../arch/,../win/,.."
-				PreprocessorDefinitions="NOOS;NOFPE;EXTNROM_SUPPORT;SYSTEM_win;WIN32;_WINDOWS;_CRT_SECURE_NO_DEPRECATE"
+				PreprocessorDefinitions="NOOS;NOFPE;EXTNROM_SUPPORT;HOSTFS_SUPPORT;SOUND_SUPPORT;SYSTEM_win;WIN32;_WINDOWS;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -171,6 +172,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="comdlg32.lib winmm.lib gdi32.lib user32.lib"
 				OutputFile="ArcEm.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
@@ -211,11 +213,10 @@
 	</References>
 	<Files>
 		<Filter
-			Name="Source Files"
-			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
+			Name="arch"
 			>
 			<File
-				RelativePath="..\armcopro.c"
+				RelativePath="..\arch\ArcemConfig.c"
 				>
 				<FileConfiguration
 					Name="Release|Win32"
@@ -237,11 +238,11 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\armdefs.h"
+				RelativePath="..\arch\ArcemConfig.h"
 				>
 			</File>
 			<File
-				RelativePath="..\armemu.c"
+				RelativePath="..\arch\archio.c"
 				>
 				<FileConfiguration
 					Name="Release|Win32"
@@ -263,15 +264,11 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\armemu.h"
+				RelativePath="..\arch\archio.h"
 				>
 			</File>
 			<File
-				RelativePath="..\armfpe.h"
-				>
-			</File>
-			<File
-				RelativePath="..\arminit.c"
+				RelativePath="..\arch\armarc.c"
 				>
 				<FileConfiguration
 					Name="Release|Win32"
@@ -293,11 +290,15 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\armopts.h"
+				RelativePath="..\arch\armarc.h"
 				>
 			</File>
 			<File
-				RelativePath="..\armos.c"
+				RelativePath="..\arch\ControlPane.h"
+				>
+			</File>
+			<File
+				RelativePath="..\arch\cp15.c"
 				>
 				<FileConfiguration
 					Name="Release|Win32"
@@ -319,11 +320,23 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\armos.h"
+				RelativePath="..\arch\cp15.h"
 				>
 			</File>
 			<File
-				RelativePath="..\armrdi.c"
+				RelativePath="..\arch\dbugsys.h"
+				>
+			</File>
+			<File
+				RelativePath="..\arch\displaydev.c"
+				>
+			</File>
+			<File
+				RelativePath="..\arch\displaydev.h"
+				>
+			</File>
+			<File
+				RelativePath="..\arch\extnrom.c"
 				>
 				<FileConfiguration
 					Name="Release|Win32"
@@ -345,11 +358,11 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\armrdi.h"
+				RelativePath="..\arch\extnrom.h"
 				>
 			</File>
 			<File
-				RelativePath="..\armsupp.c"
+				RelativePath="..\arch\fdc1772.c"
 				>
 				<FileConfiguration
 					Name="Release|Win32"
@@ -371,7 +384,19 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\dagstandalone.c"
+				RelativePath="..\arch\fdc1772.h"
+				>
+			</File>
+			<File
+				RelativePath="..\arch\filecalls.h"
+				>
+			</File>
+			<File
+				RelativePath="..\arch\filecommon.c"
+				>
+			</File>
+			<File
+				RelativePath="..\arch\hdc63463.c"
 				>
 				<FileConfiguration
 					Name="Release|Win32"
@@ -393,27 +418,11 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\dagstandalone.h"
+				RelativePath="..\arch\hdc63463.h"
 				>
 			</File>
 			<File
-				RelativePath="..\dbg_conf.h"
-				>
-			</File>
-			<File
-				RelativePath="..\dbg_cp.h"
-				>
-			</File>
-			<File
-				RelativePath="..\dbg_hif.h"
-				>
-			</File>
-			<File
-				RelativePath="..\dbg_rdi.h"
-				>
-			</File>
-			<File
-				RelativePath="..\main.c"
+				RelativePath="..\arch\i2c.c"
 				>
 				<FileConfiguration
 					Name="Release|Win32"
@@ -434,449 +443,381 @@
 					/>
 				</FileConfiguration>
 			</File>
-			<Filter
-				Name="win"
+			<File
+				RelativePath="..\arch\i2c.h"
 				>
-				<File
-					RelativePath="..\win\arc.ico"
-					>
-				</File>
-				<File
-					RelativePath="..\win\ControlPane.c"
-					>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\win\DispKbd.c"
-					>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\win\filecalls.c"
-					>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\win\filecalls_internal.h"
-					>
-				</File>
-				<File
-					RelativePath="..\win\gui.h"
-					>
-				</File>
-				<File
-					RelativePath="..\win\gui.rc"
-					>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCResourceCompilerTool"
-							PreprocessorDefinitions=""
-							AdditionalIncludeDirectories="\gp2x\arcem\win"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCResourceCompilerTool"
-							PreprocessorDefinitions=""
-							AdditionalIncludeDirectories="\gp2x\arcem\win"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\win\KeyTable.h"
-					>
-				</File>
-				<File
-					RelativePath="..\win\win.c"
-					>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\win\win.h"
-					>
-				</File>
-			</Filter>
-			<Filter
-				Name="arch"
+			</File>
+			<File
+				RelativePath="..\arch\keyboard.c"
 				>
-				<File
-					RelativePath="..\arch\ArcemConfig.c"
+				<FileConfiguration
+					Name="Release|Win32"
 					>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\arch\ArcemConfig.h"
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
 					>
-				</File>
-				<File
-					RelativePath="..\arch\archio.c"
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\arch\keyboard.h"
+				>
+			</File>
+			<File
+				RelativePath="..\arch\newsound.c"
+				>
+			</File>
+			<File
+				RelativePath="..\arch\ReadConfig.c"
+				>
+				<FileConfiguration
+					Name="Release|Win32"
 					>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\arch\archio.h"
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
 					>
-				</File>
-				<File
-					RelativePath="..\arch\armarc.c"
-					>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\arch\armarc.h"
-					>
-				</File>
-				<File
-					RelativePath="..\arch\ControlPane.h"
-					>
-				</File>
-				<File
-					RelativePath="..\arch\cp15.c"
-					>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\arch\cp15.h"
-					>
-				</File>
-				<File
-					RelativePath="..\arch\DispKbd.h"
-					>
-				</File>
-				<File
-					RelativePath="..\arch\DispKbdShared.c"
-					>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\arch\extnrom.c"
-					>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\arch\extnrom.h"
-					>
-				</File>
-				<File
-					RelativePath="..\arch\fdc1772.c"
-					>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\arch\fdc1772.h"
-					>
-				</File>
-				<File
-					RelativePath="..\arch\filecalls.h"
-					>
-				</File>
-				<File
-					RelativePath="..\arch\hdc63463.c"
-					>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\arch\hdc63463.h"
-					>
-				</File>
-				<File
-					RelativePath="..\arch\i2c.c"
-					>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\arch\i2c.h"
-					>
-				</File>
-				<File
-					RelativePath="..\arch\keyboard.c"
-					>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\arch\ReadConfig.c"
-					>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\arch\ReadConfig.h"
-					>
-				</File>
-				<File
-					RelativePath="..\arch\Version.h"
-					>
-				</File>
-			</Filter>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\arch\ReadConfig.h"
+				>
+			</File>
+			<File
+				RelativePath="..\arch\sound.h"
+				>
+			</File>
+			<File
+				RelativePath="..\arch\Version.h"
+				>
+			</File>
 		</Filter>
 		<Filter
-			Name="Header Files"
-			Filter="h;hpp;hxx;hm;inl"
+			Name="win"
 			>
+			<File
+				RelativePath="..\win\arc.ico"
+				>
+			</File>
+			<File
+				RelativePath="..\win\ControlPane.c"
+				>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\win\DispKbd.c"
+				>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\win\filecalls.c"
+				>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\win\filecalls_internal.h"
+				>
+			</File>
+			<File
+				RelativePath="..\win\gui.h"
+				>
+			</File>
+			<File
+				RelativePath="..\win\gui.rc"
+				>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCResourceCompilerTool"
+						PreprocessorDefinitions=""
+						AdditionalIncludeDirectories="\gp2x\arcem\win"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCResourceCompilerTool"
+						PreprocessorDefinitions=""
+						AdditionalIncludeDirectories="\gp2x\arcem\win"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\win\KeyTable.h"
+				>
+			</File>
+			<File
+				RelativePath="..\win\sound.c"
+				>
+			</File>
+			<File
+				RelativePath="..\win\win.c"
+				>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\win\win.h"
+				>
+			</File>
 		</Filter>
-		<Filter
-			Name="Resource Files"
-			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
+		<File
+			RelativePath="..\armcopro.c"
 			>
-		</Filter>
+			<FileConfiguration
+				Name="Release|Win32"
+				>
+				<Tool
+					Name="VCCLCompilerTool"
+					AdditionalIncludeDirectories=""
+					PreprocessorDefinitions=""
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Debug|Win32"
+				>
+				<Tool
+					Name="VCCLCompilerTool"
+					AdditionalIncludeDirectories=""
+					PreprocessorDefinitions=""
+				/>
+			</FileConfiguration>
+		</File>
+		<File
+			RelativePath="..\armdefs.h"
+			>
+		</File>
+		<File
+			RelativePath="..\armemu.c"
+			>
+			<FileConfiguration
+				Name="Release|Win32"
+				>
+				<Tool
+					Name="VCCLCompilerTool"
+					AdditionalIncludeDirectories=""
+					PreprocessorDefinitions=""
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Debug|Win32"
+				>
+				<Tool
+					Name="VCCLCompilerTool"
+					AdditionalIncludeDirectories=""
+					PreprocessorDefinitions=""
+				/>
+			</FileConfiguration>
+		</File>
+		<File
+			RelativePath="..\armemu.h"
+			>
+		</File>
+		<File
+			RelativePath="..\arminit.c"
+			>
+			<FileConfiguration
+				Name="Release|Win32"
+				>
+				<Tool
+					Name="VCCLCompilerTool"
+					AdditionalIncludeDirectories=""
+					PreprocessorDefinitions=""
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Debug|Win32"
+				>
+				<Tool
+					Name="VCCLCompilerTool"
+					AdditionalIncludeDirectories=""
+					PreprocessorDefinitions=""
+				/>
+			</FileConfiguration>
+		</File>
+		<File
+			RelativePath="..\armsupp.c"
+			>
+			<FileConfiguration
+				Name="Release|Win32"
+				>
+				<Tool
+					Name="VCCLCompilerTool"
+					AdditionalIncludeDirectories=""
+					PreprocessorDefinitions=""
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Debug|Win32"
+				>
+				<Tool
+					Name="VCCLCompilerTool"
+					AdditionalIncludeDirectories=""
+					PreprocessorDefinitions=""
+				/>
+			</FileConfiguration>
+		</File>
+		<File
+			RelativePath="..\c99.h"
+			>
+		</File>
+		<File
+			RelativePath="..\dagstandalone.c"
+			>
+			<FileConfiguration
+				Name="Release|Win32"
+				>
+				<Tool
+					Name="VCCLCompilerTool"
+					AdditionalIncludeDirectories=""
+					PreprocessorDefinitions=""
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Debug|Win32"
+				>
+				<Tool
+					Name="VCCLCompilerTool"
+					AdditionalIncludeDirectories=""
+					PreprocessorDefinitions=""
+				/>
+			</FileConfiguration>
+		</File>
+		<File
+			RelativePath="..\dagstandalone.h"
+			>
+		</File>
+		<File
+			RelativePath="..\eventq.c"
+			>
+		</File>
+		<File
+			RelativePath="..\eventq.h"
+			>
+		</File>
+		<File
+			RelativePath="..\hostfs.c"
+			>
+		</File>
+		<File
+			RelativePath="..\hostfs.h"
+			>
+		</File>
+		<File
+			RelativePath="..\main.c"
+			>
+			<FileConfiguration
+				Name="Release|Win32"
+				>
+				<Tool
+					Name="VCCLCompilerTool"
+					AdditionalIncludeDirectories=""
+					PreprocessorDefinitions=""
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Debug|Win32"
+				>
+				<Tool
+					Name="VCCLCompilerTool"
+					AdditionalIncludeDirectories=""
+					PreprocessorDefinitions=""
+				/>
+			</FileConfiguration>
+		</File>
+		<File
+			RelativePath="..\prof.h"
+			>
+		</File>
 	</Files>
 	<Globals>
 	</Globals>
