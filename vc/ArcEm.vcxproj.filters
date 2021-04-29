@@ -135,8 +135,8 @@
       <Filter>win</Filter>
     </ClInclude>
     <ClInclude Include="..\dagstandalone.h" />
-    <ClInclude Include="..\win\resource.h" />
     <ClInclude Include="..\hostfs.h" />
+    <ClInclude Include="..\prof.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\win\arc.ico">
