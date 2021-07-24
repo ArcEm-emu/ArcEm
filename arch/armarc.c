@@ -57,6 +57,7 @@ static ARMword ARMul_ManglePhysAddr(ARMword phy);
 /*------------------------------------------------------------------------------*/
 /* OK - this is getting treated as an odds/sods engine - just hook up anything
    you need to do occasionally! */
+#ifndef WIN32
 static void DumpHandler(int sig) {
   ARMul_State *state = &statestr;
   FILE *res;
@@ -64,9 +65,7 @@ static void DumpHandler(int sig) {
   ARMword size;
 
   fprintf(stderr,"SIGUSR2 at PC=0x%x\n",ARMul_GetPC(state));
-#ifndef WIN32
   signal(SIGUSR2,DumpHandler);
-#endif
   /* Register dump */
   fprintf(stderr, "Current registers:\n"
                   "r0  = %08x  r1  = %08x  r2  = %08x  r3  = %08x\n"
@@ -179,6 +178,7 @@ static void DumpHandler(int sig) {
 
   exit(0);
 } /* DumpHandler */
+#endif
 
 /**
  * ARMul_MemoryInit

@@ -81,7 +81,7 @@ void ARMul_EmulateInit(void) {
   COMPUTE(GT,!Z&&(N==V))
   COMPUTE(LE,Z||(N!=V))
   COMPUTE(AL,1)
-  COMPUTE(NV,0)
+  ARMul_CCTable[NV] = 0;
 #undef V
 #undef C
 #undef Z
