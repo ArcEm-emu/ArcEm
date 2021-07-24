@@ -49,8 +49,8 @@ static HANDLE hInst;
 static HWND mainWin;
 static DWORD tid;
 
-WORD *dibbmp;
-WORD *curbmp;
+void *dibbmp;
+void *curbmp;
 
 static DWORD WINAPI threadWindow(LPVOID param)
 {
@@ -395,7 +395,7 @@ BOOL CALLBACK AboutDlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam)
  * @param y Height of video mode
  * @returns ALWAYS 0 (IMPROVE)
  */
-int createWindow(int x, int y)
+int createWindow(int x, int y, int bpp)
 {
    xSize = x;
    ySize = y;
@@ -410,12 +410,12 @@ int createWindow(int x, int y)
    pbmi.bmiHeader.biCompression   = BI_RGB; //0;
    pbmi.bmiHeader.biPlanes        = 1;
    pbmi.bmiHeader.biSizeImage     = 0; //wic->getWidth()*wic->getHeight()*scale;
-   pbmi.bmiHeader.biBitCount      = 16; //24;
+   pbmi.bmiHeader.biBitCount      = bpp;
    pbmi.bmiHeader.biXPelsPerMeter = 0;
    pbmi.bmiHeader.biYPelsPerMeter = 0;
    pbmi.bmiHeader.biClrUsed       = 0;
    pbmi.bmiHeader.biClrImportant  = 0;
-   hbmp = CreateDIBSection(NULL, &pbmi, DIB_RGB_COLORS, (void **)&dibbmp, NULL, 0);
+   hbmp = CreateDIBSection(NULL, &pbmi, DIB_RGB_COLORS, &dibbmp, NULL, 0);
 
    /* Setup Cursor bitmap */
    cbmi.bmiHeader.biSize          = sizeof(BITMAPINFOHEADER);
@@ -424,12 +424,12 @@ int createWindow(int x, int y)
    cbmi.bmiHeader.biCompression   = BI_RGB; //0;
    cbmi.bmiHeader.biPlanes        = 1;
    cbmi.bmiHeader.biSizeImage     = 0; //wic->getWidth()*wic->getHeight()*scale;
-   cbmi.bmiHeader.biBitCount      = 16; //24;
+   cbmi.bmiHeader.biBitCount      = bpp;
    cbmi.bmiHeader.biXPelsPerMeter = 0;
    cbmi.bmiHeader.biYPelsPerMeter = 0;
    cbmi.bmiHeader.biClrUsed       = 0;
    cbmi.bmiHeader.biClrImportant  = 0;
-   cbmp = CreateDIBSection(NULL, &cbmi, DIB_RGB_COLORS, (void **)&curbmp, NULL, 0);
+   cbmp = CreateDIBSection(NULL, &cbmi, DIB_RGB_COLORS, &curbmp, NULL, 0);
 
    CreateThread(NULL, 16384, threadWindow, NULL, 0, &tid);
 
