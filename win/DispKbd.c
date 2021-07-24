@@ -15,8 +15,8 @@
 #define MonitorWidth 1600
 #define MonitorHeight 1200
 
-extern unsigned short *dibbmp;
-extern unsigned short *curbmp;
+extern void *dibbmp;
+extern void *curbmp;
 
 
 
@@ -30,7 +30,15 @@ int oldMouseY = 0;
 
 /* Standard display device */
 
-typedef unsigned short SDD_HostColour;
+#define SDD_BitsPerPixel 16
+#if SDD_BitsPerPixel == 24
+typedef struct { uint8_t b, g, r; } SDD_HostColour;
+#elif SDD_BitsPerPixel == 32
+typedef uint32_t SDD_HostColour;
+#else
+typedef uint16_t SDD_HostColour;
+#endif
+
 #define SDD_Name(x) sdd_##x
 static const int SDD_RowsAtOnce = 1;
 typedef SDD_HostColour *SDD_Row;
@@ -38,22 +46,47 @@ typedef SDD_HostColour *SDD_Row;
 
 static SDD_HostColour SDD_Name(Host_GetColour)(ARMul_State *state,unsigned int col)
 {
+  SDD_HostColour hostCol;
+  uint8_t r, g, b;
+
+#if SDD_BitsPerPixel >= 24
+  /* Convert to 8-bit component values */
+  r = (col & 0x00f);
+  g = (col & 0x0f0);
+  b = (col & 0xf00) >> 8;
+  /* May want to tweak this a bit at some point? */
+  r |= r<<4;
+  g |= g>>4;
+  b |= b<<4;
+#else
   /* Convert to 5-bit component values */
-  int r = (col & 0x00f) << 1;
-  int g = (col & 0x0f0) >> 3;
-  int b = (col & 0xf00) >> 7;
+  r = (col & 0x00f) << 1;
+  g = (col & 0x0f0) >> 3;
+  b = (col & 0xf00) >> 7;
   /* May want to tweak this a bit at some point? */
   r |= r>>4;
   g |= g>>4;
   b |= b>>4;
-  return (r<<10) | (g<<5) | (b);
-}  
+#endif
+
+#if SDD_BitsPerPixel == 24
+  hostCol.b = b;
+  hostCol.g = g;
+  hostCol.r = r;
+#elif SDD_BitsPerPixel == 32
+  hostCol = (r<<16) | (g<<8) | (b);
+#else
+  hostCol = (r<<10) | (g<<5) | (b);
+#endif
+
+  return hostCol;
+}
 
 static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,int hz);
 
 static inline SDD_Row SDD_Name(Host_BeginRow)(ARMul_State *state,int row,int offset)
 {
-  return &dibbmp[(MonitorHeight-(row+1))*MonitorWidth+offset];
+  return (SDD_Row)dibbmp + ((MonitorHeight-(row+1))*MonitorWidth+offset);
 }
 
 static inline void SDD_Name(Host_EndRow)(ARMul_State *state,SDD_Row *row) { /* nothing */ };
@@ -142,6 +175,8 @@ static void RefreshMouse(ARMul_State *state) {
   int VertPos;
   int diboffs;
   SDD_HostColour cursorPal[4];
+  SDD_HostColour *host_dibbmp = (SDD_HostColour *)dibbmp;
+  SDD_HostColour *host_curbmp = (SDD_HostColour *)curbmp;
 
   DisplayDev_GetCursorPos(state,&HorizPos,&VertPos);
   HorizPos = HorizPos*HD.XScale+HD.XOffset;
@@ -155,7 +190,7 @@ static void RefreshMouse(ARMul_State *state) {
   rMouseHeight = Height;
 
   /* Cursor palette */
-  cursorPal[0] = 0;
+  cursorPal[0] = SDD_Name(Host_GetColour)(state,0);
   for(x=0; x<3; x++) {
     cursorPal[x+1] = SDD_Name(Host_GetColour)(state,VIDC.CursorPalette[x]);
   }
@@ -174,9 +209,9 @@ static void RefreshMouse(ARMul_State *state) {
         pix = ((tmp[x/16]>>((x & 15)*2)) & 3);
         diboffs = rMouseX + x + (MonitorHeight - rMouseY - y - 1) * MonitorWidth;
 
-        curbmp[x + (MonitorHeight - y - 1) * 32] =
+        host_curbmp[x + (MonitorHeight - y - 1) * 32] =
                 (pix || diboffs < 0) ?
-                cursorPal[pix] : dibbmp[diboffs];
+                cursorPal[pix] : host_dibbmp[diboffs];
       }; /* x */
     } else return;
     if(++repeat == HD.YScale) {
@@ -207,7 +242,7 @@ int
 DisplayDev_Init(ARMul_State *state)
 {
   /* Setup display and cursor bitmaps */
-  createWindow(MonitorWidth, MonitorHeight);
+  createWindow(MonitorWidth, MonitorHeight, SDD_BitsPerPixel);
   return DisplayDev_Set(state,&SDD_DisplayDev);
 }
 

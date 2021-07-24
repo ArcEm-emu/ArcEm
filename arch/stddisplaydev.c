@@ -1620,16 +1620,25 @@ static void SDD_Name(RowFunc8bpp2XNoFlags)(ARMul_State *state,int row,SDD_Row dr
 
 */
 
+static bool SDD_Name(IsColourEqual)(SDD_HostColour left, SDD_HostColour right) {
+#if defined(SDD_BitsPerPixel) && (SDD_BitsPerPixel == 24)
+	return (memcmp(&left, &right, sizeof(SDD_HostColour)) == 0);
+#else
+	return left == right;
+#endif
+}
+
 static void SDD_Name(BorderRow)(ARMul_State *state,int row)
 {
   int hoststart, hostend;
   /* Render a border row */
   SDD_HostColour col = HD.BorderCol;
-  if(!DC.ForceRefresh && (HD.BorderCols[row] == col))
+  bool colourChanged = !SDD_Name(IsColourEqual)(HD.BorderCols[row], col);
+  if(!DC.ForceRefresh && !colourChanged)
     return;
   VIDEO_STAT(BorderRedraw,1,1);
   VIDEO_STAT(BorderRedrawForced,DC.ForceRefresh,1);
-  VIDEO_STAT(BorderRedrawColourChanged,(HD.BorderCols[row] != col),1);
+  VIDEO_STAT(BorderRedrawColourChanged,colourChanged,1);
   HD.BorderCols[row] = col;
   hoststart = (row-(VIDC.Vert_DisplayStart+1))*HD.YScale+HD.YOffset;
   hostend = hoststart + HD.YScale;
@@ -1666,6 +1675,7 @@ static void SDD_Name(DisplayRow)(ARMul_State *state,int row)
 {
   int rowflags;
   SDD_HostColour col;
+  bool colourChanged;
   uint32_t flags, bit;
   SDD_Row drow;
   const SDD_Name(RowFunc) *rf;
@@ -1682,13 +1692,14 @@ static void SDD_Name(DisplayRow)(ARMul_State *state,int row)
   /* Handle border colour updates */
   rowflags = (DC.ForceRefresh?ROWFUNC_FORCE:0);
   col = HD.BorderCol;
+  colourChanged = !SDD_Name(IsColourEqual)(HD.BorderCols[row], col);
   
-  if(rowflags || (HD.BorderCols[row] != col))
+  if(rowflags || colourChanged)
   {
     int i;
     VIDEO_STAT(BorderRedraw,1,1);
     VIDEO_STAT(BorderRedrawForced,rowflags,1);
-    VIDEO_STAT(BorderRedrawColourChanged,(HD.BorderCols[row] != col),1);
+    VIDEO_STAT(BorderRedrawColourChanged,colourChanged,1);
     HD.BorderCols[row] = col;
     for(i=hoststart;i<hostend;i++)
     {
@@ -1769,6 +1780,7 @@ static const SDD_Name(RowFuncNoFlags) SDD_Name(RowFuncsNoFlags)[2][4] = {
 static void SDD_Name(DisplayRowNoFlags)(ARMul_State *state,int row)
 {
   SDD_HostColour col;
+  bool colourChanged;
   const SDD_Name(RowFuncNoFlags) *rf;
   uint32_t Vptr;
   /* Render a display row */
@@ -1783,13 +1795,14 @@ static void SDD_Name(DisplayRowNoFlags)(ARMul_State *state,int row)
 
   /* Handle border colour updates */
   col = HD.BorderCol;
+  colourChanged = !SDD_Name(IsColourEqual)(HD.BorderCols[row], col);
   
-  if(DC.ForceRefresh || (HD.BorderCols[row] != col))
+  if(DC.ForceRefresh || colourChanged)
   {
     int i;
     VIDEO_STAT(BorderRedraw,1,1);
     VIDEO_STAT(BorderRedrawForced,DC.ForceRefresh,1);
-    VIDEO_STAT(BorderRedrawColourChanged,(HD.BorderCols[row] != col),1);
+    VIDEO_STAT(BorderRedrawColourChanged,colourChanged,1);
     HD.BorderCols[row] = col;
     for(i=hoststart;i<hostend;i++)
     {
