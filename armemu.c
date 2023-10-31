@@ -35,7 +35,7 @@ typedef struct {
   ARMEmuFunc func;
 } PipelineEntry;
 
-extern PipelineEntry abortpipe;
+static const PipelineEntry abortpipe;
 
 /***************************************************************************\
 *                   Load Instruction                                        *
@@ -1074,7 +1074,7 @@ ARMEmuFunc ARMul_Emulate_DecodeInstr(ARMword instr) {
 } /* ARMul_Emulate_DecodeInstr */
 
 /* Pipeline entry used for prefetch aborts */
-PipelineEntry abortpipe = {
+static const PipelineEntry abortpipe = {
   ARMul_ABORTWORD,
   EMFUNCDECL26(SWI)
 };
