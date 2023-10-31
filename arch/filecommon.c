@@ -14,6 +14,7 @@
 #include <stddef.h>
 
 #include "armarc.h"
+#include "dbugsys.h"
 #include "filecalls.h"
 #include "displaydev.h"
 #include "ControlPane.h"
@@ -38,7 +39,7 @@ static void ensure_buffer_size(size_t buffer_size_needed)
   if (buffer_size_needed > buffer_size) {
     buffer = realloc(buffer, buffer_size_needed);
     if (!buffer) {
-      ControlPane_Error(EXIT_FAILURE,"filecommon could not increase buffer size to %u bytes\n",
+      warn_data("filecommon could not increase buffer size to %u bytes\n",
               (ARMword) buffer_size_needed);
     }
     buffer_size = buffer_size_needed;

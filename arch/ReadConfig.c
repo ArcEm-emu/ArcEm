@@ -13,6 +13,7 @@
 #include "ArcemConfig.h"
 #include "ReadConfig.h"
 #include "armarc.h"
+#include "dbugsys.h"
 #include "hdc63463.h"
 
 /* Returns 1 if it was all OK - 0 if it failed
@@ -48,7 +49,7 @@ int ReadConfigFile(ARMul_State *state)
 #endif
 
     if (envvar && (env = getenv(envvar)) == NULL) {
-        fprintf(stderr, "configuration file is $%s/%s but $%s isn't "
+        warn_cfg("configuration file is $%s/%s but $%s isn't "
             "set.", envvar, basename2, envvar);
         return 0;
     }
@@ -65,7 +66,7 @@ int ReadConfigFile(ARMul_State *state)
     strcat(tmpbuf, basename2);
 
     if ((fConf = fopen(tmpbuf, "r")) == NULL) {
-        fprintf(stderr, "couldn't open config file: %s\n", tmpbuf);
+        warn_cfg("couldn't open config file: %s\n", tmpbuf);
         return 0;
     }
 
@@ -73,7 +74,7 @@ int ReadConfigFile(ARMul_State *state)
     char *tptr;
 
     if (fgets(tmpbuf, 1023, fConf)==NULL) {
-      fprintf(stderr, "Failed to read config file header line\n");
+      warn_cfg("Failed to read config file header line\n");
       return 0;
     }
 
@@ -93,12 +94,12 @@ int ReadConfigFile(ARMul_State *state)
 
       unsigned int drivenum,numcyl,numheads,numsect,reclength;
       if (fscanf(fConf,"%u %u %u %u %u\n",&drivenum,&numcyl,&numheads,&numsect,&reclength)!=5) {
-        fprintf(stderr,"Failed to read MFM disc data line\n");
+        warn_cfg("Failed to read MFM disc data line\n");
         return 0;
       }
       
       if (drivenum>3) {
-        fprintf(stderr,"Invalid drive number in MFM disc data line\n");
+        warn_cfg("Invalid drive number in MFM disc data line\n");
         return 0;
       }
 
@@ -107,7 +108,7 @@ int ReadConfigFile(ARMul_State *state)
       hArcemConfig.aST506DiskShapes[drivenum].NSectors     = numsect;
       hArcemConfig.aST506DiskShapes[drivenum].RecordLength = reclength;
     } else {
-      fprintf(stderr,"Unknown configuration file key '%s'\n",tmpbuf);
+      warn_cfg("Unknown configuration file key '%s'\n",tmpbuf);
       return 0;
     }
   }

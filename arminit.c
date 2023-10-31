@@ -19,6 +19,7 @@
 #include "armdefs.h"
 #include "armemu.h"
 #include "armarc.h"
+#include "arch/dbugsys.h"
 #include "hostfs.h"
 
 FastMapEntry FastMap[FASTMAP_SIZE];
@@ -153,9 +154,7 @@ void ARMul_Abort(ARMul_State *state, ARMword vector) {
   int exit_code;
   state->Aborted = FALSE;
 
-#ifdef DEBUG
- printf("ARMul_Abort: vector=0x%x\n",vector);
-#endif
+  dbug("ARMul_Abort: vector=0x%x\n",vector);
 
   temp = state->Reg[15];
 
@@ -170,7 +169,7 @@ void ARMul_Abort(ARMul_State *state, ARMword vector) {
        SETABORT(R15IBIT,SVC26MODE);
        ARMul_R15Altered(state);
        state->Reg[14] = temp - 4;
-       /*fprintf(stderr,"DAG: In ARMul_Abort: Taking undefined instruction trap R[14] being set to: 0x%08x\n",
+       /*dbug("DAG: In ARMul_Abort: Taking undefined instruction trap R[14] being set to: 0x%08x\n",
                (unsigned int)(state->Reg[14])); */
        break;
 
@@ -205,11 +204,11 @@ void ARMul_Abort(ARMul_State *state, ARMword vector) {
              return;
 #endif
            case ARCEM_SWI_DEBUG-ARCEM_SWI_CHUNK:
-             fprintf(stderr, "r0 = %08x  r4 = %08x  r8  = %08x  r12 = %08x\n"
-                             "r1 = %08x  r5 = %08x  r9  = %08x  sp  = %08x\n"
-                             "r2 = %08x  r6 = %08x  r10 = %08x  lr  = %08x\n"
-                             "r3 = %08x  r7 = %08x  r11 = %08x  pc  = %08x\n"
-                           "\n",
+             warn("r0 = %08x  r4 = %08x  r8  = %08x  r12 = %08x\n"
+                  "r1 = %08x  r5 = %08x  r9  = %08x  sp  = %08x\n"
+                  "r2 = %08x  r6 = %08x  r10 = %08x  lr  = %08x\n"
+                  "r3 = %08x  r7 = %08x  r11 = %08x  pc  = %08x\n"
+                  "\n",
                state->Reg[0], state->Reg[4], state->Reg[8], state->Reg[12],
                state->Reg[1], state->Reg[5], state->Reg[9], state->Reg[13],
                state->Reg[2], state->Reg[6], state->Reg[10], state->Reg[14],
