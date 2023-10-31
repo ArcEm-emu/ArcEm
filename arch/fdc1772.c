@@ -50,7 +50,7 @@ typedef struct {
      * obtained. */
     bool write_protected;
     /* Points to an element of avail_format. */
-    floppy_format *form;
+    const floppy_format *form;
 } floppy_drive;
 
 struct FDCStruct{
@@ -128,7 +128,7 @@ struct FDCStruct{
 struct FDCStruct FDC;
 
 
-static floppy_format avail_format[] = {
+static const floppy_format avail_format[] = {
     /* First is default for `ejected' discs. */
     { "ADFS 800KB", 1024, 5, 0, 80, 2 },
     { "ADFS 160KB", 256, 16, 0, 40, 1 },
@@ -951,7 +951,7 @@ FDC_InsertFloppy(int drive, const char *image)
   floppy_drive *dr;
   FILE *fp;
   int32_t len;
-  floppy_format *ff;
+  const floppy_format *ff;
 
   assert(drive >= 0 && drive < sizeof FDC.drive /
       sizeof FDC.drive[0]);

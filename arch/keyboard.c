@@ -19,7 +19,7 @@ typedef struct {
   uint8_t col;
 } key_info;
 
-static key_info keys[] = {
+static const key_info keys[] = {
 #define X(key, row, col) { #key, row, col },
   ARCH_KEYBOARD_DEFINITION
 #undef X
@@ -41,7 +41,7 @@ static key_info keys[] = {
 void keyboard_key_changed(struct arch_keyboard *kb, arch_key_id kid,
                           bool up)
 {
-  key_info *ki;
+  const key_info *ki;
   KbdEntry *e;
 
   ki = keys + kid;

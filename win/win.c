@@ -25,7 +25,7 @@ HBITMAP cbmp = NULL;
 BITMAPINFO pbmi;
 BITMAPINFO cbmi;
 
-static char szWindowClass[32] = "GenericClass";
+static const char szWindowClass[32] = "GenericClass";
 
 
 static BOOL captureMouse = FALSE;

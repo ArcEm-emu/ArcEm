@@ -2,12 +2,12 @@
       case 0x0: {
           int i = BITS(20,23);
           if((i<4) && (BITS(4,7) == 9)) {
-            static ARMEmuFunc funcs0[4]={
+            static const ARMEmuFunc funcs0[4]={
               EMFUNCDECL26(Mul), EMFUNCDECL26(Muls), EMFUNCDECL26(Mla), EMFUNCDECL26(Mlas)
             };
             f=funcs0[i];
           } else {            
-            static ARMEmuFunc funcs0[16]={
+            static const ARMEmuFunc funcs0[16]={
               EMFUNCDECL26(AndReg), EMFUNCDECL26(AndsReg), EMFUNCDECL26(EorReg), EMFUNCDECL26(EorsReg),
               EMFUNCDECL26(SubReg), EMFUNCDECL26(SubsReg), EMFUNCDECL26(RsbReg), EMFUNCDECL26(RsbsReg),
               EMFUNCDECL26(AddReg), EMFUNCDECL26(AddsReg), EMFUNCDECL26(AdcReg), EMFUNCDECL26(AdcsReg),
@@ -19,7 +19,7 @@
       break;
 
       case 0x1: {
-        static ARMEmuFunc funcs1[2][16]={
+        static const ARMEmuFunc funcs1[2][16]={
           { EMFUNCDECL26(TstRegMrs1SwpNorm),EMFUNCDECL26(TstpRegNorm),EMFUNCDECL26(Noop),EMFUNCDECL26(TeqpRegNorm),
             EMFUNCDECL26(CmpRegMrs2SwpNorm),EMFUNCDECL26(CmppRegNorm),EMFUNCDECL26(Noop),EMFUNCDECL26(CmnpRegNorm),
             EMFUNCDECL26(OrrRegNorm),EMFUNCDECL26(OrrsRegNorm),EMFUNCDECL26(MovRegNorm),EMFUNCDECL26(MovsRegNorm),
@@ -36,7 +36,7 @@
       break;
 
       case 0x2: {
-        static ARMEmuFunc funcsdata[16] = {
+        static const ARMEmuFunc funcsdata[16] = {
            EMFUNCDECL26(AndImm), EMFUNCDECL26(AndsImm),     EMFUNCDECL26(EorImm), EMFUNCDECL26(EorsImm),
            EMFUNCDECL26(SubImm), EMFUNCDECL26(SubsImmNorm), EMFUNCDECL26(RsbImm), EMFUNCDECL26(RsbsImm),
            EMFUNCDECL26(AddImm), EMFUNCDECL26(AddsImm),     EMFUNCDECL26(AdcImm), EMFUNCDECL26(AdcsImm),
@@ -48,7 +48,7 @@
       break;
 
       case 0x3: {
-        static ARMEmuFunc funcs3[16]={
+        static const ARMEmuFunc funcs3[16]={
           EMFUNCDECL26(Noop), EMFUNCDECL26(TstpImm), EMFUNCDECL26(Noop), EMFUNCDECL26(TeqpImm),
           EMFUNCDECL26(Noop), EMFUNCDECL26(CmppImm), EMFUNCDECL26(Noop), EMFUNCDECL26(CmnpImm),
           EMFUNCDECL26(OrrImm), EMFUNCDECL26(OrrsImm), EMFUNCDECL26(MovImm), EMFUNCDECL26(MovsImm),
@@ -59,7 +59,7 @@
       break;
 
       case 0x4: {
-        static ARMEmuFunc funcs4[16]={
+        static const ARMEmuFunc funcs4[16]={
           EMFUNCDECL26(StoreNoWritePostDecImm), EMFUNCDECL26(LoadNoWritePostDecImm), EMFUNCDECL26(StoreWritePostDecImm), EMFUNCDECL26(LoadWritePostDecImm),
           EMFUNCDECL26(StoreBNoWritePostDecImm), EMFUNCDECL26(LoadBNoWritePostDecImm), EMFUNCDECL26(StoreBWritePostDecImm), EMFUNCDECL26(LoadBWritePostDecImm),
           EMFUNCDECL26(StoreNoWritePostIncImm), EMFUNCDECL26(LoadNoWritePostIncImm), EMFUNCDECL26(StoreWritePostIncImm), EMFUNCDECL26(LoadWritePostIncImm),
@@ -70,7 +70,7 @@
       break;
 
       case 0x5: {
-        static ARMEmuFunc funcs5[16]={
+        static const ARMEmuFunc funcs5[16]={
           EMFUNCDECL26(StoreNoWritePreDecImm), EMFUNCDECL26(LoadNoWritePreDecImm), EMFUNCDECL26(StoreWritePreDecImm), EMFUNCDECL26(LoadWritePreDecImm),
           EMFUNCDECL26(StoreBNoWritePreDecImm), EMFUNCDECL26(LoadBNoWritePreDecImm), EMFUNCDECL26(StoreBWritePreDecImm), EMFUNCDECL26(LoadBWritePreDecImm),
           EMFUNCDECL26(StoreNoWritePreIncImm), EMFUNCDECL26(LoadNoWritePreIncImm), EMFUNCDECL26(StoreWritePreIncImm), EMFUNCDECL26(LoadWritePreIncImm),
@@ -84,7 +84,7 @@
         if (BIT(4)) {
           f=EMFUNCDECL26(Undef);
         } else {
-          static ARMEmuFunc funcs6[16]={
+          static const ARMEmuFunc funcs6[16]={
             EMFUNCDECL26(StoreNoWritePostDecReg), EMFUNCDECL26(LoadNoWritePostDecReg), EMFUNCDECL26(StoreWritePostDecReg), EMFUNCDECL26(LoadWritePostDecReg),
             EMFUNCDECL26(StoreBNoWritePostDecReg), EMFUNCDECL26(LoadBNoWritePostDecReg), EMFUNCDECL26(StoreBWritePostDecReg), EMFUNCDECL26(LoadBWritePostDecReg),
             EMFUNCDECL26(StoreNoWritePostIncReg), EMFUNCDECL26(LoadNoWritePostIncReg), EMFUNCDECL26(StoreWritePostIncReg), EMFUNCDECL26(LoadWritePostIncReg),
@@ -98,7 +98,7 @@
         if (BIT(4)) {
           f=EMFUNCDECL26(Undef);
         } else {
-          static ARMEmuFunc funcs7[16]={
+          static const ARMEmuFunc funcs7[16]={
             EMFUNCDECL26(StoreNoWritePreDecReg), EMFUNCDECL26(LoadNoWritePreDecReg), EMFUNCDECL26(StoreWritePreDecReg), EMFUNCDECL26(LoadWritePreDecReg),
             EMFUNCDECL26(StoreBNoWritePreDecReg), EMFUNCDECL26(LoadBNoWritePreDecReg), EMFUNCDECL26(StoreBWritePreDecReg), EMFUNCDECL26(LoadBWritePreDecReg),
             EMFUNCDECL26(StoreNoWritePreIncReg), EMFUNCDECL26(LoadNoWritePreIncReg), EMFUNCDECL26(StoreWritePreIncReg), EMFUNCDECL26(LoadWritePreIncReg),
@@ -109,7 +109,7 @@
       break;
 
       case 0x8: {
-        static ARMEmuFunc funcs8[16]={
+        static const ARMEmuFunc funcs8[16]={
           EMFUNCDECL26(MultiStorePostDec), EMFUNCDECL26(MultiLoadPostDec), EMFUNCDECL26(MultiStoreWritePostDec), EMFUNCDECL26(MultiLoadWritePostDec),
           EMFUNCDECL26(MultiStoreFlagsPostDec), EMFUNCDECL26(MultiLoadFlagsPostDec), EMFUNCDECL26(MultiStoreWriteFlagsPostDec), EMFUNCDECL26(MultiLoadWriteFlagsPostDec),
           EMFUNCDECL26(MultiStorePostInc), EMFUNCDECL26(MultiLoadPostInc), EMFUNCDECL26(MultiStoreWritePostInc), EMFUNCDECL26(MultiLoadWritePostInc),
@@ -120,7 +120,7 @@
       break;
 
       case 0x9: {
-        static ARMEmuFunc funcs9[16]={
+        static const ARMEmuFunc funcs9[16]={
           EMFUNCDECL26(MultiStorePreDec), EMFUNCDECL26(MultiLoadPreDec), EMFUNCDECL26(MultiStoreWritePreDec), EMFUNCDECL26(MultiLoadWritePreDec),
           EMFUNCDECL26(MultiStoreFlagsPreDec), EMFUNCDECL26(MultiLoadFlagsPreDec), EMFUNCDECL26(MultiStoreWriteFlagsPreDec), EMFUNCDECL26(MultiLoadWriteFlagsPreDec),
           EMFUNCDECL26(MultiStorePreInc), EMFUNCDECL26(MultiLoadPreInc), EMFUNCDECL26(MultiStoreWritePreInc), EMFUNCDECL26(MultiLoadWritePreInc),

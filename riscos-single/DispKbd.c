@@ -1182,14 +1182,14 @@ static HostMode *SelectROScreenMode(int x, int y, int aspect, int depths, int *o
 typedef struct {
   const char label;
   const char *name;
-  const char **values;
+  const char *const *values;
   void *val;
   size_t valsz;
 } menu_item;
 
-static const char *values_bool[] = {"Off","On",NULL};
-static const char *values_display[] = {"Palettised","Standard",NULL};
-static const char *values_skip[] = {"0","1","2","3","4","5","6","7","8","9","10",NULL};
+static const char *const values_bool[] = {"Off","On",NULL};
+static const char *const values_display[] = {"Palettised","Standard",NULL};
+static const char *const values_skip[] = {"0","1","2","3","4","5","6","7","8","9","10",NULL};
 
 #define XX(X) &X,sizeof(X)
 

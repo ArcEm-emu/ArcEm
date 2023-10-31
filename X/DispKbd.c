@@ -495,7 +495,7 @@ DisplayDev_Init(ARMul_State *state)
             XColor *dest;
             XColor *reserve;
         } desired_colour;
-        static desired_colour desired[] = {
+        static const desired_colour desired[] = {
             { "white", &PD.White, NULL },
             { "black", &PD.Black, NULL },
             { "red", &PD.Red, NULL },
@@ -504,7 +504,7 @@ DisplayDev_Init(ARMul_State *state)
             { "gray90", &PD.GreyLight, NULL },
             { "PapayaWhip", &PD.OffWhite, &PD.White },
         };
-        desired_colour *d;
+        const desired_colour *d;
         XColor discard;
 
         for (d = desired; d < END(desired); d++) {

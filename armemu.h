@@ -329,7 +329,7 @@ static inline ARMword inlLHS(ARMul_State *state,ARMword r)
 void ARMul_Emulate26(ARMul_State *state);
 void ARMul_Icycles(ARMul_State *state,unsigned number);
 
-extern uint_fast8_t ARMul_MultTable[]; /* Number of I cycles for a mult */
+extern const uint_fast8_t ARMul_MultTable[]; /* Number of I cycles for a mult */
 #ifdef ARMUL_USE_IMMEDTABLE
 extern ARMword ARMul_ImmedTable[]; /* Immediate DP LHS values */
 #endif
