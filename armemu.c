@@ -52,7 +52,7 @@ ARMul_LoadInstr(ARMul_State *state,ARMword addr, PipelineEntry *p)
   
   entry = FastMap_GetEntryNoWrap(state,addr);
   res = FastMap_DecodeRead(entry,state->FastMapMode);
-//  fprintf(stderr,"LoadInstr: %08x maps to entry %08x res %08x (mode %08x pc %08x)\n",addr,entry,res,MEMC.FastMapMode,state->Reg[15]);
+//  dbug("LoadInstr: %08x maps to entry %08x res %08x (mode %08x pc %08x)\n",addr,entry,res,MEMC.FastMapMode,state->Reg[15]);
   if(FASTMAP_RESULT_DIRECT(res))
   {
     ARMword *data = FastMap_Log2Phy(entry,addr);
@@ -67,9 +67,9 @@ ARMul_LoadInstr(ARMul_State *state,ARMword addr, PipelineEntry *p)
 #if 0
     else if(temp != ARMul_Emulate_DecodeInstr(instr))
     {
-      fprintf(stderr,"LoadInstr: %08x maps to entry %08x res %08x (mode %08x pc %08x)\n",addr,entry,res,MEMC.FastMapMode,state->Reg[15]);
-      fprintf(stderr,"-> data %08x pfunc %08x instr %08x func %08x using ofs %08x\n",data,pfunc,instr,temp,MEMC.FastMapInstrFuncOfs);
-      fprintf(stderr,"But should be %08x!\n",ARMul_Emulate_DecodeInstr(instr));
+      warn("LoadInstr: %08x maps to entry %08x res %08x (mode %08x pc %08x)\n",addr,entry,res,MEMC.FastMapMode,state->Reg[15]);
+      warn("-> data %08x pfunc %08x instr %08x func %08x using ofs %08x\n",data,pfunc,instr,temp,MEMC.FastMapInstrFuncOfs);
+      warn("But should be %08x!\n",ARMul_Emulate_DecodeInstr(instr));
       ControlPane_Error(5,"AMul_LoadInstr failure\n");
     }
 #endif
@@ -1049,7 +1049,7 @@ void EmuRate_Update(ARMul_State *state)
   /* Update IOC timers again, to ensure the next interrupt occurs at the right time */
   UpdateTimerRegisters(state);
 
-  //fprintf(stderr,"EmuRate %d IOC %.4f InvIOC %.4f\n",ARMul_EmuRate,((float)ioc.IOCRate)/65536,((float)ioc.InvIOCRate)/65536);  
+  //dbug("EmuRate %d IOC %.4f InvIOC %.4f\n",ARMul_EmuRate,((float)ioc.IOCRate)/65536,((float)ioc.InvIOCRate)/65536);  
 }
 
 /***************************************************************************\
@@ -1154,9 +1154,7 @@ ARMul_Emulate26(ARMul_State *state)
         /* DAG - resume was here! */
 
         default: /* The program counter has been changed */
-#ifdef DEBUG
-          printf("PC ch pc=0x%x (O 0x%x\n", state->Reg[15], pc);
-#endif
+          dbug("PC ch pc=0x%x (O 0x%x\n", state->Reg[15], pc);
           pc = PC;
           INCPCAMT(8);
           state->Aborted = 0;
@@ -1208,7 +1206,7 @@ ARMul_Emulate26(ARMul_State *state)
       }
 
       ARMword instr = pipe[pipeidx].instr;
-      /*fprintf(stderr, "exec: pc=0x%08x instr=0x%08x\n", pc, instr);*/
+      /*dbug("exec: pc=0x%08x instr=0x%08x\n", pc, instr);*/
       if(ARMul_CCCheck(instr,ECC))
       {
         Prof_BeginFunc(pipe[pipeidx].func);

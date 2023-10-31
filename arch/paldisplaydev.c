@@ -553,7 +553,7 @@ static void PDD_Name(EventFunc)(ARMul_State *state,CycleCount nowtime)
     
     if((Width != DC.LastHostWidth) || (Height != DC.LastHostHeight) || (FrameRate != DC.LastHostHz) || (Depth != DC.LastHostDepth))
     {
-      fprintf(stderr,"New mode: %dx%d, %dHz (CR %x ClockIn %dMhz)\n",Width,Height,FrameRate,NewCR,(int)(ClockIn/2000000));
+      warn_vidc("New mode: %dx%d, %dHz (CR %x ClockIn %dMhz)\n",Width,Height,FrameRate,NewCR,(int)(ClockIn/2000000));
       /* Try selecting new mode */
       if((Width < 1) || (Height < 1))
       {
@@ -817,9 +817,7 @@ static void PDD_Name(VIDCPutVal)(ARMul_State *state,ARMword address, ARMword dat
   addr&=~3;
   switch (addr) {
     case 0x40: /* Border col */
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC border colour write val=0x%x\n",val);
-#endif
+      dbug_vidc("VIDC border colour write val=0x%x\n",val);
       val &= 0x1fff;
       if(VIDC.BorderCol != val)
       {
@@ -832,9 +830,7 @@ static void PDD_Name(VIDCPutVal)(ARMul_State *state,ARMword address, ARMword dat
     case 0x48: /* Cursor palette log col 2 */
     case 0x4c: /* Cursor palette log col 3 */
       addr = (addr-0x44)>>2;
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC cursor log col %d write val=0x%x\n",addr+1,val);
-#endif
+      dbug_vidc("VIDC cursor log col %d write val=0x%x\n",addr+1,val);
       VIDC.CursorPalette[addr] = val & 0x1fff;
       break;
 
@@ -846,9 +842,7 @@ static void PDD_Name(VIDCPutVal)(ARMul_State *state,ARMword address, ARMword dat
     case 0x74: /* Stereo image reg 4 */
     case 0x78: /* Stereo image reg 5 */
     case 0x7c: /* Stereo image reg 6 */
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC stereo image reg write val=0x%x\n",val);
-#endif
+      dbug_vidc("VIDC stereo image reg write val=0x%x\n",val);
       val &= 7;
       addr = ((addr-0x64)>>2)&0x7;
       if(VIDC.StereoImageReg[addr] != val)
@@ -861,121 +855,87 @@ static void PDD_Name(VIDCPutVal)(ARMul_State *state,ARMword address, ARMword dat
       break;
 
     case 0x80:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Horiz cycle register val=%d\n",val>>14);
-#endif
+      dbug_vidc("VIDC Horiz cycle register val=%d\n",val>>14);
       VideoRelUpdateAndForce(DC.ModeChanged,VIDC.Horiz_Cycle,(val>>14) & 0x3ff);
       break;
 
     case 0x84:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Horiz sync width register val=%d\n",val>>14);
-#endif
+      dbug_vidc("VIDC Horiz sync width register val=%d\n",val>>14);
       VIDC.Horiz_SyncWidth = (val>>14) & 0x3ff;
       break;
 
     case 0x88:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Horiz border start register val=%d\n",val>>14);
-#endif
+      dbug_vidc("VIDC Horiz border start register val=%d\n",val>>14);
       VIDC.Horiz_BorderStart = (val>>14) & 0x3ff;
       break;
 
     case 0x8c:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Horiz display start register val=%d\n",val>>14);
-#endif
+      dbug_vidc("VIDC Horiz display start register val=%d\n",val>>14);
       VideoRelUpdateAndForce(DC.ModeChanged,VIDC.Horiz_DisplayStart,(val>>14) & 0x3ff);
       break;
 
     case 0x90:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Horiz display end register val=%d\n",val>>14);
-#endif
+      dbug_vidc("VIDC Horiz display end register val=%d\n",val>>14);
       VideoRelUpdateAndForce(DC.ModeChanged,VIDC.Horiz_DisplayEnd,(val>>14) & 0x3ff);
       break;
 
     case 0x94:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC horizontal border end register val=%d\n",val>>14);
-#endif
+      dbug_vidc("VIDC horizontal border end register val=%d\n",val>>14);
       VIDC.Horiz_BorderEnd = (val>>14) & 0x3ff;
       break;
 
     case 0x98:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC horiz cursor start register val=%d\n",val>>13);
-#endif
+      dbug_vidc("VIDC horiz cursor start register val=%d\n",val>>13);
       VIDC.Horiz_CursorStart=(val>>13) & 0x7ff;
       break;
 
     case 0x9c:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC horiz interlace register val=%d\n",val>>14);
-#endif
+      dbug_vidc("VIDC horiz interlace register val=%d\n",val>>14);
       VIDC.Horiz_Interlace = (val>>14) & 0x3ff;
       break;
 
     case 0xa0:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Vert cycle register val=%d\n",val>>14);
-#endif
+      dbug_vidc("VIDC Vert cycle register val=%d\n",val>>14);
       VideoRelUpdateAndForce(DC.ModeChanged,VIDC.Vert_Cycle,(val>>14) & 0x3ff);
       break;
 
     case 0xa4:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Vert sync width register val=%d\n",val>>14);
-#endif
+      dbug_vidc("VIDC Vert sync width register val=%d\n",val>>14);
       VIDC.Vert_SyncWidth = (val>>14) & 0x3ff;
       break;
 
     case 0xa8:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Vert border start register val=%d\n",val>>14);
-#endif
+      dbug_vidc("VIDC Vert border start register val=%d\n",val>>14);
       VideoRelUpdateAndForce(DC.ModeChanged,VIDC.Vert_BorderStart,((val>>14) & 0x3ff));
       break;
 
     case 0xac:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Vert disp start register val=%d\n",val>>14);
-#endif
+      dbug_vidc("VIDC Vert disp start register val=%d\n",val>>14);
       VideoRelUpdateAndForce(DC.ModeChanged,VIDC.Vert_DisplayStart,((val>>14) & 0x3ff));
       break;
 
     case 0xb0:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Vert disp end register val=%d\n",val>>14);
-#endif
+      dbug_vidc("VIDC Vert disp end register val=%d\n",val>>14);
       VideoRelUpdateAndForce(DC.ModeChanged,VIDC.Vert_DisplayEnd,(val>>14) & 0x3ff);
       break;
 
     case 0xb4:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Vert Border end register val=%d\n",val>>14);
-#endif
+      dbug_vidc("VIDC Vert Border end register val=%d\n",val>>14);
       VideoRelUpdateAndForce(DC.ModeChanged,VIDC.Vert_BorderEnd,((val>>14) & 0x3ff));
       break;
 
     case 0xb8:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Vert cursor start register val=%d\n",val>>14);
-#endif
+      dbug_vidc("VIDC Vert cursor start register val=%d\n",val>>14);
       VIDC.Vert_CursorStart=(val>>14) & 0x3ff;
       break;
 
     case 0xbc:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Vert cursor end register val=%d\n",val>>14);
-#endif
+      dbug_vidc("VIDC Vert cursor end register val=%d\n",val>>14);
       VIDC.Vert_CursorEnd=(val>>14) & 0x3ff;
       break;
 
     case 0xc0:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Sound freq register val=%d\n",val);
-#endif
+      dbug_vidc("VIDC Sound freq register val=%d\n",val);
       val &= 0xff;
       if(VIDC.SoundFreq != val)
       {
@@ -987,14 +947,12 @@ static void PDD_Name(VIDCPutVal)(ARMul_State *state,ARMword address, ARMword dat
       break;
 
     case 0xe0:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Control register val=0x%x\n",val);
-#endif
+      dbug_vidc("VIDC Control register val=0x%x\n",val);
       VIDC.ControlReg = val & 0xffff;
       break;
 
     default:
-      fprintf(stderr,"Write to unknown VIDC register reg=0x%x val=0x%x\n",addr,val);
+      warn_vidc("Write to unknown VIDC register reg=0x%x val=0x%x\n",addr,val);
       break;
 
   }; /* Register switch */
@@ -1014,7 +972,7 @@ static int PDD_Name(Init)(ARMul_State *state,const struct Vidc_Regs *Vidc)
 {
   state->Display = calloc(sizeof(struct PDD_Name(DisplayInfo)),1);
   if(!state->Display) {
-    fprintf(stderr,"Failed to allocate DisplayInfo\n");
+    warn_vidc("Failed to allocate DisplayInfo\n");
     return -1;
   }
 

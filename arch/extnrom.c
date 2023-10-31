@@ -21,6 +21,7 @@
 #include <string.h>
 
 #include "../armdefs.h"
+#include "dbugsys.h"
 #include "filecalls.h"
 #include "extnrom.h"
 #include "ArcemConfig.h"
@@ -145,8 +146,8 @@ extnrom_calculate_size(uint32_t *entry_count)
 
   /* Read list of files and calculate total size */
   if(!Directory_Open(hArcemConfig.sEXTNDirectory, &hDir)) {
-    fprintf(stderr, "Could not open Extension Rom directory \'%s\': %s\n",
-            hArcemConfig.sEXTNDirectory, strerror(errno));
+    warn_data("Could not open Extension Rom directory \'%s\': %s\n",
+              hArcemConfig.sEXTNDirectory, strerror(errno));
     return 0;
   }
 
@@ -166,8 +167,8 @@ extnrom_calculate_size(uint32_t *entry_count)
 
     /* Read information about the entry */
     if (!File_GetInfo(path, &hFileInfo)) {
-      fprintf(stderr, "Warning: could not get info on file \'%s\'\n",
-              path);
+      warn_data("Warning: could not get info on file \'%s\'\n",
+                path);
       continue;
     }
 
@@ -255,7 +256,7 @@ extnrom_load(uint32_t size, uint32_t entry_count, void *address)
 
   /* Read list of files, create Chunk Directory and load them in */
   if(!Directory_Open(hArcemConfig.sEXTNDirectory, &hDir)) {
-    fprintf(stderr, "Could not open Extension Rom directory \'%s\'\n",
+    warn_data("Could not open Extension Rom directory \'%s\'\n",
             hArcemConfig.sEXTNDirectory);
     return;
   }
@@ -325,14 +326,14 @@ extnrom_load(uint32_t size, uint32_t entry_count, void *address)
     /* Load module */
     f = fopen(path, "rb");
     if (!f) {
-      fprintf(stderr, "Could not open file \'%s\': %s\n",
-              path, strerror(errno));
+      warn_data("Could not open file \'%s\': %s\n",
+                path, strerror(errno));
       continue;
     }
 
     if (fread(modules, 1, hFileInfo.ulFilesize, f) != hFileInfo.ulFilesize) {
-      fprintf(stderr, "Error while loading file \'%s\': %s\n",
-              path, strerror(errno));
+      warn_data("Error while loading file \'%s\': %s\n",
+                path, strerror(errno));
       fclose(f);
       continue;
     }

@@ -15,6 +15,7 @@
 
 #include "../armdefs.h"
 #include "armarc.h"
+#include "arch/dbugsys.h"
 #include "arch/keyboard.h"
 #include "archio.h"
 #include "hdc63463.h"

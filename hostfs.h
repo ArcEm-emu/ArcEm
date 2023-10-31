@@ -2,6 +2,7 @@
 #define HOSTFS_H
 
 #include "armdefs.h"
+#include "dbugsys.h"
 
 #define ARCEM_SWI_CHUNK    0x56ac0
 #define ARCEM_SWI_SHUTDOWN  (ARCEM_SWI_CHUNK + 0)
@@ -10,8 +11,6 @@
 #define ARCEM_SWI_NANOSLEEP (ARCEM_SWI_CHUNK + 3)
 #define ARCEM_SWI_NETWORK   (ARCEM_SWI_CHUNK + 4)
 
-#define rpclog(...) fprintf(stderr,__VA_ARGS__)
-#define error(...) fprintf(stderr,__VA_ARGS__)
 #define hostfs_error(code,...) ControlPane_Error(code,__VA_ARGS__)
 
 #define HOSTFS_ARCEM /* Build ArcEm version, not RPCEmu */

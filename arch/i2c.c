@@ -31,7 +31,7 @@ static const char *I2CStateNameTrans[] = {"Idle",
 
 #define I2CDATAREAD ((ioc.ControlReg & (ioc.ControlRegInputData)) & 1)
 #define I2CCLOCKREAD ((ioc.ControlReg & 2)!=0)
-#define I2CDATAWRITE(v) { /*fprintf(stderr,"I2C data write (%d)\n",v); */ ioc.ControlRegInputData &= ~1; ioc.ControlRegInputData |=v; };
+#define I2CDATAWRITE(v) { /*warn_i2c("I2C data write (%d)\n",v); */ ioc.ControlRegInputData &= ~1; ioc.ControlRegInputData |=v; };
 
 /* Macros taken from bcd.h in the Linux kernel - licensed under GPL2+ */
 #define BCD2BIN(val)    (((val) & 0x0f) + ((val)>>4)*10)
@@ -99,7 +99,7 @@ static const unsigned char CMOSDefaults[] = {
 static void
 I2C_SetupTransmit(ARMul_State *state)
 {
-  /*fprintf(stderr,"I2C_SetupTransmit (address=%d)\n",I2C.WordAddress); */
+  /*dbug_i2c("I2C_SetupTransmit (address=%d)\n",I2C.WordAddress); */
   I2C.IAmTransmitter = true;
   I2C.state = I2CChipState_TransmittingToMaster;
 
@@ -198,7 +198,7 @@ void I2C_Update(ARMul_State *state) {
 
   ClockEdge=NewClockState!=I2C.OldClockState;
 
-  /*fprintf(stderr,"I2C_Update: current state=%s Clock=%d Data=%d BitsSoFar=%d DataBuffer=%d\n",
+  /*dbug_i2c("I2C_Update: current state=%s Clock=%d Data=%d BitsSoFar=%d DataBuffer=%d\n",
     I2CStateNameTrans[I2C.state],I2CCLOCKREAD,I2CDATAREAD,I2C.NumberOfBitsSoFar,I2C.DataBuffer); */
 
   if ((ClockEdge) && (I2CCLOCKREAD)) {
@@ -263,7 +263,7 @@ void I2C_Update(ARMul_State *state) {
             if ((I2C.DataBuffer & 0xfe)!=0xa0) {
               /* Hey - its a request for a different I2C peripheral - like an A500's timer
                  chip */
-              fprintf(stderr, "I2C simulator got wierd slave address "
+              warn_i2c("I2C simulator got wierd slave address "
                   "%d\n", (int) I2C.DataBuffer);
               I2C.IAmTransmitter=false;
               I2C.NumberOfBitsSoFar=0;
@@ -436,8 +436,8 @@ static void SetUpCMOS(ARMul_State *state)
 #endif
 
     if ((fp = fopen(path, "r")) == NULL)
-        fputs("SetUpCMOS: Could not open (hexcmos) CMOS settings file, "
-            "resetting to internal defaults.\n", stderr);
+        warn_i2c("SetUpCMOS: Could not open (hexcmos) CMOS settings file, "
+            "resetting to internal defaults.\n");
 
     for (byte = 0; byte < 240; byte++) {
         if (fp) {

@@ -1,26 +1,32 @@
 /* arch/keyboard.c -- a model of the Archimedes keyboard. */
 
 #include "armarc.h"
+#include "dbugsys.h"
 #include "keyboard.h"
-
-#define DEBUG_KEYBOARD 0
-#if DEBUG_KEYBOARD
-#define DBG(a) fprintf a
-#else
-#define DBG(a)
-#endif
 
 /* ------------------------------------------------------------------ */
 
+#if defined(DEBUG_KEYBOARD) || defined(WARN_KEYBOARD)
+#define STORE_KEY_NAME 1
+#else
+#define STORE_KEY_NAME 0
+#endif
+
 /* Information on an arch_key_id. */
 typedef struct {
+#if STORE_KEY_NAME
   const char *name;
+#endif
   uint8_t row;
   uint8_t col;
 } key_info;
 
 static const key_info keys[] = {
+#if STORE_KEY_NAME
 #define X(key, row, col) { #key, row, col },
+#else
+#define X(key, row, col) { row, col },
+#endif
   ARCH_KEYBOARD_DEFINITION
 #undef X
 };
@@ -46,11 +52,15 @@ void keyboard_key_changed(struct arch_keyboard *kb, arch_key_id kid,
 
   ki = keys + kid;
 
-  DBG((stderr, "keyboard_key_changed(kb, \"%s\", %d)\n", ki->name, up));
+#if STORE_KEY_NAME
+  dbug_kbd("keyboard_key_changed(kb, \"%s\", %d)\n", ki->name, up);
+#endif
 
   if (kb->BuffOcc >= KBDBUFFLEN) {
-    fprintf(stderr, "keyboard_key_changed: key \"%s\" discarded, "
-            "buffer full\n", ki->name);
+#if STORE_KEY_NAME
+    warn_kbd("keyboard_key_changed: key \"%s\" discarded, "
+             "buffer full\n", ki->name);
+#endif
     return;
   }
 
@@ -78,7 +88,7 @@ void Kbd_StartToHost(ARMul_State *state)
   }
 
   if (KBD.HostCommand) {
-    DBG((stderr, "Kbd_StartToHost: HostCommand=%d\n", KBD.HostCommand));
+    dbug_kbd("Kbd_StartToHost: HostCommand=%d\n", KBD.HostCommand);
   }
 
   switch (KBD.HostCommand) {
@@ -108,9 +118,9 @@ void Kbd_StartToHost(ARMul_State *state)
   if (KBD.KeyScanEnable && KBD.BuffOcc > 0) {
     uint8_t loop;
 
-    DBG((stderr, "KBD_StartToHost - sending key -  BuffOcc=%d "
+    dbug_kbd("KBD_StartToHost - sending key -  BuffOcc=%d "
         "(%d,%d,%d)\n", KBD.BuffOcc, KBD.Buffer[0].KeyUpNDown,
-        KBD.Buffer[0].KeyRowToSend, KBD.Buffer[0].KeyColToSend));
+        KBD.Buffer[0].KeyRowToSend, KBD.Buffer[0].KeyColToSend);
 
     KBD.KeyUpNDown = KBD.Buffer[0].KeyUpNDown;
     KBD.KeyRowToSend = KBD.Buffer[0].KeyRowToSend;
@@ -152,8 +162,8 @@ void Kbd_StartToHost(ARMul_State *state)
 
 void Kbd_CodeFromHost(ARMul_State *state, uint8_t FromHost)
 {
-  DBG((stderr, "Kbd_CodeFromHost: FromHost=0x%x State=%d\n",
-      FromHost, KBD.KbdState));
+  dbug_kbd("Kbd_CodeFromHost: FromHost=0x%x State=%d\n",
+      FromHost, KBD.KbdState);
 
   switch (KBD.KbdState) {
     case KbdState_JustStarted:
@@ -161,14 +171,14 @@ void Kbd_CodeFromHost(ARMul_State *state, uint8_t FromHost)
       if (FromHost == PROTO_HRST) {
         if (IOC_WriteKbdRx(state, PROTO_HRST) != -1) {
           KBD.KbdState = KbdState_SentHardReset;
-          DBG((stderr, "KBD: Received Reset and sent Reset\n"));
+          dbug_kbd("KBD: Received Reset and sent Reset\n");
         } else {
-          DBG((stderr, "KBD: Couldn't respond to Reset - Kart "
-              "full\n"));
+          dbug_kbd("KBD: Couldn't respond to Reset - Kart "
+              "full\n");
         }
       } else {
-        DBG((stderr, "KBD: JustStarted; Got bad code 0x%x\n",
-            FromHost));
+        dbug_kbd("KBD: JustStarted; Got bad code 0x%x\n",
+            FromHost);
       }
       break;
 
@@ -177,14 +187,14 @@ void Kbd_CodeFromHost(ARMul_State *state, uint8_t FromHost)
       if (FromHost == PROTO_RAK1) {
         if (IOC_WriteKbdRx(state, PROTO_RAK1) != -1) {
           KBD.KbdState = KbdState_SentAck1;
-          DBG((stderr, "KBD: Received Ack1 and sent Ack1\n"));
+          dbug_kbd("KBD: Received Ack1 and sent Ack1\n");
         } else {
-          DBG((stderr, "KBD: Couldn't respond to Ack1 - Kart "
-              "full\n"));
+          dbug_kbd("KBD: Couldn't respond to Ack1 - Kart "
+              "full\n");
         }
       } else {
-        DBG((stderr, "KBD: SentAck1; Got bad code 0x%x - "
-            "sending reset\n", FromHost));
+        dbug_kbd("KBD: SentAck1; Got bad code 0x%x - "
+            "sending reset\n", FromHost);
         IOC_WriteKbdRx(state, PROTO_HRST);
         KBD.KbdState = KbdState_SentHardReset;
         /* Or should that be just started? */
@@ -196,14 +206,14 @@ void Kbd_CodeFromHost(ARMul_State *state, uint8_t FromHost)
       if (FromHost == PROTO_RAK2) {
         if (IOC_WriteKbdRx(state, PROTO_RAK2) != -1) {
           KBD.KbdState = KbdState_SentAck2;
-          DBG((stderr, "KBD: Received and ack'd to Ack2\n"));
+          dbug_kbd("KBD: Received and ack'd to Ack2\n");
         } else {
-          DBG((stderr, "KBD: Couldn't respond to Ack2 - Kart "
-              "full\n"));
+          dbug_kbd("KBD: Couldn't respond to Ack2 - Kart "
+              "full\n");
         }
       } else {
-        DBG((stderr, "KBD: SentAck2; Got bad code 0x%x\n",
-            FromHost));
+        dbug_kbd("KBD: SentAck2; Got bad code 0x%x\n",
+            FromHost);
       }
       break;
 
@@ -211,11 +221,11 @@ void Kbd_CodeFromHost(ARMul_State *state, uint8_t FromHost)
       if (FromHost == PROTO_HRST) {
         if (IOC_WriteKbdRx(state, PROTO_HRST) != -1) {
           KBD.KbdState = KbdState_SentHardReset;
-          DBG((stderr, "KBD: Received and ack'd to hardware "
-              "reset\n"));
+          dbug_kbd("KBD: Received and ack'd to hardware "
+              "reset\n");
         } else {
-          DBG((stderr, "KBD: Couldn't respond to hardware reset - "
-              "Kart full\n"));
+          dbug_kbd("KBD: Couldn't respond to hardware reset - "
+              "Kart full\n");
         }
         return;
       }
@@ -223,11 +233,11 @@ void Kbd_CodeFromHost(ARMul_State *state, uint8_t FromHost)
       switch (FromHost & 0xf0) {
         case 0: /* May be LED switch */
           if ((FromHost & 0x08) == 0x08) {
-            DBG((stderr, "KBD: Received bad code: 0x%x\n",
-                FromHost));
+            dbug_kbd("KBD: Received bad code: 0x%x\n",
+                FromHost);
              return;
           }
-          DBG((stderr, "KBD: LED state now: 0x%x\n", FromHost & 0x7));
+          dbug_kbd("KBD: LED state now: 0x%x\n", FromHost & 0x7);
           if (KBD.Leds != (FromHost & 0x7)) {
             KBD.Leds = FromHost & 0x7;
             if (KBD.leds_changed) {
@@ -238,10 +248,10 @@ void Kbd_CodeFromHost(ARMul_State *state, uint8_t FromHost)
           /* I think we have to acknowledge - but I don't know with
            * what. */
           if (IOC_WriteKbdRx(state, 0xa0 | FromHost & 0x7)) {
-            DBG((stderr, "KBD: acked led's\n"));
+            dbug_kbd("KBD: acked led's\n");
           } else {
-            DBG((stderr, "KBD: Couldn't respond to LED - Kart "
-                 "full\n"));
+            dbug_kbd("KBD: Couldn't respond to LED - Kart "
+                 "full\n");
           }
 #endif
           break;
@@ -249,7 +259,7 @@ void Kbd_CodeFromHost(ARMul_State *state, uint8_t FromHost)
         case 0x20: /* Host requests keyboard id - or mouse position. */
           KBD.HostCommand = FromHost;
           Kbd_StartToHost(state);
-          DBG((stderr, "KBD: Host requested keyboard id\n"));
+          dbug_kbd("KBD: Host requested keyboard id\n");
           return;
 
         case 0x30: /* Its probably an ack of some type. */
@@ -266,8 +276,8 @@ void Kbd_CodeFromHost(ARMul_State *state, uint8_t FromHost)
             } else {
                 /* Hmm - we just sent a first byte - we shouldn't get
                  * one of * these! */
-                DBG((stderr, "KBD: Got last byte ack after first "
-                    "byte!\n"));
+                dbug_kbd("KBD: Got last byte ack after first "
+                    "byte!\n");
             }
             break;
 
@@ -275,13 +285,13 @@ void Kbd_CodeFromHost(ARMul_State *state, uint8_t FromHost)
           if (KBD.KbdState != KbdState_SentKeyByte1 &&
             KBD.KbdState != KbdState_SentMouseByte1)
           {
-            DBG((stderr, "KBD: Got 1st byte ack when we "
-                 "haven't sent one!\n"));
+            dbug_kbd("KBD: Got 1st byte ack when we "
+                 "haven't sent one!\n");
           } else {
             if (KBD.KbdState == KbdState_SentMouseByte1) {
               if (IOC_WriteKbdRx(state, KBD.MouseYToSend) == -1) {
-                  DBG((stderr, "KBD: Couldn't send 2nd byte "
-                      "of mouse value - Kart full\n"));
+                  dbug_kbd("KBD: Couldn't send 2nd byte "
+                      "of mouse value - Kart full\n");
               }
               KBD.KbdState = KbdState_SentMouseByte2;
             } else {
@@ -289,8 +299,8 @@ void Kbd_CodeFromHost(ARMul_State *state, uint8_t FromHost)
                   (uint8_t) ((KBD.KeyUpNDown ? 0xd0 : 0xc0) |
                   KBD.KeyColToSend)) == -1)
               {
-                  DBG((stderr, "KBD: Couldn't send 2nd byte "
-                      "of key value - Kart full\n"));
+                  dbug_kbd("KBD: Couldn't send 2nd byte "
+                      "of key value - Kart full\n");
               }
               KBD.KbdState = KbdState_SentKeyByte2;
               /* Indicate that the key has been sent. */
@@ -301,20 +311,20 @@ void Kbd_CodeFromHost(ARMul_State *state, uint8_t FromHost)
           break;
 
         default:
-          DBG((stderr, "KBD: Bad ack type received 0x%x\n",
-              FromHost));
+          dbug_kbd("KBD: Bad ack type received 0x%x\n",
+              FromHost);
           break;
       }
       return;
 
       case 0x40: /* Host just sends us some data. */
-        DBG((stderr, "KBD: Host sent us some data: 0x%x\n",
-            FromHost));
+        dbug_kbd("KBD: Host sent us some data: 0x%x\n",
+            FromHost);
         return;
 
       default:
-        DBG((stderr, "KBD: Unknown code received from host "
-            "0x%x\n", FromHost));
+        dbug_kbd("KBD: Unknown code received from host "
+            "0x%x\n", FromHost);
         return;
     }
   }

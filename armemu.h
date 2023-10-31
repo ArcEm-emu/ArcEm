@@ -292,18 +292,18 @@ static inline ARMword inlLHS(ARMul_State *state,ARMword r)
 *                 Macros to store results of instructions                   *
 \***************************************************************************/
 
-#define WRITEDEST(d) {/*fprintf(stderr,"WRITEDEST: %d=0x%08x\n",DESTReg,d);*/\
+#define WRITEDEST(d) {/*dbug("WRITEDEST: %d=0x%08x\n",DESTReg,d);*/\
                       if (DESTReg==15) \
                         WriteR15(state, d); \
                      else \
                           DEST = d;\
                       }
 
-#define WRITEDESTNORM(d) {/*fprintf(stderr,"WRITEDEST: %d=0x%08x\n",DESTReg,d);*/ DEST = d;}
+#define WRITEDESTNORM(d) {/*dbug("WRITEDEST: %d=0x%08x\n",DESTReg,d);*/ DEST = d;}
 
-#define WRITEDESTPC(d) {/*fprintf(stderr,"WRITEDEST: %d=0x%08x\n", 15, d);*/ WriteR15(state, d);}
+#define WRITEDESTPC(d) {/*dbug("WRITEDEST: %d=0x%08x\n", 15, d);*/ WriteR15(state, d);}
 
-#define WRITESDEST(d) { /*fprintf(stderr,"WRITESDEST: %d=0x%08x\n",DESTReg,d);*/\
+#define WRITESDEST(d) { /*dbug("WRITESDEST: %d=0x%08x\n",DESTReg,d);*/\
                       if (DESTReg == 15) \
                          WriteSR15(state, d); \
                       else { \

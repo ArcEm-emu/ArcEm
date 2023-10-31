@@ -4,6 +4,7 @@
 
 #include "../armdefs.h"
 #include "armarc.h"
+#include "../arch/dbugsys.h"
 #include "../arch/keyboard.h"
 #include "displaydev.h"
 #include "win.h"

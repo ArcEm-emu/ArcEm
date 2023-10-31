@@ -222,6 +222,16 @@ dbug_hostfs(const char *format, ...)
 #endif
 
 static void
+warn_hostfs(const char *format, ...)
+{
+  va_list ap;
+
+  va_start(ap, format);
+  vfprintf(stderr, format, ap);
+  va_end(ap);
+}
+
+static void
 path_construct(const char *old_path, const char *ro_path,
                char *new_path, size_t len, ARMword load, ARMword exec);
 
@@ -258,14 +268,14 @@ errno_to_hostfs_error(const char *filename,const char *function,const char *op)
     }
     else
     {
-      fprintf(stderr,"%s() could not %s '%s': %s %d\n",function,op,filename,strerror(errno),errno);
+      warn_hostfs("%s() could not %s '%s': %s %d\n",function,op,filename,strerror(errno),errno);
       return HOSTFS_ERROR_UNKNOWN;
     }
   }
 #endif
 
   default:
-    fprintf(stderr,"%s() could not %s '%s': %s %d\n",function,op,filename,strerror(errno),errno);
+    warn_hostfs("%s() could not %s '%s': %s %d\n",function,op,filename,strerror(errno),errno);
     return HOSTFS_ERROR_UNKNOWN;
   }
 }
@@ -588,7 +598,7 @@ hostfs_read_object_info(const char *host_pathname,
 
   if(err)
   {
-    fprintf(stderr,"hostfs_read_object_info() could not stat '%s': %d %s\n",host_pathname,err->errnum,err->errmess);
+    warn_hostfs("hostfs_read_object_info() could not stat '%s': %d %s\n",host_pathname,err->errnum,err->errmess);
     object_info->type = OBJECT_TYPE_NOT_FOUND;
   }
 
@@ -624,7 +634,7 @@ hostfs_read_object_info(const char *host_pathname,
 
     default:
       /* Other error */
-      fprintf(stderr,
+      warn_hostfs(
               "hostfs_read_object_info() could not stat() \'%s\': %s %d\n",
               host_pathname, strerror(errno), errno);
       object_info->type = OBJECT_TYPE_NOT_FOUND;
@@ -769,8 +779,8 @@ hostfs_path_scan(const char *host_dir_path,
       break;
 
     default:
-      fprintf(stderr, "hostfs_path_scan() could not opendir() \'%s\': %s %d\n",
-              host_dir_path, strerror(errno), errno);
+     warn_hostfs("hostfs_path_scan() could not opendir() \'%s\': %s %d\n",
+                 host_dir_path, strerror(errno), errno);
       object_info->type = OBJECT_TYPE_NOT_FOUND;
     }
 
@@ -1076,16 +1086,16 @@ hostfs_args_3_write_file_extent(ARMul_State *state)
 
   /* Flush any pending I/O before moving to low-level I/O functions */
   if (fflush(f)) {
-    fprintf(stderr, "hostfs_args_3_write_file_extent() bad fflush(): %s %d\n",
-            strerror(errno), errno);
+    warn_hostfs("hostfs_args_3_write_file_extent() bad fflush(): %s %d\n",
+                strerror(errno), errno);
     return;
   }
 
   /* Obtain underlying file descriptor for this FILE* */
   fd = fileno(f);
   if (fd < 0) {
-    fprintf(stderr, "hostfs_args_3_write_file_extent() bad fd: %s %d\n",
-            strerror(errno), errno);
+    warn_hostfs("hostfs_args_3_write_file_extent() bad fd: %s %d\n",
+                strerror(errno), errno);
     return;
   }
 
@@ -1093,8 +1103,8 @@ hostfs_args_3_write_file_extent(ARMul_State *state)
   /* Set file to required extent */
   /* FIXME Not defined if file is increased in size */
   if (ftruncate(fd, (off_t) state->Reg[2])) {
-    fprintf(stderr, "hostfs_args_3_write_file_extent() bad ftruncate(): %s %d\n",
-            strerror(errno), errno);
+    warn_hostfs("hostfs_args_3_write_file_extent() bad ftruncate(): %s %d\n",
+                strerror(errno), errno);
     return;
   }
 #endif
@@ -1146,7 +1156,7 @@ hostfs_args_8_write_zeros(ARMul_State *state)
 
     written = fwrite(buffer, 1, buffer_amount, f);
     if (written < buffer_amount) {
-      fprintf(stderr, "fwrite(): %s\n", strerror(errno));
+      warn_hostfs("fwrite(): %s\n", strerror(errno));
       return;
     }
     length -= written;
@@ -1302,7 +1312,7 @@ hostfs_write_file(ARMul_State *state, bool with_data)
 
   if(bytes_written != (state->Reg[5] - state->Reg[4]))
   {
-    fprintf(stderr,"hostfs_write_file(): Failed to write full extent of file\n");
+    warn_hostfs("hostfs_write_file(): Failed to write full extent of file\n");
     /* TODO - Examine errno? */
     state->Reg[9] = HOSTFS_ERROR_UNKNOWN;
   }
@@ -1560,7 +1570,7 @@ hostfs_file_255_load_file(ARMul_State *state)
   bytes_read = File_ReadRAM(state, f,ptr,state->Reg[4]);
   if(bytes_read != state->Reg[4])
   {
-    fprintf(stderr,"hostfs_file_255_load_file(): Failed to read full extent of file\n");
+    warn_hostfs("hostfs_file_255_load_file(): Failed to read full extent of file\n");
     /* TODO - Examine errno? */
     state->Reg[9] = HOSTFS_ERROR_UNKNOWN;
   }
@@ -1680,8 +1690,8 @@ hostfs_func_8_rename(ARMul_State *state)
   if (rename(host_pathname1, new_pathname)) {
     /* An error occurred */
 
-    fprintf(stderr, "HostFS could not rename \'%s\' to \'%s\': %s %d\n",
-            host_pathname1, new_pathname, strerror(errno), errno);
+    warn_hostfs("HostFS could not rename \'%s\' to \'%s\': %s %d\n",
+                host_pathname1, new_pathname, strerror(errno), errno);
     state->Reg[1] = 1; /* non-zero indicates could not rename */
     return;
   }
@@ -1766,7 +1776,7 @@ hostfs_cache_dir(const char *directory_name)
     if(err)
     {
       /* Hmm, this shouldn't happen. just give up. */
-      fprintf(stderr,"hostfs_cache_dir(): Error %d %s\n",err->errnum,err->errmess);
+      warn_hostfs("hostfs_cache_dir(): Error %d %s\n",err->errnum,err->errmess);
       break;
     }
 
@@ -2098,14 +2108,14 @@ hostfs_register(ARMul_State *state)
   /* Does R0 contain the supported protocol? */
   if (state->Reg[0] == HOSTFS_PROTOCOL_VERSION) {
     /* Successful registration - acknowledge by setting R0 to 0xffffffff */
-    rpclog("HostFS: Registration request version %u accepted\n", state->Reg[0]);
+    warn_hostfs("HostFS: Registration request version %u accepted\n", state->Reg[0]);
     state->Reg[0] = 0xffffffff;
     hostfs_reset();
     hostfs_state = HOSTFS_STATE_REGISTERED;
 
   } else {
     /* Failed registration due to an unsupported version */
-    rpclog("HostFS: Registration request version %u rejected\n", state->Reg[0]);
+    warn_hostfs("HostFS: Registration request version %u rejected\n", state->Reg[0]);
     hostfs_state = HOSTFS_STATE_IGNORE;
   }
 }
@@ -2186,7 +2196,7 @@ hostfs(ARMul_State *state)
     case 6: hostfs_func(state);     break;
     case 7: hostfs_gbpb(state);     break;
     default:
-      error("!!! ERROR !!! - unknown op in R9\n");
+      warn_hostfs("!!! ERROR !!! - unknown op in R9\n");
       break;
     }
     break;
@@ -2194,7 +2204,7 @@ hostfs(ARMul_State *state)
   case HOSTFS_STATE_UNREGISTERED:
     /* Log attempt to use HostFS without registration and ignore further
        operations */
-    rpclog("HostFS: Attempt to use HostFS without registration - ignoring\n");
+    warn_hostfs("HostFS: Attempt to use HostFS without registration - ignoring\n");
     hostfs_state = HOSTFS_STATE_IGNORE;
     break;
 
@@ -2204,7 +2214,7 @@ hostfs(ARMul_State *state)
   }
 
   if(state->Reg[9] >= 0xb0)
-    fprintf(stderr,"\tReturning with error %x\n",state->Reg[9]);
+    warn_hostfs("\tReturning with error %x\n",state->Reg[9]);
 
 #if defined(__riscos__) && defined(__TARGET_UNIXLIB__)
   __riscosify_control = old_riscosify;

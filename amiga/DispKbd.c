@@ -8,6 +8,7 @@
 
 #include "../armdefs.h"
 #include "armarc.h"
+#include "../arch/dbugsys.h"
 #include "../arch/keyboard.h"
 #include "../arch/ControlPane.h"
 #include "displaydev.h"

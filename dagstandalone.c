@@ -29,6 +29,7 @@
 
 #include "dagstandalone.h"
 #include "armdefs.h"
+#include "dbugsys.h"
 
 #include "ArcemConfig.h"
 #include "ControlPane.h"
@@ -39,15 +40,13 @@
 #ifndef WIN32
 #ifndef AMIGA
 static void dagstandalone_handlesignal(int sig) {
-#ifdef DEBUG
-  fprintf(stderr, "Terminate ARMulator - excecution\n");
-#endif
+  dbug("Terminate ARMulator - excecution\n");
 #ifdef BENCHMARKEXIT
-  printf("Emulated cycles = %ld\n", ARMul_Time);
+  warn("Emulated cycles = %ld\n", ARMul_Time);
   exit(0);
 #endif
   if (sig != SIGUSR1) {
-    fprintf(stderr,"Unsupported signal.\n");
+    warn("Unsupported signal.\n");
     return;
   }
   exit(0); /* ??? */

@@ -64,23 +64,23 @@ static void DumpHandler(int sig) {
   int i, idx;
   ARMword size;
 
-  fprintf(stderr,"SIGUSR2 at PC=0x%x\n",ARMul_GetPC(state));
+  warn("SIGUSR2 at PC=0x%x\n",ARMul_GetPC(state));
   signal(SIGUSR2,DumpHandler);
   /* Register dump */
-  fprintf(stderr, "Current registers:\n"
-                  "r0  = %08x  r1  = %08x  r2  = %08x  r3  = %08x\n"
-                  "r4  = %08x  r5  = %08x  r6  = %08x  r7  = %08x\n"
-                  "r8  = %08x  r9  = %08x  r10 = %08x  r11 = %08x\n"
-                  "r12 = %08x  r13 = %08x  r14 = %08x  r15 = %08x\n",
+  warn("Current registers:\n"
+       "r0  = %08x  r1  = %08x  r2  = %08x  r3  = %08x\n"
+       "r4  = %08x  r5  = %08x  r6  = %08x  r7  = %08x\n"
+       "r8  = %08x  r9  = %08x  r10 = %08x  r11 = %08x\n"
+       "r12 = %08x  r13 = %08x  r14 = %08x  r15 = %08x\n",
     state->Reg[0], state->Reg[1], state->Reg[2], state->Reg[3],
     state->Reg[4], state->Reg[5], state->Reg[6], state->Reg[7],
     state->Reg[8], state->Reg[9], state->Reg[10], state->Reg[11],
     state->Reg[12], state->Reg[13], state->Reg[14], state->Reg[15]);
   if(state->Bank == FIQBANK)
   {
-    fprintf(stderr,"USR registers:\n"
-                   "r8  = %08x  r9  = %08x  r10 = %08x  r11 = %08x\n"
-                   "r12 = %08x  r13 = %08x  r14 = %08x\n",
+    warn("USR registers:\n"
+         "r8  = %08x  r9  = %08x  r10 = %08x  r11 = %08x\n"
+         "r12 = %08x  r13 = %08x  r14 = %08x\n",
       state->RegBank[USERBANK][8], state->RegBank[USERBANK][9],
       state->RegBank[USERBANK][10], state->RegBank[USERBANK][11],
       state->RegBank[USERBANK][12],
@@ -88,14 +88,14 @@ static void DumpHandler(int sig) {
   }
   else if(state->Bank != USERBANK)
   {
-    fprintf(stderr,"USR registers:  r13 = %08x  r14 = %08x\n",
+    warn("USR registers:  r13 = %08x  r14 = %08x\n",
       state->RegBank[USERBANK][13], state->RegBank[USERBANK][14]);
   }
   if(state->Bank != FIQBANK)
   {
-    fprintf(stderr,"FIQ registers:\n"
-                   "r8  = %08x  r9  = %08x  r10 = %08x  r11 = %08x\n"
-                   "r12 = %08x  r13 = %08x  r14 = %08x\n",
+    warn("FIQ registers:\n"
+         "r8  = %08x  r9  = %08x  r10 = %08x  r11 = %08x\n"
+         "r12 = %08x  r13 = %08x  r14 = %08x\n",
       state->RegBank[FIQBANK][8], state->RegBank[FIQBANK][9],
       state->RegBank[FIQBANK][10], state->RegBank[FIQBANK][11],
       state->RegBank[FIQBANK][12],
@@ -103,21 +103,21 @@ static void DumpHandler(int sig) {
   }
   if(state->Bank != IRQBANK)
   {
-    fprintf(stderr,"IRQ registers:  r13 = %08x  r14 = %08x\n",
+    warn("IRQ registers:  r13 = %08x  r14 = %08x\n",
       state->RegBank[IRQBANK][13], state->RegBank[IRQBANK][14]);
   }  
   if(state->Bank != SVCBANK)
   {
-    fprintf(stderr,"SVC registers:  r13 = %08x  r14 = %08x\n",
+    warn("SVC registers:  r13 = %08x  r14 = %08x\n",
       state->RegBank[SVCBANK][13], state->RegBank[SVCBANK][14]);
   }  
 
   /* IOC timers */
   for(i=0;i<4;i++)
-    fprintf(stderr,"Timer%d Count %08x Latch %08x\n",i,ioc.TimerCount[i],ioc.TimerInputLatch[i]);
+    warn("Timer%d Count %08x Latch %08x\n",i,ioc.TimerCount[i],ioc.TimerInputLatch[i]);
 
   /* Memory map */
-  fprintf(stderr,"MEMC using %dKB page size\n",4<<MEMC.PageSizeFlags);
+  warn("MEMC using %dKB page size\n",4<<MEMC.PageSizeFlags);
   size=1<<(12+MEMC.PageSizeFlags);
   for(idx=0;idx<512;idx++)
   {
@@ -152,7 +152,7 @@ static void DumpHandler(int sig) {
       }
       phys *= size;
       mangle = ARMul_ManglePhysAddr(phys);
-      fprintf(stderr,"log %08x -> phy %08x (pre-mangle %08x) prot %s\n",logadr,mangle,phys,prot[(pt>>8)&3]);
+      warn("log %08x -> phy %08x (pre-mangle %08x) prot %s\n",logadr,mangle,phys,prot[(pt>>8)&3]);
     }
   }
 
@@ -164,7 +164,7 @@ static void DumpHandler(int sig) {
 #endif
 
   if (res==NULL) {
-    fprintf(stderr,"Could not open memory dump file\n");
+    warn_data("Could not open memory dump file\n");
     return;
   };
 
@@ -210,7 +210,7 @@ ARMul_MemoryInit(ARMul_State *state)
       MEMC.DRAMPageSize = MEMC_PAGESIZE_O_4K;
       break;
 #else
-      fprintf(stderr, "256K memory size may not be working right. Rounding up to 512K\n");
+      warn("256K memory size may not be working right. Rounding up to 512K\n");
       /* fall through... */
 #endif
       
@@ -292,8 +292,8 @@ ARMul_MemoryInit(ARMul_State *state)
 #if defined(EXTNROM_SUPPORT)
   /* Add the space required by an Extension Rom */
   extnrom_size = (extnrom_calculate_size(&extnrom_entry_count)+4095)&~4095;
-  fprintf(stderr, "extnrom_size = %u, extnrom_entry_count= %u\n",
-          extnrom_size, extnrom_entry_count);
+  warn("extnrom_size = %u, extnrom_entry_count= %u\n",
+       extnrom_size, extnrom_entry_count);
 #endif /* EXTNROM_SUPPORT */
   dbug("Total ROM size required = %u KB\n",
        (MEMC.ROMHighSize + extnrom_size) / 1024);
@@ -488,10 +488,10 @@ static ARMword ARMul_ManglePhysAddr(ARMword phy)
 static void FastMap_SetEntries(ARMul_State *state, ARMword addr,ARMword *data,FastMapAccessFunc func,FastMapUInt flags,ARMword size)
 {
   FastMapEntry *entry = FastMap_GetEntryNoWrap(state,addr);
-//  fprintf(stderr,"FastMap_SetEntries(%08x,%08x,%08x,%08x,%08x)\n",addr,data,func,flags,size);
+//  dbug("FastMap_SetEntries(%08x,%08x,%08x,%08x,%08x)\n",addr,data,func,flags,size);
   FastMapUInt offset = ((FastMapUInt)data)-addr; /* Offset so we can just add the phy addr to get a pointer back */
   flags |= offset>>8;
-//  fprintf(stderr,"->entry %08x\n->FlagsAndData %08x\n",entry,flags);
+//  dbug("->entry %08x\n->FlagsAndData %08x\n",entry,flags);
   while(size) {
     entry->FlagsAndData = flags;
     entry->AccessFunc = func;
