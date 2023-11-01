@@ -186,6 +186,38 @@ riscpkg: $(TARGET)
 	mkdir ArcEm/Apps/Misc/hostfs
 endif
 
+ifeq (${SYSTEM},nds)
+CC=arm-none-eabi-gcc
+LD=$(CC)
+ARM9_ARCH = -mthumb -mthumb-interwork -march=armv5te -mtune=arm946e-s
+CFLAGS += $(ARM9_ARCH) -ffunction-sections -fdata-sections -DSYSTEM_nds -DARM9 -DUSE_FAKEMAIN -DNO_OPEN64 -isystem $(DEVKITPRO)/libnds/include -Wno-cast-align -Wno-format
+LDFLAGS += -specs=ds_arm9.specs -g $(ARM9_ARCH) -Wl,--gc-sections -L$(DEVKITPRO)/libnds/lib
+LIBS += -lfilesystem -lfat -lnds9
+OBJS += nds/main.o
+ifneq ($(DEBUG),yes)
+CFLAGS += -DNDEBUG
+endif
+
+TARGET = ArcEm.elf
+all: ArcEm.nds
+
+%.nds: %.elf %.arm7.elf nds/arc.bmp
+	mkdir -p romfs/extnrom
+	cp support_modules/*/*,ffa romfs/extnrom
+	ndstool -c $@ -9 $< -7 $*.arm7.elf -b nds/arc.bmp "ArcEm;Archimedes Emulator;WIP" -d romfs
+
+ARM7_ARCH = -mthumb -mthumb-interwork -march=armv4t -mtune=arm7tdmi
+ARM7_CFLAGS = $(ARM7_ARCH) -Os -ffunction-sections -fdata-sections -DARM7 -isystem $(DEVKITPRO)/libnds/include
+ARM7_LDFLAGS = -specs=ds_arm7.specs -g $(ARM7_ARCH) -Wl,--gc-sections -L$(DEVKITPRO)/libnds/lib
+ARM7_LIBS = -lnds7
+
+ArcEm.arm7.elf: nds/arm7/main.arm7.o
+	$(LD) $(ARM7_LDFLAGS) $^ $(ARM7_LIBS) -o $@
+
+%.arm7.o: %.c
+	$(CC) $(ARM7_CFLAGS) -o $@ -c $<
+endif
+
 ifeq (${SYSTEM},SDL)
 SDL_CONFIG=sdl2-config
 CPPFLAGS += -DSYSTEM_SDL
