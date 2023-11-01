@@ -55,7 +55,11 @@ void ArcemConfig_SetupDefaults(void)
 
 #if defined(EXTNROM_SUPPORT)
   // The default directory is extnrom in the current working directory
+#ifdef SYSTEM_nds
+  hArcemConfig.sEXTNDirectory = arcemconfig_StringDuplicate("nitro:/extnrom");
+#else
   hArcemConfig.sEXTNDirectory = arcemconfig_StringDuplicate("extnrom");
+#endif
   // If we've run out of memory this early, something is very wrong
   if(NULL == hArcemConfig.sEXTNDirectory) {
     ControlPane_Error(EXIT_FAILURE,"Failed to allocate memory for initial configuration. Please free up more memory.\n");
@@ -109,6 +113,7 @@ void ArcemConfig_SetupDefaults(void)
 void ArcemConfig_ParseCommandLine(int argc, char *argv[])
 {
   int iArgument = 0;
+#ifndef SYSTEM_nds
   char sHelpString[] =
     "Arcem <Options>\n"
     " Where options are one or more of the following\n"
@@ -138,6 +143,7 @@ void ArcemConfig_ParseCommandLine(int argc, char *argv[])
     "  --menukeys <a> <b> - Specify which key numbers open the tweak menu\n"
 #endif /* SYSTEM_riscos_single */
     ;
+#endif
 
   // No commandline arguments?
   if(0 == argc) {
@@ -158,6 +164,7 @@ void ArcemConfig_ParseCommandLine(int argc, char *argv[])
   iArgument = 1;
 
   while(iArgument < argc) {
+#ifndef SYSTEM_nds
     if(0 == strcmp("--version", argv[iArgument])) {
       printf("Arcem %s\n", Version);
       
@@ -168,7 +175,9 @@ void ArcemConfig_ParseCommandLine(int argc, char *argv[])
       
       exit(EXIT_SUCCESS);
     }
-    else if(0 == strcmp("--rom", argv[iArgument])) {
+    else
+#endif
+    if(0 == strcmp("--rom", argv[iArgument])) {
       if(iArgument+1 < argc) { // Is there a following argument?
         char *sNewRomName = arcemconfig_StringDuplicate(argv[iArgument + 1]);
         

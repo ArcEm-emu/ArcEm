@@ -9,6 +9,7 @@
 #ifndef _DBUGSYS_H_
 #define _DBUGSYS_H_
 
+#include "c99.h"
 #include <stdio.h>
 #include <stdarg.h>
 
@@ -26,6 +27,21 @@
 #undef DEBUG_HDC63463
 #undef DEBUG_CONFIG
 
+#ifdef SYSTEM_nds
+#undef IOC_WARN
+#undef WARN
+#undef WARN_MEMC
+#undef WARN_I2C
+#undef WARN_DATA
+#undef WARN_DMAWRITE
+#undef WARN_DMAREAD
+#undef WARN_INTS
+#undef WARN_VIDC
+#undef WARN_KEYBOARD
+#undef WARN_FDC1772
+#undef WARN_HDC63463
+#undef WARN_CONFIG
+#else
 #define IOC_WARN
 #define WARN
 #define WARN_MEMC
@@ -39,6 +55,7 @@
 #define WARN_FDC1772
 #define WARN_HDC63463
 #define WARN_CONFIG
+#endif
 
 #define dbug_stdout printf
 

@@ -34,7 +34,7 @@ int ReadConfigFile(ARMul_State *state)
 #if defined(WIN32)
     envvar = NULL;
     basename2 = "arcemrc";
-#elif defined(AMIGA)
+#elif defined(AMIGA) || defined(SYSTEM_nds)
     envvar = NULL;
     basename2 = ".arcemrc";
 #elif defined(MACOSX)

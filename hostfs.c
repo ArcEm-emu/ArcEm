@@ -220,6 +220,9 @@ dbug_hostfs(const char *format, ...)
 }
 #endif
 
+#ifdef SYSTEM_nds
+static inline void warn_hostfs(const char *format, ...) {}
+#else
 static void
 warn_hostfs(const char *format, ...)
 {
@@ -229,6 +232,7 @@ warn_hostfs(const char *format, ...)
   vfprintf(stderr, format, ap);
   va_end(ap);
 }
+#endif
 
 static void
 path_construct(const char *old_path, const char *ro_path,
