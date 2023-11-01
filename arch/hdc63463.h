@@ -21,6 +21,6 @@ ARMword HDC_Read(ARMul_State *state, int offset);
 
 void HDC_Init(ARMul_State *state);
 
-unsigned int HDC_Regular(ARMul_State *state);
+uint32_t HDC_Regular(ARMul_State *state);
 
 #endif
