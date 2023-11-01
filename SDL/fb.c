@@ -256,7 +256,9 @@ static inline ARMword *PDD_Name(Host_BeginUpdate)(ARMul_State *state,PDD_Row *ro
   return row->data;
 }
 
-static inline void PDD_Name(Host_EndUpdate)(ARMul_State *state,PDD_Row *row) { /* nothing */ };
+static inline void PDD_Name(Host_EndUpdate)(ARMul_State *state,PDD_Row *row,unsigned int count) {
+  (*row) += count >> 3;
+}
 
 static inline void PDD_Name(Host_AdvanceRow)(ARMul_State *state,PDD_Row *row,unsigned int count) {
   row->offset += count;

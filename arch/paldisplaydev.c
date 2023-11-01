@@ -85,9 +85,7 @@
       which the first pixel will start at within the area being accessed.
 
    void PDD_Name(Host_EndRow)(ARMul_State *state,PDD_Row *row)
-    - Function to end the use of a PDD_Row
-    - Where a PDD_Row has been copied via pass-by-value, currently only the
-      original instance will have Host_EndRow called on it.
+    - Function to end the use of a PDD_Row.
 
    ARMword *PDD_Name(Host_BeginUpdate)(ARMul_State *state,PDD_Row *row,
                                        unsigned int count,int *outoffset)
@@ -101,7 +99,8 @@
       1 << (DC.LastHostDepth + HD.ExpandFactor)
 
    void PDD_Name(Host_EndUpdate)(ARMul_State *state,PDD_Row *row)
-    - End updating the region of the row
+    - End updating the region of the row, and advance the row pointer by
+      'count' bits
 
    void PDD_Name(Host_AdvanceRow)(ARMul_State *state,PDD_Row *row,
                                   unsigned int count)
@@ -216,7 +215,7 @@ struct PDD_Name(DisplayInfo) {
 
 */
        
-static inline int PDD_Name(RowFunc1XSameBitAligned)(ARMul_State *state,PDD_Row drow,int flags)
+static inline int PDD_Name(RowFunc1XSameBitAligned)(ARMul_State *state,PDD_Row *drow,int flags)
 {
   uint32_t Vptr = DC.Vptr;
   uint32_t Vstart = MEMC.Vstart<<7;
@@ -241,11 +240,14 @@ static inline int PDD_Name(RowFunc1XSameBitAligned)(ARMul_State *state,PDD_Row d
       flags |= ROWFUNC_UPDATED;
       /* Process the pixels in this region, stopping at end of row/update block/Vend */
       int outoffset;
-      ARMword *out = PDD_Name(Host_BeginUpdate)(state,&drow,Available,&outoffset);
+      ARMword *out = PDD_Name(Host_BeginUpdate)(state,drow,Available,&outoffset);
       BitCopy(out,outoffset,RAM+(Vptr>>5),Vptr&0x1f,Available);
-      PDD_Name(Host_EndUpdate)(state,&drow);
+      PDD_Name(Host_EndUpdate)(state,drow,Available);
     }
-    PDD_Name(Host_AdvanceRow)(state,&drow,Available);
+    else
+    {
+      PDD_Name(Host_AdvanceRow)(state,drow,Available);
+    }
     Vptr += Available;
     Remaining -= Available;
     if(Vptr >= Vend)
@@ -257,7 +259,7 @@ static inline int PDD_Name(RowFunc1XSameBitAligned)(ARMul_State *state,PDD_Row d
   return (flags & ROWFUNC_UPDATED);
 }
 
-static inline int PDD_Name(RowFunc1XSameByteAligned)(ARMul_State *state,PDD_Row drow,int flags)
+static inline int PDD_Name(RowFunc1XSameByteAligned)(ARMul_State *state,PDD_Row *drow,int flags)
 {
   uint32_t Vptr = DC.Vptr>>3;
   uint32_t Vstart = MEMC.Vstart<<4;
@@ -282,11 +284,14 @@ static inline int PDD_Name(RowFunc1XSameByteAligned)(ARMul_State *state,PDD_Row 
       flags |= ROWFUNC_UPDATED;
       /* Process the pixels in this region, stopping at end of row/update block/Vend */
       int outoffset;
-      ARMword *out = PDD_Name(Host_BeginUpdate)(state,&drow,Available<<3,&outoffset);
+      ARMword *out = PDD_Name(Host_BeginUpdate)(state,drow,Available<<3,&outoffset);
       ByteCopy(((uint8_t *)out)+(outoffset>>3),RAM+Vptr,Available);
-      PDD_Name(Host_EndUpdate)(state,&drow);
+      PDD_Name(Host_EndUpdate)(state,drow,Available<<3);
     }
-    PDD_Name(Host_AdvanceRow)(state,&drow,Available<<3);
+    else
+    {
+      PDD_Name(Host_AdvanceRow)(state,drow,Available<<3);
+    }
     Vptr += Available;
     Remaining -= Available;
     if(Vptr >= Vend)
@@ -306,7 +311,7 @@ static inline int PDD_Name(RowFunc1XSameByteAligned)(ARMul_State *state,PDD_Row 
 
 */
 
-static inline int PDD_Name(RowFuncExpandTable)(ARMul_State *state,PDD_Row drow,int flags)
+static inline int PDD_Name(RowFuncExpandTable)(ARMul_State *state,PDD_Row *drow,int flags)
 {
   uint32_t Vptr = DC.Vptr;
   uint32_t Vstart = MEMC.Vstart<<7;
@@ -331,11 +336,14 @@ static inline int PDD_Name(RowFuncExpandTable)(ARMul_State *state,PDD_Row drow,i
       flags |= ROWFUNC_UPDATED;
       /* Process the pixels in this region, stopping at end of row/update block/Vend */
       int outoffset;
-      ARMword *out = PDD_Name(Host_BeginUpdate)(state,&drow,Available<<HD.ExpandFactor,&outoffset);
+      ARMword *out = PDD_Name(Host_BeginUpdate)(state,drow,Available<<HD.ExpandFactor,&outoffset);
       BitCopyExpand(out,outoffset,RAM+(Vptr>>5),Vptr&0x1f,Available,HD.ExpandTable,1<<DC.LastHostDepth,HD.ExpandFactor);
-      PDD_Name(Host_EndUpdate)(state,&drow);
+      PDD_Name(Host_EndUpdate)(state,drow,Available<<HD.ExpandFactor);
     }
-    PDD_Name(Host_AdvanceRow)(state,&drow,Available<<HD.ExpandFactor);
+    else
+    {
+      PDD_Name(Host_AdvanceRow)(state,drow,Available<<HD.ExpandFactor);
+    }
     Vptr += Available;
     Remaining -= Available;
     if(Vptr >= Vend)
@@ -355,7 +363,7 @@ static inline int PDD_Name(RowFuncExpandTable)(ARMul_State *state,PDD_Row drow,i
 
 */
 
-static inline void PDD_Name(RowFunc1XSameBitAlignedNoFlags)(ARMul_State *state,PDD_Row drow)
+static inline void PDD_Name(RowFunc1XSameBitAlignedNoFlags)(ARMul_State *state,PDD_Row *drow)
 {
   uint32_t Vptr = DC.Vptr;
   uint32_t Vstart = MEMC.Vstart<<7;
@@ -376,11 +384,10 @@ static inline void PDD_Name(RowFunc1XSameBitAlignedNoFlags)(ARMul_State *state,P
 
     /* Process the pixels in this region, stopping at end of row/Vend */
     int outoffset;
-    ARMword *out = PDD_Name(Host_BeginUpdate)(state,&drow,Available,&outoffset);
+    ARMword *out = PDD_Name(Host_BeginUpdate)(state,drow,Available,&outoffset);
     BitCopy(out,outoffset,RAM+(Vptr>>5),Vptr&0x1f,Available);
-    PDD_Name(Host_EndUpdate)(state,&drow);
+    PDD_Name(Host_EndUpdate)(state,drow,Available);
 
-    PDD_Name(Host_AdvanceRow)(state,&drow,Available);
     Vptr += Available;
     Remaining -= Available;
     if(Vptr >= Vend)
@@ -390,7 +397,7 @@ static inline void PDD_Name(RowFunc1XSameBitAlignedNoFlags)(ARMul_State *state,P
   DC.Vptr = Vptr;
 }
 
-static inline void PDD_Name(RowFunc1XSameByteAlignedNoFlags)(ARMul_State *state,PDD_Row drow)
+static inline void PDD_Name(RowFunc1XSameByteAlignedNoFlags)(ARMul_State *state,PDD_Row *drow)
 {
   uint32_t Vptr = DC.Vptr>>3;
   uint32_t Vstart = MEMC.Vstart<<4;
@@ -411,11 +418,10 @@ static inline void PDD_Name(RowFunc1XSameByteAlignedNoFlags)(ARMul_State *state,
 
     /* Process the pixels in this region, stopping at end of row/update block/Vend */
     int outoffset;
-    ARMword *out = PDD_Name(Host_BeginUpdate)(state,&drow,Available<<3,&outoffset);
+    ARMword *out = PDD_Name(Host_BeginUpdate)(state,drow,Available<<3,&outoffset);
     ByteCopy(((uint8_t *)out)+(outoffset>>3),RAM+Vptr,Available);
-    PDD_Name(Host_EndUpdate)(state,&drow);
+    PDD_Name(Host_EndUpdate)(state,drow,Available<<3);
 
-    PDD_Name(Host_AdvanceRow)(state,&drow,Available<<3);
     Vptr += Available;
     Remaining -= Available;
     if(Vptr >= Vend)
@@ -433,7 +439,7 @@ static inline void PDD_Name(RowFunc1XSameByteAlignedNoFlags)(ARMul_State *state,
 
 */
 
-static inline void PDD_Name(RowFuncExpandTableNoFlags)(ARMul_State *state,PDD_Row drow)
+static inline void PDD_Name(RowFuncExpandTableNoFlags)(ARMul_State *state,PDD_Row *drow)
 {
   uint32_t Vptr = DC.Vptr;
   uint32_t Vstart = MEMC.Vstart<<7;
@@ -454,11 +460,10 @@ static inline void PDD_Name(RowFuncExpandTableNoFlags)(ARMul_State *state,PDD_Ro
 
     /* Process the pixels in this region, stopping at end of row/update block/Vend */
     int outoffset;
-    ARMword *out = PDD_Name(Host_BeginUpdate)(state,&drow,Available<<HD.ExpandFactor,&outoffset);
+    ARMword *out = PDD_Name(Host_BeginUpdate)(state,drow,Available<<HD.ExpandFactor,&outoffset);
     BitCopyExpand(out,outoffset,RAM+(Vptr>>5),Vptr&0x1f,Available,HD.ExpandTable,1<<DC.LastHostDepth,HD.ExpandFactor);
-    PDD_Name(Host_EndUpdate)(state,&drow);
+    PDD_Name(Host_EndUpdate)(state,drow,Available<<HD.ExpandFactor);
 
-    PDD_Name(Host_AdvanceRow)(state,&drow,Available<<HD.ExpandFactor);
     Vptr += Available;
     Remaining -= Available;
     if(Vptr >= Vend)
@@ -704,15 +709,15 @@ static void PDD_Name(EventFunc)(ARMul_State *state,CycleCount nowtime)
           PDD_Row hrow = PDD_Name(Host_BeginRow)(state,hoststart++,HD.XOffset,&alignment);
           if(HD.ExpandTable)
           {
-            updated = PDD_Name(RowFuncExpandTable)(state,hrow,flags);
+            updated = PDD_Name(RowFuncExpandTable)(state,&hrow,flags);
           }
           else if(!(flags & ROWFUNC_UNALIGNED) && !(alignment & 0x7))
           {
-            updated = PDD_Name(RowFunc1XSameByteAligned)(state,hrow,flags);
+            updated = PDD_Name(RowFunc1XSameByteAligned)(state,&hrow,flags);
           }
           else
           {
-            updated = PDD_Name(RowFunc1XSameBitAligned)(state,hrow,flags);
+            updated = PDD_Name(RowFunc1XSameBitAligned)(state,&hrow,flags);
           }
           PDD_Name(Host_EndRow)(state,&hrow);
           if(updated)
@@ -754,15 +759,15 @@ static void PDD_Name(EventFunc)(ARMul_State *state,CycleCount nowtime)
             PDD_Row hrow = PDD_Name(Host_BeginRow)(state,hoststart++,HD.XOffset,&alignment);
             if(HD.ExpandTable)
             {
-              PDD_Name(RowFuncExpandTableNoFlags)(state,hrow);
+              PDD_Name(RowFuncExpandTableNoFlags)(state,&hrow);
             }
             else if(!(flags & ROWFUNC_UNALIGNED) && !(alignment & 0x7))
             {
-              PDD_Name(RowFunc1XSameByteAlignedNoFlags)(state,hrow);
+              PDD_Name(RowFunc1XSameByteAlignedNoFlags)(state,&hrow);
             }
             else
             {
-              PDD_Name(RowFunc1XSameBitAlignedNoFlags)(state,hrow);
+              PDD_Name(RowFunc1XSameBitAlignedNoFlags)(state,&hrow);
             }
             PDD_Name(Host_EndRow)(state,&hrow);
           }
