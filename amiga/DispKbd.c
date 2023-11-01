@@ -474,9 +474,10 @@ static inline ARMword *PDD_Name(Host_BeginUpdate)(ARMul_State *state,PDD_Row *ro
 	return RowBuffer;
 }
 
-static inline void PDD_Name(Host_EndUpdate)(ARMul_State *state,PDD_Row *row)
+static inline void PDD_Name(Host_EndUpdate)(ARMul_State *state,PDD_Row *row,unsigned int count)
 {
 	WritePixelLine8(&friend,row->x,row->y,row->width,RowBuffer,&tmprp);
+	row->x += count>>3;
 }
 
 static inline void PDD_Name(Host_AdvanceRow)(ARMul_State *state,PDD_Row *row,unsigned int count)
