@@ -8,10 +8,10 @@ REM (at your option) any later version.
 REM
 REM This program is distributed in the hope that it will be useful,
 REM but WITHOUT ANY WARRANTY; without even the implied warranty of
-REM MERCHANABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
+REM MERCHANABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 REM GNU General Public License for more details.
 REM
-REM You should have received a copy of the GNU General Public License 
+REM You should have received a copy of the GNU General Public License
 REM along with this program; if not, write to the Free Software
 REM Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 REM
@@ -23,16 +23,16 @@ REM NewMode in the current working directory, with the two tables
 REM of data you need to cut and paste into MakeModes.
 REM
 REM Limitations
-REM 
+REM
 REM  - Only supports suare pixel modes, with the X eigen and Y eigen
-REM    values of 1. 
+REM    values of 1.
 REM  - Does not cut and paste perfectly, you need to replace all instances
 REM    of the word „ with the word „ (BBC basic tokenisation issue).
-REM    And the labels of the code blocks are slightly broken due to 
+REM    And the labels of the code blocks are slightly broken due to
 REM    having a dot on the fornt (another tokenisation issue).
-REM 
+REM
 REM Usage
-REM 
+REM
 REM Fill in the call to generate_mode_vidc with the following params
 REM  1: Mode number of new mode
 REM  2: X Size
@@ -43,7 +43,7 @@ REM and run the program
 ON ERROR PRINT REPORT$;" at ";ERL:END
 
 REM (ModeNumber, X, Y, BPP)
-PROCgenerate_mode_vidc(125,240,320,8)
+PROCgenerate_mode_vidc(126,256,192,8)
 
 PRINT "Done"
 END
@@ -167,7 +167,8 @@ BPUT# fh%, " << 14)";
 BPUT# fh%, 13
 BPUT# fh%, "        equd       (&E0 << 24) OR (";
 BPUT# fh%, STR$ log2bpp%;
-BPUT# fh%, " << 2) OR ";CLK%;
+BPUT# fh%, " << 2) OR ";
+BPUT# fh%, STR$ CLK%;
 BPUT# fh%, 13
 BPUT# fh%, "        equd       -1       ; Terminate standard parameters";
 BPUT# fh%, 13
