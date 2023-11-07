@@ -220,7 +220,7 @@ dbug_hostfs(const char *format, ...)
 }
 #endif
 
-#ifdef SYSTEM_nds
+#if defined(SYSTEM_nds) && defined(NDEBUG)
 static inline void warn_hostfs(const char *format, ...) {}
 #else
 static void

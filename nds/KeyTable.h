@@ -1,107 +1,176 @@
 /* Virtual Key codes */
 
-#include <nds/input.h>
-
 typedef struct {
-    int sym;
     arch_key_id kid;
-} button_to_arch_key;
+    unsigned short sprite;
+    short x;
+    short y;
+} dvk_to_vkeybd;
 
-/* TODO: Provide a GUI for remapping the buttons */
-static const button_to_arch_key button_to_arch_key_map[] = {
-    { KEY_Y,     ARCH_KEY_left      },
-    { KEY_B,     ARCH_KEY_down      },
-    { KEY_A,     ARCH_KEY_right     },
-    { KEY_X,     ARCH_KEY_up        },
-    { KEY_L,     ARCH_KEY_shift_r   },
-    { KEY_R,     ARCH_KEY_control_r },
-    { KEY_LEFT,  ARCH_KEY_button_1  },
-    { KEY_DOWN,  ARCH_KEY_button_2  },
-    { KEY_RIGHT, ARCH_KEY_button_3  },
-    { KEY_UP,    ARCH_KEY_space     },
-    { 0, 0 }
+enum {
+	spr_f1         = 0 | (1 << 8),
+	spr_f2         = 1 | (1 << 8),
+	spr_f3         = 2 | (1 << 8),
+	spr_f4         = 3 | (1 << 8),
+	spr_f5         = 4 | (1 << 8),
+	spr_f6         = 5 | (1 << 8),
+	spr_f7         = 6 | (1 << 8),
+	spr_f8         = 7 | (1 << 8),
+	spr_f9         = 8 | (1 << 8),
+	spr_f10        = 9 | (1 << 8),
+	spr_f11        = 10 | (1 << 8),
+	spr_f12        = 11 | (1 << 8),
+	spr_up         = 12 | (1 << 8),
+	spr_down       = 13 | (1 << 8),
+	spr_left       = 14 | (1 << 8),
+	spr_right      = 15 | (1 << 8),
+
+	spr_shift_l    = 16 | (3 << 8),
+	spr_shift_r    = spr_shift_l,
+	spr_caps_lock  = 19 | (2 << 8),
+	spr_tab        = 21 | (2 << 8),
+	spr_escape     = 23 | (1 << 8),
+	spr_alt_l      = 24 | (2 << 8),
+	spr_alt_r      = spr_alt_l,
+	spr_return     = 26 | (2 << 8),
+	spr_control_r  = 28 | (2 << 8),
+	spr_control_l  = 30 | (2 << 8),
+
+	spr_backspace  = 32 | (1 << 8),
+	spr_space      = 33 | (8 << 8),
+	spr_backslash  = 41 | (2 << 8),
+	spr_grave      = 43 | (1 << 8),
+	spr_1          = 44 | (1 << 8),
+	spr_2          = 45 | (1 << 8),
+	spr_3          = 46 | (1 << 8),
+	spr_4          = 47 | (1 << 8),
+
+	spr_5          = 48 | (1 << 8),
+	spr_6          = 49 | (1 << 8),
+	spr_7          = 50 | (1 << 8),
+	spr_8          = 51 | (1 << 8),
+	spr_9          = 52 | (1 << 8),
+	spr_0          = 53 | (1 << 8),
+	spr_minus      = 54 | (1 << 8),
+	spr_equal      = 55 | (1 << 8),
+	spr_sterling   = 56 | (1 << 8),
+	spr_q          = 57 | (1 << 8),
+	spr_w          = 58 | (1 << 8),
+	spr_e          = 59 | (1 << 8),
+	spr_r          = 60 | (1 << 8),
+	spr_t          = 61 | (1 << 8),
+	spr_y          = 62 | (1 << 8),
+	spr_u          = 63 | (1 << 8),
+
+	spr_i          = 64 | (1 << 8),
+	spr_o          = 65 | (1 << 8),
+	spr_p          = 66 | (1 << 8),
+	spr_bracket_l  = 67 | (1 << 8),
+	spr_bracket_r  = 68 | (1 << 8),
+	spr_a          = 69 | (1 << 8),
+	spr_s          = 70 | (1 << 8),
+	spr_d          = 71 | (1 << 8),
+	spr_f          = 72 | (1 << 8),
+	spr_g          = 73 | (1 << 8),
+	spr_h          = 74 | (1 << 8),
+	spr_j          = 75 | (1 << 8),
+	spr_k          = 76 | (1 << 8),
+	spr_l          = 77 | (1 << 8),
+	spr_semicolon  = 78 | (1 << 8),
+	spr_apostrophe = 79 | (1 << 8),
+
+
+	spr_z          = 80 | (1 << 8),
+	spr_x          = 81 | (1 << 8),
+	spr_c          = 82 | (1 << 8),
+	spr_v          = 83 | (1 << 8),
+	spr_b          = 84 | (1 << 8),
+	spr_n          = 85 | (1 << 8),
+	spr_m          = 86 | (1 << 8),
+	spr_comma      = 87 | (1 << 8),
+	spr_period     = 88 | (1 << 8),
+	spr_slash      = 89 | (1 << 8),
 };
 
-#include <nds/arm9/keyboard.h>
+#define X(kid, x, y) { ARCH_KEY_ ## kid, spr_ ## kid, x, y }
+static const dvk_to_vkeybd dvk_to_vkeybd_map[] = {
+	X(escape,     1,          165-(5*17)),
+	X(f1,         30+(0*17),  165-(5*17)),
+	X(f2,         30+(1*17),  165-(5*17)),
+	X(f3,         30+(2*17),  165-(5*17)),
+	X(f4,         30+(3*17),  165-(5*17)),
+	X(f5,         41+(4*17),  165-(5*17)),
+	X(f6,         41+(5*17),  165-(5*17)),
+	X(f7,         41+(6*17),  165-(5*17)),
+	X(f8,         41+(7*17),  165-(5*17)),
+	X(f9,         52+(8*17),  165-(5*17)),
+	X(f10,        52+(9*17),  165-(5*17)),
+	X(f11,        52+(10*17), 165-(5*17)),
+	X(f12,        52+(11*17), 165-(5*17)),
 
-typedef struct {
-    int sym;
-    arch_key_id kid;
-    bool isShift;
-} dvk_to_arch_key;
+	X(grave,      1+(0*17),   167-(4*17)),
+	X(1,          1+(1*17),   167-(4*17)),
+	X(2,          1+(2*17),   167-(4*17)),
+	X(3,          1+(3*17),   167-(4*17)),
+	X(4,          1+(4*17),   167-(4*17)),
+	X(5,          1+(5*17),   167-(4*17)),
+	X(6,          1+(6*17),   167-(4*17)),
+	X(7,          1+(7*17),   167-(4*17)),
+	X(8,          1+(8*17),   167-(4*17)),
+	X(9,          1+(9*17),   167-(4*17)),
+	X(0,          1+(10*17),  167-(4*17)),
+	X(minus,      1+(11*17),  167-(4*17)),
+	X(equal,      1+(12*17),  167-(4*17)),
+	X(sterling,   1+(13*17),  167-(4*17)),
+	X(backspace,  1+(14*17),  167-(4*17)),
 
-#define X(sym, kid) { sym, ARCH_KEY_ ## kid, false },
-#define C(sym, shift, kid) { sym, ARCH_KEY_ ## kid, false }, { shift, ARCH_KEY_ ## kid, true },
-static const dvk_to_arch_key dvk_to_arch_key_map[] = {
-    X(DVK_FOLD, escape)
-    X(DVK_MENU, f12)
+	X(tab,        1,          167-(3*17)),
+	X(q,          27+(0*17),  167-(3*17)),
+	X(w,          27+(1*17),  167-(3*17)),
+	X(e,          27+(2*17),  167-(3*17)),
+	X(r,          27+(3*17),  167-(3*17)),
+	X(t,          27+(4*17),  167-(3*17)),
+	X(y,          27+(5*17),  167-(3*17)),
+	X(u,          27+(6*17),  167-(3*17)),
+	X(i,          27+(7*17),  167-(3*17)),
+	X(o,          27+(8*17),  167-(3*17)),
+	X(p,          27+(9*17),  167-(3*17)),
+	X(bracket_l,  27+(10*17), 167-(3*17)),
+	X(bracket_r,  27+(11*17), 167-(3*17)),
+	X(backslash,  27+(12*17), 167-(3*17)),
 
-    C('`', '~', grave)
-    C('1', '!', 1)
-    C('2', '@', 2)
-    C('3', '#', 3)
-    C('4', '$', 4)
-    C('5', '%', 5)
-    C('6', '^', 6)
-    C('7', '&', 7)
-    C('8', '*', 8)
-    C('9', '(', 9)
-    C('0', ')', 0)
-    C('-', '_', minus)
-    C('=', '+', equal)
-    X(DVK_BACKSPACE, backspace)
+	X(control_l,  1,          167-(2*17)),
+	X(a,          35+(0*17),  167-(2*17)),
+	X(s,          35+(1*17),  167-(2*17)),
+	X(d,          35+(2*17),  167-(2*17)),
+	X(f,          35+(3*17),  167-(2*17)),
+	X(g,          35+(4*17),  167-(2*17)),
+	X(h,          35+(5*17),  167-(2*17)),
+	X(j,          35+(6*17),  167-(2*17)),
+	X(k,          35+(7*17),  167-(2*17)),
+	X(l,          35+(8*17),  167-(2*17)),
+	X(semicolon,  35+(9*17),  167-(2*17)),
+	X(apostrophe, 35+(10*17), 167-(2*17)),
+	X(return,     36+(11*17), 167-(2*17)),
 
-    X(DVK_TAB, tab)
-    C('q', 'Q', q)
-    C('w', 'W', w)
-    C('e', 'E', e)
-    C('r', 'R', r)
-    C('t', 'T', t)
-    C('y', 'Y', y)
-    C('u', 'U', u)
-    C('i', 'I', i)
-    C('o', 'O', o)
-    C('p', 'P', p)
-    C('[', '{', bracket_l)
-    C(']', '}', bracket_r)
-    C('\\', '|', backslash)
+	X(shift_l,    1,          167-(1*17)),
+	X(z,          43+(0*17),  167-(1*17)),
+	X(x,          43+(1*17),  167-(1*17)),
+	X(c,          43+(2*17),  167-(1*17)),
+	X(v,          43+(3*17),  167-(1*17)),
+	X(b,          43+(4*17),  167-(1*17)),
+	X(n,          43+(5*17),  167-(1*17)),
+	X(m,          43+(6*17),  167-(1*17)),
+	X(comma,      43+(7*17),  167-(1*17)),
+	X(period,     43+(8*17),  167-(1*17)),
+	X(slash,      43+(9*17),  167-(1*17)),
+	X(shift_r,    44+(10*17), 167-(1*17)),
 
-    X(DVK_CTRL, control_l)
-    C('a', 'A', a)
-    C('s', 'S', s)
-    C('d', 'D', d)
-    C('f', 'F', f)
-    C('g', 'G', g)
-    C('h', 'H', h)
-    C('j', 'J', j)
-    C('k', 'K', k)
-    C('l', 'L', l)
-    C(';', ':', semicolon)
-    C('\'', '"', apostrophe)
-    X(DVK_ENTER, return)
+	X(caps_lock,  1,          167-(0*17)),
+	X(alt_l,      47,         167-(0*17)),
+	X(space,      73,         167-(0*17)),
+	X(alt_r,      192,        167-(0*17)),
+	X(control_r,  231,        167-(0*17)),
 
-    X(DVK_SHIFT, shift_l)
-    C('z', 'Z', z)
-    C('x', 'X', x)
-    C('c', 'C', c)
-    C('v', 'V', v)
-    C('b', 'B', b)
-    C('n', 'N', n)
-    C('m', 'M', m)
-    C(',', '<', comma)
-    C('.', '>', period)
-    C('/', '?', slash)
-
-    X(DVK_CAPS, caps_lock)
-    X(DVK_ALT, alt_l)
-    X(DVK_SPACE, space)
-
-    X(DVK_UP, up)
-    X(DVK_LEFT, left)
-    X(DVK_DOWN, down)
-    X(DVK_RIGHT, right)
-
-    { 0, 0, false },
+	{ 0, 0, 0, 0 }
 };
-#undef C
-#undef X
