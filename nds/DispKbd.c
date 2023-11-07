@@ -14,8 +14,6 @@
 
 #include <nds.h>
 
-#include "KeyTable.h"
-
 ARMul_State nds_statestr DTCM_BSS;
 void *state_alloc(int s) { return &nds_statestr; }
 void state_free(void *p) {}
@@ -133,6 +131,7 @@ static inline void PDD_Name(Host_PollDisplay)(ARMul_State *state)
 	RefreshMouse(state);
 	oamUpdate(&oamMain);
 	bgUpdate();
+	ControlPane_Redraw();
 }
 
 static inline void PDD_Name(Host_DrawBorderRect)(ARMul_State *state,int x,int y,int width,int height)
@@ -279,24 +278,26 @@ DisplayDev_Init(ARMul_State *state)
 }
 
 /*-----------------------------------------------------------------------------*/
-static void ProcessKey(ARMul_State *state, int key, bool up) {;
-	const dvk_to_arch_key *ktak;
-	for (ktak = dvk_to_arch_key_map; ktak->sym; ktak++) {
-		if (ktak->sym == key) {
-			keyboard_key_changed(&KBD, ktak->kid, up);
-			return;
-		}
-	}
-	dbug_kbd("ProcessKey: unknown key: keysym=%u\n", key);
-}
 
-void OnKeyPressed(int key) {
-	ProcessKey(&nds_statestr, key, false);
-}
+typedef struct {
+    int sym;
+    arch_key_id kid;
+} button_to_arch_key;
 
-void OnKeyReleased(int key) {
-	ProcessKey(&nds_statestr, key, true);
-}
+/* TODO: Provide a GUI for remapping the buttons */
+static const button_to_arch_key button_to_arch_key_map[] = {
+    { KEY_Y,     ARCH_KEY_left      },
+    { KEY_B,     ARCH_KEY_down      },
+    { KEY_A,     ARCH_KEY_right     },
+    { KEY_X,     ARCH_KEY_up        },
+    { KEY_L,     ARCH_KEY_shift_r   },
+    { KEY_R,     ARCH_KEY_control_r },
+    { KEY_LEFT,  ARCH_KEY_button_1  },
+    { KEY_DOWN,  ARCH_KEY_button_2  },
+    { KEY_RIGHT, ARCH_KEY_button_3  },
+    { KEY_UP,    ARCH_KEY_space     },
+    { 0, 0 }
+};
 
 static void ProcessButtons(ARMul_State *state, int pressed, int released) {
 	const button_to_arch_key *btak;
@@ -308,38 +309,11 @@ static void ProcessButtons(ARMul_State *state, int pressed, int released) {
 	}
 }; /* ProcessButtons */
 
-touchPosition oldTouch;
-bool touchDown = false;
-
-static void ProcessRelativeTouch(ARMul_State *state) {
-	int newMouseX, newMouseY, xdiff, ydiff;
-	touchPosition touch;
-
-	touchRead(&touch);
-	xdiff = (touch.px - oldTouch.px) << 1;
-	ydiff = (touch.py - oldTouch.py) << 1;
-
-	if (xdiff > 63)
-		xdiff = 63;
-	if (xdiff < -63)
-		xdiff = -63;
-
-	if (ydiff > 63)
-		ydiff = 63;
-	if (ydiff < -63)
-		ydiff = -63;
-
-	oldTouch.px += xdiff >> 1;
-	oldTouch.py += ydiff >> 1;
-
-	KBD.MouseXCount = xdiff & 127;
-	KBD.MouseYCount = -ydiff & 127;
-}; /* ProcessRelativeTouch */
-
 /*-----------------------------------------------------------------------------*/
 int
 Kbd_PollHostKbd(ARMul_State *state)
 {
+	touchPosition touch;
 	scanKeys();
 
 	int pressed = keysDown();
@@ -348,17 +322,14 @@ Kbd_PollHostKbd(ARMul_State *state)
 	ProcessButtons(state, pressed, released);
 
 	if (pressed & KEY_TOUCH) {
-		touchRead(&oldTouch);
-		if (oldTouch.py <= 112)
-			touchDown = true;
+		touchRead(&touch);
+		ControlPane_ProcessTouchPressed(state, touch.px, touch.py);
+	} else if (held & KEY_TOUCH) {
+		touchRead(&touch);
+		ControlPane_ProcessTouchHeld(state, touch.px, touch.py);
 	} else if (released & KEY_TOUCH) {
-		touchDown = false;
+		ControlPane_ProcessTouchReleased(state);
 	}
-
-	if (touchDown)
-		ProcessRelativeTouch(state);
-
-	keyboardUpdate();
 
 	return 0;
 }
