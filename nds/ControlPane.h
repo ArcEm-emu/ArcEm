@@ -7,7 +7,10 @@ void ControlPane_Init(ARMul_State *state);
 /* Report an error and exit */
 void ControlPane_Error(bool fatal,const char *fmt,...);
 
-void OnKeyPressed(int key);
-void OnKeyReleased(int key);
+bool ControlPane_ProcessTouchPressed(ARMul_State *state, int px, int py);
+bool ControlPane_ProcessTouchHeld(ARMul_State *state, int px, int py);
+bool ControlPane_ProcessTouchReleased(ARMul_State *state);
+
+void ControlPane_Redraw(void);
 
 #endif
