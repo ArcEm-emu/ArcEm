@@ -27,7 +27,7 @@
 #undef DEBUG_CONFIG
 #undef DEBUG_HOSTFS
 
-#ifdef SYSTEM_nds
+#if defined(SYSTEM_nds) && defined(NDEBUG)
 #undef IOC_WARN
 #undef WARN
 #undef WARN_MEMC
