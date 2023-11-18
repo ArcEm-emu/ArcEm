@@ -1,0 +1,80 @@
+name: Build
+
+on: [push, pull_request]
+
+jobs:
+  build-x11:
+    name: Linux (X11)
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build
+      run: make SYSTEM=X
+
+  build-msvc:
+    name: Windows (MSVC ${{ matrix.msvc.platform }})
+    runs-on: windows-latest
+
+    strategy:
+      matrix:
+        msvc:
+        - { platform: Win32 }
+        - { platform: x64 }
+
+    steps:
+    - name: Set up msbuild
+      uses: microsoft/setup-msbuild@v1.1.3
+    - uses: actions/checkout@v3
+    - name: Build
+      run: msbuild vc/ArcEm.sln /m /p:BuildInParallel=true /p:Configuration=Release /p:Platform=${{ matrix.msvc.platform }}
+
+  build-mingw:
+    name: Windows (${{ matrix.mingw.msystem }})
+    runs-on: windows-latest
+
+    defaults:
+      run:
+        shell: msys2 {0}
+
+    strategy:
+      matrix:
+        mingw:
+        - { msystem: mingw32, msys-env: mingw-w64-i686 }
+        - { msystem: mingw64, msys-env: mingw-w64-x86_64 }
+
+    steps:
+    - name: Set up MSYS2
+      uses: msys2/setup-msys2@v2
+      with:
+        msystem: ${{ matrix.mingw.msystem }}
+        install: ${{ matrix.mingw.msys-env }}-cc make
+    - uses: actions/checkout@v3
+    - name: Build
+      run: make SYSTEM=win
+
+  build-riscos:
+    name: RISC OS
+    runs-on: ubuntu-latest
+    container: riscosdotinfo/riscos-gccsdk-4.7:latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build
+      run: make SYSTEM=riscos-single CROSS=arm-unknown-riscos-
+
+  build-amiga:
+    name: ${{ matrix.amiga.name }}
+    runs-on: ubuntu-latest
+    container: amigadev/crosstools:${{ matrix.amiga.host }}
+
+    strategy:
+      matrix:
+        amiga:
+        # - { name: "AmigaOS 3", host: "m68k-amigaos", system: "amigaos3" }
+        - { name: "AmigaOS 4", host: "ppc-amigaos", system: "amiga" }
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build
+      run: make SYSTEM=${{ matrix.amiga.system }} CROSS=${{ matrix.amiga.host }}-
