@@ -1,7 +1,3 @@
-#
-# $Id$
-#
-
 AS = armas
 LD = armld
 OBJCOPY = armobjcopy

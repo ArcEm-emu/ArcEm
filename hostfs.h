@@ -1,7 +1,3 @@
-/*
- * $Id$
- */
-
 #ifndef HOSTFS_H
 #define HOSTFS_H
 

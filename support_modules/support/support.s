@@ -5,8 +5,6 @@
 @ and bobs in.
 @
 @ Created by Rob Kendrick, 19 Oct 2005.
-@
-@ $Id$
 
 	ARCEM_SWI_BASE = 0x56ac0
 

@@ -1,6 +1,4 @@
         @
-        @ $Id$
-        @
         @ HostFS Filer
         @
 

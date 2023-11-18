@@ -1,8 +1,5 @@
 /* archio.c - IO and IOC emulation.  (c) David Alan Gilbert 1995 */
 /* (c) David Alan Gilbert 1995 - see Readme file for copying info */
-/*
- * $Id$
- */
 
 #include <ctype.h>
 #include <signal.h>
