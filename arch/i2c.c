@@ -65,7 +65,7 @@ struct I2CStruct {
 
 static struct I2CStruct I2C;
 
-/* These are "sensible" defaults from the CVS hexcmos file,
+/* These are "sensible" defaults from the git hexcmos file,
    as opposed to "factory" defaults, which are not quite as sensible */
 
 unsigned char CMOSDefaults[] = {

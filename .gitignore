@@ -4,9 +4,12 @@ armsuppmvn.s
 armsuppmvns.s
 ROM*
 *,ff8
+*.o
 HardImage?
 FloppyImage?
 hexcmos*
 arcem*
 cygwin1.dll
 index.html
+stdout
+stderr

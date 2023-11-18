@@ -166,8 +166,6 @@ riscpkg: $(TARGET)
 	cp -r docs ArcEm/Apps/Misc/!ArcEm
 	mkdir -p ArcEm/Apps/Misc/!ArcEm/extnrom
 	find support_modules -name *,ffa -exec cp '{}' ArcEm/Apps/Misc/!ArcEm/extnrom \;
-	find ArcEm -name CVS -type d | xargs rm -r
-	find ArcEm -name .cvsignore -type f | xargs rm
 	wget http://arcem.sf.net/manual/$(MANUAL).html -O ArcEm/Apps/Misc/!ArcEm/manual.html
 	cp docs/COPYING ArcEm/Apps/Misc
 	mkdir ArcEm/Apps/Misc/hostfs
@@ -253,8 +251,7 @@ arcem.tar.gz:
 	for file in $(TARED) ; do \
 	  cp -a ../$${file} . ; \
 	done ; \
-	find -name CVS -type d | xargs rm -r; \
-	find -name .cvsignore -type f | xargs rm; \
+	find -name .gitignore -type f | xargs rm; \
 	touch dummy.o ; find -type f | grep '\.o$$' | xargs rm -r 2>/dev/null
 	tar cf arcem.tar arcem-$(VER)
 	gzip arcem.tar
