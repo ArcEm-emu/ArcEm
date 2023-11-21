@@ -149,26 +149,26 @@ static void ReturnParams(ARMul_State *state,const int NParams, ...);
 static void Dump256Block(uint8_t *Data) {
   int oindex,iindex;
 
-  fputc('\n',stderr);
+  dbug_hdc("\n");
 
   for(oindex=0;oindex<256;oindex+=8) {
-    fprintf(stderr,"0x%4x : ",oindex);
+    dbug_hdc("0x%4x : ",oindex);
 
     for(iindex=0;iindex<8;iindex++) {
-      fprintf(stderr,"%2x ",Data[oindex+iindex]);
+      dbug_hdc("%2x ",Data[oindex+iindex]);
     }
 
     for(iindex=0;iindex<8;iindex++) {
       if (isprint(Data[oindex+iindex])) {
-        fputc(Data[oindex+iindex],stderr);
+        dbug_hdc("%c", Data[oindex+iindex]);
       } else {
-        fputc('.',stderr);
+        dbug_hdc(".");
       }
     }
 
-    fputc('\n',stderr);
+    dbug_hdc("\n");
   } /* oindex */
-  fputc('\n',stderr);
+  dbug_hdc("\n");
 } /* Dump256Block */
 #endif
 
@@ -183,10 +183,10 @@ uint32_t HDC_Regular(ARMul_State *state) {
     case 0x40: /* Read data */
       if (HDC.DBufPtrs[HDC.CommandData.ReadData.NextDestBuffer ^1]>255) {
         ReadData_DoNextBufferFull(state);
-        dbug_data("HDC_Regular: Read data buffer full case\n");
+        dbug_hdc("HDC_Regular: Read data buffer full case\n");
       } else {
         HDC.DelayCount=HDC.DelayLatch;
-        dbug_data("HDC_Regular: Read data buffer not full case\n");
+        dbug_hdc("HDC_Regular: Read data buffer not full case\n");
       }
       break;
 
@@ -198,10 +198,10 @@ uint32_t HDC_Regular(ARMul_State *state) {
     case 0x87: /* Write data */
       if (HDC.DBufPtrs[HDC.CommandData.WriteData.CurrentSourceBuffer]>255) {
         WriteData_DoNextBufferFull(state);
-        dbug_data("HDC_Regular: Write data buffer full case\n");
+        dbug_hdc("HDC_Regular: Write data buffer full case\n");
       } else {
         HDC.DelayCount=HDC.DelayLatch;
-        dbug_data("HDC_Regular: Write data buffer not full case\n");
+        dbug_hdc("HDC_Regular: Write data buffer not full case\n");
       }
       break;
 
@@ -209,10 +209,10 @@ uint32_t HDC_Regular(ARMul_State *state) {
       /* Pinching writedata control for this */
       if (HDC.DBufPtrs[HDC.CommandData.WriteData.CurrentSourceBuffer]>255) {
         CompareData_DoNextBufferFull(state);
-        fprintf(stderr,"HDC_Regular: Compare data buffer full case\n");
+        dbug_hdc("HDC_Regular: Compare data buffer full case\n");
       } else {
         HDC.DelayCount=HDC.DelayLatch;
-        fprintf(stderr,"HDC_Regular: Compare data buffer not full case\n");
+        dbug_hdc("HDC_Regular: Compare data buffer not full case\n");
 
         /* I think in the case of no data we are supposed to no hit - but I'm not sure - Hmm */
         HDC.DelayLatch=1024;
@@ -233,10 +233,10 @@ uint32_t HDC_Regular(ARMul_State *state) {
     case 0xa3: /* Write format */
       if (HDC.DBufPtrs[HDC.CommandData.WriteFormat.CurrentSourceBuffer]>255) {
         WriteFormat_DoNextBufferFull(state);
-        fprintf(stderr,"HDC_Regulat: Write format buffer full case\n");
+        dbug_hdc("HDC_Regulat: Write format buffer full case\n");
       } else {
         HDC.DelayCount=HDC.DelayLatch;
-        fprintf(stderr,"HDC_Regular: Write format buffer not full case\n");
+        dbug_hdc("HDC_Regular: Write format buffer not full case\n");
       }
       break;
 
@@ -282,13 +282,13 @@ static void HDC_DMAWrite(ARMul_State *state, int offset, int data) {
   dbug_dmawrite("HDC DMA Write offset=0x%x data=0x%x r15=0x%x\n",offset,data,PCVAL);
 
   if (HDC.CurrentlyOpenDataBuffer==-1) {
-    fprintf(stderr,"HDC_DMAWrite: DTR - to non-open data buffer\n");
+    dbug_dmawrite("HDC_DMAWrite: DTR - to non-open data buffer\n");
     return;
   }
 
   if (HDC.DBufPtrs[HDC.CurrentlyOpenDataBuffer]>254) {
-    fprintf(stderr,"HDC_DMAWrite: DTR - to data buffer %d - off end!\n",
-            HDC.CurrentlyOpenDataBuffer);
+    dbug_dmawrite("HDC_DMAWrite: DTR - to data buffer %d - off end!\n",
+                  HDC.CurrentlyOpenDataBuffer);
 
     HDC.DREQ=false;
     UpdateInterrupt(state);
@@ -328,8 +328,8 @@ static ARMword HDC_DMARead(ARMul_State *state, int offset) {
   }
 
   if (HDC.DBufPtrs[HDC.CurrentlyOpenDataBuffer]>254) {
-    fprintf(stderr,"HDC_DMARead: DTR - from data buffer %d - off end!\n",
-            HDC.CurrentlyOpenDataBuffer);
+    dbug_dmawrite("HDC_DMARead: DTR - from data buffer %d - off end!\n",
+                  HDC.CurrentlyOpenDataBuffer);
     HDC.DREQ=false;
     UpdateInterrupt(state);
     return(0x1223);
@@ -359,12 +359,12 @@ static ARMword HDC_DMARead(ARMul_State *state, int offset) {
 /*---------------------------------------------------------------------------*/
 static void PrintParams(ARMul_State *state) {
   uint32_t ptr;
-  fprintf(stderr,"HDC: Param block contents: ");
+  warn_hdc("HDC: Param block contents: ");
 
   for(ptr=0;ptr<HDC.PBPtr;ptr++) {
-    fprintf(stderr," 0x%x ",HDC.ParamBlock[ptr]); 
+    warn_hdc(" 0x%x ",HDC.ParamBlock[ptr]); 
   }
-  fprintf(stderr,"\n");
+  warn_hdc("\n");
 } /* PrintParams */
 
 /*---------------------------------------------------------------------------*/
@@ -374,7 +374,7 @@ static void ReturnParams(ARMul_State *state,const int NParams, ...) {
   int param;
 
   if (NParams>16) {
-    fprintf(stderr,"HDC:ReturnParams - invalid number of parameters\n");
+    warn_hdc("HDC:ReturnParams - invalid number of parameters\n");
     abort();
   }
 
@@ -398,18 +398,18 @@ static int GetParams(ARMul_State *state, const int NParams, ...) {
   uint8_t *resptr;
 
   if (NParams > 16) {
-    fprintf(stderr,"HDC:GetParams - invalid number of parameters requested\n");
+    warn_hdc("HDC:GetParams - invalid number of parameters requested\n");
     abort();
   }
 
   if ((int)HDC.PBPtr < (NParams - 1)) {
-    fprintf(stderr,"HDC:GetParams - not enough parameters passed to HDC (required=%d got=%d)\n",
+    warn_hdc("HDC:GetParams - not enough parameters passed to HDC (required=%d got=%d)\n",
             NParams,HDC.PBPtr);
     return(0);
   }
 
   if ((int)HDC.PBPtr > NParams) {
-    dbug_data("HDC:GetParams - warning: Too many parameters passed to hdc\n");
+    dbug_hdc("HDC:GetParams - warning: Too many parameters passed to hdc\n");
   }
 
   va_start(args,NParams);
@@ -508,14 +508,14 @@ static void CheckDriveCommand(ARMul_State *state) {
   dbug("HDC New command: Check drive\n");
 
   if (!GetParams(state,2,&Must00,&US)) {
-    fprintf(stderr,"Check drive command exiting due to insufficient parameters\n");
+    warn_hdc("Check drive command exiting due to insufficient parameters\n");
     Cause_Error(state,ERR_PER); /* parameter error */
     ReturnParams(state,2,0,HDC.SSB);
     return;
   }
 
   if (Must00!=0) {
-    fprintf(stderr,"Check drive - mandatory 0 missing (was=0x%x)\n",Must00);
+    warn_hdc("Check drive - mandatory 0 missing (was=0x%x)\n",Must00);
     Cause_Error(state,ERR_PER); /* parameter error */
     ReturnParams(state,2,0,HDC.SSB);
     return;
@@ -555,7 +555,7 @@ static void SpecifyCommand(ARMul_State *state) {
 
   if (!GetParams(state,16,&OM0,&OM1,&OM2,&CUL,&TONCH,&NCL,&NH,&NS,&SHRL,
                  &GPL1,&GPL2,&GPL3,&LCCH,&LCCL,&PCCH,&PCCL)) {
-    fprintf(stderr,"Specify command exiting due to insufficient parameters\n");
+    warn_hdc("Specify command exiting due to insufficient parameters\n");
     Cause_Error(state,ERR_PER); /* parameter error */
     ReturnParams(state,2,0,HDC.SSB);
     return;
@@ -583,7 +583,7 @@ static void SpecifyCommand(ARMul_State *state) {
                                (OM1 & 1)?"Parallel seek":"Normal seek");
 
   if (OM0 & 32) {
-    fprintf(stderr,"HDC-Specify: SMD not supported\n");
+    warn_hdc("HDC-Specify: SMD not supported\n");
     /* Make up an error code! */
     Cause_Error(state,ERR_PER); /* parameter error */
     ReturnParams(state,2,0,HDC.SSB);
@@ -616,7 +616,7 @@ static void SpecifyCommand(ARMul_State *state) {
     case 0:
     case 6:
     case 7:
-      fprintf(stderr,"HDC-Specify: Bad record size\n");
+      warn_hdc("HDC-Specify: Bad record size\n");
       HDC.specshape.RecordLength=1; /* Smaller than real sectors - won't cause an overrun anywhere! */
       break;
 
@@ -669,21 +669,21 @@ static void SeekCommand(ARMul_State *state) {
   dbug("HDC New command: Seek\n");
 
   if (!HDC.HaveGotSpecify) {
-    fprintf(stderr,"HDC - Seek - not had specify\n");
+    warn_hdc("HDC - Seek - not had specify\n");
     Cause_Error(state,ERR_NIN);
     ReturnParams(state,2,0,HDC.SSB);
     return;
   }
 
   if (!GetParams(state,4,&US,&Must00,&NCAH,&NCAL)) {
-    fprintf(stderr,"Seek command exiting due to insufficient parameters\n");
+    warn_hdc("Seek command exiting due to insufficient parameters\n");
     Cause_Error(state,ERR_PER); /* parameter error */
     ReturnParams(state,2,0,HDC.SSB);
     return;
   }
 
   if (Must00!=0) {
-    fprintf(stderr,"Seek - mandatory 0 missing (was=0x%x)\n",Must00);
+    warn_hdc("Seek - mandatory 0 missing (was=0x%x)\n",Must00);
     Cause_Error(state,ERR_PER); /* parameter error */
     ReturnParams(state,2,0,HDC.SSB);
     return;
@@ -698,7 +698,7 @@ static void SeekCommand(ARMul_State *state) {
 
   if (DesiredCylinder>HDC.specshape.NCyls) {
     /* Ook - bad cylinder address */
-        fprintf(stderr, "seek: cylinder address greater than "
+        warn_hdc("seek: cylinder address greater than "
             "specified, %u > %u\n", DesiredCylinder,
             HDC.specshape.NCyls);
     Cause_Error(state,ERR_INC); /* Invalid NCA */
@@ -708,7 +708,7 @@ static void SeekCommand(ARMul_State *state) {
 
   if (DesiredCylinder >= hArcemConfig.aST506DiskShapes[US].NCyls) {
     /* Ook - bad cylinder address */
-        fprintf(stderr, "seek: cylinder address greater than "
+        warn_hdc("seek: cylinder address greater than "
             "or equal to configured, %u >= %u\n", DesiredCylinder,
             hArcemConfig.aST506DiskShapes[US].NCyls);
     Cause_Error(state,ERR_NSC); /* Seek screwed up */
@@ -741,21 +741,21 @@ static void RecalibrateCommand(ARMul_State *state) {
   dbug("HDC New command: Recalibrate\n");
 
   if (!HDC.HaveGotSpecify) {
-    fprintf(stderr,"HDC - Recalibrate - not had specify\n");
+    warn_hdc("HDC - Recalibrate - not had specify\n");
     Cause_Error(state,ERR_NIN);
     ReturnParams(state,2,0,HDC.SSB);
     return;
   }
 
   if (!GetParams(state,2,&US,&Must00)) {
-    fprintf(stderr,"Recalibrate command exiting due to insufficient parameters\n");
+    warn_hdc("Recalibrate command exiting due to insufficient parameters\n");
     Cause_Error(state,ERR_PER); /* parameter error */
     ReturnParams(state,2,0,HDC.SSB);
     return;
   }
 
   if (Must00!=0) {
-    fprintf(stderr,"Recalibrate - mandatory 0 missing (was=0x%x)\n",Must00);
+    warn_hdc("Recalibrate - mandatory 0 missing (was=0x%x)\n",Must00);
     Cause_Error(state,ERR_PER); /* parameter error */
     ReturnParams(state,2,0,HDC.SSB);
     return;
@@ -802,7 +802,7 @@ static void ReadData_DoNextBufferFull(ARMul_State *state) {
     fread(HDC.DBufs[HDC.CommandData.ReadData.NextDestBuffer],
           1,256,HDC.HardFile[HDC.CommandData.ReadData.US]);
 
-    dbug_data("HDC:ReadData_DoNextBufferFull - just got\n");
+    dbug_hdc("HDC:ReadData_DoNextBufferFull - just got\n");
 #ifdef DEBUG_DATA
     Dump256Block(HDC.DBufs[HDC.CommandData.ReadData.NextDestBuffer]);
 #endif
@@ -830,13 +830,13 @@ static void ReadDataCommand(ARMul_State *state) {
   /* TMP for timing!! */
   exitcount++;
   if (exitcount>140) {
-    printf("Emulated cycles=%ld\n",ARMul_Time);
+    warn_hdc("Emulated cycles=%ld\n",ARMul_Time);
     exit(0);
   }
 #endif
 
   if (!HDC.HaveGotSpecify) {
-    fprintf(stderr,"HDC - Read data - not had specify\n");
+    warn_hdc("HDC - Read data - not had specify\n");
     Cause_Error(state,ERR_NIN);
     ReturnParams(state,2,0,HDC.SSB);
     Cause_CED(state);
@@ -844,7 +844,7 @@ static void ReadDataCommand(ARMul_State *state) {
   }
 
   if (!GetParams(state,8,&US,&PHA,&LCAH,&LCAL,&LHA,&LSA,&SCNTH,&SCNTL)) {
-    fprintf(stderr,"Read data command exiting due to insufficient parameters\n");
+    warn_hdc("Read data command exiting due to insufficient parameters\n");
     Cause_Error(state,ERR_PER); /* parameter error */
     ReturnParams(state,10,0,HDC.SSB,US,PHA,LCAH,LCAL,LHA,LSA,SCNTH,SCNTL);
     Cause_CED(state);
@@ -869,7 +869,7 @@ static void ReadDataCommand(ARMul_State *state) {
 
   /* Couldn't set file ptr - off the end? */
   if (!SetFilePtr(state,US,PHA,LCAL | (LCAH<<8),LSA)) {
-    fprintf(stderr,"Read data command exiting due to failed file seek\n");
+    warn_hdc("Read data command exiting due to failed file seek\n");
     ReturnParams(state,10,0,HDC.SSB,US,PHA,LCAH,LCAL,LHA,LSA,SCNTH,SCNTL);
     HDC.StatusReg|=BIT_DRIVEERR;
     Cause_CED(state);
@@ -898,7 +898,7 @@ static void WriteDataCommand(ARMul_State *state) {
   dbug("HDC New command: Write data\n");
 
   if (!HDC.HaveGotSpecify) {
-    fprintf(stderr,"HDC - Write data - not had specify\n");
+    warn_hdc("HDC - Write data - not had specify\n");
     Cause_Error(state,ERR_NIN);
     ReturnParams(state,2,0,HDC.SSB);
     Cause_CED(state);
@@ -906,7 +906,7 @@ static void WriteDataCommand(ARMul_State *state) {
   }
 
   if (!GetParams(state,8,&US,&PHA,&LCAH,&LCAL,&LHA,&LSA,&SCNTH,&SCNTL)) {
-    fprintf(stderr,"Write data command exiting due to insufficient parameters\n");
+    warn_hdc("Write data command exiting due to insufficient parameters\n");
     Cause_Error(state,ERR_PER); /* parameter error */
     ReturnParams(state,10,0,HDC.SSB,US,PHA,LCAH,LCAL,LHA,LSA,SCNTH,SCNTL);
     Cause_CED(state);
@@ -931,7 +931,7 @@ static void WriteDataCommand(ARMul_State *state) {
 
   /* Couldn't set file ptr - off the end? */
   if (!SetFilePtr(state,US,PHA,LCAL | (LCAH<<8),LSA)) {
-    fprintf(stderr,"Write data command exiting due to failed file seek\n");
+    warn_hdc("Write data command exiting due to failed file seek\n");
     ReturnParams(state,10,0,HDC.SSB,US,PHA,LCAH,LCAL,LHA,LSA,SCNTH,SCNTL);
     HDC.StatusReg|=BIT_DRIVEERR;
     Cause_CED(state);
@@ -960,7 +960,7 @@ static void WriteData_DoNextBufferFull(ARMul_State *state) {
   HDC.CurrentlyOpenDataBuffer^=1;
   HDC.DBufPtrs[HDC.CurrentlyOpenDataBuffer]=0;
 
-  dbug_data("HDC:WriteData_DoNextBufferFull - about to throw the following to disc:\n");
+  dbug_hdc("HDC:WriteData_DoNextBufferFull - about to throw the following to disc:\n");
 #ifdef DEBUG_DATA
   Dump256Block(HDC.DBufs[HDC.CommandData.WriteData.CurrentSourceBuffer]);
 #endif
@@ -1004,7 +1004,7 @@ static void CompareDataCommand(ARMul_State *state) {
   dbug("HDC New command: Compare data\n");
 
   if (!HDC.HaveGotSpecify) {
-    fprintf(stderr,"HDC - Compare data - not had specify\n");
+    warn_hdc("HDC - Compare data - not had specify\n");
     Cause_Error(state,ERR_NIN);
     ReturnParams(state,2,0,HDC.SSB);
     Cause_CED(state);
@@ -1012,7 +1012,7 @@ static void CompareDataCommand(ARMul_State *state) {
   }
 
   if (!GetParams(state,8,&US,&PHA,&LCAH,&LCAL,&LHA,&LSA,&SCNTH,&SCNTL)) {
-    fprintf(stderr,"Compare data command exiting due to insufficient parameters\n");
+    warn_hdc("Compare data command exiting due to insufficient parameters\n");
     Cause_Error(state,ERR_PER); /* parameter error */
     ReturnParams(state,10,0,HDC.SSB,US,PHA,LCAH,LCAL,LHA,LSA,SCNTH,SCNTL);
     Cause_CED(state);
@@ -1032,12 +1032,12 @@ static void CompareDataCommand(ARMul_State *state) {
   HDC.CommandData.WriteData.SCNTH=SCNTH;
   HDC.CommandData.WriteData.SCNTL=SCNTL;
 
-  fprintf(stderr,"HDC:CompareData command: US=%d PHA=%d LCA=%d LDA=%d LSA=%d SCNT=%d\n",
+  warn_hdc("HDC:CompareData command: US=%d PHA=%d LCA=%d LDA=%d LSA=%d SCNT=%d\n",
           US,PHA,LCAL | (LCAH<<8),LHA,LSA,SCNTL | (SCNTH<<8));
 
   /* Couldn't set file ptr - off the end? */
   if (!SetFilePtr(state,US,PHA,LCAL | (LCAH<<8),LSA)) {
-    fprintf(stderr,"Compare data command exiting due to failed file seek\n");
+    warn_hdc("Compare data command exiting due to failed file seek\n");
     ReturnParams(state,10,0,HDC.SSB,US,PHA,LCAH,LCAL,LHA,LSA,SCNTH,SCNTL);
     HDC.StatusReg|=BIT_DRIVEERR;
     Cause_CED(state);
@@ -1065,7 +1065,7 @@ static void CompareData_DoNextBufferFull(ARMul_State *state) {
   HDC.CurrentlyOpenDataBuffer^=1;
   HDC.DBufPtrs[HDC.CurrentlyOpenDataBuffer]=0;
 
-  dbug_data("HDC:CompareData_DoNextBufferFull - about to check the following against the disc:\n");
+  dbug_hdc("HDC:CompareData_DoNextBufferFull - about to check the following against the disc:\n");
 #ifdef DEBUG_DATA
   Dump256Block(HDC.DBufs[HDC.CommandData.WriteData.CurrentSourceBuffer]);
 #endif
@@ -1140,7 +1140,7 @@ static void CheckData_DoNextBufferFull(ARMul_State *state) {
     /* Fill here up! */
     if (retval=fread(tmpbuff,1,256,HDC.HardFile[HDC.CommandData.ReadData.US]),retval!=256)
     {
-      fprintf(stderr,"HDC: CheckData_DoNextBufferFull - returning data err - retval=0x%x\n",retval);
+      warn_hdc("HDC: CheckData_DoNextBufferFull - returning data err - retval=0x%x\n",retval);
       /* End of command */
       Cause_CED(state);
       HDC.DelayLatch=1024;
@@ -1179,7 +1179,7 @@ static void CheckDataCommand(ARMul_State *state) {
   dbug("HDC New command: Check data\n");
 
   if (!HDC.HaveGotSpecify) {
-    fprintf(stderr,"HDC - Check data - not had specify\n");
+    warn_hdc("HDC - Check data - not had specify\n");
     Cause_Error(state,ERR_NIN);
     ReturnParams(state,2,0,HDC.SSB);
     Cause_CED(state);
@@ -1187,7 +1187,7 @@ static void CheckDataCommand(ARMul_State *state) {
   }
 
   if (!GetParams(state,8,&US,&PHA,&LCAH,&LCAL,&LHA,&LSA,&SCNTH,&SCNTL)) {
-    fprintf(stderr,"Check data command exiting due to insufficient parameters\n");
+    warn_hdc("Check data command exiting due to insufficient parameters\n");
     Cause_Error(state,ERR_PER); /* parameter error */
     ReturnParams(state,10,0,HDC.SSB,US,PHA,LCAH,LCAL,LHA,LSA,SCNTH,SCNTL);
     Cause_CED(state);
@@ -1212,7 +1212,7 @@ static void CheckDataCommand(ARMul_State *state) {
 
   /* Couldn't set file ptr - off the end? */
   if (!SetFilePtr(state,US,PHA,LCAL | (LCAH<<8),LSA)) {
-    fprintf(stderr,"Check data command exiting due to failed file seek\n");
+    warn_hdc("Check data command exiting due to failed file seek\n");
     ReturnParams(state,10,0,HDC.SSB,US,PHA,LCAH,LCAL,LHA,LSA,SCNTH,SCNTL);
     HDC.StatusReg|=BIT_DRIVEERR;
     Cause_CED(state);
@@ -1243,7 +1243,7 @@ static void WriteFormatCommand(ARMul_State *state) {
   dbug("HDC New command: Write format\n");
 
   if (!HDC.HaveGotSpecify) {
-    fprintf(stderr,"HDC - write format - not had specify\n");
+    warn_hdc("HDC - write format - not had specify\n");
     Cause_Error(state,ERR_NIN);
     ReturnParams(state,2,0,HDC.SSB);
     Cause_CED(state);
@@ -1251,7 +1251,7 @@ static void WriteFormatCommand(ARMul_State *state) {
   }
 
   if (!GetParams(state,4,&US,&PHA,&SCNTH,&SCNTL)) {
-    fprintf(stderr,"Write format command exiting due to insufficient parameters\n");
+    warn_hdc("Write format command exiting due to insufficient parameters\n");
     Cause_Error(state,ERR_PER); /* parameter error */
     ReturnParams(state,6,0,HDC.SSB,US,PHA,SCNTH,SCNTL);
     Cause_CED(state);
@@ -1271,7 +1271,7 @@ static void WriteFormatCommand(ARMul_State *state) {
 
   /* Couldn't set file ptr - hmm - I hope this doesn't cause problems for formatting arbitary parts of the disc */
   if (!SetFilePtr(state,US,PHA,HDC.Track[US],0)) {
-    fprintf(stderr,"Write format command exiting due to failed file seek\n");
+    warn_hdc("Write format command exiting due to failed file seek\n");
     ReturnParams(state,6,0,HDC.SSB,US,PHA,SCNTH,SCNTL);
     HDC.StatusReg|=BIT_DRIVEERR;
     Cause_CED(state);
@@ -1367,7 +1367,7 @@ static void HDC_StartNewCommand(ARMul_State *state, int data) {
   } /* Recall */
 
   if (HDC.LastCommand!=-1) {
-    /*fprintf(stderr,"HDC New command received (0x%x) but not in idle state (last command=0x%x)\n",
+    /*dbug_hdc("HDC New command received (0x%x) but not in idle state (last command=0x%x)\n",
        data,HDC.LastCommand); */
     /* Hmm - this seems to happen - I expected recalls to always be used */
     HDC.LastCommand=-1;
@@ -1428,7 +1428,7 @@ static void HDC_StartNewCommand(ARMul_State *state, int data) {
       break;
 
     default:
-      fprintf(stderr,"-------------- HDC New command: Data=0x%x - unknown/unimplemented PC=0x%x\n",data,(uint32_t)(PCVAL));
+      warn_hdc("-------------- HDC New command: Data=0x%x - unknown/unimplemented PC=0x%x\n",data,(uint32_t)(PCVAL));
       HDC.StatusReg&=~BIT_COMPARAMREJECT;
       PrintParams(state);
       abort();
@@ -1446,7 +1446,7 @@ void HDC_Write(ARMul_State *state, int offset, int data) {
     HDC_DMAWrite(state,offset,data);
   } else {
     if (rNw) {
-      fprintf(stderr,"HDC_Write: Write but address means read!!!!\n");
+      warn_hdc("HDC_Write: Write but address means read!!!!\n");
       return;
     }
 
@@ -1455,10 +1455,10 @@ void HDC_Write(ARMul_State *state, int offset, int data) {
          we should return stuff from the parameter block otherwise
          we should return stuff from the data buffers  - possibly Idle as well */
       if ((HDC.LastCommand=0xfff) || (HDC.LastCommand==-1)) {
-        /*fprintf(stderr,"HDC_Write: DTR data=0x%x\n",data); */
+        /*dbug_hdc("HDC_Write: DTR data=0x%x\n",data); */
         if (!(HDC.StatusReg & BIT_COMPARAMREJECT)) {
           if (HDC.PBPtr<15) {
-            /*fprintf(stderr,"HDC_Write: DTR to param block\n"); */
+            /*dbug_hdc("HDC_Write: DTR to param block\n"); */
             HDC.ParamBlock[HDC.PBPtr++]=(data & 0xff00)>>8;
             HDC.ParamBlock[HDC.PBPtr++]=data & 0xff;
             if (HDC.PBPtr>=16) HDC.StatusReg|=BIT_COMPARAMREJECT;
@@ -1469,12 +1469,12 @@ void HDC_Write(ARMul_State *state, int offset, int data) {
         dbug("HDC Write offset=0x%x data=0x%x\n",offset,data);
 
         if (HDC.CurrentlyOpenDataBuffer==-1) {
-          fprintf(stderr,"HDC_Write: DTR - to non-open data buffer\n");
+          warn_hdc("HDC_Write: DTR - to non-open data buffer\n");
           return;
         }
 
         if (HDC.DBufPtrs[HDC.CurrentlyOpenDataBuffer]>254) {
-          fprintf(stderr,"HDC_Write: DTR - to data buffer %d - off end!\n",
+          warn_hdc("HDC_Write: DTR - to data buffer %d - off end!\n",
                   HDC.CurrentlyOpenDataBuffer);
 
           HDC.DREQ=false;
@@ -1543,7 +1543,7 @@ ARMword HDC_Read(ARMul_State *state, int offset) {
         tmpres<<=8; /* This is presuming big endian - as the 68K for which this
                        beast is designed - yuk! */
         tmpres|=HDC.ParamBlock[HDC.PBPtr++];
-        /*fprintf(stderr,"HDC_Read: DTR - from param buffer - 0x%x\n",tmpres);*/
+        /*dbug_hdc("HDC_Read: DTR - from param buffer - 0x%x\n",tmpres);*/
         return(tmpres);
       } else {
         dbug("HDC_Read: DTR - from parameter buffer - but read past end!\n");
@@ -1571,7 +1571,7 @@ ARMword HDC_Read(ARMul_State *state, int offset) {
 
         HDC.DBufPtrs[db]=off;
 
-        /*fprintf(stderr,"HDC_Read: DTR - from data buffer %d - returning 0x%x\n",db,(uint32_t)tmpres); */
+        /*dbug_hdc("HDC_Read: DTR - from data buffer %d - returning 0x%x\n",db,(uint32_t)tmpres); */
 
         if (off>254) {
           /* Ooh - just finished reading a block - lets fire the next one off
@@ -1633,7 +1633,7 @@ void HDC_Init(ARMul_State *state) {
     }
 
     if (!HDC.HardFile[currentdrive]) {
-      fprintf(stderr,"HDC: Couldn't open image for drive %d\n", currentdrive);
+      warn_hdc("HDC: Couldn't open image for drive %d\n", currentdrive);
     }
   } /* Image opening */
 

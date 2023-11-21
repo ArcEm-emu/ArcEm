@@ -72,7 +72,7 @@ void Sound_UpdateDMARate(ARMul_State *state)
      Sound_DMARate = ARMul_EmuRate*16*(VIDC.SoundFreq+2)*24/VIDC_clk
  */
   Sound_DMARate = (((uint64_t) ARMul_EmuRate)*(16*24)*(VIDC.SoundFreq+2))/DisplayDev_GetVIDCClockIn();
-//  printf("UpdateDMARate: f %d r %u -> %u\n",VIDC.SoundFreq,ARMul_EmuRate,Sound_DMARate);
+//  warn_vidc("UpdateDMARate: f %d r %u -> %u\n",VIDC.SoundFreq,ARMul_EmuRate,Sound_DMARate);
 }
 
 #ifdef SOUND_SUPPORT
@@ -460,7 +460,7 @@ static void Sound_Process(ARMul_State *state,int32_t avail)
     uint64_t b = ((uint64_t) Sound_HostRate)*24*(VIDC.SoundFreq+2);
     soundTimeStep = (a<<TIMESHIFT)/b;
     soundScale = (b<<16)/a;
-    fprintf(stderr,"New sample period %d (VIDC %dMHz) host %dHz -> timestep %08x scale %08x\n",VIDC.SoundFreq+2,clockin/1000000,Sound_HostRate>>10,soundTimeStep,soundScale);
+    warn_vidc("New sample period %d (VIDC %dMHz) host %dHz -> timestep %08x scale %08x\n",VIDC.SoundFreq+2,clockin/1000000,Sound_HostRate>>10,soundTimeStep,soundScale);
     soundTime = 0;
   }
   if(avail)

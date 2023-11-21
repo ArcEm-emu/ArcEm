@@ -38,20 +38,20 @@
 /**************************************************************/
 #ifndef WIN32
 #ifndef AMIGA
+#ifndef SYSTEM_nds
 static void dagstandalone_handlesignal(int sig) {
-#ifdef DEBUG
-  fprintf(stderr, "Terminate ARMulator - excecution\n");
-#endif
+  dbug("Terminate ARMulator - excecution\n");
 #ifdef BENCHMARKEXIT
-  printf("Emulated cycles = %ld\n", ARMul_Time);
+  warn("Emulated cycles = %ld\n", ARMul_Time);
   exit(0);
 #endif
   if (sig != SIGUSR1) {
-    fprintf(stderr,"Unsupported signal.\n");
+    warn("Unsupported signal.\n");
     return;
   }
   exit(0); /* ??? */
 }
+#endif
 #endif
 #endif
 
@@ -69,21 +69,19 @@ static void InitFail(int exitcode, char const *which) {
  *
  */
  void dagstandalone(void) {
-#ifndef WIN32
-#ifndef AMIGA
-  struct sigaction action;
-#endif
-#endif
   ARMul_State *emu_state = NULL;
-
 #ifndef WIN32
 #ifndef AMIGA
+#ifndef SYSTEM_nds
+  struct sigaction action;
+
   /* Setup a signal handler for SIGUSR1 */
   action.sa_handler = dagstandalone_handlesignal;
   sigemptyset (&action.sa_mask);
   action.sa_flags = 0;
   
   sigaction(SIGUSR1, &action, (struct sigaction *) 0);
+#endif
 #endif
 #endif
 

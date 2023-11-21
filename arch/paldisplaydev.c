@@ -85,9 +85,7 @@
       which the first pixel will start at within the area being accessed.
 
    void PDD_Name(Host_EndRow)(ARMul_State *state,PDD_Row *row)
-    - Function to end the use of a PDD_Row
-    - Where a PDD_Row has been copied via pass-by-value, currently only the
-      original instance will have Host_EndRow called on it.
+    - Function to end the use of a PDD_Row.
 
    ARMword *PDD_Name(Host_BeginUpdate)(ARMul_State *state,PDD_Row *row,
                                        unsigned int count,int *outoffset)
@@ -101,7 +99,8 @@
       1 << (DC.LastHostDepth + HD.ExpandFactor)
 
    void PDD_Name(Host_EndUpdate)(ARMul_State *state,PDD_Row *row)
-    - End updating the region of the row
+    - End updating the region of the row, and advance the row pointer by
+      'count' bits
 
    void PDD_Name(Host_AdvanceRow)(ARMul_State *state,PDD_Row *row,
                                   unsigned int count)
@@ -216,7 +215,7 @@ struct PDD_Name(DisplayInfo) {
 
 */
        
-static inline int PDD_Name(RowFunc1XSameBitAligned)(ARMul_State *state,PDD_Row drow,int flags)
+static inline int PDD_Name(RowFunc1XSameBitAligned)(ARMul_State *state,PDD_Row *drow,int flags)
 {
   uint32_t Vptr = DC.Vptr;
   uint32_t Vstart = MEMC.Vstart<<7;
@@ -241,11 +240,14 @@ static inline int PDD_Name(RowFunc1XSameBitAligned)(ARMul_State *state,PDD_Row d
       flags |= ROWFUNC_UPDATED;
       /* Process the pixels in this region, stopping at end of row/update block/Vend */
       int outoffset;
-      ARMword *out = PDD_Name(Host_BeginUpdate)(state,&drow,Available,&outoffset);
+      ARMword *out = PDD_Name(Host_BeginUpdate)(state,drow,Available,&outoffset);
       BitCopy(out,outoffset,RAM+(Vptr>>5),Vptr&0x1f,Available);
-      PDD_Name(Host_EndUpdate)(state,&drow);
+      PDD_Name(Host_EndUpdate)(state,drow,Available);
     }
-    PDD_Name(Host_AdvanceRow)(state,&drow,Available);
+    else
+    {
+      PDD_Name(Host_AdvanceRow)(state,drow,Available);
+    }
     Vptr += Available;
     Remaining -= Available;
     if(Vptr >= Vend)
@@ -257,7 +259,7 @@ static inline int PDD_Name(RowFunc1XSameBitAligned)(ARMul_State *state,PDD_Row d
   return (flags & ROWFUNC_UPDATED);
 }
 
-static inline int PDD_Name(RowFunc1XSameByteAligned)(ARMul_State *state,PDD_Row drow,int flags)
+static inline int PDD_Name(RowFunc1XSameByteAligned)(ARMul_State *state,PDD_Row *drow,int flags)
 {
   uint32_t Vptr = DC.Vptr>>3;
   uint32_t Vstart = MEMC.Vstart<<4;
@@ -282,11 +284,14 @@ static inline int PDD_Name(RowFunc1XSameByteAligned)(ARMul_State *state,PDD_Row 
       flags |= ROWFUNC_UPDATED;
       /* Process the pixels in this region, stopping at end of row/update block/Vend */
       int outoffset;
-      ARMword *out = PDD_Name(Host_BeginUpdate)(state,&drow,Available<<3,&outoffset);
+      ARMword *out = PDD_Name(Host_BeginUpdate)(state,drow,Available<<3,&outoffset);
       ByteCopy(((uint8_t *)out)+(outoffset>>3),RAM+Vptr,Available);
-      PDD_Name(Host_EndUpdate)(state,&drow);
+      PDD_Name(Host_EndUpdate)(state,drow,Available<<3);
     }
-    PDD_Name(Host_AdvanceRow)(state,&drow,Available<<3);
+    else
+    {
+      PDD_Name(Host_AdvanceRow)(state,drow,Available<<3);
+    }
     Vptr += Available;
     Remaining -= Available;
     if(Vptr >= Vend)
@@ -306,7 +311,7 @@ static inline int PDD_Name(RowFunc1XSameByteAligned)(ARMul_State *state,PDD_Row 
 
 */
 
-static inline int PDD_Name(RowFuncExpandTable)(ARMul_State *state,PDD_Row drow,int flags)
+static inline int PDD_Name(RowFuncExpandTable)(ARMul_State *state,PDD_Row *drow,int flags)
 {
   uint32_t Vptr = DC.Vptr;
   uint32_t Vstart = MEMC.Vstart<<7;
@@ -331,11 +336,14 @@ static inline int PDD_Name(RowFuncExpandTable)(ARMul_State *state,PDD_Row drow,i
       flags |= ROWFUNC_UPDATED;
       /* Process the pixels in this region, stopping at end of row/update block/Vend */
       int outoffset;
-      ARMword *out = PDD_Name(Host_BeginUpdate)(state,&drow,Available<<HD.ExpandFactor,&outoffset);
+      ARMword *out = PDD_Name(Host_BeginUpdate)(state,drow,Available<<HD.ExpandFactor,&outoffset);
       BitCopyExpand(out,outoffset,RAM+(Vptr>>5),Vptr&0x1f,Available,HD.ExpandTable,1<<DC.LastHostDepth,HD.ExpandFactor);
-      PDD_Name(Host_EndUpdate)(state,&drow);
+      PDD_Name(Host_EndUpdate)(state,drow,Available<<HD.ExpandFactor);
     }
-    PDD_Name(Host_AdvanceRow)(state,&drow,Available<<HD.ExpandFactor);
+    else
+    {
+      PDD_Name(Host_AdvanceRow)(state,drow,Available<<HD.ExpandFactor);
+    }
     Vptr += Available;
     Remaining -= Available;
     if(Vptr >= Vend)
@@ -355,7 +363,7 @@ static inline int PDD_Name(RowFuncExpandTable)(ARMul_State *state,PDD_Row drow,i
 
 */
 
-static inline void PDD_Name(RowFunc1XSameBitAlignedNoFlags)(ARMul_State *state,PDD_Row drow)
+static inline void PDD_Name(RowFunc1XSameBitAlignedNoFlags)(ARMul_State *state,PDD_Row *drow)
 {
   uint32_t Vptr = DC.Vptr;
   uint32_t Vstart = MEMC.Vstart<<7;
@@ -376,11 +384,10 @@ static inline void PDD_Name(RowFunc1XSameBitAlignedNoFlags)(ARMul_State *state,P
 
     /* Process the pixels in this region, stopping at end of row/Vend */
     int outoffset;
-    ARMword *out = PDD_Name(Host_BeginUpdate)(state,&drow,Available,&outoffset);
+    ARMword *out = PDD_Name(Host_BeginUpdate)(state,drow,Available,&outoffset);
     BitCopy(out,outoffset,RAM+(Vptr>>5),Vptr&0x1f,Available);
-    PDD_Name(Host_EndUpdate)(state,&drow);
+    PDD_Name(Host_EndUpdate)(state,drow,Available);
 
-    PDD_Name(Host_AdvanceRow)(state,&drow,Available);
     Vptr += Available;
     Remaining -= Available;
     if(Vptr >= Vend)
@@ -390,7 +397,7 @@ static inline void PDD_Name(RowFunc1XSameBitAlignedNoFlags)(ARMul_State *state,P
   DC.Vptr = Vptr;
 }
 
-static inline void PDD_Name(RowFunc1XSameByteAlignedNoFlags)(ARMul_State *state,PDD_Row drow)
+static inline void PDD_Name(RowFunc1XSameByteAlignedNoFlags)(ARMul_State *state,PDD_Row *drow)
 {
   uint32_t Vptr = DC.Vptr>>3;
   uint32_t Vstart = MEMC.Vstart<<4;
@@ -411,11 +418,10 @@ static inline void PDD_Name(RowFunc1XSameByteAlignedNoFlags)(ARMul_State *state,
 
     /* Process the pixels in this region, stopping at end of row/update block/Vend */
     int outoffset;
-    ARMword *out = PDD_Name(Host_BeginUpdate)(state,&drow,Available<<3,&outoffset);
+    ARMword *out = PDD_Name(Host_BeginUpdate)(state,drow,Available<<3,&outoffset);
     ByteCopy(((uint8_t *)out)+(outoffset>>3),RAM+Vptr,Available);
-    PDD_Name(Host_EndUpdate)(state,&drow);
+    PDD_Name(Host_EndUpdate)(state,drow,Available<<3);
 
-    PDD_Name(Host_AdvanceRow)(state,&drow,Available<<3);
     Vptr += Available;
     Remaining -= Available;
     if(Vptr >= Vend)
@@ -433,7 +439,7 @@ static inline void PDD_Name(RowFunc1XSameByteAlignedNoFlags)(ARMul_State *state,
 
 */
 
-static inline void PDD_Name(RowFuncExpandTableNoFlags)(ARMul_State *state,PDD_Row drow)
+static inline void PDD_Name(RowFuncExpandTableNoFlags)(ARMul_State *state,PDD_Row *drow)
 {
   uint32_t Vptr = DC.Vptr;
   uint32_t Vstart = MEMC.Vstart<<7;
@@ -454,11 +460,10 @@ static inline void PDD_Name(RowFuncExpandTableNoFlags)(ARMul_State *state,PDD_Ro
 
     /* Process the pixels in this region, stopping at end of row/update block/Vend */
     int outoffset;
-    ARMword *out = PDD_Name(Host_BeginUpdate)(state,&drow,Available<<HD.ExpandFactor,&outoffset);
+    ARMword *out = PDD_Name(Host_BeginUpdate)(state,drow,Available<<HD.ExpandFactor,&outoffset);
     BitCopyExpand(out,outoffset,RAM+(Vptr>>5),Vptr&0x1f,Available,HD.ExpandTable,1<<DC.LastHostDepth,HD.ExpandFactor);
-    PDD_Name(Host_EndUpdate)(state,&drow);
+    PDD_Name(Host_EndUpdate)(state,drow,Available<<HD.ExpandFactor);
 
-    PDD_Name(Host_AdvanceRow)(state,&drow,Available<<HD.ExpandFactor);
     Vptr += Available;
     Remaining -= Available;
     if(Vptr >= Vend)
@@ -553,7 +558,7 @@ static void PDD_Name(EventFunc)(ARMul_State *state,CycleCount nowtime)
     
     if((Width != DC.LastHostWidth) || (Height != DC.LastHostHeight) || (FrameRate != DC.LastHostHz) || (Depth != DC.LastHostDepth))
     {
-      fprintf(stderr,"New mode: %dx%d, %dHz (CR %x ClockIn %dMhz)\n",Width,Height,FrameRate,NewCR,(int)(ClockIn/2000000));
+      warn_vidc("New mode: %dx%d, %dHz (CR %x ClockIn %dMhz)\n",Width,Height,FrameRate,NewCR,(int)(ClockIn/2000000));
       /* Try selecting new mode */
       if((Width < 1) || (Height < 1))
       {
@@ -704,15 +709,15 @@ static void PDD_Name(EventFunc)(ARMul_State *state,CycleCount nowtime)
           PDD_Row hrow = PDD_Name(Host_BeginRow)(state,hoststart++,HD.XOffset,&alignment);
           if(HD.ExpandTable)
           {
-            updated = PDD_Name(RowFuncExpandTable)(state,hrow,flags);
+            updated = PDD_Name(RowFuncExpandTable)(state,&hrow,flags);
           }
           else if(!(flags & ROWFUNC_UNALIGNED) && !(alignment & 0x7))
           {
-            updated = PDD_Name(RowFunc1XSameByteAligned)(state,hrow,flags);
+            updated = PDD_Name(RowFunc1XSameByteAligned)(state,&hrow,flags);
           }
           else
           {
-            updated = PDD_Name(RowFunc1XSameBitAligned)(state,hrow,flags);
+            updated = PDD_Name(RowFunc1XSameBitAligned)(state,&hrow,flags);
           }
           PDD_Name(Host_EndRow)(state,&hrow);
           if(updated)
@@ -754,15 +759,15 @@ static void PDD_Name(EventFunc)(ARMul_State *state,CycleCount nowtime)
             PDD_Row hrow = PDD_Name(Host_BeginRow)(state,hoststart++,HD.XOffset,&alignment);
             if(HD.ExpandTable)
             {
-              PDD_Name(RowFuncExpandTableNoFlags)(state,hrow);
+              PDD_Name(RowFuncExpandTableNoFlags)(state,&hrow);
             }
             else if(!(flags & ROWFUNC_UNALIGNED) && !(alignment & 0x7))
             {
-              PDD_Name(RowFunc1XSameByteAlignedNoFlags)(state,hrow);
+              PDD_Name(RowFunc1XSameByteAlignedNoFlags)(state,&hrow);
             }
             else
             {
-              PDD_Name(RowFunc1XSameBitAlignedNoFlags)(state,hrow);
+              PDD_Name(RowFunc1XSameBitAlignedNoFlags)(state,&hrow);
             }
             PDD_Name(Host_EndRow)(state,&hrow);
           }
@@ -817,9 +822,7 @@ static void PDD_Name(VIDCPutVal)(ARMul_State *state,ARMword address, ARMword dat
   addr&=~3;
   switch (addr) {
     case 0x40: /* Border col */
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC border colour write val=0x%x\n",val);
-#endif
+      dbug_vidc("VIDC border colour write val=0x%x\n",val);
       val &= 0x1fff;
       if(VIDC.BorderCol != val)
       {
@@ -832,9 +835,7 @@ static void PDD_Name(VIDCPutVal)(ARMul_State *state,ARMword address, ARMword dat
     case 0x48: /* Cursor palette log col 2 */
     case 0x4c: /* Cursor palette log col 3 */
       addr = (addr-0x44)>>2;
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC cursor log col %d write val=0x%x\n",addr+1,val);
-#endif
+      dbug_vidc("VIDC cursor log col %d write val=0x%x\n",addr+1,val);
       VIDC.CursorPalette[addr] = val & 0x1fff;
       break;
 
@@ -846,9 +847,7 @@ static void PDD_Name(VIDCPutVal)(ARMul_State *state,ARMword address, ARMword dat
     case 0x74: /* Stereo image reg 4 */
     case 0x78: /* Stereo image reg 5 */
     case 0x7c: /* Stereo image reg 6 */
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC stereo image reg write val=0x%x\n",val);
-#endif
+      dbug_vidc("VIDC stereo image reg write val=0x%x\n",val);
       val &= 7;
       addr = ((addr-0x64)>>2)&0x7;
       if(VIDC.StereoImageReg[addr] != val)
@@ -861,121 +860,87 @@ static void PDD_Name(VIDCPutVal)(ARMul_State *state,ARMword address, ARMword dat
       break;
 
     case 0x80:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Horiz cycle register val=%d\n",val>>14);
-#endif
+      dbug_vidc("VIDC Horiz cycle register val=%d\n",val>>14);
       VideoRelUpdateAndForce(DC.ModeChanged,VIDC.Horiz_Cycle,(val>>14) & 0x3ff);
       break;
 
     case 0x84:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Horiz sync width register val=%d\n",val>>14);
-#endif
+      dbug_vidc("VIDC Horiz sync width register val=%d\n",val>>14);
       VIDC.Horiz_SyncWidth = (val>>14) & 0x3ff;
       break;
 
     case 0x88:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Horiz border start register val=%d\n",val>>14);
-#endif
+      dbug_vidc("VIDC Horiz border start register val=%d\n",val>>14);
       VIDC.Horiz_BorderStart = (val>>14) & 0x3ff;
       break;
 
     case 0x8c:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Horiz display start register val=%d\n",val>>14);
-#endif
+      dbug_vidc("VIDC Horiz display start register val=%d\n",val>>14);
       VideoRelUpdateAndForce(DC.ModeChanged,VIDC.Horiz_DisplayStart,(val>>14) & 0x3ff);
       break;
 
     case 0x90:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Horiz display end register val=%d\n",val>>14);
-#endif
+      dbug_vidc("VIDC Horiz display end register val=%d\n",val>>14);
       VideoRelUpdateAndForce(DC.ModeChanged,VIDC.Horiz_DisplayEnd,(val>>14) & 0x3ff);
       break;
 
     case 0x94:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC horizontal border end register val=%d\n",val>>14);
-#endif
+      dbug_vidc("VIDC horizontal border end register val=%d\n",val>>14);
       VIDC.Horiz_BorderEnd = (val>>14) & 0x3ff;
       break;
 
     case 0x98:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC horiz cursor start register val=%d\n",val>>13);
-#endif
+      dbug_vidc("VIDC horiz cursor start register val=%d\n",val>>13);
       VIDC.Horiz_CursorStart=(val>>13) & 0x7ff;
       break;
 
     case 0x9c:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC horiz interlace register val=%d\n",val>>14);
-#endif
+      dbug_vidc("VIDC horiz interlace register val=%d\n",val>>14);
       VIDC.Horiz_Interlace = (val>>14) & 0x3ff;
       break;
 
     case 0xa0:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Vert cycle register val=%d\n",val>>14);
-#endif
+      dbug_vidc("VIDC Vert cycle register val=%d\n",val>>14);
       VideoRelUpdateAndForce(DC.ModeChanged,VIDC.Vert_Cycle,(val>>14) & 0x3ff);
       break;
 
     case 0xa4:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Vert sync width register val=%d\n",val>>14);
-#endif
+      dbug_vidc("VIDC Vert sync width register val=%d\n",val>>14);
       VIDC.Vert_SyncWidth = (val>>14) & 0x3ff;
       break;
 
     case 0xa8:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Vert border start register val=%d\n",val>>14);
-#endif
+      dbug_vidc("VIDC Vert border start register val=%d\n",val>>14);
       VideoRelUpdateAndForce(DC.ModeChanged,VIDC.Vert_BorderStart,((val>>14) & 0x3ff));
       break;
 
     case 0xac:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Vert disp start register val=%d\n",val>>14);
-#endif
+      dbug_vidc("VIDC Vert disp start register val=%d\n",val>>14);
       VideoRelUpdateAndForce(DC.ModeChanged,VIDC.Vert_DisplayStart,((val>>14) & 0x3ff));
       break;
 
     case 0xb0:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Vert disp end register val=%d\n",val>>14);
-#endif
+      dbug_vidc("VIDC Vert disp end register val=%d\n",val>>14);
       VideoRelUpdateAndForce(DC.ModeChanged,VIDC.Vert_DisplayEnd,(val>>14) & 0x3ff);
       break;
 
     case 0xb4:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Vert Border end register val=%d\n",val>>14);
-#endif
+      dbug_vidc("VIDC Vert Border end register val=%d\n",val>>14);
       VideoRelUpdateAndForce(DC.ModeChanged,VIDC.Vert_BorderEnd,((val>>14) & 0x3ff));
       break;
 
     case 0xb8:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Vert cursor start register val=%d\n",val>>14);
-#endif
+      dbug_vidc("VIDC Vert cursor start register val=%d\n",val>>14);
       VIDC.Vert_CursorStart=(val>>14) & 0x3ff;
       break;
 
     case 0xbc:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Vert cursor end register val=%d\n",val>>14);
-#endif
+      dbug_vidc("VIDC Vert cursor end register val=%d\n",val>>14);
       VIDC.Vert_CursorEnd=(val>>14) & 0x3ff;
       break;
 
     case 0xc0:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Sound freq register val=%d\n",val);
-#endif
+      dbug_vidc("VIDC Sound freq register val=%d\n",val);
       val &= 0xff;
       if(VIDC.SoundFreq != val)
       {
@@ -987,14 +952,12 @@ static void PDD_Name(VIDCPutVal)(ARMul_State *state,ARMword address, ARMword dat
       break;
 
     case 0xe0:
-#ifdef DEBUG_VIDCREGS
-      fprintf(stderr,"VIDC Control register val=0x%x\n",val);
-#endif
+      dbug_vidc("VIDC Control register val=0x%x\n",val);
       VIDC.ControlReg = val & 0xffff;
       break;
 
     default:
-      fprintf(stderr,"Write to unknown VIDC register reg=0x%x val=0x%x\n",addr,val);
+      warn_vidc("Write to unknown VIDC register reg=0x%x val=0x%x\n",addr,val);
       break;
 
   }; /* Register switch */
@@ -1014,7 +977,7 @@ static int PDD_Name(Init)(ARMul_State *state,const struct Vidc_Regs *Vidc)
 {
   state->Display = calloc(sizeof(struct PDD_Name(DisplayInfo)),1);
   if(!state->Display) {
-    fprintf(stderr,"Failed to allocate DisplayInfo\n");
+    warn_vidc("Failed to allocate DisplayInfo\n");
     return -1;
   }
 

@@ -93,6 +93,16 @@ const char *FDC_InsertFloppy(int drive, const char *image);
 const char *FDC_EjectFloppy(int drive);
 
 /**
+ * FDC_IsFloppyInserted
+ *
+ * Check if there's a floppy disc inserted in the specified drive.
+ *
+ * @param drive Drive number to check [0-3]
+ * @returns true if a disc is inserted, false otherwise
+ */
+bool FDC_IsFloppyInserted(int drive);
+
+/**
  * FDC_Regular
  *
  * Called regulaly from the DispKbd poll loop.

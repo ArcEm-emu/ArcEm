@@ -96,7 +96,7 @@ FASTMAP_FUNC void ARMul_StoreWordS(ARMul_State *state, ARMword address, ARMword 
 
 	entry = FastMap_GetEntryNoWrap(state,address);
 	res = FastMap_DecodeWrite(entry,state->FastMapMode);
-//  fprintf(stderr,"StoreWordS: %08x maps to entry %08x res %08x (mode %08x pc %08x)\n",address,entry,res,MEMC.FastMapMode,state->Reg[15]);
+//  dbug("StoreWordS: %08x maps to entry %08x res %08x (mode %08x pc %08x)\n",address,entry,res,MEMC.FastMapMode,state->Reg[15]);
 	ARMul_CLEARABORT;
 	if(FASTMAP_RESULT_DIRECT(res))
 	{
