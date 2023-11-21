@@ -116,6 +116,9 @@ LDFLAGS += -mcrt=newlib
 # Uncomment them if you are using a G4 or other PPC with Altivec
 #CFLAGS += -maltivec -mabi=altivec
 #LDFLAGS += -maltivec -mabi=altivec -lfreevec
+# The following line is for onchipmem support, which should speed
+# the emulator up but slows it down, so it is disabled by default
+#CFLAGS += -DONCHIPMEM_SUPPORT
 endif
 
 ifeq (${SYSTEM},amigaos3)

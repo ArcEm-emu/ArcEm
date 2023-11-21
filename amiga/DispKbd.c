@@ -24,11 +24,14 @@
 #ifdef __amigaos4__
 #include <libraries/keymap.h>
 #include <graphics/blitattr.h>
+
+#ifdef ONCHIPMEM_SUPPORT
 #include <proto/onchipmem.h>
 
 struct Library *ocmb;
 struct OCMIFace *IOCM = NULL;
-#endif
+#endif // ONCHIPMEM_SUPPORT
+#endif // _amigaos4__
 
 BOOL using_ocm = FALSE;
 
@@ -69,7 +72,7 @@ void CloseDisplay(void);
 void *state_alloc(int s)
 {
 	void *p = NULL;
-#ifdef __amigaos4__
+#if defined(__amigaos4__) && defined(ONCHIPMEM_SUPPORT)
 	if((use_ocm == TRUE) && (s <= 65536)) {
 		/* This is a 64K block. ARMul_State is a little over 1K without FastMap */
 		if((ocmb = OpenResource("onchipmem.resource"))) {
@@ -91,7 +94,7 @@ void *state_alloc(int s)
 void state_free(void *p)
 {
 	if(using_ocm) {
-#ifdef __amigaos4__
+#if defined(__amigaos4__) && defined(ONCHIPMEM_SUPPORT)
 		ReleaseOnChipMem();
 		DropInterface((struct Interface *)IOCM);
 #endif
