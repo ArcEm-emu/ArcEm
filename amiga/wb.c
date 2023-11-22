@@ -11,11 +11,13 @@
 #include "platform.h"
 #include "displaydev.h"
 
-void wblaunch(struct WBStartup *);
-void closewblibs(void);
-void gettooltypes(struct WBArg *);
+#ifdef __amigaos4__
+#define CurrentDir SetCurrentDir
+#endif
 
-void closewblibs(void)
+void wblaunch(struct WBStartup *);
+
+static void closewblibs(void)
 {
 	/* We only need these libraries to read tooltypes, so if they don't open
 		we can just skip the tooltypes and carry on */
@@ -35,7 +37,7 @@ void closewblibs(void)
 }
 
 
-void gettooltypes(struct WBArg *wbarg)
+static void gettooltypes(struct WBArg *wbarg)
 {
 	struct DiskObject *dobj;
 	CONST_STRPTR *toolarray;

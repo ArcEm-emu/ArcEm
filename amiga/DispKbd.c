@@ -1,12 +1,15 @@
 /* Amiga DispKbd.c for ArcEm by Chris Young <chris@unsatisfactorysoftware.co.uk> */
 /* Some code based on DispKbd.c for other platforms                              */
 
+#define __USE_CLASSIC_MINTERM__
+
 #include <string.h>
 #include <limits.h>
 
 #include "../armdefs.h"
 #include "armarc.h"
 #include "../arch/keyboard.h"
+#include "../arch/ControlPane.h"
 #include "displaydev.h"
 #include "KeyTable.h"
 #include "platform.h"
@@ -65,9 +68,9 @@ static int redraw_maxy = 0;
 static ULONG monitor_tag = TAG_IGNORE;
 static ULONG monitor_data = TAG_IGNORE;
 
-void writepixel(struct RastPort *,ULONG,ULONG,ULONG);
 void ChangeDisplayMode(ARMul_State *,long,long,int);
 void CloseDisplay(void);
+void MouseMoved(ARMul_State *state,int xdiff,int ydiff);
 
 void *state_alloc(int s)
 {
@@ -105,7 +108,7 @@ void state_free(void *p)
 	cleanup();
 }
 
-int changemode(int width,int height,int log2bpp,int *xscale,int *yscale)
+static int changemode(int width,int height,int log2bpp,int *xscale,int *yscale)
 {
 	ULONG id = INVALID_ID;
 
@@ -479,7 +482,7 @@ static inline ARMword *PDD_Name(Host_BeginUpdate)(ARMul_State *state,PDD_Row *ro
 
 static inline void PDD_Name(Host_EndUpdate)(ARMul_State *state,PDD_Row *row)
 {
-	WritePixelLine8(&friend,row->x,row->y,row->width,RowBuffer,&tmprp);
+	WritePixelLine8((struct RastPort *)&friend,row->x,row->y,row->width,RowBuffer,(struct RastPort *)&tmprp);
 }
 
 static inline void PDD_Name(Host_AdvanceRow)(ARMul_State *state,PDD_Row *row,unsigned int count)
@@ -850,7 +853,7 @@ Kbd_PollHostKbd(ARMul_State *state)
 #ifdef __amigaos4__
 					case 0x67:
 					{
-						BPTR *in,*out;
+						BPTR in,out;
 
 						in = Open("NIL:",MODE_OLDFILE);
 						out = Open("NIL:",MODE_NEWFILE);
@@ -956,7 +959,7 @@ DisplayDev_Init(ARMul_State *state)
 	mask = AllocRaster(32,32);
 	
 	if(anymonitor == FALSE) {
-		if(wb = LockPubScreen(NULL)) {
+		if((wb = LockPubScreen(NULL))) {
 			monitor_tag = BIDTAG_MonitorID;
 			monitor_data = GetVPModeID(&wb->ViewPort) & MONITOR_ID_MASK;
 			UnlockPubScreen(NULL, wb);

@@ -16,7 +16,7 @@ static unsigned long sampleRate = 44100;
 
 SoundData sound_buffer[256*2]; /* Must be >= 2*Sound_BatchSize! */
 
-int openaudio(void)
+static int openaudio(void)
 {
 	char audiof[256];
 
