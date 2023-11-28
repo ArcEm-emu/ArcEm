@@ -14,32 +14,15 @@
 //#include <proto/input.h>
 //#include <proto/picasso96api.h>
 
-#ifdef __amigaos4__
-struct Library *ExecBase;
-struct Library *IntuitionBase;
-struct Library *GfxBase;
-struct Library *DOSBase;
-struct Library *AslBase;
-struct Library *IconBase;
-struct Library *UtilityBase;
-//struct Device *inputdevice;
-
-struct ExecIFace *IExec;
-struct IntuitionIFace *IIntuition;
-struct GraphicsIFace *IGraphics;
-struct DOSIFace *IDOS;
-struct AslIFace *IAsl;
-struct IconIFace *IIcon;
-struct UtilityIFace *IUtility;
-#else
+#ifndef __amigaos4__
 #define IDCMP_EXTENDEDMOUSE 0
 #endif
 
 extern void cleanup(void);
 extern void sound_exit(void);
 
-int force8bit;
-int swapmousebuttons;
-BOOL anymonitor;
-BOOL use_ocm;
+extern int force8bit;
+extern int swapmousebuttons;
+extern BOOL anymonitor;
+extern BOOL use_ocm;
 #endif
