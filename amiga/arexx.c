@@ -13,6 +13,7 @@ struct Library *ARexxBase;
 struct ARexxIFace *IARexx;
 
 Object *arexx_obj = NULL;
+BOOL arexx_quit = FALSE;
 
 enum
 {

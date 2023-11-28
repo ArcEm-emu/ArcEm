@@ -15,6 +15,11 @@
 #define CurrentDir SetCurrentDir
 #endif
 
+int force8bit;
+int swapmousebuttons;
+BOOL anymonitor;
+BOOL use_ocm;
+
 void wblaunch(struct WBStartup *);
 
 static void closewblibs(void)
