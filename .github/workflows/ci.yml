@@ -104,13 +104,13 @@ jobs:
     strategy:
       matrix:
         amiga:
-        # - { name: "AmigaOS 3", host: "m68k-amigaos", system: "amigaos3" }
-        - { name: "AmigaOS 4", host: "ppc-amigaos", system: "amiga" }
+        - { name: "AmigaOS 3", host: "m68k-amigaos" }
+        - { name: "AmigaOS 4", host: "ppc-amigaos" }
 
     steps:
     - uses: actions/checkout@v3
     - name: Build
-      run: make SYSTEM=${{ matrix.amiga.system }} CROSS=${{ matrix.amiga.host }}-
+      run: make SYSTEM=amiga CROSS=${{ matrix.amiga.host }}-
     - uses: actions/upload-artifact@v3
       with:
         name: arcem-${{ matrix.amiga.host }}
