@@ -207,6 +207,8 @@ elseif(${SYSTEM} STREQUAL "amiga")
 			# the emulator up but slows it down, so it is disabled by default
 			target_compile_definitions(arcem PRIVATE ONCHIPMEM_SUPPORT)
 		endif()
+	elseif(AMIGAOS3)
+		target_link_libraries(arcem PRIVATE m)
 	endif()
 
 	# TODO: Build arcempanel

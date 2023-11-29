@@ -163,7 +163,7 @@ jobs:
     strategy:
       matrix:
         amiga:
-        # - { name: "AmigaOS 3", host: "m68k-amigaos", cmake-flags: -DM68K_CRT=nix20 }
+        - { name: "AmigaOS 3", host: "m68k-amigaos", cmake-flags: -DM68K_CRT=nix20 }
         - { name: "AmigaOS 4", host: "ppc-amigaos", cmake-flags: -DPPC_CRT=newlib }
 
     steps:
