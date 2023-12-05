@@ -19,6 +19,8 @@
 #include "arch/displaydev.h"
 
 #include <proto/intuition.h>
+#include <proto/graphics.h>
+#include <proto/asl.h>
 #include <intuition/pointerclass.h>
 #include <dos/dostags.h>
 #include <devices/input.h>
@@ -35,6 +37,15 @@ struct Library *ocmb;
 struct OCMIFace *IOCM = NULL;
 #endif // ONCHIPMEM_SUPPORT
 #endif // _amigaos4__
+
+struct Library *AslBase;
+struct Library *GfxBase;
+struct Library *IntuitionBase;
+#ifdef __amigaos4__
+struct AslIFace *IAsl;
+struct GraphicsIFace *IGraphics;
+struct IntuitionIFace *IIntuition;
+#endif
 
 BOOL using_ocm = FALSE;
 

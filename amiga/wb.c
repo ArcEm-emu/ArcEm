@@ -7,6 +7,9 @@
 #include <workbench/startup.h>
 #include <stdio.h>
 
+#include <proto/dos.h>
+#include <proto/icon.h>
+
 #include "ArcemConfig.h"
 #include "platform.h"
 #include "displaydev.h"
@@ -19,6 +22,11 @@ int force8bit;
 int swapmousebuttons;
 BOOL anymonitor;
 BOOL use_ocm;
+
+struct Library *IconBase;
+#ifdef __amigaos4__
+struct IconIFace *IIcon;
+#endif
 
 void wblaunch(struct WBStartup *);
 
