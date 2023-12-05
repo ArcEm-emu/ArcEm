@@ -53,6 +53,19 @@ jobs:
     - name: Build
       run: make SYSTEM=win
 
+  build-watcom:
+    name: Windows (OpenWatcom)
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Set up OpenWatcom
+      uses: open-watcom/setup-watcom@v0
+      with:
+        tag: 2021-12-01-Build
+    - uses: actions/checkout@v3
+    - name: Build
+      run: wmake -f Makefile.ow
+
   build-riscos:
     name: RISC OS
     runs-on: ubuntu-latest
