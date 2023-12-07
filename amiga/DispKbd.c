@@ -38,10 +38,10 @@ struct OCMIFace *IOCM = NULL;
 #endif // ONCHIPMEM_SUPPORT
 #endif // _amigaos4__
 
+#ifdef __amigaos4__
 struct Library *AslBase;
 struct Library *GfxBase;
 struct Library *IntuitionBase;
-#ifdef __amigaos4__
 struct AslIFace *IAsl;
 struct GraphicsIFace *IGraphics;
 struct IntuitionIFace *IIntuition;
@@ -99,7 +99,7 @@ void *state_alloc(int s)
 #endif
 
 	if(p == NULL) {
-		p = AllocVec(s, MEMF_PRIVATE);
+		p = malloc(s);
 	}
 	
 	return p;
@@ -113,7 +113,7 @@ void state_free(void *p)
 		DropInterface((struct Interface *)IOCM);
 #endif
 	} else {
-		FreeVec(p);
+		free(p);
 	}
 	
 	cleanup();
