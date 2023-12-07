@@ -9,6 +9,9 @@
 
 #include <SDL.h>
 
+/* TODO: Allow selecting the display device at runtime? */
+#if !SDL_VERSION_ATLEAST(2, 0, 0)
+
 #include "../armdefs.h"
 #include "armarc.h"
 #include "archio.h"
@@ -445,3 +448,5 @@ int DisplayDev_Init(ARMul_State *state)
       ControlPane_Error(0, "Unsupported bytes per pixel: %d", screen->format->BytesPerPixel);
   }
 }
+
+#endif

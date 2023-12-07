@@ -176,13 +176,13 @@ riscpkg: $(TARGET)
 endif
 
 ifeq (${SYSTEM},SDL)
-SDL_CONFIG=sdl-config
+SDL_CONFIG=sdl2-config
 CFLAGS += -DSYSTEM_SDL -DUSE_FAKEMAIN $(shell $(SDL_CONFIG) --cflags)
 ifneq ($(shell uname),Darwin)
 CFLAGS += -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
 endif
 LIBS += $(shell $(SDL_CONFIG) --libs)
-OBJS += SDL/fb.o
+OBJS += SDL/fb.o SDL/render.o
 endif
 
 ifeq (${SYSTEM},X)
