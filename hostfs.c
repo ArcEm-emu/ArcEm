@@ -183,8 +183,8 @@ typedef struct {
 #define ROUND_UP_TO_4(x) (((x) + 3) & (~3))
 
 #define STREQ(x,y)     (strcmp(x,y) == 0)
-#ifdef _MSC_VER
-#define STRCASEEQ(x,y) (stricmp(x,y) == 0)
+#if defined(_MSC_VER) || defined(__WATCOMC__)
+#define STRCASEEQ(x,y) (_stricmp(x,y) == 0)
 #else
 #define STRCASEEQ(x,y) (strcasecmp(x,y) == 0)
 #endif

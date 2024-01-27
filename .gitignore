@@ -5,6 +5,8 @@ armsuppmvns.s
 ROM*
 *,ff8
 *.o
+*.obj
+*.res
 HardImage?
 FloppyImage?
 hexcmos*
