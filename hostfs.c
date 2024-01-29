@@ -175,7 +175,7 @@ typedef struct {
  * Contains name and RISC OS object info
  */
 typedef struct {
-  unsigned name_offset; /**< Offset within cache_names[] */
+  size_t name_offset; /**< Offset within cache_names[] */
   risc_os_object_info object_info;
 } cache_directory_entry;
 
@@ -1133,7 +1133,7 @@ hostfs_args_8_write_zeros(ARMul_State *state)
 {
   const unsigned BUFSIZE = MINIMUM_BUFFER_SIZE;
   FILE *f;
-  ARMword length;
+  size_t length;
 
   assert(state);
 
@@ -1237,10 +1237,10 @@ hostfs_write_file(ARMul_State *state, bool with_data)
   const unsigned BUFSIZE = MINIMUM_BUFFER_SIZE;
   char ro_path[PATH_MAX];
   char host_pathname[PATH_MAX], new_pathname[PATH_MAX];
-  ARMword length, ptr;
+  ARMword ptr;
   risc_os_object_info object_info;
   FILE *f;
-  size_t bytes_written=0;
+  size_t length, bytes_written=0;
 
   assert(state);
 
@@ -1538,7 +1538,7 @@ hostfs_file_255_load_file(ARMul_State *state)
   risc_os_object_info object_info;
   FILE *f;
   ARMword ptr;
-  ARMword bytes_read;
+  size_t bytes_read;
 
   assert(state);
 
@@ -1733,7 +1733,7 @@ hostfs_cache_dir(const char *directory_name)
   static unsigned cache_names_capacity = 2048; /* Initial capacity of cache_names[] */
 
   unsigned entry_ptr = 0;
-  unsigned name_ptr = 0;
+  size_t name_ptr = 0;
 
 #ifdef __riscos__
   struct {
@@ -1789,7 +1789,7 @@ hostfs_cache_dir(const char *directory_name)
       cache_entries[entry_ptr].object_info.length = gbpb_buffer.length;
       cache_entries[entry_ptr].object_info.attribs = gbpb_buffer.attribs;
 
-      unsigned string_space;
+      size_t string_space;
 
       /* Calculate space required to store name (+ terminator) */
       string_space = strlen(gbpb_buffer.name) + 1;
@@ -1829,7 +1829,7 @@ hostfs_cache_dir(const char *directory_name)
 
   while ((entry = readdir(d)) != NULL) {
     char entry_path[PATH_MAX], ro_leaf[PATH_MAX];
-    unsigned string_space;
+    size_t string_space;
 
     /* Ignore the current directory and it's parent */
     if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {

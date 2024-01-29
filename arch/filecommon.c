@@ -321,7 +321,7 @@ size_t File_ReadRAM(ARMul_State *state, FILE *pFile,ARMword uAddress,size_t uCou
       ret += temp;
       if(temp != amt)
         break;
-      uAddress += temp;
+      uAddress += (ARMword)temp;
       uCount -= temp;
     }
     else if(FASTMAP_RESULT_FUNC(res))
@@ -432,7 +432,7 @@ size_t File_WriteRAM(ARMul_State *state, FILE *pFile,ARMword uAddress,size_t uCo
 #ifdef USE_FILEBUFFER
       filebuffer_write(phy,amt,true);
       /* Update state */
-      uAddress += amt;
+      uAddress += (ARMword)amt;
       uCount -= amt;
 #else
       {
@@ -442,7 +442,7 @@ size_t File_WriteRAM(ARMul_State *state, FILE *pFile,ARMword uAddress,size_t uCo
       ret += temp;
       if(temp != amt)
         break;
-      uAddress += temp;
+      uAddress += (ARMword)temp;
       uCount -= temp;
       }
 #endif

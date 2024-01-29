@@ -462,8 +462,8 @@ static void Sound_Process(ARMul_State *state,int32_t avail)
        We need that divided by Sound_HostRate, and the reciprocal */
     a = ((uint64_t) clockin)*1024;
     b = ((uint64_t) Sound_HostRate)*24*(VIDC.SoundFreq+2);
-    soundTimeStep = (a<<TIMESHIFT)/b;
-    soundScale = (b<<16)/a;
+    soundTimeStep = (uint32_t)((a<<TIMESHIFT)/b);
+    soundScale = (uint32_t)((b<<16)/a);
     warn_vidc("New sample period %d (VIDC %dMHz) host %dHz -> timestep %08x scale %08x\n",VIDC.SoundFreq+2,clockin/1000000,Sound_HostRate>>10,soundTimeStep,soundScale);
     soundTime = 0;
   }

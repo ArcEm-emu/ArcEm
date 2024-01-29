@@ -272,8 +272,8 @@ extnrom_load(uint32_t size, uint32_t entry_count, void *address)
 
   /* The First Chunk: A simple description string */
   chunk[0] = OS_ID_BYTE_DEVICE_DESCR |
-             ((strlen(DESCRIPTION_STRING) + 1) << 8);
-  chunk[1] = (modules - start_addr) * 4; /* offset in bytes */
+             (ARMword)((strlen(DESCRIPTION_STRING) + 1) << 8);
+  chunk[1] = (ARMword)(modules - start_addr) * 4; /* offset in bytes */
 
   strcpy((char *) modules, DESCRIPTION_STRING);
   extnrom_endian_correct(modules, strlen(DESCRIPTION_STRING) + 1);
@@ -286,7 +286,7 @@ extnrom_load(uint32_t size, uint32_t entry_count, void *address)
   while ((sFilename = Directory_GetNextEntry(&hDir)) != NULL) {
     char path[ARCEM_PATH_MAX];
     FileInfo hFileInfo;
-    uint32_t offset;
+    ARMword offset;
     FILE *f;
 
     /* Ignore hidden entries - those starting with '.' */
@@ -310,7 +310,7 @@ extnrom_load(uint32_t size, uint32_t entry_count, void *address)
     }
 
     /* Offset of where this module will be placed in the ROM */
-    offset = ((modules - start_addr) * 4) + 4;
+    offset = (ARMword)((modules - start_addr) * 4) + 4;
 
     /* Prepare Chunk Directory information for this entry */
     chunk[0] = OS_ID_BYTE_RISCOS_MODULE |

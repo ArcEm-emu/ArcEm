@@ -47,10 +47,10 @@ SoundData *Sound_GetHostBuffer(int32_t *destavail)
 void Sound_HostBuffered(SoundData *buffer,int32_t numSamples)
 {
 	LPSTR lpbuffer = (LPSTR)buffer;
-	int size = numSamples * 2 * sizeof(SoundData);
+	DWORD_PTR size = numSamples * 2 * sizeof(SoundData);
 
 	WAVEHDR* current;
-	int remain;
+	DWORD_PTR remain;
 	current = &waveBlocks[waveCurrentBlock];
 	while(size > 0) {
 		/*

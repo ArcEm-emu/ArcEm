@@ -1135,7 +1135,7 @@ static void CheckData_DoNextBufferFull(ARMul_State *state) {
                  HDC.CommandData.ReadData.SCNTL);
   } else {
     static char tmpbuff[256];
-    int retval;
+    size_t retval;
 
     /* Fill here up! */
     if (retval=fread(tmpbuff,1,256,HDC.HardFile[HDC.CommandData.ReadData.US]),retval!=256)
