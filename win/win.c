@@ -463,8 +463,6 @@ int resizeWindow(int hWidth, int hHeight)
 {
   RECT r;
 
-  int w, h;
-
   if (hWidth <= 0 || hWidth > xSize) {
     return 0;
   }
@@ -472,16 +470,16 @@ int resizeWindow(int hWidth, int hHeight)
     return 0;
   }
 
-  if (GetWindowRect(mainWin, &r) != TRUE) {
+  if (!GetWindowRect(mainWin, &r)) {
     return 0;
   }
 
-  w = hWidth  + GetSystemMetrics(SM_CXFIXEDFRAME) * 2;
-  h = hHeight + GetSystemMetrics(SM_CYFIXEDFRAME) * 2
-        + GetSystemMetrics(SM_CYCAPTION)
-      + GetSystemMetrics(SM_CYMENU);
+  r.right = r.left + hWidth;
+  r.bottom = r.top + hHeight;
+  AdjustWindowRect(&r, WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX, TRUE);
 
-  MoveWindow(mainWin, r.left,   r.top, w, h, TRUE);
+  SetWindowPos(mainWin, HWND_TOP, r.left, r.top, r.right - r.left, r.bottom - r.top,
+               SWP_NOMOVE | SWP_NOZORDER | SWP_NOCOPYBITS);
 
   return 0;
 }
