@@ -13,6 +13,7 @@
 #include "ControlPane.h"
 
 
+#define MinimumWidth 512
 #define MonitorWidth 1600
 #define MonitorHeight 1200
 
@@ -126,6 +127,14 @@ static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,in
   {
     HD.XScale = 2;
     HD.Width *= 2;
+  }
+  /* Try and detect small screen resolutions */
+  else if ((width < MinimumWidth) && (width * 2 <= MonitorWidth) && (height * 2 <= MonitorHeight))
+  {
+    HD.XScale  = 2;
+    HD.YScale  = 2;
+    HD.Width  *= 2;
+    HD.Height *= 2;
   }
   resizeWindow(HD.Width,HD.Height);
   /* Screen is expected to be cleared */
