@@ -114,7 +114,8 @@ char *Directory_GetNextEntry(Directory *hDirectory)
  */
 bool File_GetInfo(const char *sPath, FileInfo *phFileInfo)
 {
-  WIN32_FILE_ATTRIBUTE_DATA w32fad = {0};
+  HANDLE hFile;
+  DWORD attributes;
 
   assert(sPath);
   assert(*sPath);
@@ -125,22 +126,34 @@ bool File_GetInfo(const char *sPath, FileInfo *phFileInfo)
   phFileInfo->bIsRegularFile = false;
 
   /* Read the details */
-  if (!GetFileAttributesEx(sPath, GetFileExInfoStandard, &w32fad))
+  attributes = GetFileAttributesA(sPath);
+  if (attributes == INVALID_FILE_ATTRIBUTES)
   {
     fprintf(stderr, "Failed to stat '%s'\n", sPath);
     return false;
   }
-  
-  /* Fill in entries */
-  phFileInfo->ulFilesize = w32fad.nFileSizeLow;
 
-  if (w32fad.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+  if (attributes & FILE_ATTRIBUTE_DIRECTORY) {
     phFileInfo->bIsDirectory = true;
   } else {
     /* IMPROVE guess, if not a directory then we are a regular file */
     phFileInfo->bIsRegularFile = true;
   }
-  
+
+  /* This works Windows 95 or earlier */
+  hFile = CreateFile(sPath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING,
+                     FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OVERLAPPED, NULL);
+  if (hFile == INVALID_HANDLE_VALUE)
+  {
+    fprintf(stderr, "Failed to stat '%s'\n", sPath);
+    return false;
+  }
+
+  /* Fill in entries */
+  phFileInfo->ulFilesize = GetFileSize(hFile, NULL);
+
+  CloseHandle(hFile);
+
   /* Success! */
   return true;
 }
