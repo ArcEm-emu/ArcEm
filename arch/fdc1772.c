@@ -914,7 +914,7 @@ void FDC_Init(ARMul_State *state) {
     FDC.drive[drive].form = avail_format;
   }
 
-#if !defined(MACOSX) && !defined(SYSTEM_X)
+#if !defined(SYSTEM_win) && !defined(MACOSX) && !defined(SYSTEM_X)
   for (drive = 0; drive < 4; drive++) {
     char tmp[256];
 
@@ -1041,6 +1041,27 @@ FDC_EjectFloppy(int drive)
   dr->form = avail_format;
 
   return NULL;
+}
+
+/**
+ * FDC_IsFloppyInserted
+ *
+ * Check if there's a floppy disc inserted in the specified drive.
+ *
+ * @param drive Drive number to check [0-3]
+ * @returns true if a disc is inserted, false otherwise
+ */
+bool
+FDC_IsFloppyInserted(int drive)
+{
+    floppy_drive* dr;
+
+    assert(drive >= 0 && drive < sizeof FDC.drive /
+        sizeof FDC.drive[0]);
+
+    dr = FDC.drive + drive;
+
+    return (dr->fp != NULL);
 }
 
 /* ------------------------------------------------------------------ */

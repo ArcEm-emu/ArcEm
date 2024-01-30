@@ -94,26 +94,27 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
     return RegisterClassEx(&wcex);
 }
 
-static void insert_floppy(int drive, char *image)
+static void insert_floppy(HWND hWnd, int drive, char *image)
 {
-	static char got_disc[4];
 	const char *err;
 
-	if (got_disc[drive]) {
+	if (FDC_IsFloppyInserted(drive)) {
 		err = FDC_EjectFloppy(drive);
 		fprintf(stderr, "ejecting drive %d: %s\n", drive,
 		        err ? err : "ok");
-		got_disc[drive] ^= !err;
 	}
 
 	err = FDC_InsertFloppy(drive, image);
-		fprintf(stderr, "inserting floppy image %s into drive %d: %s\n",
-		        image, drive, err ? err : "ok");
+	fprintf(stderr, "inserting floppy image %s into drive %d: %s\n",
+	        image, drive, err ? err : "ok");
 
-	got_disc[drive] ^= !err;
+	if (err == NULL)
+		EnableMenuItem(GetMenu(hWnd), IDM_EJECT0 + drive, MF_ENABLED);
+	else
+		EnableMenuItem(GetMenu(hWnd), IDM_EJECT0 + drive, MF_GRAYED);
 }
 
-void OpenFloppyImageDialog(int drive) {
+static void OpenFloppyImageDialog(HWND hWnd, int drive) {
 	OPENFILENAMEA ofn;      // common dialog box structure
 	char szFile[260];       // buffer for file name
 
@@ -135,8 +136,16 @@ void OpenFloppyImageDialog(int drive) {
 
 	// Display the Open dialog box.
 	if (GetOpenFileNameA(&ofn)==TRUE) {
-		insert_floppy(drive, szFile);
+		insert_floppy(hWnd, drive, szFile);
 	}
+}
+
+void EjectFloppyImage(HWND hWnd, int drive) {
+	const char *err = FDC_EjectFloppy(drive);
+	fprintf(stderr, "ejecting drive %d: %s\n",
+	        drive, err ? err : "ok");
+
+	EnableMenuItem(GetMenu(hWnd), IDM_EJECT0 + drive, MF_GRAYED);
 }
 
 //
@@ -206,9 +215,18 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
           break;
         case IDM_COPY:
           break;
-        case IDM_OPEN:
-          OpenFloppyImageDialog(0);
-          break;
+        case IDM_OPEN0:
+        case IDM_OPEN1:
+        case IDM_OPEN2:
+        case IDM_OPEN3:
+            OpenFloppyImageDialog(hWnd, wmId - IDM_OPEN0);
+            break;
+        case IDM_EJECT0:
+        case IDM_EJECT1:
+        case IDM_EJECT2:
+        case IDM_EJECT3:
+            EjectFloppyImage(hWnd, wmId - IDM_EJECT0);
+            break;
         case IDM_EXIT:
           DestroyWindow(hWnd);
           exit(0);
