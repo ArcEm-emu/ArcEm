@@ -3,17 +3,27 @@ name: Build
 on: [push, pull_request]
 
 jobs:
-  build-x11:
-    name: Linux (X11)
+  build-linux:
+    name: Linux (${{ matrix.linux.platform }})
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        linux:
+        - { platform: X11,  system: X }
+        - { platform: SDL1, system: SDL, apt-packages: libsdl1.2-dev, sdl-config: sdl-config }
+        - { platform: SDL2, system: SDL, apt-packages: libsdl2-dev,   sdl-config: sdl2-config }
 
     steps:
     - uses: actions/checkout@v3
+    - name: Install dependencies
+      if: ${{ matrix.linux.apt-packages != '' }}
+      run: sudo apt-get update && sudo apt-get install ${{ matrix.linux.apt-packages }}
     - name: Build
-      run: make SYSTEM=X
+      run: make SYSTEM=${{ matrix.linux.system }} SDL_CONFIG=${{ matrix.linux.sdl-config }}
     - uses: actions/upload-artifact@v3
       with:
-        name: arcem-x11
+        name: arcem-${{ matrix.linux.platform }}
         path: ./arcem
 
   build-msvc:
