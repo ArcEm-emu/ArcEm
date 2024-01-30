@@ -20,9 +20,35 @@
    Other platforms with decent a rotate right instruction may want to avoid using the table too
 */
 
-#ifndef __arm__
-#ifndef __PPC__
+#if defined(__i386__) || defined(_M_IX86)
+#define ARMUL_ARCH_I386
+#endif
+
+#if defined(__x86_64__) || defined(_M_X64)
+#define ARMUL_ARCH_X64
+#endif
+
+#if defined(__arm__) || defined(_M_ARM)
+#define ARMUL_ARCH_ARM
+#endif
+
+#if defined(__aarch64__) || defined(_M_ARM64)
+#define ARMUL_ARCH_ARM64
+#endif
+
+#if defined(__PPC__)
+#define ARMUL_ARCH_PPC
+#endif
+
+#ifndef ARMUL_ARCH_ARM
+#ifndef ARMUL_ARCH_ARM64
+#ifndef ARMUL_ARCH_PPC
+#ifndef ARMUL_ARCH_I386
+#ifndef ARMUL_ARCH_X64
 #define ARMUL_USE_IMMEDTABLE
+#endif
+#endif
+#endif
 #endif
 #endif
 
@@ -76,7 +102,7 @@
 #define NFLAG ((state->Reg[15]>>31)&1)
 #define SETN state->Reg[15] |= NBIT
 #define CLEARN state->Reg[15] &= ~NBIT
-#ifndef __arm__
+#ifndef ARMUL_ARCH_ARM
 #define ASSIGNN(res) state->Reg[15] = (res?state->Reg[15]|NBIT:state->Reg[15]&~NBIT)
 #else
 #define ASSIGNN(res) inlASSIGN(state,res,NBIT)
@@ -94,7 +120,7 @@ static inline void inlASSIGN(ARMul_State *state,ARMword res,ARMword bit)
 #define ZFLAG ((state->Reg[15]>>30)&1)
 #define SETZ state->Reg[15] |= ZBIT
 #define CLEARZ state->Reg[15] &= ~ZBIT
-#ifndef __arm__
+#ifndef ARMUL_ARCH_ARM
 #define ASSIGNZ(res) state->Reg[15] = (res?state->Reg[15]|ZBIT:state->Reg[15]&~ZBIT)
 #else
 #define ASSIGNZ(res) inlASSIGN(state,res,ZBIT)
@@ -103,7 +129,7 @@ static inline void inlASSIGN(ARMul_State *state,ARMword res,ARMword bit)
 #define CFLAG ((state->Reg[15]>>29)&1)
 #define SETC state->Reg[15] |= CBIT
 #define CLEARC state->Reg[15] &= ~CBIT
-#ifndef __arm__
+#ifndef ARMUL_ARCH_ARM
 #define ASSIGNC(res) state->Reg[15] = (res?state->Reg[15]|CBIT:state->Reg[15]&~CBIT)
 #else
 #define ASSIGNC(res) inlASSIGN(state,res,CBIT)
@@ -112,7 +138,7 @@ static inline void inlASSIGN(ARMul_State *state,ARMword res,ARMword bit)
 #define VFLAG ((state->Reg[15]>>28)&1)
 #define SETV state->Reg[15] |= VBIT
 #define CLEARV state->Reg[15] &= ~VBIT
-#ifndef __arm__
+#ifndef ARMUL_ARCH_ARM
 #define ASSIGNV(res) state->Reg[15] = (res?state->Reg[15]|VBIT:state->Reg[15]&~VBIT)
 #else
 #define ASSIGNV(res) inlASSIGN(state,res,VBIT)
@@ -229,7 +255,7 @@ static inline void inlASSIGN(ARMul_State *state,ARMword res,ARMword bit)
 
 #define DEST (state->Reg[DESTReg])
 
-#ifndef __arm__ /* GCC makes a mess of this ternary op, much better to go with the hand-holding approach to ensure there's only one LDR */
+#ifndef ARMUL_ARCH_ARM /* GCC makes a mess of this ternary op, much better to go with the hand-holding approach to ensure there's only one LDR */
 #define LHS ((LHSReg == 15) ? R15PC : (state->Reg[LHSReg]) )
 #else
 #define LHS inlLHS(state,LHSReg)
@@ -286,7 +312,11 @@ static inline ARMword inlLHS(ARMul_State *state,ARMword r)
 *                    Macro to rotate n right by b bits                      *
 \***************************************************************************/
 
+#if defined(_MSC_VER) || defined(__WATCOMC__)
+#define ROTATER(n,b) _rotr(n,b)
+#else
 #define ROTATER(n,b) (((n)>>(b))|((n)<<(32-(b))))
+#endif
 
 /***************************************************************************\
 *                 Macros to store results of instructions                   *
