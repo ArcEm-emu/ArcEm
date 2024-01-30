@@ -9,7 +9,7 @@
 
 struct Directory_s {
   char *sPath;
-  WIN32_FIND_DATA w32fd;
+  WIN32_FIND_DATAA w32fd;
   HANDLE hFile;  
   bool bFirstEntry;
 };

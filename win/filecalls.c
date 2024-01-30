@@ -85,7 +85,7 @@ char *Directory_GetNextEntry(Directory *hDirectory)
 {
 
   if(hDirectory->bFirstEntry) {
-  	hDirectory->hFile = FindFirstFile(hDirectory->sPath, &hDirectory->w32fd);
+    hDirectory->hFile = FindFirstFileA(hDirectory->sPath, &hDirectory->w32fd);
     hDirectory->bFirstEntry = false;
 
     if(INVALID_HANDLE_VALUE == hDirectory->hFile) {
@@ -95,7 +95,7 @@ char *Directory_GetNextEntry(Directory *hDirectory)
     }
   } else {
     /* second or later entry */
-    if(0 == FindNextFile(hDirectory->hFile, &hDirectory->w32fd)) {
+    if(0 == FindNextFileA(hDirectory->hFile, &hDirectory->w32fd)) {
       return NULL;
     } else {
       return hDirectory->w32fd.cFileName;    
@@ -141,8 +141,8 @@ bool File_GetInfo(const char *sPath, FileInfo *phFileInfo)
   }
 
   /* This works Windows 95 or earlier */
-  hFile = CreateFile(sPath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING,
-                     FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OVERLAPPED, NULL);
+  hFile = CreateFileA(sPath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING,
+                      FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OVERLAPPED, NULL);
   if (hFile == INVALID_HANDLE_VALUE)
   {
     fprintf(stderr, "Failed to stat '%s'\n", sPath);

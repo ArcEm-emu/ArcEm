@@ -25,7 +25,7 @@ HBITMAP cbmp = NULL;
 BITMAPINFO pbmi;
 BITMAPINFO cbmi;
 
-static const char szWindowClass[32] = "GenericClass";
+static const TCHAR szWindowClass[32] = TEXT("GenericClass");
 
 
 static BOOL captureMouse = FALSE;
@@ -84,10 +84,10 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
     wcex.cbClsExtra    = 0;
     wcex.cbWndExtra    = 0;
     wcex.hInstance     = hInstance;
-    wcex.hIcon         = LoadIcon(hInstance, "GuiIcon");
+    wcex.hIcon         = LoadIcon(hInstance, TEXT("GuiIcon"));
     wcex.hCursor       = LoadCursor(NULL, IDC_ARROW);
     wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW+1);
-    wcex.lpszMenuName  = "GuiMenu";
+    wcex.lpszMenuName  = TEXT("GuiMenu");
     wcex.lpszClassName = szWindowClass;
     wcex.hIconSm       = NULL; //LoadIcon(wcex.hInstance, (LPCTSTR)IDI_SMALL);
 
@@ -114,7 +114,7 @@ static void insert_floppy(int drive, char *image)
 }
 
 void OpenFloppyImageDialog(int drive) {
-	OPENFILENAME ofn;       // common dialog box structure
+	OPENFILENAMEA ofn;      // common dialog box structure
 	char szFile[260];       // buffer for file name
 
 	// Initialize OPENFILENAME
@@ -134,7 +134,7 @@ void OpenFloppyImageDialog(int drive) {
 	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
 
 	// Display the Open dialog box.
-	if (GetOpenFileName(&ofn)==TRUE) {
+	if (GetOpenFileNameA(&ofn)==TRUE) {
 		insert_floppy(drive, szFile);
 	}
 }
@@ -152,7 +152,7 @@ void OpenFloppyImageDialog(int drive) {
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
    mainWin = CreateWindow( szWindowClass,
-            "Archimedes Emulator",
+            TEXT("Archimedes Emulator"),
             WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX, //WS_OVERLAPPEDWINDOW,
             CW_USEDEFAULT,
             CW_USEDEFAULT,
