@@ -125,3 +125,17 @@ jobs:
       with:
         name: arcem-${{ matrix.amiga.host }}
         path: ./arcem
+
+  build-nds:
+    name: Nintendo DS
+    runs-on: ubuntu-latest
+    container: devkitpro/devkitarm:latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build
+      run: make SYSTEM=nds
+    - uses: actions/upload-artifact@v3
+      with:
+        name: arcem-nds
+        path: ./ArcEm.nds
