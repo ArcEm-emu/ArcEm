@@ -187,8 +187,8 @@ riscpkg: $(TARGET)
 endif
 
 ifeq (${SYSTEM},nds)
-CC=arm-none-eabi-gcc
-AS=arm-none-eabi-as
+CC=$(DEVKITARM)/bin/arm-none-eabi-gcc
+AS=$(DEVKITARM)/bin/arm-none-eabi-as
 LD=$(CC)
 ARM9_ARCH = -mthumb -mthumb-interwork -march=armv5te -mtune=arm946e-s
 CFLAGS += $(ARM9_ARCH) -ffunction-sections -fdata-sections -DSYSTEM_nds -DARM9 -DUSE_FAKEMAIN -DNO_OPEN64 -isystem $(DEVKITPRO)/libnds/include -Wno-cast-align -Wno-format
