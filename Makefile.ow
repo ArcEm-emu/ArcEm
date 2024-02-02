@@ -12,7 +12,8 @@ SRCS = armcopro.c armemu.c arminit.c armarc.c &
 	arch/i2c.c arch/archio.c &
 	arch/fdc1772.c arch/hdc63463.c arch/ReadConfig.c &
 	arch/keyboard.c arch/filecommon.c &
-	arch/ArcemConfig.c arch/cp15.c arch/newsound.c arch/displaydev.c
+	arch/ArcemConfig.c arch/cp15.c arch/newsound.c arch/displaydev.c &
+	libs/inih/ini.c
 
 CFLAGS += -DWIN32 -DSYSTEM_win -Iwin
 SRCS += win/ControlPane.c win/DispKbd.c win/filecalls.c win/win.c
@@ -65,7 +66,7 @@ $(LNK):
 .EXTENSIONS: .obj .res
 .EXTENSIONS: .c .h .rc .ico
 
-.c:.;./arch;./win
+.c:.;./arch;./win;./libs/inih
 .ico:./win
 .rc:./win
 

@@ -234,6 +234,18 @@ SOURCE=..\arch\ReadConfig.h
 SOURCE=..\arch\Version.h
 # End Source File
 # End Group
+# Begin Group "inih"
+
+# PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=..\libs\inih\ini.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\libs\inih\ini.c
+# End Source File
+# End Group
 # Begin Source File
 
 SOURCE=..\armcopro.c

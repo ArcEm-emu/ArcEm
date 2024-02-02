@@ -60,6 +60,11 @@ typedef enum ArcemConfig_DisplayDriver_e {
   DisplayDriver_Standard, /* i.e. 16/32bpp true colour */
 } ArcemConfig_DisplayDriver;
 
+typedef struct ArcemConfig_Label_s {
+    const char *name;
+    unsigned int value;
+} ArcemConfig_Label;
+
 /* THIS IS THE MAIN CONFIGURATION STRUCTURE */
 
 typedef struct ArcemConfig_s {
@@ -104,6 +109,16 @@ typedef struct ArcemConfig_s {
  * @param pConfig The structure to fill in
  */
 extern void ArcemConfig_SetupDefaults(ArcemConfig *pConfig);
+
+/**
+ * ArcemConfig_ParseConfigFile
+ *
+ * Parse and fill in the runtime options into the supplied configuration
+ * structure from the config file.
+ *
+ * @param pConfig The structure to fill in
+ */
+extern void ArcemConfig_ParseConfigFile(ArcemConfig* pConfig);
 
 /**
  * ArcemConfig_ParseCommandLine
