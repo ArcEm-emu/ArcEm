@@ -5,7 +5,7 @@
 */
 
 /* A key point of confusion throughout the source and documentation is
- * that hArcemConfig.aST506DiskShapes is an array of four elements so
+ * that CONFIG.aST506DiskShapes is an array of four elements so
  * I'd assume that [0] matched onto ADFS::4 and [1] was ADFS::5.  (An
  * ST506 controller only supported two drives.)  So you'd think that the
  * "MFM disc" line in ~/.arcemrc had to specify 0 and 1 as they're used
@@ -444,12 +444,12 @@ static int SetFilePtr(ARMul_State *state, int drive, uint32_t head,
 
     dbug("SetFilePtr: drive=%d head=%u cyl=%u sec=%u\n", drive, head, cyl, sect);
 
-    if (drive < 0 || drive > DIM(hArcemConfig.aST506DiskShapes)) {
+    if (drive < 0 || drive > DIM(CONFIG.aST506DiskShapes)) {
         ControlPane_Error(1,"SetFilePtr: drive %d out of range 0..%d\n",
-            drive, (int) DIM(hArcemConfig.aST506DiskShapes));
+            drive, (int) DIM(CONFIG.aST506DiskShapes));
     }
 
-    disc = hArcemConfig.aST506DiskShapes + drive;
+    disc = CONFIG.aST506DiskShapes + drive;
     dbug("SetFilePtr: disc: heads=%d sectors=%d sectorsize=%d\n",
         disc->NHeads, disc->NSectors, disc->RecordLength);
 
@@ -706,11 +706,11 @@ static void SeekCommand(ARMul_State *state) {
     return;
   }
 
-  if (DesiredCylinder >= hArcemConfig.aST506DiskShapes[US].NCyls) {
+  if (DesiredCylinder >= CONFIG.aST506DiskShapes[US].NCyls) {
     /* Ook - bad cylinder address */
         warn_hdc("seek: cylinder address greater than "
             "or equal to configured, %u >= %u\n", DesiredCylinder,
-            hArcemConfig.aST506DiskShapes[US].NCyls);
+            CONFIG.aST506DiskShapes[US].NCyls);
     Cause_Error(state,ERR_NSC); /* Seek screwed up */
     ReturnParams(state,4,0,HDC.SSB,US,0);
     return;
@@ -877,7 +877,7 @@ static void ReadDataCommand(ARMul_State *state) {
   }
 
   /* Number of buffers to read */
-  HDC.CommandData.ReadData.BuffersLeft    = ((SCNTL+(SCNTH<<8)) * hArcemConfig.aST506DiskShapes[US].RecordLength) / 256;
+  HDC.CommandData.ReadData.BuffersLeft    = ((SCNTL+(SCNTH<<8)) * CONFIG.aST506DiskShapes[US].RecordLength) / 256;
   HDC.CommandData.ReadData.NextDestBuffer = 0;
   HDC.CurrentlyOpenDataBuffer=0;
 
@@ -939,7 +939,7 @@ static void WriteDataCommand(ARMul_State *state) {
   }
 
   /* Number of buffers to Write */
-  HDC.CommandData.WriteData.BuffersLeft=((SCNTL+(SCNTH<<8))* hArcemConfig.aST506DiskShapes[US].RecordLength)/256;
+  HDC.CommandData.WriteData.BuffersLeft=((SCNTL+(SCNTH<<8))* CONFIG.aST506DiskShapes[US].RecordLength)/256;
   HDC.CommandData.WriteData.CurrentSourceBuffer=0;
   HDC.CurrentlyOpenDataBuffer=0;
 
@@ -1045,7 +1045,7 @@ static void CompareDataCommand(ARMul_State *state) {
   }
 
   /* Number of buffers to compare */
-  HDC.CommandData.WriteData.BuffersLeft=((SCNTL+(SCNTH<<8)) * hArcemConfig.aST506DiskShapes[US].RecordLength)/256;
+  HDC.CommandData.WriteData.BuffersLeft=((SCNTL+(SCNTH<<8)) * CONFIG.aST506DiskShapes[US].RecordLength)/256;
   HDC.CommandData.WriteData.CurrentSourceBuffer=0;
   HDC.CurrentlyOpenDataBuffer=0;
 
@@ -1220,7 +1220,7 @@ static void CheckDataCommand(ARMul_State *state) {
   }
 
   /* Number of buffers to read */
-  HDC.CommandData.ReadData.BuffersLeft=((SCNTL+(SCNTH<<8)) * hArcemConfig.aST506DiskShapes[US].RecordLength)/256;
+  HDC.CommandData.ReadData.BuffersLeft=((SCNTL+(SCNTH<<8)) * CONFIG.aST506DiskShapes[US].RecordLength)/256;
   HDC.CommandData.ReadData.NextDestBuffer=0;
 
   HDC.DelayCount=1;
@@ -1313,7 +1313,7 @@ static void WriteFormat_DoNextBufferFull(ARMul_State *state) {
     physical and logical cylinders to mismatch - if we are then we are in trouble! */
 
     /* Write the block to the hard disc image file */
-    fwrite(fillbuffer, 1, hArcemConfig.aST506DiskShapes[HDC.CommandData.WriteFormat.US].RecordLength,
+    fwrite(fillbuffer, 1, CONFIG.aST506DiskShapes[HDC.CommandData.WriteFormat.US].RecordLength,
            HDC.HardFile[HDC.CommandData.WriteFormat.US]);
     fflush(HDC.HardFile[HDC.CommandData.WriteFormat.US]);
 

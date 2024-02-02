@@ -217,6 +217,7 @@ typedef enum ARMStartIns {
 
 typedef struct arch_keyboard arch_keyboard;
 typedef struct Vidc_Regs Vidc_Regs;
+typedef struct ArcemConfig_s ArcemConfig;
 
 #define Exception_IRQ R15IBIT
 #define Exception_FIQ R15FBIT
@@ -235,6 +236,7 @@ struct ARMul_State {
    ARMword Bank;              /* the current register bank */
    unsigned NtransSig;        /* MEMC USR/SVC flag, somewhat redundant with FastMapMode */
    ARMword Base;              /* extra hand for base writeback */
+   ArcemConfig *Config;
 
    /* Event queue */
    EventQ_Entry EventQ[EVENTQ_SIZE];
@@ -287,7 +289,7 @@ static inline void state_free(void *p)
 \***************************************************************************/
 
 void ARMul_EmulateInit(void);
-ARMul_State *ARMul_NewState(void);
+ARMul_State *ARMul_NewState(ArcemConfig *pConfig);
 void ARMul_Reset(ARMul_State *state);
 ARMword ARMul_DoProg(ARMul_State *state);
 

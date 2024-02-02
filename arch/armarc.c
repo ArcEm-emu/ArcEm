@@ -203,7 +203,7 @@ ARMul_MemoryInit(ARMul_State *state)
   uint32_t initmemsize = 0;
   
   MEMC.DRAMPageSize = MEMC_PAGESIZE_3_32K;
-  switch(hArcemConfig.eMemSize) {
+  switch(CONFIG.eMemSize) {
     case MemSize_256K:
 #if 0
       initmemsize = 256 * 1024;
@@ -273,7 +273,7 @@ ARMul_MemoryInit(ARMul_State *state)
     chdir(arcemDir);
   }
 #endif
-  if (ROMFile = fopen(hArcemConfig.sRomImageName, "rb"), ROMFile == NULL) {
+  if (ROMFile = fopen(CONFIG.sRomImageName, "rb"), ROMFile == NULL) {
     ControlPane_Error(2,"Couldn't open ROM file");
   }
 
@@ -291,7 +291,7 @@ ARMul_MemoryInit(ARMul_State *state)
 
 #if defined(EXTNROM_SUPPORT)
   /* Add the space required by an Extension Rom */
-  extnrom_size = (extnrom_calculate_size(&extnrom_entry_count)+4095)&~4095;
+  extnrom_size = (extnrom_calculate_size(CONFIG.sEXTNDirectory, &extnrom_entry_count)+4095)&~4095;
   warn("extnrom_size = %u, extnrom_entry_count= %u\n",
        extnrom_size, extnrom_entry_count);
 #endif /* EXTNROM_SUPPORT */
@@ -337,7 +337,7 @@ ARMul_MemoryInit(ARMul_State *state)
 #if defined(EXTNROM_SUPPORT)
     /* Load extension ROM */
     dbug("Loading Extension ROM...\n");
-    extnrom_load(extnrom_size, extnrom_entry_count, MEMC.ROMLow);
+    extnrom_load(CONFIG.sEXTNDirectory, extnrom_size, extnrom_entry_count, MEMC.ROMLow);
 #endif /* EXTNROM_SUPPORT */
   }
 

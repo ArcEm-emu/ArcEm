@@ -27,37 +27,31 @@
 // Local functions
 static char *arcemconfig_StringDuplicate(const char *sInput);
 
-
-
-// Global Variable holding the configuration runtime options of
-// the emulator
-ArcemConfig hArcemConfig;
-
 /** 
  * ArcemConfig_SetupDefaults
  *
  * Called on program startup, sets up the defaults for
  * all the configuration values for the emulator
  */
-void ArcemConfig_SetupDefaults(void)
+void ArcemConfig_SetupDefaults(ArcemConfig *pConfig)
 {
   // Default to 4MB of memory
-  hArcemConfig.eMemSize = MemSize_4M;
+  pConfig->eMemSize = MemSize_4M;
 
   // We default to an ARM 2AS architecture (includes SWP) without a cache
-  hArcemConfig.eProcessor = Processor_ARM250;
+  pConfig->eProcessor = Processor_ARM250;
 
-  hArcemConfig.sRomImageName = arcemconfig_StringDuplicate("ROM");
+  pConfig->sRomImageName = arcemconfig_StringDuplicate("ROM");
   // If we've run out of memory this early, something is very wrong
-  if(NULL == hArcemConfig.sRomImageName) {
+  if(NULL == pConfig->sRomImageName) {
     ControlPane_Error(EXIT_FAILURE,"Failed to allocate memory for initial configuration. Please free up more memory.\n");
   }
 
 #if defined(EXTNROM_SUPPORT)
   // The default directory is extnrom in the current working directory
-  hArcemConfig.sEXTNDirectory = arcemconfig_StringDuplicate("extnrom");
+  pConfig->sEXTNDirectory = arcemconfig_StringDuplicate("extnrom");
   // If we've run out of memory this early, something is very wrong
-  if(NULL == hArcemConfig.sEXTNDirectory) {
+  if(NULL == pConfig->sEXTNDirectory) {
     ControlPane_Error(EXIT_FAILURE,"Failed to allocate memory for initial configuration. Please free up more memory.\n");
   }
 #endif /* EXTNROM_SUPPORT */
@@ -65,33 +59,33 @@ void ArcemConfig_SetupDefaults(void)
 #if defined(HOSTFS_SUPPORT)
   // The default directory is hostfs in the current working directory
 #ifdef AMIGA
-  hArcemConfig.sHostFSDirectory = arcemconfig_StringDuplicate("hostfs");
+  pConfig->sHostFSDirectory = arcemconfig_StringDuplicate("hostfs");
 #else
-  hArcemConfig.sHostFSDirectory = arcemconfig_StringDuplicate("./hostfs");
+  pConfig->sHostFSDirectory = arcemconfig_StringDuplicate("./hostfs");
 #endif
   // If we've run out of memory this early, something is very wrong
-  if(NULL == hArcemConfig.sHostFSDirectory) {
+  if(NULL == pConfig->sHostFSDirectory) {
     ControlPane_Error(EXIT_FAILURE,"Failed to allocate memory for initial configuration. Please free up more memory.\n");
   }
 
 #endif /* HOSTFS_SUPPORT */
 
   /* Default for ST506 drive details is all NULL/zeros */
-  memset(hArcemConfig.aST506DiskShapes, 0, sizeof(struct HDCshape) * 4);
+  memset(pConfig->aST506DiskShapes, 0, sizeof(struct HDCshape) * 4);
 
 
 #if defined(SYSTEM_riscos_single)
-  hArcemConfig.eDisplayDriver = DisplayDriver_Palettised;
-  hArcemConfig.bRedBlueSwap = false;
-  hArcemConfig.bAspectRatioCorrection = true;
-  hArcemConfig.bUpscale = true;
-  hArcemConfig.bNoLowColour = false;
-  hArcemConfig.iMinResX = 0;
-  hArcemConfig.iMinResY = 0;
-  hArcemConfig.iLCDResX = 0;
-  hArcemConfig.iLCDResY = 0;
-  hArcemConfig.iTweakMenuKey1 = 104; /* Left windows key */
-  hArcemConfig.iTweakMenuKey2 = 105; /* Right windows key */
+  pConfig->eDisplayDriver = DisplayDriver_Palettised;
+  pConfig->bRedBlueSwap = false;
+  pConfig->bAspectRatioCorrection = true;
+  pConfig->bUpscale = true;
+  pConfig->bNoLowColour = false;
+  pConfig->iMinResX = 0;
+  pConfig->iMinResY = 0;
+  pConfig->iLCDResX = 0;
+  pConfig->iLCDResY = 0;
+  pConfig->iTweakMenuKey1 = 104; /* Left windows key */
+  pConfig->iTweakMenuKey2 = 105; /* Right windows key */
 #endif
 }
 
@@ -106,7 +100,7 @@ void ArcemConfig_SetupDefaults(void)
  * @param argc Number of entries in argv
  * @param argv Array of char*'s represented space seperated commandline arguments
  */
-void ArcemConfig_ParseCommandLine(int argc, char *argv[])
+void ArcemConfig_ParseCommandLine(ArcemConfig *pConfig, int argc, char *argv[])
 {
   int iArgument = 0;
   char sHelpString[] =
@@ -144,7 +138,7 @@ void ArcemConfig_ParseCommandLine(int argc, char *argv[])
     // There should always be at least 1, the program name
 #ifdef AMIGA
 // Unless we are launching from Workbench...
-	wblaunch((struct WBStartup *)argv);
+	wblaunch((struct WBStartup *)argv, pConfig);
 #endif
     return;
   }
@@ -175,9 +169,9 @@ void ArcemConfig_ParseCommandLine(int argc, char *argv[])
         // Only replace the romname if we successfully allocated a new string
         if(sNewRomName) {
           // Free up the old one
-          free(hArcemConfig.sRomImageName);
+          free(pConfig->sRomImageName);
 
-          hArcemConfig.sRomImageName = sNewRomName;
+          pConfig->sRomImageName = sNewRomName;
         }
 
         iArgument += 2;
@@ -194,9 +188,9 @@ void ArcemConfig_ParseCommandLine(int argc, char *argv[])
         // Only replace the directory if we successfully allocated a new string
         if(sNewExtnRomDir) {
           // Free up the old one
-          free(hArcemConfig.sEXTNDirectory);
+          free(pConfig->sEXTNDirectory);
 
-          hArcemConfig.sEXTNDirectory = sNewExtnRomDir;
+          pConfig->sEXTNDirectory = sNewExtnRomDir;
         }
 
         iArgument += 2;
@@ -214,9 +208,9 @@ void ArcemConfig_ParseCommandLine(int argc, char *argv[])
         // Only replace the directory if we successfully allocated a new string
         if(sNewHostFSDir) {
           // Free up the old one
-          free(hArcemConfig.sHostFSDirectory);
+          free(pConfig->sHostFSDirectory);
 
-          hArcemConfig.sHostFSDirectory = sNewHostFSDir;
+          pConfig->sHostFSDirectory = sNewHostFSDir;
         }
 
         iArgument += 2;
@@ -229,42 +223,42 @@ void ArcemConfig_ParseCommandLine(int argc, char *argv[])
     else if(0 == strcmp("--memory", argv[iArgument])) {
       if(iArgument+1 < argc) { // Is there a following argument?
         if(0 == strcmp("256K", argv[iArgument + 1])) {
-          hArcemConfig.eMemSize = MemSize_256K;
+          pConfig->eMemSize = MemSize_256K;
 
           iArgument += 2;
         }
         else if(0 == strcmp("512K", argv[iArgument + 1])) {
-          hArcemConfig.eMemSize = MemSize_512K;
+          pConfig->eMemSize = MemSize_512K;
 
           iArgument += 2;
         }
         else if(0 == strcmp("1M", argv[iArgument + 1])) {
-          hArcemConfig.eMemSize = MemSize_1M;
+          pConfig->eMemSize = MemSize_1M;
 
           iArgument += 2;
         }
         else if(0 == strcmp("2M", argv[iArgument + 1])) {
-          hArcemConfig.eMemSize = MemSize_2M;
+          pConfig->eMemSize = MemSize_2M;
 
           iArgument += 2;
         }
         else if(0 == strcmp("4M", argv[iArgument + 1])) {
-          hArcemConfig.eMemSize = MemSize_4M;
+          pConfig->eMemSize = MemSize_4M;
 
           iArgument += 2;
         }
         else if(0 == strcmp("8M", argv[iArgument + 1])) {
-          hArcemConfig.eMemSize = MemSize_8M;
+          pConfig->eMemSize = MemSize_8M;
 
           iArgument += 2;
         }
         else if(0 == strcmp("12M", argv[iArgument + 1])) {
-          hArcemConfig.eMemSize = MemSize_12M;
+          pConfig->eMemSize = MemSize_12M;
 
           iArgument += 2;
         }
         else if(0 == strcmp("16M", argv[iArgument + 1])) {
-          hArcemConfig.eMemSize = MemSize_16M;
+          pConfig->eMemSize = MemSize_16M;
 
           iArgument += 2;
         }
@@ -280,17 +274,17 @@ void ArcemConfig_ParseCommandLine(int argc, char *argv[])
     else if(0 == strcmp("--processor", argv[iArgument])) {
       if(iArgument+1 < argc) { // Is there a following argument?
         if(0 == strcmp("ARM2", argv[iArgument + 1])) {
-          hArcemConfig.eProcessor = Processor_ARM2;
+          pConfig->eProcessor = Processor_ARM2;
 
           iArgument += 2;
         }
         else if(0 == strcmp("ARM250", argv[iArgument + 1])) {
-          hArcemConfig.eProcessor = Processor_ARM250;
+          pConfig->eProcessor = Processor_ARM250;
 
           iArgument += 2;
         }
         else if(0 == strcmp("ARM3", argv[iArgument + 1])) {
-          hArcemConfig.eProcessor = Processor_ARM3;
+          pConfig->eProcessor = Processor_ARM3;
 
           iArgument += 2;
         }
@@ -306,11 +300,11 @@ void ArcemConfig_ParseCommandLine(int argc, char *argv[])
     else if(0 == strcmp("--display", argv[iArgument])) {
       if(iArgument+1 < argc) { // Is there a following argument?
         if(0 == strcmp("pal", argv[iArgument + 1])) {
-          hArcemConfig.eDisplayDriver = DisplayDriver_Palettised;
+          pConfig->eDisplayDriver = DisplayDriver_Palettised;
           iArgument += 2;
         }
         else if(0 == strcmp("std", argv[iArgument + 1])) {
-          hArcemConfig.eDisplayDriver = DisplayDriver_Standard;
+          pConfig->eDisplayDriver = DisplayDriver_Standard;
           iArgument += 2;
         }
         else {
@@ -320,37 +314,37 @@ void ArcemConfig_ParseCommandLine(int argc, char *argv[])
         ControlPane_Error(EXIT_FAILURE,"No argument following the --display option\n");
       }
     } else if(0 == strcmp("--rbswap",argv[iArgument])) {
-      hArcemConfig.bRedBlueSwap = true;
+      pConfig->bRedBlueSwap = true;
       iArgument += 1;
     } else if(0 == strcmp("--noaspect",argv[iArgument])) {
-      hArcemConfig.bAspectRatioCorrection = false;
+      pConfig->bAspectRatioCorrection = false;
       iArgument += 1;
     } else if(0 == strcmp("--noupscale",argv[iArgument])) {
-      hArcemConfig.bUpscale = false;
+      pConfig->bUpscale = false;
       iArgument += 1;
     } else if(0 == strcmp("--nolowcolour",argv[iArgument])) {
-      hArcemConfig.bNoLowColour = true;
+      pConfig->bNoLowColour = true;
       iArgument += 1;
     } else if(0 == strcmp("--minres",argv[iArgument])) {
       if(iArgument+2 < argc) {
-        hArcemConfig.iMinResX = atoi(argv[iArgument+1]);
-        hArcemConfig.iMinResY = atoi(argv[iArgument+2]);
+        pConfig->iMinResX = atoi(argv[iArgument+1]);
+        pConfig->iMinResY = atoi(argv[iArgument+2]);
         iArgument += 3;
       } else {
         ControlPane_Error(EXIT_FAILURE,"Not enough arguments following the --minres option\n");
       }
     } else if(0 == strcmp("--lcdres",argv[iArgument])) {
       if(iArgument+2 < argc) {
-        hArcemConfig.iLCDResX = atoi(argv[iArgument+1]);
-        hArcemConfig.iLCDResY = atoi(argv[iArgument+2]);
+        pConfig->iLCDResX = atoi(argv[iArgument+1]);
+        pConfig->iLCDResY = atoi(argv[iArgument+2]);
         iArgument += 3;
       } else {
         ControlPane_Error(EXIT_FAILURE,"Not enough arguments following the --lcdres option\n");
       }
     } else if(0 == strcmp("--menukeys",argv[iArgument])) {
       if(iArgument+2 < argc) {
-        hArcemConfig.iTweakMenuKey1 = atoi(argv[iArgument+1]);
-        hArcemConfig.iTweakMenuKey2 = atoi(argv[iArgument+2]);
+        pConfig->iTweakMenuKey1 = atoi(argv[iArgument+1]);
+        pConfig->iTweakMenuKey2 = atoi(argv[iArgument+2]);
         iArgument += 3;
       } else {
         ControlPane_Error(EXIT_FAILURE,"Not enough arguments following the --menukeys option\n");

@@ -11,15 +11,16 @@
  
   FUTURE VERSIONS will absorb the code from ReadConfig.c
 
-  The Structure hArcemConfig can be filled in by means other
+  The ArcemConfig structure can be filled in by means other
   than the Command Line parser as needed on a platform by
   platform basis.
 
   Using a configuration value in the rest of the emulator code
   ------------------------------------------------------------
-   Use the global variable 'hArcemConfig'. Its properties are defined
-  in the struct ArcemConfig_s below. Use enumeration values or #defines
-  for all properties that support that.
+   Use the define 'CONFIG' to access the structure for the current
+  state. Its properties are defined in the struct ArcemConfig_s
+  below. Use enumeration values or #defines for all properties that
+  support that.
 
   Adding a config value to the emulator
   -------------------------------------
@@ -92,25 +93,28 @@ typedef struct ArcemConfig_s {
 
 } ArcemConfig;
 
-extern ArcemConfig hArcemConfig;
+#define CONFIG (*(state->Config))
 
 /** 
  * ArcemConfig_SetupDefaults
  *
  * Called on program startup, sets up the defaults for
  * all the configuration values for the emulator
+ *
+ * @param pConfig The structure to fill in
  */
-extern void ArcemConfig_SetupDefaults(void);
+extern void ArcemConfig_SetupDefaults(ArcemConfig *pConfig);
 
 /**
  * ArcemConfig_ParseCommandLine
  *
  * Given the commandline arguments that the program was started with,
- * parse and fill in the runtime options into the global configuration
+ * parse and fill in the runtime options into the supplied configuration
  * structure. Will exit the program if command line arguments are
  * incorrectly formatted (or the --help or --version argument is used).
  *
+ * @param pConfig The structure to fill in
  * @param argc Number of entries in argv
  * @param argv Array of char*'s represented space seperated commandline arguments
  */
-extern void ArcemConfig_ParseCommandLine(int argc, char *argv[]);
+extern void ArcemConfig_ParseCommandLine(ArcemConfig* pConfig, int argc, char* argv[]);
