@@ -242,16 +242,30 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
       hdc = BeginPaint(hWnd, &ps);
 
-      hsrc = CreateCompatibleDC(hdc);
-      SelectObject(hsrc, hbmp);
-      BitBlt(hdc, 0, 0, xSize, ySize, hsrc, 0, 0, SRCCOPY);
-      DeleteDC(hsrc);
-
       if(rMouseHeight > 0) {
+        int rWidth = xSize - (rMouseX + 32);
+        int bHeight = ySize - (rMouseY + rMouseHeight);
+
+        hsrc = CreateCompatibleDC(hdc);
+        SelectObject(hsrc, hbmp);
+
         hsrc1=CreateCompatibleDC(hdc);
         SelectObject(hsrc1, cbmp);
+
+        /* The mouse bitmap is already combined with the image underneath, so blit the screen in multiple parts to avoid flickering.  */
+        BitBlt(hdc, 0, 0, xSize, rMouseY, hsrc, 0, 0, SRCCOPY); /* top */
+        BitBlt(hdc, 0, rMouseY, rMouseX, rMouseHeight, hsrc, 0, rMouseY, SRCCOPY); /* left */
         BitBlt(hdc, rMouseX, rMouseY, 32, rMouseHeight, hsrc1, 0, 0, SRCCOPY);
+        BitBlt(hdc, rMouseX + 32, rMouseY, rWidth, rMouseHeight, hsrc, rMouseX + 32, rMouseY, SRCCOPY); /* right */
+        BitBlt(hdc, 0, rMouseY + rMouseHeight, xSize, bHeight, hsrc, 0, rMouseY + rMouseHeight, SRCCOPY); /* bottom */
+
         DeleteDC(hsrc1);
+        DeleteDC(hsrc);
+      } else {
+        hsrc = CreateCompatibleDC(hdc);
+        SelectObject(hsrc, hbmp);
+        BitBlt(hdc, 0, 0, xSize, ySize, hsrc, 0, 0, SRCCOPY);
+        DeleteDC(hsrc);
       }
 
       EndPaint(hWnd, &ps);
