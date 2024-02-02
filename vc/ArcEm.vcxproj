@@ -306,6 +306,7 @@
     <ClCompile Include="..\dagstandalone.c" />
     <ClCompile Include="..\eventq.c" />
     <ClCompile Include="..\hostfs.c" />
+    <ClCompile Include="..\libs\inih\ini.c" />
     <ClCompile Include="..\main.c" />
     <ClCompile Include="..\win\ControlPane.c" />
     <ClCompile Include="..\win\DispKbd.c" />
@@ -336,6 +337,7 @@
     <ClInclude Include="..\dagstandalone.h" />
     <ClInclude Include="..\eventq.h" />
     <ClInclude Include="..\hostfs.h" />
+    <ClInclude Include="..\libs\inih\ini.h" />
     <ClInclude Include="..\prof.h" />
     <ClInclude Include="..\win\filecalls_internal.h" />
     <ClInclude Include="..\win\gui.h" />

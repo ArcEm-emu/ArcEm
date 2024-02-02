@@ -650,6 +650,22 @@
 				>
 			</File>
 		</Filter>
+		<Filter
+			Name="libs"
+			>
+			<Filter
+				Name="inih"
+				>
+				<File
+					RelativePath="..\libs\inih\ini.c"
+					>
+				</File>
+				<File
+					RelativePath="..\libs\inih\ini.h"
+					>
+				</File>
+			</Filter>
+		</Filter>
 		<File
 			RelativePath="..\armcopro.c"
 			>

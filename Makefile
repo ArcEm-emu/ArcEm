@@ -89,7 +89,8 @@ OBJS = armcopro.o armemu.o arminit.o \
 		$(SYSTEM)/DispKbd.o arch/i2c.o arch/archio.o \
     arch/fdc1772.o $(SYSTEM)/ControlPane.o arch/hdc63463.o arch/ReadConfig.o \
     arch/keyboard.o $(SYSTEM)/filecalls.o arch/filecommon.o \
-    arch/ArcemConfig.o arch/cp15.o arch/newsound.o arch/displaydev.o
+    arch/ArcemConfig.o arch/cp15.o arch/newsound.o arch/displaydev.o \
+    libs/inih/ini.o
 
 SRCS = armcopro.c armemu.c arminit.c arch/armarc.c \
 	armsupp.c main.c dagstandalone.c eventq.c \
@@ -97,11 +98,13 @@ SRCS = armcopro.c armemu.c arminit.c arch/armarc.c \
 	arch/fdc1772.c $(SYSTEM)/ControlPane.c arch/hdc63463.c \
 	arch/ReadConfig.c arch/keyboard.c $(SYSTEM)/filecalls.c \
 	arch/ArcemConfig.c arch/cp15.c arch/newsound.c \
-	arch/displaydev.c arch/filecommon.c
+	arch/displaydev.c arch/filecommon.c \
+	libs/inih/ini.c
 
 INCS = armdefs.h armemu.h $(SYSTEM)/KeyTable.h \
   arch/i2c.h arch/archio.h arch/fdc1772.h arch/ControlPane.h \
-  arch/hdc63463.h arch/keyboard.h arch/ArcemConfig.h arch/cp15.h
+  arch/hdc63463.h arch/keyboard.h arch/ArcemConfig.h arch/cp15.h \
+  libs/inih/ini.h
 
 TARGET=arcem
 

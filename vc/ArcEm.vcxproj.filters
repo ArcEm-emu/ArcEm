@@ -7,6 +7,12 @@
     <Filter Include="win">
       <UniqueIdentifier>{bd6365f3-4e60-41c7-b7c6-df4c786223c8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="libs">
+      <UniqueIdentifier>{dd3c676d-38dc-4a4c-a995-d4f8fa382ead}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libs\inih">
+      <UniqueIdentifier>{27395c90-4dec-4f65-9b22-9bf4d072e791}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\armcopro.c" />
@@ -71,6 +77,9 @@
     </ClCompile>
     <ClCompile Include="..\dagstandalone.c" />
     <ClCompile Include="..\hostfs.c" />
+    <ClCompile Include="..\libs\inih\ini.c">
+      <Filter>libs\inih</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\armdefs.h" />
@@ -140,6 +149,9 @@
     <ClInclude Include="..\dagstandalone.h" />
     <ClInclude Include="..\hostfs.h" />
     <ClInclude Include="..\prof.h" />
+    <ClInclude Include="..\libs\inih\ini.h">
+      <Filter>libs\inih</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\win\arc.ico">

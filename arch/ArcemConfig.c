@@ -19,6 +19,9 @@
 #include "ArcemConfig.h"
 #include "Version.h"
 #include "ControlPane.h"
+#include "dbugsys.h"
+
+#include "libs/inih/ini.h"
 
 #ifdef AMIGA
 #include <workbench/startup.h>
@@ -26,6 +29,27 @@
 
 // Local functions
 static char *arcemconfig_StringDuplicate(const char *sInput);
+static void arcemconfig_StringReplace(char** sPtr, const char* sNew);
+static bool arcemconfig_StringToEnum(unsigned int* uPtr, const char* sInput, const ArcemConfig_Label *labels);
+
+static const ArcemConfig_Label memsize_labels[] = {
+    { "256K", MemSize_256K },
+    { "512K", MemSize_512K },
+    { "1M",   MemSize_1M   },
+    { "2M",   MemSize_2M   },
+    { "4M",   MemSize_4M   },
+    { "8M",   MemSize_8M   },
+    { "12M",  MemSize_12M  },
+    { "16M",  MemSize_16M  },
+    { NULL, 0 }
+};
+
+static const ArcemConfig_Label processor_labels[] = {
+    { "ARM2",   Processor_ARM2 },
+    { "ARM250", Processor_ARM250 },
+    { "ARM3",   Processor_ARM3 },
+    { NULL, 0 }
+};
 
 /** 
  * ArcemConfig_SetupDefaults
@@ -89,6 +113,65 @@ void ArcemConfig_SetupDefaults(ArcemConfig *pConfig)
 #endif
 }
 
+static int ArcemConfig_Handler(void* user, const char* section,
+    const char* name, const char* value)
+{
+    ArcemConfig *pConfig = (ArcemConfig *)user;
+    unsigned int uValue;
+
+    if (0 == strcmp(section, "machine")) {
+        if (0 == strcmp(name, "rom")) {
+            arcemconfig_StringReplace(&pConfig->sRomImageName, value);
+        } else if (0 == strcmp(name, "extnromdir")) {
+            arcemconfig_StringReplace(&pConfig->sEXTNDirectory, value);
+        } else if (0 == strcmp(name, "hostfsdir")) {
+            arcemconfig_StringReplace(&pConfig->sHostFSDirectory, value);
+        } else if (0 == strcmp(name, "memory")) {
+            if (arcemconfig_StringToEnum(&uValue, value, memsize_labels)) {
+                pConfig->eMemSize = uValue;
+            } else {
+                warn("Unrecognised value for %s: %s\n", name, value);
+                return 0;
+            }
+        } else if (0 == strcmp(name, "processor")) {
+            if (arcemconfig_StringToEnum(&uValue, value, processor_labels)) {
+                pConfig->eProcessor = uValue;
+            } else {
+                warn("Unrecognised value for %s: %s\n", name, value);
+                return 0;
+            }
+        } else {
+            warn("Unknown section/name: %s, %s, %s\n", section, name, value);
+            return 0;
+        }
+    } else {
+        warn("Unknown section/name: %s, %s, %s\n", section, name, value);
+        return 0;  /* unknown section/name, error */
+    }
+
+    return 1;
+}
+
+/**
+ * ArcemConfig_ParseConfigFile
+ *
+ * Parse and fill in the runtime options into the supplied configuration
+ * structure from the config file.
+ *
+ * @param pConfig The structure to fill in
+ */
+void ArcemConfig_ParseConfigFile(ArcemConfig* pConfig)
+{
+#if defined(__riscos__)
+    const char* filename = "<ArcEm$Dir>.arcem/ini";
+#else
+    const char* filename = "arcem.ini";
+#endif
+    dbug("Reading options from file %s\n", filename);
+
+    ini_parse(filename, ArcemConfig_Handler, pConfig);
+}
+
 /**
  * ArcemConfig_ParseCommandLine
  *
@@ -102,6 +185,7 @@ void ArcemConfig_SetupDefaults(ArcemConfig *pConfig)
  */
 void ArcemConfig_ParseCommandLine(ArcemConfig *pConfig, int argc, char *argv[])
 {
+  unsigned int uValue;
   int iArgument = 0;
   char sHelpString[] =
     "Arcem <Options>\n"
@@ -164,16 +248,7 @@ void ArcemConfig_ParseCommandLine(ArcemConfig *pConfig, int argc, char *argv[])
     }
     else if(0 == strcmp("--rom", argv[iArgument])) {
       if(iArgument+1 < argc) { // Is there a following argument?
-        char *sNewRomName = arcemconfig_StringDuplicate(argv[iArgument + 1]);
-        
-        // Only replace the romname if we successfully allocated a new string
-        if(sNewRomName) {
-          // Free up the old one
-          free(pConfig->sRomImageName);
-
-          pConfig->sRomImageName = sNewRomName;
-        }
-
+        arcemconfig_StringReplace(&pConfig->sRomImageName, argv[iArgument + 1]);
         iArgument += 2;
       } else {
         // No argument following the --rom option
@@ -183,16 +258,7 @@ void ArcemConfig_ParseCommandLine(ArcemConfig *pConfig, int argc, char *argv[])
 #if defined(EXTNROM_SUPPORT)
     else if(0 == strcmp("--extnromdir", argv[iArgument])) {
       if(iArgument+1 < argc) { // Is there a following argument?
-        char *sNewExtnRomDir = arcemconfig_StringDuplicate(argv[iArgument + 1]);
-        
-        // Only replace the directory if we successfully allocated a new string
-        if(sNewExtnRomDir) {
-          // Free up the old one
-          free(pConfig->sEXTNDirectory);
-
-          pConfig->sEXTNDirectory = sNewExtnRomDir;
-        }
-
+        arcemconfig_StringReplace(&pConfig->sEXTNDirectory, argv[iArgument + 1]);
         iArgument += 2;
       } else {
         // No argument following the --extnromdir option
@@ -203,16 +269,7 @@ void ArcemConfig_ParseCommandLine(ArcemConfig *pConfig, int argc, char *argv[])
 #if defined(HOSTFS_SUPPORT)
     else if(0 == strcmp("--hostfsdir", argv[iArgument])) {
       if(iArgument+1 < argc) { // Is there a following argument?
-        char *sNewHostFSDir = arcemconfig_StringDuplicate(argv[iArgument + 1]);
-        
-        // Only replace the directory if we successfully allocated a new string
-        if(sNewHostFSDir) {
-          // Free up the old one
-          free(pConfig->sHostFSDirectory);
-
-          pConfig->sHostFSDirectory = sNewHostFSDir;
-        }
-
+        arcemconfig_StringReplace(&pConfig->sHostFSDirectory, argv[iArgument + 1]);
         iArgument += 2;
       } else {
         // No argument following the --hostfsdir option
@@ -222,47 +279,10 @@ void ArcemConfig_ParseCommandLine(ArcemConfig *pConfig, int argc, char *argv[])
 #endif /* HOSTFS_SUPPORT */
     else if(0 == strcmp("--memory", argv[iArgument])) {
       if(iArgument+1 < argc) { // Is there a following argument?
-        if(0 == strcmp("256K", argv[iArgument + 1])) {
-          pConfig->eMemSize = MemSize_256K;
-
+        if (arcemconfig_StringToEnum(&uValue, argv[iArgument + 1], memsize_labels)) {
+          pConfig->eMemSize = uValue;
           iArgument += 2;
-        }
-        else if(0 == strcmp("512K", argv[iArgument + 1])) {
-          pConfig->eMemSize = MemSize_512K;
-
-          iArgument += 2;
-        }
-        else if(0 == strcmp("1M", argv[iArgument + 1])) {
-          pConfig->eMemSize = MemSize_1M;
-
-          iArgument += 2;
-        }
-        else if(0 == strcmp("2M", argv[iArgument + 1])) {
-          pConfig->eMemSize = MemSize_2M;
-
-          iArgument += 2;
-        }
-        else if(0 == strcmp("4M", argv[iArgument + 1])) {
-          pConfig->eMemSize = MemSize_4M;
-
-          iArgument += 2;
-        }
-        else if(0 == strcmp("8M", argv[iArgument + 1])) {
-          pConfig->eMemSize = MemSize_8M;
-
-          iArgument += 2;
-        }
-        else if(0 == strcmp("12M", argv[iArgument + 1])) {
-          pConfig->eMemSize = MemSize_12M;
-
-          iArgument += 2;
-        }
-        else if(0 == strcmp("16M", argv[iArgument + 1])) {
-          pConfig->eMemSize = MemSize_16M;
-
-          iArgument += 2;
-        }
-        else {
+        } else {
           ControlPane_Error(EXIT_FAILURE,"Unrecognised value to the --memory option\n");
         }
 
@@ -273,22 +293,10 @@ void ArcemConfig_ParseCommandLine(ArcemConfig *pConfig, int argc, char *argv[])
     }
     else if(0 == strcmp("--processor", argv[iArgument])) {
       if(iArgument+1 < argc) { // Is there a following argument?
-        if(0 == strcmp("ARM2", argv[iArgument + 1])) {
-          pConfig->eProcessor = Processor_ARM2;
-
+        if (arcemconfig_StringToEnum(&uValue, argv[iArgument + 1], processor_labels)) {
+          pConfig->eProcessor = uValue;
           iArgument += 2;
-        }
-        else if(0 == strcmp("ARM250", argv[iArgument + 1])) {
-          pConfig->eProcessor = Processor_ARM250;
-
-          iArgument += 2;
-        }
-        else if(0 == strcmp("ARM3", argv[iArgument + 1])) {
-          pConfig->eProcessor = Processor_ARM3;
-
-          iArgument += 2;
-        }
-        else {
+        } else {
           ControlPane_Error(EXIT_FAILURE,"Unrecognised value to the --processor option\n");
         }
       } else {
@@ -369,12 +377,40 @@ void ArcemConfig_ParseCommandLine(ArcemConfig *pConfig, int argc, char *argv[])
 static char *arcemconfig_StringDuplicate(const char *sInput)
 {
   char *sNew;
+  size_t sLen;
   assert(sInput);
 
-  sNew = calloc(strlen(sInput) + 1, 1); /* +1 is the string null terminator */
+  sLen = strlen(sInput);
+  sNew = malloc(sLen + 1); /* +1 is the string null terminator */
   if(sNew) {
-    strcpy(sNew, sInput);
+    memcpy(sNew, sInput, sLen);
+    sNew[sLen] = 0;
   }
 
   return sNew;
+}
+
+static void arcemconfig_StringReplace(char **sPtr, const char *sInput)
+{
+    char *sNew = arcemconfig_StringDuplicate(sInput);
+
+    // Only replace the romname if we successfully allocated a new string
+    if (sNew) {
+        // Free up the old one
+        free(*sPtr);
+
+        *sPtr = sNew;
+    }
+}
+
+static bool arcemconfig_StringToEnum(unsigned int *uPtr, const char *sInput, const ArcemConfig_Label *labels) {
+    while (labels->name != NULL) {
+        if (0 == strcmp(sInput, labels->name)) {
+            *uPtr = labels->value;
+            return true;
+        }
+
+        labels++;
+    }
+    return false;
 }
