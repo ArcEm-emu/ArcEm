@@ -26,6 +26,9 @@
 
 #include "ControlPane.h"
 
+/* TODO: Replace direct use of hArcemConfig in RISC OS code */
+extern ArcemConfig hArcemConfig;
+
 #define ENABLE_MENU
 
 

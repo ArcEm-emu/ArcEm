@@ -67,7 +67,7 @@ static void InitFail(int exitcode, char const *which) {
  *
  *
  */
- void dagstandalone(void) {
+ void dagstandalone(ArcemConfig *pConfig) {
 #ifndef WIN32
 #ifndef AMIGA
   struct sigaction action;
@@ -87,7 +87,7 @@ static void InitFail(int exitcode, char const *which) {
 #endif
 
   ARMul_EmulateInit();
-  emu_state = ARMul_NewState();
+  emu_state = ARMul_NewState(pConfig);
   ARMul_Reset(emu_state);
   if (ARMul_MemoryInit(emu_state) == FALSE)
     InitFail(1, "Memory");

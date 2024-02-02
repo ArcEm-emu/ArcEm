@@ -95,7 +95,7 @@ void ARMul_EmulateInit(void) {
 *            Returns a new instantiation of the ARMulator's state           *
 \***************************************************************************/
 
-ARMul_State *ARMul_NewState(void)
+ARMul_State *ARMul_NewState(ArcemConfig *pConfig)
 {ARMul_State *state;
  unsigned i, j;
 
@@ -110,6 +110,7 @@ ARMul_State *ARMul_NewState(void)
  state->Aborted = FALSE;
  state->Display = NULL;
  state->FastMap = FastMap;
+ state->Config  = pConfig;
  
  ARMul_Reset(state);
  EventQ_Init(state);

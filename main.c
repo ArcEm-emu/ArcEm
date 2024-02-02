@@ -21,6 +21,14 @@
 #include "ArcemConfig.h"
 #include "prof.h"
 
+#if defined(SYSTEM_riscos_single)
+/* TODO: Replace direct use of hArcemConfig in RISC OS code */
+extern ArcemConfig hArcemConfig;
+ArcemConfig hArcemConfig;
+#else
+static ArcemConfig hArcemConfig;
+#endif
+
 #if defined(WIN32) && !defined(USE_FAKEMAIN)
 
 #include <windows.h>
@@ -37,17 +45,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 #endif
 
   // Setup the default values for the config system
-  ArcemConfig_SetupDefaults();
+  ArcemConfig_SetupDefaults(&hArcemConfig);
 
   // Parse any commandline arguments given to the program
   // to overrule the defaults
 #if defined(__GNUC__) && defined(__MINGW32__) && !defined(__MINGW64_VERSION_MAJOR)
-  ArcemConfig_ParseCommandLine(_argc, _argv);
+  ArcemConfig_ParseCommandLine(&hArcemConfig, _argc, _argv);
 #else
-  ArcemConfig_ParseCommandLine(__argc, __argv);
+  ArcemConfig_ParseCommandLine(&hArcemConfig, __argc, __argv);
 #endif
 
-  dagstandalone();
+  dagstandalone(&hArcemConfig);
 
   return EXIT_SUCCESS;
 }
@@ -68,13 +76,13 @@ int main(int argc, char *argv[])
   Prof_Init();
   
   // Setup the default values for the config system
-  ArcemConfig_SetupDefaults();
+  ArcemConfig_SetupDefaults(&hArcemConfig);
 
   // Parse any commandline arguments given to the program
   // to overrule the defaults
-  ArcemConfig_ParseCommandLine(argc, argv);
+  ArcemConfig_ParseCommandLine(&hArcemConfig, argc, argv);
 
-  dagstandalone();
+  dagstandalone(&hArcemConfig);
 
   return EXIT_SUCCESS;
 }

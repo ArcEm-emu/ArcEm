@@ -103,10 +103,10 @@ int ReadConfigFile(ARMul_State *state)
         return 0;
       }
 
-      hArcemConfig.aST506DiskShapes[drivenum].NCyls        = numcyl;
-      hArcemConfig.aST506DiskShapes[drivenum].NHeads       = numheads;
-      hArcemConfig.aST506DiskShapes[drivenum].NSectors     = numsect;
-      hArcemConfig.aST506DiskShapes[drivenum].RecordLength = reclength;
+      CONFIG.aST506DiskShapes[drivenum].NCyls        = numcyl;
+      CONFIG.aST506DiskShapes[drivenum].NHeads       = numheads;
+      CONFIG.aST506DiskShapes[drivenum].NSectors     = numsect;
+      CONFIG.aST506DiskShapes[drivenum].RecordLength = reclength;
     } else {
       warn_cfg("Unknown configuration file key '%s'\n",tmpbuf);
       return 0;

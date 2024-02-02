@@ -54,7 +54,7 @@ unsigned ARMul_CoProInit(ARMul_State *state) {
 
     /* Add in the ARM3 processor CPU control coprocessor if the user
        wants it */
-    if(Processor_ARM3 == hArcemConfig.eProcessor) {
+    if(Processor_ARM3 == CONFIG.eProcessor) {
       ARMul_CoProAttach(state, 15, ARM3_Initialise, NULL,
                         NULL, NULL, ARM3_MRCs, ARM3_MCRs,
                         NULL, ARM3_RegisterRead, ARM3_RegisterWrite);

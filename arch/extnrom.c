@@ -134,7 +134,7 @@ extnrom_calculate_checksum(const ARMword *start_addr, uint32_t size)
 }
 
 uint32_t
-extnrom_calculate_size(uint32_t *entry_count)
+extnrom_calculate_size(const char *dir, uint32_t *entry_count)
 {
   Directory hDir;
   char *sFilename;
@@ -145,9 +145,9 @@ extnrom_calculate_size(uint32_t *entry_count)
   *entry_count = 0;
 
   /* Read list of files and calculate total size */
-  if(!Directory_Open(hArcemConfig.sEXTNDirectory, &hDir)) {
+  if(!Directory_Open(dir, &hDir)) {
     warn_data("Could not open Extension Rom directory \'%s\': %s\n",
-              hArcemConfig.sEXTNDirectory, strerror(errno));
+              dir, strerror(errno));
     return 0;
   }
 
@@ -161,7 +161,7 @@ extnrom_calculate_size(uint32_t *entry_count)
     }
 
     /* Construct relative path to the entry */
-    strcpy(path, hArcemConfig.sEXTNDirectory);
+    strcpy(path, dir);
     strcat(path, "/");
     strcat(path, sFilename);
 
@@ -211,7 +211,7 @@ extnrom_calculate_size(uint32_t *entry_count)
 }
 
 void
-extnrom_load(uint32_t size, uint32_t entry_count, void *address)
+extnrom_load(const char *dir, uint32_t size, uint32_t entry_count, void *address)
 {
   ARMword *start_addr = address;
   ARMword *chunk, *modules;
@@ -255,9 +255,9 @@ extnrom_load(uint32_t size, uint32_t entry_count, void *address)
   start_addr[3] = 0;
 
   /* Read list of files, create Chunk Directory and load them in */
-  if(!Directory_Open(hArcemConfig.sEXTNDirectory, &hDir)) {
+  if(!Directory_Open(dir, &hDir)) {
     warn_data("Could not open Extension Rom directory \'%s\'\n",
-            hArcemConfig.sEXTNDirectory);
+              dir);
     return;
   }
 
@@ -295,7 +295,7 @@ extnrom_load(uint32_t size, uint32_t entry_count, void *address)
     }
 
     /* Construct relative path to the entry */
-    strcpy(path, hArcemConfig.sEXTNDirectory);
+    strcpy(path, dir);
     strcat(path, "/");
     strcat(path, sFilename);
 

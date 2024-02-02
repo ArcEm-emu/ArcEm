@@ -28,7 +28,7 @@ struct Library *IconBase;
 struct IconIFace *IIcon;
 #endif
 
-void wblaunch(struct WBStartup *);
+void wblaunch(struct WBStartup *, ArcemConfig *pConfig);
 
 static void closewblibs(void)
 {
@@ -50,7 +50,7 @@ static void closewblibs(void)
 }
 
 
-static void gettooltypes(struct WBArg *wbarg)
+static void gettooltypes(struct WBArg *wbarg, ArcemConfig *pConfig)
 {
 	struct DiskObject *dobj;
 	CONST_STRPTR *toolarray;
@@ -73,9 +73,9 @@ static void gettooltypes(struct WBArg *wbarg)
         	if(sNewRomName)
 			{
           		// Free up the old one
-          		free(hArcemConfig.sRomImageName);
+          		free(pConfig->sRomImageName);
 
-		        hArcemConfig.sRomImageName = sNewRomName;
+		        pConfig->sRomImageName = sNewRomName;
 			}
         }
 
@@ -87,9 +87,9 @@ static void gettooltypes(struct WBArg *wbarg)
 	        if(sNewExtnRomDir)
 			{
     	      // Free up the old one
-        	  free(hArcemConfig.sEXTNDirectory);
+        	  free(pConfig->sEXTNDirectory);
 
-	          hArcemConfig.sEXTNDirectory = sNewExtnRomDir;
+	          pConfig->sEXTNDirectory = sNewExtnRomDir;
 			}
         }
 
@@ -103,9 +103,9 @@ static void gettooltypes(struct WBArg *wbarg)
         	if(sNewHostFSDir)
 			{
           		// Free up the old one
-          		free(hArcemConfig.sHostFSDirectory);
+          		free(pConfig->sHostFSDirectory);
 
-          		hArcemConfig.sHostFSDirectory = sNewHostFSDir;
+          		pConfig->sHostFSDirectory = sNewHostFSDir;
 			}
         }
 #endif /* HOSTFS_SUPPORT */
@@ -113,40 +113,40 @@ static void gettooltypes(struct WBArg *wbarg)
 		if(s = (char *)FindToolType(toolarray,"MEMORY"))
 		{
 			if(MatchToolValue(s,"256K"))
-          		hArcemConfig.eMemSize = MemSize_256K;
+          		pConfig->eMemSize = MemSize_256K;
 
 			if(MatchToolValue(s,"512K"))
-          		hArcemConfig.eMemSize = MemSize_512K;
+          		pConfig->eMemSize = MemSize_512K;
 
 			if(MatchToolValue(s,"1M"))
-          		hArcemConfig.eMemSize = MemSize_1M;
+          		pConfig->eMemSize = MemSize_1M;
 
 			if(MatchToolValue(s,"2M"))
-          		hArcemConfig.eMemSize = MemSize_2M;
+          		pConfig->eMemSize = MemSize_2M;
 
 			if(MatchToolValue(s,"4M"))
-          		hArcemConfig.eMemSize = MemSize_4M;
+          		pConfig->eMemSize = MemSize_4M;
 
 			if(MatchToolValue(s,"8M"))
-          		hArcemConfig.eMemSize = MemSize_8M;
+          		pConfig->eMemSize = MemSize_8M;
 
 			if(MatchToolValue(s,"12M"))
-          		hArcemConfig.eMemSize = MemSize_12M;
+          		pConfig->eMemSize = MemSize_12M;
 
 			if(MatchToolValue(s,"16M"))
-          		hArcemConfig.eMemSize = MemSize_16M;
+          		pConfig->eMemSize = MemSize_16M;
       }
 
 		if(s = (char *)FindToolType(toolarray,"PROCESSOR"))
 		{
 			if(MatchToolValue(s,"ARM2"))
-		         hArcemConfig.eProcessor = Processor_ARM2;
+		         pConfig->eProcessor = Processor_ARM2;
 
 			if(MatchToolValue(s,"ARM250"))
-		         hArcemConfig.eProcessor = Processor_ARM250;
+		         pConfig->eProcessor = Processor_ARM250;
 
 			if(MatchToolValue(s,"ARM3"))
-		         hArcemConfig.eProcessor = Processor_ARM3;
+		         pConfig->eProcessor = Processor_ARM3;
 
 		}
 
@@ -195,10 +195,10 @@ static void gettooltypes(struct WBArg *wbarg)
         			return;
       			}
 
-			    hArcemConfig.aST506DiskShapes[drivenum].NCyls        = numcyl;
-      			hArcemConfig.aST506DiskShapes[drivenum].NHeads       = numheads;
-      			hArcemConfig.aST506DiskShapes[drivenum].NSectors     = numsect;
-      			hArcemConfig.aST506DiskShapes[drivenum].RecordLength = reclength;
+			    pConfig->aST506DiskShapes[drivenum].NCyls        = numcyl;
+      			pConfig->aST506DiskShapes[drivenum].NHeads       = numheads;
+      			pConfig->aST506DiskShapes[drivenum].NSectors     = numsect;
+      			pConfig->aST506DiskShapes[drivenum].RecordLength = reclength;
         }
 
 
@@ -207,7 +207,7 @@ static void gettooltypes(struct WBArg *wbarg)
 
 }
 
-void wblaunch(struct WBStartup *WBenchMsg)
+void wblaunch(struct WBStartup *WBenchMsg, ArcemConfig *pConfig)
 {
 	struct WBArg *wbarg;
 	long i;
@@ -247,7 +247,7 @@ void wblaunch(struct WBStartup *WBenchMsg)
 		if((wbarg->wa_Lock)&&(*wbarg->wa_Name))
 			olddir = CurrentDir(wbarg->wa_Lock);
 
-		gettooltypes(wbarg);
+		gettooltypes(wbarg, pConfig);
 
 		if(olddir !=-1) CurrentDir(olddir);
 	}

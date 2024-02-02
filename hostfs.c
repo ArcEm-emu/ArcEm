@@ -90,7 +90,7 @@ int __riscosify_control = 0;
 #include "ControlPane.h"
 #include "c99.h"
 
-#define HOSTFS_ROOT hArcemConfig.sHostFSDirectory
+#define HOSTFS_ROOT CONFIG.sHostFSDirectory
 
 #else /* HOSTFS_ARCEM */
 
@@ -232,7 +232,7 @@ warn_hostfs(const char *format, ...)
 }
 
 static void
-path_construct(const char *old_path, const char *ro_path,
+path_construct(ARMul_State *state, const char *old_path, const char *ro_path,
                char *new_path, size_t len, ARMword load, ARMword exec);
 
 static ARMword
@@ -411,14 +411,14 @@ hostfs_object_set_loadexec(const char *host_path, ARMword load, ARMword exec)
  * @param attribs   RISC OS file attributes
  */
 static void
-hostfs_object_set_attribs(const char *ro_path, const char *host_path, ARMword load, ARMword exec,ARMword attribs)
+hostfs_object_set_attribs(ARMul_State *state, const char *ro_path, const char *host_path, ARMword load, ARMword exec,ARMword attribs)
 {
 #ifdef __riscos__
   _swix(OS_File,_INR(0,3)|_IN(5),1,host_path,load,exec,attribs);
 #else
   char new_pathname[PATH_MAX];
 
-  path_construct(host_path, ro_path,
+  path_construct(state, host_path, ro_path,
                  new_pathname, sizeof(new_pathname),
                  load, exec);
 
@@ -434,7 +434,7 @@ hostfs_object_set_attribs(const char *ro_path, const char *host_path, ARMword lo
 }
 
 static void
-riscos_path_to_host(const char *path, char *host_path)
+riscos_path_to_host(ARMul_State *state, const char *path, char *host_path)
 {
   assert(path);
   assert(host_path);
@@ -513,7 +513,7 @@ name_host_to_riscos(const char *object_name, size_t len, char *riscos_name)
  * @param exec     RISC OS exec address (may also be filetyped)
  */
 static void
-path_construct(const char *old_path, const char *ro_path,
+path_construct(ARMul_State *state, const char *old_path, const char *ro_path,
                char *new_path, size_t len, ARMword load, ARMword exec)
 {
   const char *ro_leaf;
@@ -557,7 +557,7 @@ path_construct(const char *old_path, const char *ro_path,
     }
 
     /* Place new leaf */
-    riscos_path_to_host(ro_leaf, new_leaf);
+    riscos_path_to_host(state, ro_leaf, new_leaf);
   }
 
 #ifndef __riscos__
@@ -841,7 +841,8 @@ hostfs_path_scan(const char *host_dir_path,
  * @param object_info   Return object info (filled-in)
  */
 static void
-hostfs_path_process(const char *ro_path,
+hostfs_path_process(ARMul_State *state,
+                    const char *ro_path,
                     char *host_pathname,
                     risc_os_object_info *object_info)
 {
@@ -975,7 +976,7 @@ hostfs_open(ARMul_State *state)
   get_string(state, state->Reg[1], ro_path, sizeof(ro_path));
   dbug_hostfs("\tPATH = %s\n", ro_path);
 
-  hostfs_path_process(ro_path, host_pathname, &object_info);
+  hostfs_path_process(state, ro_path, host_pathname, &object_info);
 
   if (object_info.type == OBJECT_TYPE_NOT_FOUND) {
     /* FIXME RISC OS uses this to create files - not therefore an error if not found */
@@ -1261,13 +1262,13 @@ hostfs_write_file(ARMul_State *state, bool with_data)
   get_string(state, state->Reg[1], ro_path, sizeof(ro_path));
   dbug_hostfs("\tPATH = %s\n", ro_path);
 
-  hostfs_path_process(ro_path, host_pathname, &object_info);
+  hostfs_path_process(state, ro_path, host_pathname, &object_info);
   dbug_hostfs("\tHOST_PATHNAME = %s\n", host_pathname);
 
   switch (object_info.type) {
   case OBJECT_TYPE_NOT_FOUND:
     strcat(host_pathname, HOST_DIR_SEP_STR);
-    path_construct(host_pathname, ro_path,
+    path_construct(state, host_pathname, ro_path,
                    new_pathname, sizeof(new_pathname),
                    state->Reg[2], state->Reg[3]);
     break;
@@ -1275,7 +1276,7 @@ hostfs_write_file(ARMul_State *state, bool with_data)
   case OBJECT_TYPE_FILE:
     /* If the hostfs_path_process() reported object found,
        rename to the new name */
-    path_construct(host_pathname, ro_path,
+    path_construct(state, host_pathname, ro_path,
                    new_pathname, sizeof(new_pathname),
                    state->Reg[2], state->Reg[3]);
     if (rename(host_pathname, new_pathname)) {
@@ -1359,7 +1360,7 @@ hostfs_file_1_write_cat_info(ARMul_State *state)
 
   /* TODO Ensure we do not try to modify the root object: i.e. $ */
 
-  hostfs_path_process(ro_path, host_pathname, &object_info);
+  hostfs_path_process(state, ro_path, host_pathname, &object_info);
 
   switch (object_info.type) {
   case OBJECT_TYPE_NOT_FOUND:
@@ -1369,7 +1370,7 @@ hostfs_file_1_write_cat_info(ARMul_State *state)
   case OBJECT_TYPE_FILE:
     dbug_hostfs("\thost_pathname = \"%s\"\n", host_pathname);
 
-    hostfs_object_set_attribs(ro_path, host_pathname, state->Reg[2], state->Reg[3], state->Reg[5]);
+    hostfs_object_set_attribs(state, ro_path, host_pathname, state->Reg[2], state->Reg[3], state->Reg[5]);
     break;
 
   case OBJECT_TYPE_DIRECTORY:
@@ -1398,7 +1399,7 @@ hostfs_file_5_read_cat_info(ARMul_State *state)
   get_string(state, state->Reg[1], ro_path, sizeof(ro_path));
   dbug_hostfs("\tPATH = %s\n", ro_path);
 
-  hostfs_path_process(ro_path, host_pathname, &object_info);
+  hostfs_path_process(state, ro_path, host_pathname, &object_info);
 
   state->Reg[0] = object_info.type;
 
@@ -1431,7 +1432,7 @@ hostfs_file_6_delete(ARMul_State *state)
     return;
   }
 
-  hostfs_path_process(ro_path, host_pathname, &object_info);
+  hostfs_path_process(state, ro_path, host_pathname, &object_info);
 
   state->Reg[0] = object_info.type;
 
@@ -1497,7 +1498,7 @@ hostfs_file_8_create_dir(ARMul_State *state)
     return;
   }
 
-  hostfs_path_process(ro_path, host_pathname, &object_info);
+  hostfs_path_process(state, ro_path, host_pathname, &object_info);
 
   if (object_info.type != OBJECT_TYPE_NOT_FOUND) {
     /* The object already exists (not necessarily as a directory).
@@ -1523,7 +1524,7 @@ hostfs_file_8_create_dir(ARMul_State *state)
     new_leaf = host_pathname + strlen(host_pathname);
 
     /* Place new leaf */
-    riscos_path_to_host(ro_leaf, new_leaf);
+    riscos_path_to_host(state, ro_leaf, new_leaf);
   }
 
   dbug_hostfs("\tHOST_PATHNAME = %s\n", host_pathname);
@@ -1556,7 +1557,7 @@ hostfs_file_255_load_file(ARMul_State *state)
   get_string(state, state->Reg[1], ro_path, sizeof(ro_path));
   dbug_hostfs("\tPATH = %s\n", ro_path);
 
-  hostfs_path_process(ro_path, host_pathname, &object_info);
+  hostfs_path_process(state, ro_path, host_pathname, &object_info);
 
   state->Reg[2] = object_info.load;
   state->Reg[3] = object_info.exec;
@@ -1624,7 +1625,7 @@ hostfs_func_0_chdir(ARMul_State *state)
   dbug_hostfs("\tr1 = 0x%08x (ptr to wildcarded dir. name)\n", state->Reg[1]);
 
   get_string(state, state->Reg[1], ro_path, sizeof(ro_path));
-  riscos_path_to_host(ro_path, host_path);
+  riscos_path_to_host(state, ro_path, host_path);
   dbug_hostfs("\tPATH = %s\n", ro_path);
   dbug_hostfs("\tPATH2 = %s\n", host_path);
 }
@@ -1654,7 +1655,7 @@ hostfs_func_8_rename(ARMul_State *state)
   get_string(state, state->Reg[1], ro_path1, sizeof(ro_path1));
   dbug_hostfs("\tPATH_OLD = %s\n", ro_path1);
 
-  hostfs_path_process(ro_path1, host_pathname1, &object_info1);
+  hostfs_path_process(state, ro_path1, host_pathname1, &object_info1);
 
   dbug_hostfs("\tHOST_PATH_OLD = %s\n", host_pathname1);
 
@@ -1662,7 +1663,7 @@ hostfs_func_8_rename(ARMul_State *state)
   get_string(state, state->Reg[2], ro_path2, sizeof(ro_path2));
   dbug_hostfs("\tPATH_NEW = %s\n", ro_path2);
 
-  hostfs_path_process(ro_path2, host_pathname2, &object_info2);
+  hostfs_path_process(state, ro_path2, host_pathname2, &object_info2);
 
   dbug_hostfs("\tHOST_PATH_NEW = %s\n", host_pathname2);
 
@@ -1684,7 +1685,7 @@ hostfs_func_8_rename(ARMul_State *state)
     strcat(host_pathname2, HOST_DIR_SEP_STR);
   }
 
-  path_construct(host_pathname2, ro_path2,
+  path_construct(state, host_pathname2, ro_path2,
                  new_pathname, sizeof(new_pathname),
                  object_info1.load, object_info1.exec);
 
@@ -1926,7 +1927,7 @@ hostfs_read_dir(ARMul_State *state, bool with_info, bool with_timestamp)
   get_string(state, state->Reg[1], ro_path, sizeof(ro_path));
   dbug_hostfs("\tPATH = %s\n", ro_path);
 
-  hostfs_path_process(ro_path, host_pathname, &object_info);
+  hostfs_path_process(state, ro_path, host_pathname, &object_info);
 
   if (object_info.type != OBJECT_TYPE_DIRECTORY) {
     /* TODO Improve error return */
