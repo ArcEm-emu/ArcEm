@@ -264,6 +264,15 @@ void ArcemConfig_ParseCommandLine(ArcemConfig *pConfig, int argc, char *argv[])
       
       exit(EXIT_SUCCESS);
     }
+    else if(0 == strcmp("--config", argv[iArgument])) {
+      if(iArgument+1 < argc) { // Is there a following argument?
+        ini_parse(argv[iArgument + 1], ArcemConfig_Handler, pConfig);
+        iArgument += 2;
+      } else {
+        // No argument following the --config option
+        ControlPane_Error(EXIT_FAILURE,"No argument following the --config option\n");
+      }
+    }
     else if(0 == strcmp("--rom", argv[iArgument])) {
       if(iArgument+1 < argc) { // Is there a following argument?
         arcemconfig_StringReplace(&pConfig->sRomImageName, argv[iArgument + 1]);
