@@ -223,14 +223,6 @@ SOURCE=..\arch\keyboard.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\arch\ReadConfig.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\arch\ReadConfig.h
-# End Source File
-# Begin Source File
-
 SOURCE=..\arch\Version.h
 # End Source File
 # End Group

@@ -87,7 +87,7 @@ INSTALL=cp
 OBJS = armcopro.o armemu.o arminit.o \
 	armsupp.o main.o dagstandalone.o eventq.o \
 		$(SYSTEM)/DispKbd.o arch/i2c.o arch/archio.o \
-    arch/fdc1772.o $(SYSTEM)/ControlPane.o arch/hdc63463.o arch/ReadConfig.o \
+    arch/fdc1772.o $(SYSTEM)/ControlPane.o arch/hdc63463.o \
     arch/keyboard.o $(SYSTEM)/filecalls.o arch/filecommon.o \
     arch/ArcemConfig.o arch/cp15.o arch/newsound.o arch/displaydev.o \
     libs/inih/ini.o
@@ -96,7 +96,7 @@ SRCS = armcopro.c armemu.c arminit.c arch/armarc.c \
 	armsupp.c main.c dagstandalone.c eventq.c \
 	$(SYSTEM)/DispKbd.c arch/i2c.c arch/archio.c \
 	arch/fdc1772.c $(SYSTEM)/ControlPane.c arch/hdc63463.c \
-	arch/ReadConfig.c arch/keyboard.c $(SYSTEM)/filecalls.c \
+	arch/keyboard.c $(SYSTEM)/filecalls.c \
 	arch/ArcemConfig.c arch/cp15.c arch/newsound.c \
 	arch/displaydev.c arch/filecommon.c \
 	libs/inih/ini.c
@@ -171,7 +171,6 @@ riscpkg: $(TARGET)
 	cp -r !ArcEm ArcEm/Apps/Misc
 	rm ArcEm/Apps/Misc/!ArcEm/arcem
 	elf2aif !ArcEm/arcem ArcEm/Apps/Misc/!ArcEm/arcem,ff8
-	cp arcemrc ArcEm/Apps/Misc/!ArcEm/.arcemrc
 	cp hexcmos ArcEm/Apps/Misc/!ArcEm/hexcmos
 	cp -r docs ArcEm/Apps/Misc/!ArcEm
 	mkdir -p ArcEm/Apps/Misc/!ArcEm/extnrom
@@ -254,7 +253,6 @@ all: $(TARGET)
 
 install: all
 	$(INSTALL) $(TARGET) $(INSTALL_DIR)
-	f=arcemrc; test -f $$HOME/.$$f || $(INSTALL) $$f $(HOME)/.$$f
 
 $(TARGET): $(OBJS) $(MODEL).o
 	$(LD) $(LDFLAGS) $(OBJS) $(LIBS) $(MODEL).o -o $@
@@ -344,10 +342,6 @@ arch/hdc63463.o: arch/hdc63463.c arch/hdc63463.h arch/armarc.h
 $(SYSTEM)/ControlPane.o: $(SYSTEM)/ControlPane.c arch/ControlPane.h \
         arch/armarc.h
 	$(CC) $(CFLAGS) -c $*.c -o $(SYSTEM)/ControlPane.o
-
-arch/ReadConfig.o: arch/ReadConfig.c arch/ReadConfig.h \
-	arch/armarc.h
-	$(CC) $(CFLAGS) -c $*.c -o arch/ReadConfig.o
 
 arch/keyboard.o: arch/keyboard.c arch/keyboard.h
 	$(CC) $(CFLAGS) -c $*.c -o arch/keyboard.o

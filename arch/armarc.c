@@ -27,7 +27,6 @@
 #include "archio.h"
 #include "archio.h"
 #include "fdc1772.h"
-#include "ReadConfig.h"
 #include "extnrom.h"
 #include "ArcemConfig.h"
 #include "sound.h"
@@ -248,9 +247,6 @@ ARMul_MemoryInit(ARMul_State *state)
     default:
       ControlPane_Error(EXIT_FAILURE,"Unsupported memory size");
   }
-
-  dbug("Reading config file....\n");
-  ReadConfigFile(state);
 
 #ifndef WIN32
   signal(SIGUSR2,DumpHandler);

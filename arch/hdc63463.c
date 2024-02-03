@@ -8,14 +8,13 @@
  * that CONFIG.aST506DiskShapes is an array of four elements so
  * I'd assume that [0] matched onto ADFS::4 and [1] was ADFS::5.  (An
  * ST506 controller only supported two drives.)  So you'd think that the
- * "MFM disc" line in ~/.arcemrc had to specify 0 and 1 as they're used
+ * "[mfm#]" section in arcem.ini had to specify 0 and 1 as they're used
  * as indexes into aST506DiskShapes[].
  *
  * But it seems that the commands RISC OS sends to the ST506 controller
  * give a two-bit drive number that's either 1 or 2.  Therefore
- * aST506DiskShapes[0] is never accessed and the "MFM disc" line should
- * specify the geometry of drive 1 for ADFS::4 and that image file
- * should be called "HardImage1". */
+ * aST506DiskShapes[0] is never accessed and the "[mfm#]" section
+ * should specify the geometry of drive 1 for ADFS::4. */
 
 #include <ctype.h>
 #include <errno.h>
@@ -1593,7 +1592,7 @@ ARMword HDC_Read(ARMul_State *state, int offset) {
 /*---------------------------------------------------------------------------*/
 void HDC_Init(ARMul_State *state) {
   int currentdrive;
-  char FileName[32];
+  const char *FileName;
   
   /* initialise the struct as if it had been calloc'd */
   memset(&HDC, 0, sizeof(struct HDCStruct));
@@ -1610,16 +1609,11 @@ void HDC_Init(ARMul_State *state) {
 
   for (currentdrive = 0; currentdrive < 4; currentdrive++) {
     HDC.Track[currentdrive] = 0;
-      
-#ifndef MACOSX
-#ifdef __riscos__
-    sprintf(FileName, "<ArcEm$Dir>.HardImage%d", currentdrive);
-#else
-    sprintf(FileName, "HardImage%d", currentdrive);
-#endif
-#else
-    sprintf(FileName, "%s/arcem/HardImage%d", getenv("HOME"), currentdrive);
-#endif
+    HDC.HardFile[currentdrive] = NULL;
+
+    FileName = CONFIG.aST506Paths[currentdrive];
+    if (!FileName)
+      continue;
 
     {
       FILE *isThere = fopen(FileName, "rb");

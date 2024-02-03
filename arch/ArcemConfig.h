@@ -9,8 +9,6 @@
   ArcemConfig - Stores the running configuration of the Arcem
   emulator.
  
-  FUTURE VERSIONS will absorb the code from ReadConfig.c
-
   The ArcemConfig structure can be filled in by means other
   than the Command Line parser as needed on a platform by
   platform basis.
@@ -80,6 +78,8 @@ typedef struct ArcemConfig_s {
 #if defined(HOSTFS_SUPPORT)
   char *sHostFSDirectory;
 #endif /* HOSTFS_SUPPORT */
+
+  char *aST506Paths[4];
 
   /* Shapes of the MFM ST506 drives as set in the config file */
   struct HDCshape aST506DiskShapes[4];
