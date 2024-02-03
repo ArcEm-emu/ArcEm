@@ -243,7 +243,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
       hdc = BeginPaint(hWnd, &ps);
 
       if(rMouseHeight > 0) {
-        int rWidth = xSize - (rMouseX + 32);
+        int rWidth = xSize - (rMouseX + rMouseWidth);
         int bHeight = ySize - (rMouseY + rMouseHeight);
 
         hsrc = CreateCompatibleDC(hdc);
@@ -255,8 +255,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         /* The mouse bitmap is already combined with the image underneath, so blit the screen in multiple parts to avoid flickering.  */
         BitBlt(hdc, 0, 0, xSize, rMouseY, hsrc, 0, 0, SRCCOPY); /* top */
         BitBlt(hdc, 0, rMouseY, rMouseX, rMouseHeight, hsrc, 0, rMouseY, SRCCOPY); /* left */
-        BitBlt(hdc, rMouseX, rMouseY, 32, rMouseHeight, hsrc1, 0, 0, SRCCOPY);
-        BitBlt(hdc, rMouseX + 32, rMouseY, rWidth, rMouseHeight, hsrc, rMouseX + 32, rMouseY, SRCCOPY); /* right */
+        BitBlt(hdc, rMouseX, rMouseY, rMouseWidth, rMouseHeight, hsrc1, 0, 0, SRCCOPY);
+        BitBlt(hdc, rMouseX + rMouseWidth, rMouseY, rWidth, rMouseHeight, hsrc, rMouseX + rMouseWidth, rMouseY, SRCCOPY); /* right */
         BitBlt(hdc, 0, rMouseY + rMouseHeight, xSize, bHeight, hsrc, 0, rMouseY + rMouseHeight, SRCCOPY); /* bottom */
 
         DeleteDC(hsrc1);
@@ -451,7 +451,7 @@ int createWindow(int x, int y, int bpp)
 
    /* Setup Cursor bitmap */
    cbmi.bmiHeader.biSize          = sizeof(BITMAPINFOHEADER);
-   cbmi.bmiHeader.biWidth         = 32;
+   cbmi.bmiHeader.biWidth         = 32*2;
    cbmi.bmiHeader.biHeight        = y;
    cbmi.bmiHeader.biCompression   = BI_RGB; //0;
    cbmi.bmiHeader.biPlanes        = 1;

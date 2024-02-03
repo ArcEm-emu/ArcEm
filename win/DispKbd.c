@@ -24,6 +24,7 @@ extern void *curbmp;
 
 int rMouseX = 0;
 int rMouseY = 0;
+int rMouseWidth = 0;
 int rMouseHeight = 0;
 int oldMouseX = 0;
 int oldMouseY = 0;
@@ -178,9 +179,10 @@ void MouseMoved(ARMul_State *state, int nMouseX, int nMouseY) {
 /*-----------------------------------------------------------------------------*/
 /* Refresh the mouse's image                                                    */
 static void RefreshMouse(ARMul_State *state) {
-  int x,y,offset, pix, repeat;
+  int x,y,xs,offset, pix, repeat;
   int memptr;
   int HorizPos;
+  int Width = 32*HD.XScale;
   int Height = ((int)VIDC.Vert_CursorEnd - (int)VIDC.Vert_CursorStart)*HD.YScale;
   int VertPos;
   int diboffs;
@@ -197,6 +199,7 @@ static void RefreshMouse(ARMul_State *state) {
 
   rMouseX = HorizPos;
   rMouseY = VertPos;
+  rMouseWidth = Width;
   rMouseHeight = Height;
 
   /* Cursor palette */
@@ -217,12 +220,15 @@ static void RefreshMouse(ARMul_State *state) {
 
       for(x=0;x<32;x++) {
         pix = ((tmp[x/16]>>((x & 15)*2)) & 3);
-        diboffs = rMouseX + x + (MonitorHeight - rMouseY - y - 1) * MonitorWidth;
 
-        host_curbmp[x + (MonitorHeight - y - 1) * 32] =
-                (pix || diboffs < 0) ?
-                cursorPal[pix] : host_dibbmp[diboffs];
-      }; /* x */
+        for(xs=0;xs<HD.XScale;xs++) {
+          diboffs = rMouseX + (x*HD.XScale) + xs + (MonitorHeight - rMouseY - y - 1) * MonitorWidth;
+
+          host_curbmp[(x*HD.XScale) + xs + (MonitorHeight - y - 1) * 32*2] =
+                  (pix || diboffs < 0) ?
+                  cursorPal[pix] : host_dibbmp[diboffs];
+        } /* xs */
+      } /* x */
     } else return;
     if(++repeat == HD.YScale) {
       memptr+=8;

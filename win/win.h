@@ -2,6 +2,7 @@
 
 extern int rMouseX;
 extern int rMouseY;
+extern int rMouseWidth;
 extern int rMouseHeight;
 
 extern int createWindow(int w, int h, int bpp);
