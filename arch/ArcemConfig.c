@@ -95,6 +95,7 @@ void ArcemConfig_SetupDefaults(ArcemConfig *pConfig)
 #endif /* HOSTFS_SUPPORT */
 
   /* Default for ST506 drive details is all NULL/zeros */
+  memset(pConfig->aST506Paths, 0, sizeof(char *) * 4);
   memset(pConfig->aST506DiskShapes, 0, sizeof(struct HDCshape) * 4);
 
 
@@ -140,6 +141,23 @@ static int ArcemConfig_Handler(void* user, const char* section,
                 warn("Unrecognised value for %s: %s\n", name, value);
                 return 0;
             }
+        } else {
+            warn("Unknown section/name: %s, %s, %s\n", section, name, value);
+            return 0;
+        }
+    } else if (strlen(section) == 4 && 0 == memcmp(section, "mfm", 3) &&
+               section[3] >= '0' && section[3] <= '3') {
+        int drive = section[3] - '0';
+        if (0 == strcmp(name, "path")) {
+            arcemconfig_StringReplace(&pConfig->aST506Paths[drive], value);
+        } else if (0 == strcmp(name, "cylinders")) {
+            pConfig->aST506DiskShapes[drive].NCyls = atoi(value);
+        } else if (0 == strcmp(name, "heads")) {
+            pConfig->aST506DiskShapes[drive].NHeads = atoi(value);
+        } else if (0 == strcmp(name, "sectors")) {
+            pConfig->aST506DiskShapes[drive].NSectors = atoi(value);
+        } else if (0 == strcmp(name, "reclength")) {
+            pConfig->aST506DiskShapes[drive].RecordLength = atoi(value);
         } else {
             warn("Unknown section/name: %s, %s, %s\n", section, name, value);
             return 0;

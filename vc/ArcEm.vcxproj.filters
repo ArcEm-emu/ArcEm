@@ -57,9 +57,6 @@
     <ClCompile Include="..\arch\newsound.c">
       <Filter>arch</Filter>
     </ClCompile>
-    <ClCompile Include="..\arch\ReadConfig.c">
-      <Filter>arch</Filter>
-    </ClCompile>
     <ClCompile Include="..\win\ControlPane.c">
       <Filter>win</Filter>
     </ClCompile>
@@ -123,9 +120,6 @@
       <Filter>arch</Filter>
     </ClInclude>
     <ClInclude Include="..\arch\keyboard.h">
-      <Filter>arch</Filter>
-    </ClInclude>
-    <ClInclude Include="..\arch\ReadConfig.h">
       <Filter>arch</Filter>
     </ClInclude>
     <ClInclude Include="..\arch\sound.h">

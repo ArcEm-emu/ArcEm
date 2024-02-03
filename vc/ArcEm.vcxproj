@@ -298,7 +298,6 @@
     <ClCompile Include="..\arch\i2c.c" />
     <ClCompile Include="..\arch\keyboard.c" />
     <ClCompile Include="..\arch\newsound.c" />
-    <ClCompile Include="..\arch\ReadConfig.c" />
     <ClCompile Include="..\armcopro.c" />
     <ClCompile Include="..\armemu.c" />
     <ClCompile Include="..\arminit.c" />
@@ -328,7 +327,6 @@
     <ClInclude Include="..\arch\hdc63463.h" />
     <ClInclude Include="..\arch\i2c.h" />
     <ClInclude Include="..\arch\keyboard.h" />
-    <ClInclude Include="..\arch\ReadConfig.h" />
     <ClInclude Include="..\arch\sound.h" />
     <ClInclude Include="..\arch\Version.h" />
     <ClInclude Include="..\armdefs.h" />
