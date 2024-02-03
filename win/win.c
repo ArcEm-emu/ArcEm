@@ -17,6 +17,12 @@
 #ifndef WM_XBUTTONUP
 #define WM_XBUTTONUP 0x20C
 #endif
+#ifndef MAPVK_VSC_TO_VK_EX
+#define MAPVK_VSC_TO_VK_EX 3
+#endif
+#ifndef GET_WHEEL_DELTA_WPARAM
+#define GET_WHEEL_DELTA_WPARAM(wParam)  ((short)HIWORD(wParam))
+#endif
 
 HBITMAP hbmp = NULL;
 HBITMAP cbmp = NULL;
