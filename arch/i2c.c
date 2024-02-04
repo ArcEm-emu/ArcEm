@@ -13,6 +13,7 @@ extern char arcemDir[256];
 #include "armarc.h"
 #include "i2c.h"
 
+#include "ArcemConfig.h"
 #include "dbugsys.h"
 #include "ControlPane.h"
 
@@ -163,21 +164,14 @@ static void SaveCMOS(ARMul_State *state) {
   int loop,dest;
   unsigned char val;
   FILE *OutFile;
-  const char *filename;
-
-#ifdef __riscos__
-  filename = "<ArcEm$Dir>.hexcmos";
-#else
-  filename = "hexcmos";
-#endif
 
 #ifdef MACOSX
   chdir(arcemDir);
 #endif
 
-  OutFile = fopen(filename,"w");
+  OutFile = fopen(CONFIG.sCMOSFileName,"w");
   if (OutFile == NULL) {
-    ControlPane_Error(1,"SaveCMOS: Could not open CMOS settings file (%s)\n", filename);
+    ControlPane_Error(1,"SaveCMOS: Could not open CMOS settings file (%s)\n", CONFIG.sCMOSFileName);
   };
 
   for (loop = 0; loop < 240; loop++) {
@@ -421,21 +415,11 @@ void I2C_Update(ARMul_State *state) {
 
 static void SetUpCMOS(ARMul_State *state)
 {
-    const char *path;
     FILE *fp;
     int byte, dest;
     unsigned int val;
 
-#if defined(__riscos__)
-    path = "<ArcEm$Dir>.hexcmos";
-#elif defined(MACOSX)
-    chdir(arcemDir);
-    path = "hexcmos";
-#else
-    path = "hexcmos";
-#endif
-
-    if ((fp = fopen(path, "r")) == NULL)
+    if ((fp = fopen(CONFIG.sCMOSFileName, "r")) == NULL)
         warn_i2c("SetUpCMOS: Could not open (hexcmos) CMOS settings file, "
             "resetting to internal defaults.\n");
 
@@ -443,7 +427,7 @@ static void SetUpCMOS(ARMul_State *state)
         if (fp) {
             if (fscanf(fp, "%x\n", &val) != 1) {
                 ControlPane_Error(1,"arcem: failed to read CMOS value %d of %s\n",
-                    byte, path);
+                    byte, CONFIG.sCMOSFileName);
             }
         } else {
             val = CMOSDefaults[byte];

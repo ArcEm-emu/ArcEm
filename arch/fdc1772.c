@@ -21,6 +21,7 @@
 #include "../armdefs.h"
 #include "../armemu.h"
 
+#include "ArcemConfig.h"
 #include "armarc.h"
 #include "ControlPane.h"
 #include "dbugsys.h"
@@ -914,18 +915,17 @@ void FDC_Init(ARMul_State *state) {
     FDC.drive[drive].form = avail_format;
   }
 
-#if !defined(SYSTEM_win) && !defined(MACOSX) && !defined(SYSTEM_X)
   for (drive = 0; drive < 4; drive++) {
-    char tmp[256];
+    char *FileName = CONFIG.aFloppyPaths[drive];
+    if (!FileName)
+        continue;
 
-#if defined(__riscos__)
-    sprintf(tmp, "<ArcEm$Dir>.^.FloppyImage%d", drive);
-#else
-    sprintf(tmp, "FloppyImage%d", drive);
+    FDC_InsertFloppy(drive, FileName);
+
+#if defined(MACOSX)
+    FDC.driveFiles[drive] = FileName;
 #endif
-    FDC_InsertFloppy(drive, tmp);
   }
-#endif
 
   FDC.DelayCount=10000;
   FDC.DelayLatch=10000;
