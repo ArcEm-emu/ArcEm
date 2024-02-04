@@ -71,6 +71,8 @@ typedef struct ArcemConfig_s {
 
   char *sRomImageName;
 
+  char *sCMOSFileName;
+
 #if defined(EXTNROM_SUPPORT)
   char *sEXTNDirectory;
 #endif /* EXTNROM_SUPPORT */
@@ -79,6 +81,7 @@ typedef struct ArcemConfig_s {
   char *sHostFSDirectory;
 #endif /* HOSTFS_SUPPORT */
 
+  char *aFloppyPaths[4];
   char *aST506Paths[4];
 
   /* Shapes of the MFM ST506 drives as set in the config file */

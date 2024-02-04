@@ -71,6 +71,16 @@ void ArcemConfig_SetupDefaults(ArcemConfig *pConfig)
     ControlPane_Error(EXIT_FAILURE,"Failed to allocate memory for initial configuration. Please free up more memory.\n");
   }
 
+#ifdef __riscos__
+  pConfig->sCMOSFileName = arcemconfig_StringDuplicate("<ArcEm$Dir>.hexcmos");
+#else
+  pConfig->sCMOSFileName = arcemconfig_StringDuplicate("hexcmos");
+#endif
+  // If we've run out of memory this early, something is very wrong
+  if(NULL == pConfig->sCMOSFileName) {
+    ControlPane_Error(EXIT_FAILURE,"Failed to allocate memory for initial configuration. Please free up more memory.\n");
+  }
+
 #if defined(EXTNROM_SUPPORT)
   // The default directory is extnrom in the current working directory
   pConfig->sEXTNDirectory = arcemconfig_StringDuplicate("extnrom");
@@ -94,7 +104,8 @@ void ArcemConfig_SetupDefaults(ArcemConfig *pConfig)
 
 #endif /* HOSTFS_SUPPORT */
 
-  /* Default for ST506 drive details is all NULL/zeros */
+  /* Default for drive details is all NULL/zeros */
+  memset(pConfig->aFloppyPaths, 0, sizeof(char *) * 4);
   memset(pConfig->aST506Paths, 0, sizeof(char *) * 4);
   memset(pConfig->aST506DiskShapes, 0, sizeof(struct HDCshape) * 4);
 
@@ -123,6 +134,8 @@ static int ArcemConfig_Handler(void* user, const char* section,
     if (0 == strcmp(section, "machine")) {
         if (0 == strcmp(name, "rom")) {
             arcemconfig_StringReplace(&pConfig->sRomImageName, value);
+        } else if (0 == strcmp(name, "hexcmos")) {
+            arcemconfig_StringReplace(&pConfig->sCMOSFileName, value);
         } else if (0 == strcmp(name, "extnromdir")) {
             arcemconfig_StringReplace(&pConfig->sEXTNDirectory, value);
         } else if (0 == strcmp(name, "hostfsdir")) {
@@ -141,6 +154,15 @@ static int ArcemConfig_Handler(void* user, const char* section,
                 warn("Unrecognised value for %s: %s\n", name, value);
                 return 0;
             }
+        } else {
+            warn("Unknown section/name: %s, %s, %s\n", section, name, value);
+            return 0;
+        }
+    } else if (strlen(section) == 4 && 0 == memcmp(section, "fdc", 3) &&
+               section[3] >= '0' && section[3] <= '3') {
+        int drive = section[3] - '0';
+        if (0 == strcmp(name, "path")) {
+            arcemconfig_StringReplace(&pConfig->aFloppyPaths[drive], value);
         } else {
             warn("Unknown section/name: %s, %s, %s\n", section, name, value);
             return 0;
@@ -280,6 +302,16 @@ void ArcemConfig_ParseCommandLine(ArcemConfig *pConfig, int argc, char *argv[])
       } else {
         // No argument following the --rom option
         ControlPane_Error(EXIT_FAILURE,"No argument following the --rom option\n");
+      }
+    }
+    else if (0 == strcmp("--hexcmos", argv[iArgument])) {
+      if (iArgument + 1 < argc) { // Is there a following argument?
+        arcemconfig_StringReplace(&pConfig->sCMOSFileName, argv[iArgument + 1]);
+        iArgument += 2;
+      }
+      else {
+        // No argument following the --hexcmos option
+        ControlPane_Error(EXIT_FAILURE,"No argument following the --hexcmos option\n");
       }
     }
 #if defined(EXTNROM_SUPPORT)
