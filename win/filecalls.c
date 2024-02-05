@@ -8,6 +8,7 @@
 
 /* windows includes */
 #include <windows.h>
+#include <shlobj.h>
 
 /* application includes */
 #include "filecalls.h"
@@ -20,6 +21,29 @@
 //  HANDLE hFile;  
 //  unsigned char bFirstEntry;
 //};
+
+/* Compatibility wrapper for Windows 95 without Internet Explorer 4 */
+static BOOL SHGetSpecialFolderPathAFunc(HWND hwnd, LPSTR pszPath, int csidl, BOOL fCreate) {
+  static bool loaded = false;
+  static HMODULE shell32 = NULL;
+
+  typedef BOOL(WINAPI* Fn)(HWND hwnd, LPSTR pszPath, int csidl, BOOL fCreate);
+  Fn pFn;
+
+  if (!loaded) {
+    shell32 = LoadLibrary(TEXT("shell32.dll"));
+    loaded = true;
+  }
+
+  if (!shell32)
+    return FALSE;
+
+  pFn = (Fn)(void*)GetProcAddress(shell32, "SHGetSpecialFolderPathA");
+  if (pFn)
+    return pFn(hwnd, pszPath, csidl, fCreate);
+
+  return FALSE;
+}
 
 /**
  * Directory_Open
@@ -101,6 +125,42 @@ char *Directory_GetNextEntry(Directory *hDirectory)
       return hDirectory->w32fd.cFileName;    
     }
   }
+}
+
+/**
+ * File_OpenAppData
+ *
+ * Open the specified file in the application data directory
+ *
+ * @param sName Name of file to open
+ * @param sMode Mode to open the file with
+ * @returns File handle or NULL on failure
+ */
+FILE *File_OpenAppData(const char *sName, const char *sMode)
+{
+    const char *sDir = "\\ArcEm\\";
+    char sAppData[ARCEM_PATH_MAX];
+    char *sPath;
+    FILE *f;
+
+    if (!SHGetSpecialFolderPathAFunc(NULL, sAppData, CSIDL_APPDATA, TRUE)) {
+        return NULL;
+    }
+
+    sPath = malloc(strlen(sAppData) + strlen(sDir) + strlen(sName) + 1);
+    if (!sPath) {
+        return NULL;
+    }
+
+    strcpy(sPath, sAppData);
+    strcat(sPath, sDir);
+    CreateDirectoryA(sPath, NULL);
+
+    strcat(sPath, sName);
+    f = fopen(sPath, sMode);
+
+    free(sPath);
+    return f;
 }
 
 /**
