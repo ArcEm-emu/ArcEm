@@ -85,7 +85,46 @@ char *Directory_GetNextEntry(Directory *hDirectory)
  */
 FILE *File_OpenAppData(const char *sName, const char *sMode)
 {
-    return NULL;
+    const char *sAppData, *sDir;
+    char *sPath, *sPtr;
+    size_t sLen;
+    FILE *f;
+
+    /* This uses XDG_DATA_HOME to match the SDL port. */
+    sAppData = getenv("XDG_DATA_HOME");
+    if (sAppData) {
+        sDir = "/arcem/";
+    } else {
+        sAppData = getenv("HOME");
+        if (sAppData) {
+            sDir = "/.local/share/arcem/";
+        } else {
+            return NULL;
+        }
+    }
+
+    sLen = strlen(sAppData) + strlen(sDir) + strlen(sName) + 1;
+    sPath = malloc(sLen);
+    if (!sPath) {
+        return NULL;
+    }
+
+    strcpy(sPath, sAppData);
+    strcat(sPath, sDir);
+    strcat(sPath, sName);
+
+    for (sPtr = sPath + 1; *sPtr; sPtr++) {
+        if (*sPtr != '/')
+            continue;
+
+        *sPtr = 0;
+        mkdir(sPath, 0700);
+        *sPtr = '/';
+    }
+
+    f = fopen(sPath, sMode);
+    free(sPath);
+    return f;
 }
 
 /**

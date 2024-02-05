@@ -13,6 +13,9 @@
 #include <sys/types.h>
 #include <dirent.h>
 
+/* SDL includes */
+#include <SDL.h>
+
 /* application includes */
 #include "filecalls.h"
 
@@ -85,7 +88,33 @@ char *Directory_GetNextEntry(Directory *hDirectory)
  */
 FILE *File_OpenAppData(const char *sName, const char *sMode)
 {
+#if SDL_VERSION_ATLEAST(2, 0, 1)
+    char *sAppData, *sPath;
+    size_t sLen;
+    FILE *f;
+
+    sAppData = SDL_GetPrefPath(NULL, "arcem");
+    if (!sAppData) {
+        return NULL;
+    }
+
+    sLen = SDL_strlen(sAppData) + SDL_strlen(sName) + 1;
+    sPath = SDL_malloc(sLen);
+    if (!sPath) {
+        SDL_free(sAppData);
+        return NULL;
+    }
+
+    SDL_strlcpy(sPath, sAppData, sLen);
+    SDL_strlcat(sPath, sName, sLen);
+    f = fopen(sPath, sMode);
+
+    SDL_free(sPath);
+    SDL_free(sAppData);
+    return f;
+#else
     return NULL;
+#endif
 }
 
 /**
