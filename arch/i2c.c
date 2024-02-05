@@ -16,6 +16,7 @@ extern char arcemDir[256];
 #include "ArcemConfig.h"
 #include "dbugsys.h"
 #include "ControlPane.h"
+#include "filecalls.h"
 
 /*
 static const char *I2CStateNameTrans[] = {"Idle",
@@ -161,6 +162,11 @@ I2C_SetupTransmit(ARMul_State *state)
 
 /*----------------------------------------------------------------------------*/
 static void SaveCMOS(ARMul_State *state) {
+#ifdef __riscos__
+  const char *defaultFile = "<ArcEm$Dir>.hexcmos";
+#else
+  const char *defaultFile = "hexcmos";
+#endif
   int loop,dest;
   unsigned char val;
   FILE *OutFile;
@@ -169,11 +175,20 @@ static void SaveCMOS(ARMul_State *state) {
   chdir(arcemDir);
 #endif
 
-  OutFile = fopen(CONFIG.sCMOSFileName,"w");
-  if (OutFile == NULL) {
-    ControlPane_Error(1,"SaveCMOS: Could not open CMOS settings file (%s)\n", CONFIG.sCMOSFileName);
-  };
-
+  if (CONFIG.sCMOSFileName) {
+    OutFile = fopen(CONFIG.sCMOSFileName, "w");
+    if (OutFile == NULL) {
+      ControlPane_Error(1, "SaveCMOS: Could not open CMOS settings file (%s)\n", CONFIG.sCMOSFileName);
+    }
+  } else {
+    OutFile = File_OpenAppData(defaultFile, "w");
+    if (OutFile == NULL) {
+      OutFile = fopen(defaultFile, "w");
+      if (OutFile == NULL) {
+        ControlPane_Error(1, "SaveCMOS: Could not open CMOS settings file (%s)\n", defaultFile);
+      }
+    }
+  }
   for (loop = 0; loop < 240; loop++) {
     dest = loop + 64;
     if (dest > 255) dest -= 240;
@@ -415,19 +430,34 @@ void I2C_Update(ARMul_State *state) {
 
 static void SetUpCMOS(ARMul_State *state)
 {
+#ifdef __riscos__
+    const char *filename = "<ArcEm$Dir>.hexcmos";
+#else
+    const char *filename = "hexcmos";
+#endif
     FILE *fp;
     int byte, dest;
     unsigned int val;
 
-    if ((fp = fopen(CONFIG.sCMOSFileName, "r")) == NULL)
-        warn_i2c("SetUpCMOS: Could not open (hexcmos) CMOS settings file, "
-            "resetting to internal defaults.\n");
+    if (CONFIG.sCMOSFileName) {
+        if ((fp = fopen(CONFIG.sCMOSFileName, "r")) == NULL)
+            warn_i2c("SetUpCMOS: Could not open (hexcmos) CMOS settings file, "
+                "resetting to internal defaults.\n");
+        filename = CONFIG.sCMOSFileName;
+    } else {
+        if ((fp = File_OpenAppData(filename, "r")) == NULL) {
+            if ((fp = fopen(filename, "r")) == NULL) {
+                warn_i2c("SetUpCMOS: Could not open (hexcmos) CMOS settings file, "
+                    "resetting to internal defaults.\n");
+            }
+        }
+    }
 
     for (byte = 0; byte < 240; byte++) {
         if (fp) {
             if (fscanf(fp, "%x\n", &val) != 1) {
                 ControlPane_Error(1,"arcem: failed to read CMOS value %d of %s\n",
-                    byte, CONFIG.sCMOSFileName);
+                    byte, filename);
             }
         } else {
             val = CMOSDefaults[byte];

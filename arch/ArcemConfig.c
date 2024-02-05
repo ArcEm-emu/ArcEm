@@ -20,6 +20,7 @@
 #include "Version.h"
 #include "ControlPane.h"
 #include "dbugsys.h"
+#include "filecalls.h"
 
 #include "libs/inih/ini.h"
 
@@ -71,15 +72,7 @@ void ArcemConfig_SetupDefaults(ArcemConfig *pConfig)
     ControlPane_Error(EXIT_FAILURE,"Failed to allocate memory for initial configuration. Please free up more memory.\n");
   }
 
-#ifdef __riscos__
-  pConfig->sCMOSFileName = arcemconfig_StringDuplicate("<ArcEm$Dir>.hexcmos");
-#else
-  pConfig->sCMOSFileName = arcemconfig_StringDuplicate("hexcmos");
-#endif
-  // If we've run out of memory this early, something is very wrong
-  if(NULL == pConfig->sCMOSFileName) {
-    ControlPane_Error(EXIT_FAILURE,"Failed to allocate memory for initial configuration. Please free up more memory.\n");
-  }
+  pConfig->sCMOSFileName = NULL;
 
 #if defined(EXTNROM_SUPPORT)
   // The default directory is extnrom in the current working directory
@@ -202,6 +195,7 @@ static int ArcemConfig_Handler(void* user, const char* section,
  */
 void ArcemConfig_ParseConfigFile(ArcemConfig* pConfig)
 {
+    FILE *file;
 #if defined(__riscos__)
     const char* filename = "<ArcEm$Dir>.arcem/ini";
 #else
@@ -209,7 +203,17 @@ void ArcemConfig_ParseConfigFile(ArcemConfig* pConfig)
 #endif
     dbug("Reading options from file %s\n", filename);
 
-    ini_parse(filename, ArcemConfig_Handler, pConfig);
+    file = fopen(filename, "r");
+    if (file) {
+        ini_parse_file(file, ArcemConfig_Handler, pConfig);
+        fclose(file);
+    } else {
+        file = File_OpenAppData(filename, "r");
+        if (file) {
+            ini_parse_file(file, ArcemConfig_Handler, pConfig);
+            fclose(file);
+        }
+    }
 }
 
 /**

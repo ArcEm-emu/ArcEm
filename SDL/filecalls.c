@@ -75,6 +75,20 @@ char *Directory_GetNextEntry(Directory *hDirectory)
 }
 
 /**
+ * File_OpenAppData
+ *
+ * Open the specified file in the application data directory
+ *
+ * @param sName Name of file to open
+ * @param sMode Mode to open the file with
+ * @returns File handle or NULL on failure
+ */
+FILE *File_OpenAppData(const char *sName, const char *sMode)
+{
+    return NULL;
+}
+
+/**
  * File_GetInfo
  *
  * Fills in lots of useful info about the passed in file
