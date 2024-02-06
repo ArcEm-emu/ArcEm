@@ -9,6 +9,7 @@
    allocating a scanline buffer and bounds checking. It's much
    more than a VIDC1 can handle, and should be pushing the RPC/A7000
    VIDC too, if we ever get around to supporting that. */
+#define MinVideoWidth 512
 #define MaxVideoWidth 2048
 #define MaxVideoHeight 1536
 

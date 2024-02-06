@@ -95,6 +95,14 @@ static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,in
     HD.XScale = 2;
     width *= 2;
   }
+  /* Try and detect small screen resolutions */
+  else if((width < MinVideoWidth) && (width * 2 <= MaxVideoWidth) && (height * 2 <= MaxVideoHeight))
+  {
+    HD.XScale = 2;
+    HD.YScale = 2;
+    width *= 2;
+    height *= 2;
+  }
   HD.Width = MIN(MaxVideoWidth,width + (VIDC_BORDER * 2));
   HD.Height = MIN(MaxVideoHeight,height + (VIDC_BORDER * 2));
 

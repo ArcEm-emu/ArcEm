@@ -24,6 +24,7 @@
    allocating a scanline buffer and bounds checking. It's much
    more than a VIDC1 can handle, and should be pushing the RPC/A7000
    VIDC too, if we ever get around to supporting that. */
+#define MinVideoWidth 512
 #define MaxVideoWidth 2048
 #define MaxVideoHeight 1536
 
@@ -93,6 +94,14 @@ static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,in
   {
     HD.XScale = 2;
     width *= 2;
+  }
+  /* Try and detect small screen resolutions */
+  else if((width < MinVideoWidth) && (width * 2 <= MaxVideoWidth) && (height * 2 <= MaxVideoHeight))
+  {
+    HD.XScale = 2;
+    HD.YScale = 2;
+    width *= 2;
+    height *= 2;
   }
   HD.Width = width;
   HD.Height = height;
@@ -167,6 +176,14 @@ static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,in
   {
     HD.XScale = 2;
     width *= 2;
+  }
+  /* Try and detect small screen resolutions */
+  else if((width < MinVideoWidth) && (width * 2 <= MaxVideoWidth) && (height * 2 <= MaxVideoHeight))
+  {
+    HD.XScale = 2;
+    HD.YScale = 2;
+    width *= 2;
+    height *= 2;
   }
   HD.Width = width;
   HD.Height = height;
@@ -266,6 +283,14 @@ void PDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,int depth
   {
     HD.XScale = 2;
     width *= 2;
+  }
+  /* Try and detect small screen resolutions */
+  else if((width < MinVideoWidth) && (width * 2 <= MaxVideoWidth) && (height * 2 <= MaxVideoHeight))
+  {
+    HD.XScale = 2;
+    HD.YScale = 2;
+    width *= 2;
+    height *= 2;
   }
   HD.Width = width;
   HD.Height = height;

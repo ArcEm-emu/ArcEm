@@ -23,6 +23,7 @@
    allocating a scanline buffer and bounds checking. It's much
    more than a VIDC1 can handle, and should be pushing the RPC/A7000
    VIDC too, if we ever get around to supporting that. */
+#define MinVideoWidth 512
 #define MaxVideoWidth 2048
 #define MaxVideoHeight 1536
 
@@ -259,6 +260,14 @@ static void SetupScreen(ARMul_State *state,int width,int height,int hz)
     xscale = 2;
     yscale = 1;
     width *= 2;
+  }
+  /* Try and detect small screen resolutions */
+  else if((width < MinVideoWidth) && (width * 2 <= MaxVideoWidth) && (height * 2 <= MaxVideoHeight))
+  {
+    xscale = 2;
+    yscale = 2;
+    width *= 2;
+    height *= 2;
   }
   else
   {
