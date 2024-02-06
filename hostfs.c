@@ -452,6 +452,9 @@ riscos_path_to_host(const char *path, char *host_path)
     case HOST_DIR_SEP_CHAR:
       *host_path++ = '.';
       break;
+    case '\xA0':
+      *host_path++ = 32;
+      break;
 #endif
     default:
       *host_path++ = *path;
