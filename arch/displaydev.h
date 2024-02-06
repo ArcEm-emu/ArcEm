@@ -44,6 +44,9 @@ struct Vidc_Regs {
   uint16_t ControlReg;
   uint8_t SoundFreq;
   uint8_t StereoImageReg[8];
+
+  /* This avoids -Wcast-align warnings with Clang. */
+  uint64_t align;
 };
 
 #define VIDC (*(state->Display))

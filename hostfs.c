@@ -484,7 +484,7 @@ name_host_to_riscos(const char *object_name, size_t len, char *riscos_name)
       *riscos_name++ = '.';
       break;
     case 32:
-      *riscos_name++ = 160;
+      *riscos_name++ = '\xA0';
       break;
     default:
       *riscos_name++ = *object_name;

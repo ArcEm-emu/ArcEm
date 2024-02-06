@@ -146,7 +146,7 @@ static void OpenFloppyImageDialog(HWND hWnd, int drive) {
 	}
 }
 
-void EjectFloppyImage(HWND hWnd, int drive) {
+static void EjectFloppyImage(HWND hWnd, int drive) {
 	const char *err = FDC_EjectFloppy(drive);
 	fprintf(stderr, "ejecting drive %d: %s\n",
 	        drive, err ? err : "ok");

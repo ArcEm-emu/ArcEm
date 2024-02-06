@@ -57,7 +57,7 @@ static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,in
 
 static inline SDD_Row SDD_Name(Host_BeginRow)(ARMul_State *state,int row,int offset)
 {
-  return ((SDD_Row) ((uint8_t *)sdd_surface->pixels + sdd_surface->pitch*row))+offset;
+  return ((SDD_Row)(void *) ((uint8_t *)sdd_surface->pixels + sdd_surface->pitch*row))+offset;
 }
 
 static inline void SDD_Name(Host_EndRow)(ARMul_State *state,SDD_Row *row) { /* nothing */ };
@@ -111,7 +111,7 @@ static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,in
 
 static inline SDD_Row SDD_Name(Host_BeginRow)(ARMul_State *state,int row,int offset)
 {
-  return ((SDD_Row) ((uint8_t *)sdd_surface->pixels + sdd_surface->pitch*row))+offset;
+  return ((SDD_Row)(void *) ((uint8_t *)sdd_surface->pixels + sdd_surface->pitch*row))+offset;
 }
 
 static inline void SDD_Name(Host_EndRow)(ARMul_State *state,SDD_Row *row) { /* nothing */ };

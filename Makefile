@@ -48,7 +48,7 @@ endif
 
 CROSS=
 CC=$(CROSS)gcc
-LD=$(CROSS)gcc
+LD=$(CC)
 WINDRES=$(CROSS)windres
 LDFLAGS=
 
@@ -64,8 +64,9 @@ else
 ifeq ($(DEBUG),yes)
 CFLAGS += -O0 -g
 else
-CFLAGS = -O3 -funroll-loops -fexpensive-optimizations -ffast-math \
-    -fomit-frame-pointer -frerun-cse-after-loop
+CFLAGS = -O3 -funroll-loops -ffast-math -fomit-frame-pointer
+# These don't exist in Clang, and are enabled with -O2 when using GCC.
+# -fexpensive-optimizations -frerun-cse-after-loop
 endif
 endif
 

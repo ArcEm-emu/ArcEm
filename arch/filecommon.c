@@ -310,7 +310,7 @@ size_t File_ReadRAM(ARMul_State *state, FILE *pFile,ARMword uAddress,size_t uCou
 
       /* Clobber emu funcs for that region */
       temp2 = (temp+(uAddress&3)+3)&~UINT32_C(3);
-      func = FastMap_Phy2Func(state,(ARMword *) (phy-(uAddress&3)));
+      func = FastMap_Phy2Func(state,(ARMword *)(void *) (phy-(uAddress&3)));
       while(temp2>0)
       {
         *func++ = FASTMAP_CLOBBEREDFUNC;
@@ -344,7 +344,7 @@ size_t File_ReadRAM(ARMul_State *state, FILE *pFile,ARMword uAddress,size_t uCou
         c++;
       }
       /* Deal with main body */
-      w = (ARMword *) c;
+      w = (ARMword *)(void *) c;
       while(temp2 >= 4)
       {
         FastMap_StoreFunc(entry,state,uAddress,EndianSwap(*w),0);
@@ -454,7 +454,7 @@ size_t File_WriteRAM(ARMul_State *state, FILE *pFile,ARMword uAddress,size_t uCo
       size_t temp2 = (amt+(uAddress&3)+3)&~UINT32_C(3); /* How many words to read */
       
       /* Copy the data a word at a time */
-      ARMword *w = (ARMword *) temp_buf;
+      ARMword *w = (ARMword *)(void *) temp_buf;
       uAddress &= ~UINT32_C(3);
       while(temp2 >= 4)
       {

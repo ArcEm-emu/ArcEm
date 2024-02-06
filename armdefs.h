@@ -40,6 +40,8 @@ extern ARMul_State statestr;
 #define MIN(a,b) ((a)<(b)?(a):(b))
 #define MAX(a,b) ((a)>(b)?(a):(b))
 
+#define UNUSED(x) (void)(x)
+
 #define UPDATEBLOCKSIZE 256
 
 /***************************************************************************\
