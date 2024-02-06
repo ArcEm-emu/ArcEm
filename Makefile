@@ -74,6 +74,8 @@ CFLAGS += \
     $(CFL) $(WARN) \
     -I$(SYSTEM) -Iarch -I.
 
+PKG_CONFIG = pkg-config
+
 prefix=/usr/local
 
 INSTALL_DIR = $(prefix)/bin
@@ -187,11 +189,17 @@ OBJS += SDL/fb.o SDL/render.o
 endif
 
 ifeq (${SYSTEM},X)
-CFLAGS += -DSYSTEM_X -I/usr/X11R6/include
+CFLAGS += -DSYSTEM_X
 ifneq ($(shell uname),Darwin)
 CFLAGS += -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
 endif
+ifneq ($(shell $(PKG_CONFIG) --exists x11 xext && echo x11 xext),)
+CFLAGS += $(shell $(PKG_CONFIG) --cflags x11 xext)
+LIBS += $(shell $(PKG_CONFIG) --libs x11 xext)
+else
+CFLAGS += -I/usr/X11R6/include
 LIBS += -L/usr/X11R6/lib -lXext -lX11
+endif
 OBJS += X/true.o X/pseudo.o
 #SOUND_SUPPORT = yes
 endif
