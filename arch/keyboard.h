@@ -135,8 +135,9 @@ enum {
 typedef uint8_t arch_key_id;
 
 typedef struct {
-  int8_t KeyColToSend, KeyRowToSend;
-  bool KeyUpNDown;
+  uint8_t KeyRowToSend : 3;
+  uint8_t KeyColToSend : 4;
+  bool KeyUpNDown : 1;
 } KbdEntry;
 
 typedef enum {

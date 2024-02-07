@@ -13,23 +13,19 @@
 #endif
 
 /* Information on an arch_key_id. */
-typedef struct {
-#if STORE_KEY_NAME
-  const char *name;
-#endif
-  uint8_t row;
-  uint8_t col;
-} key_info;
-
-static const key_info keys[] = {
-#if STORE_KEY_NAME
-#define X(key, row, col) { #key, row, col },
-#else
+static const KbdEntry keys[] = {
 #define X(key, row, col) { row, col },
-#endif
   ARCH_KEYBOARD_DEFINITION
 #undef X
 };
+
+#if STORE_KEY_NAME
+static const char *const key_names[] = {
+#define X(key, row, col) #key,
+  ARCH_KEYBOARD_DEFINITION
+#undef X
+};
+#endif
 
 /* The protocol between the keyboard and Archimedes. */
 
@@ -47,26 +43,26 @@ static const key_info keys[] = {
 void keyboard_key_changed(struct arch_keyboard *kb, arch_key_id kid,
                           bool up)
 {
-  const key_info *ki;
+  const KbdEntry *ki;
   KbdEntry *e;
 
   ki = keys + kid;
 
 #if STORE_KEY_NAME
-  dbug_kbd("keyboard_key_changed(kb, \"%s\", %d)\n", ki->name, up);
+  dbug_kbd("keyboard_key_changed(kb, \"%s\", %d)\n", key_names[kid], up);
 #endif
 
   if (kb->BuffOcc >= KBDBUFFLEN) {
 #if STORE_KEY_NAME
     warn_kbd("keyboard_key_changed: key \"%s\" discarded, "
-             "buffer full\n", ki->name);
+             "buffer full\n", key_names[kid]);
 #endif
     return;
   }
 
   e = kb->Buffer + kb->BuffOcc++;
-  e->KeyColToSend = ki->col;
-  e->KeyRowToSend = ki->row;
+  e->KeyColToSend = ki->KeyColToSend;
+  e->KeyRowToSend = ki->KeyRowToSend;
   e->KeyUpNDown = up;
 
   return;
