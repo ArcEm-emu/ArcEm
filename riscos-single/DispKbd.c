@@ -827,23 +827,6 @@ DisplayDev_Init(ARMul_State *state)
 
 
 /*-----------------------------------------------------------------------------*/
-static void ProcessKey(ARMul_State *state, int key, int transition) {
-      /* Now add it to the buffer */
-      KBD.Buffer[KBD.BuffOcc].KeyColToSend=key % 16;
-      KBD.Buffer[KBD.BuffOcc].KeyRowToSend=key / 16;
-      KBD.Buffer[KBD.BuffOcc].KeyUpNDown=transition ? 0 : 1;
-      KBD.BuffOcc++;
-#ifdef DEBUG_KBD
-      fprintf(stderr,"ProcessKey: Got Col,Row=%d,%d UpNDown=%d BuffOcc=%d\n",
-              KBD.Buffer[KBD.BuffOcc].KeyColToSend,
-               KBD.Buffer[KBD.BuffOcc].KeyRowToSend,
-               KBD.Buffer[KBD.BuffOcc].KeyUpNDown,
-              KBD.BuffOcc);
-#endif
-}; /* ProcessKey */
-
-
-/*-----------------------------------------------------------------------------*/
 /* Called on an X motion event */
 static void MouseMoved(ARMul_State *state, int mousex, int mousey/*,XMotionEvent *xmotion*/) {
   int xdiff,ydiff;
@@ -918,7 +901,9 @@ Kbd_PollHostKbd(ARMul_State *state)
     if (_swi (ArcEmKey_GetKey, _RETURN(0)|_OUTR(1,2), &transition, &key))
     {
       //printf("Processing key %d, transition %d\n",key, transition);
-      ProcessKey(state, key, transition);
+      /* Now add it to the buffer */
+      keyboard_key_changed_ex(&KBD, key / 16, key % 16, transition ? 0 : 1);
+
 #ifdef ENABLE_MENU
       static int key1_down = 0;
       static int key2_down = 0;

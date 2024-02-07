@@ -698,21 +698,10 @@ static void ProcessKey(ARMul_State *state)
         nKBRead = (nKBRead + 1) % KB_BUFFER_SIZE;
         keyF--;
 
-        if (KBD.BuffOcc >= KBDBUFFLEN)
-        {
-#ifdef DEBUG_KBD
-            fprintf(stderr,"KBD: Missed key - still busy sending another one\n");
-#endif
-            return;
-        }
-
         //printf("sym = %d, row = %d, col = %d\n", sym, invertedKeyTable[sym].row, invertedKeyTable[sym].col);
         if (invertedKeyTable[sym].row != -1)
         {
-            KBD.Buffer[KBD.BuffOcc].KeyRowToSend = invertedKeyTable[sym].row;
-            KBD.Buffer[KBD.BuffOcc].KeyColToSend = invertedKeyTable[sym].col;
-            KBD.Buffer[KBD.BuffOcc].KeyUpNDown = stat;
-            KBD.BuffOcc++;
+            keyboard_key_changed_ex(&KBD, invertedKeyTable[sym].row, invertedKeyTable[sym].col, stat);
         }
     }
 }; /* ProcessKey */
@@ -736,25 +725,8 @@ static void ProcessButton(ARMul_State *state)
         if (ButtonNum<0)
             return;
 
-        if (KBD.BuffOcc>=KBDBUFFLEN) {
-#ifdef DEBUG_KBD
-            fprintf(stderr,"KBD: Missed mouse event - buffer full\n");
-#endif
-            return;
-        };
-
         /* Now add it to the buffer */
-        KBD.Buffer[KBD.BuffOcc].KeyColToSend=ButtonNum;
-        KBD.Buffer[KBD.BuffOcc].KeyRowToSend=7;
-        KBD.Buffer[KBD.BuffOcc].KeyUpNDown=UpNDown;
-        KBD.BuffOcc++;
-#ifdef DEBUG_KBD
-        fprintf(stderr,"ProcessButton: Got Col,Row=%d,%d UpNDown=%d BuffOcc=%d\n",
-                KBD.Buffer[KBD.BuffOcc].KeyColToSend,
-                KBD.Buffer[KBD.BuffOcc].KeyRowToSend,
-                KBD.Buffer[KBD.BuffOcc].KeyUpNDown,
-                KBD.BuffOcc);
-#endif
+        keyboard_key_changed(&KBD, ARCH_KEY_button_1 + ButtonNum, UpNDown);
     }
 }; /* ProcessButton */
 

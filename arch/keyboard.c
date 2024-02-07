@@ -44,26 +44,52 @@ void keyboard_key_changed(struct arch_keyboard *kb, arch_key_id kid,
                           bool up)
 {
   const KbdEntry *ki;
-  KbdEntry *e;
+  KbdEntry e;
 
   ki = keys + kid;
+  e.KeyColToSend = ki->KeyColToSend;
+  e.KeyRowToSend = ki->KeyRowToSend;
+  e.KeyUpNDown = up;
 
 #if STORE_KEY_NAME
   dbug_kbd("keyboard_key_changed(kb, \"%s\", %d)\n", key_names[kid], up);
 #endif
 
-  if (kb->BuffOcc >= KBDBUFFLEN) {
+  if ((kb->BuffWritePos + 1) % KBDBUFFLEN == kb->BuffReadPos) {
 #if STORE_KEY_NAME
     warn_kbd("keyboard_key_changed: key \"%s\" discarded, "
              "buffer full\n", key_names[kid]);
 #endif
-    return;
+  } else {
+    kb->Buffer[kb->BuffWritePos] = e;
+    kb->BuffWritePos = (kb->BuffWritePos + 1) % KBDBUFFLEN;
   }
 
-  e = kb->Buffer + kb->BuffOcc++;
-  e->KeyColToSend = ki->KeyColToSend;
-  e->KeyRowToSend = ki->KeyRowToSend;
-  e->KeyUpNDown = up;
+  return;
+}
+
+void keyboard_key_changed_ex(struct arch_keyboard *kb, uint8_t row,
+                             uint8_t col, bool up)
+{
+  KbdEntry e;
+
+  e.KeyColToSend = col;
+  e.KeyRowToSend = row;
+  e.KeyUpNDown = up;
+
+#if STORE_KEY_NAME
+  dbug_kbd("keyboard_key_changed_ex(kb, %d, %d, %d)\n", row, col, up);
+#endif
+
+  if ((kb->BuffWritePos + 1) % KBDBUFFLEN == kb->BuffReadPos) {
+#if STORE_KEY_NAME
+    warn_kbd("keyboard_key_changed: key (%d, %d) discarded, "
+             "buffer full\n", row, col);
+#endif
+  } else {
+    kb->Buffer[kb->BuffWritePos] = e;
+    kb->BuffWritePos = (kb->BuffWritePos + 1) % KBDBUFFLEN;
+  }
 
   return;
 }
@@ -111,28 +137,29 @@ void Kbd_StartToHost(ARMul_State *state)
   }
 
   /* Perhaps some keyboard data */
-  if (KBD.KeyScanEnable && KBD.BuffOcc > 0) {
-    uint8_t loop;
+  if (KBD.KeyScanEnable) {
+    uint8_t BuffReadPos, BuffWritePos;
+    KbdEntry e;
 
-    dbug_kbd("KBD_StartToHost - sending key -  BuffOcc=%d "
-        "(%d,%d,%d)\n", KBD.BuffOcc, KBD.Buffer[0].KeyUpNDown,
-        KBD.Buffer[0].KeyRowToSend, KBD.Buffer[0].KeyColToSend);
+    BuffReadPos = KBD.BuffReadPos;
+    BuffWritePos = KBD.BuffWritePos;
+    if (BuffReadPos != BuffWritePos) {
+      e = KBD.Buffer[BuffReadPos];
+      KBD.BuffReadPos = (BuffReadPos + 1) % KBDBUFFLEN;
 
-    KBD.KeyUpNDown = KBD.Buffer[0].KeyUpNDown;
-    KBD.KeyRowToSend = KBD.Buffer[0].KeyRowToSend;
-    KBD.KeyColToSend = KBD.Buffer[0].KeyColToSend;
+      dbug_kbd("KBD_StartToHost - sending key -  BuffReadPos=%d "
+          "BuffWritePos=%d (%d,%d,%d)\n", BuffReadPos, BuffWritePos,
+          e.KeyUpNDown, e.KeyRowToSend, e.KeyColToSend);
 
-    /* I should implement a circular buffer - but can't be bothered
-     * yet. */
-    for(loop = 1; loop < KBD.BuffOcc; loop++) {
-      KBD.Buffer[loop - 1] = KBD.Buffer[loop];
+      KBD.KeyUpNDown = e.KeyUpNDown;
+      KBD.KeyRowToSend = e.KeyRowToSend;
+      KBD.KeyColToSend = e.KeyColToSend;
+
+      if (IOC_WriteKbdRx(state, (uint8_t) ((KBD.KeyUpNDown ? 0xd0 : 0xc0) | KBD.KeyRowToSend)) != -1) {
+        KBD.KbdState = KbdState_SentKeyByte1;
+      }
+      return;
     }
-
-    if (IOC_WriteKbdRx(state, (uint8_t) ((KBD.KeyUpNDown ? 0xd0 : 0xc0) | KBD.KeyRowToSend)) != -1) {
-      KBD.KbdState = KbdState_SentKeyByte1;
-    }
-    KBD.BuffOcc--;
-    return;
   }
 
   /* NOTE:  Mouse movement gets lower priority than key input. */
@@ -362,7 +389,8 @@ void Kbd_Init(ARMul_State *state)
   KBD.MouseYCount         = 0;
   KBD.KeyUpNDown          = false; /* When false it means the key to be sent is a key down event, true is up */
   KBD.HostCommand         = 0;
-  KBD.BuffOcc             = 0;
+  KBD.BuffReadPos         = 0;
+  KBD.BuffWritePos        = 0;
   KBD.TimerIntHasHappened = 0; /* If using AutoKey should be 2 Otherwise it never reinitialises the event routines */
   KBD.Leds                = 0;
   KBD.leds_changed        = NULL;

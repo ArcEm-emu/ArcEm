@@ -178,7 +178,7 @@ struct arch_keyboard {
   bool MouseTransEnable,KeyScanEnable; /* When 1 allowed to transmit */
   uint8_t HostCommand;            /* Normally 0 else the command code */
   KbdEntry Buffer[KBDBUFFLEN];
-  uint8_t BuffOcc;
+  uint8_t BuffReadPos,BuffWritePos;
   uint8_t TimerIntHasHappened;
 };
 
@@ -190,6 +190,9 @@ struct arch_keyboard {
  * mouse buttons. */
 void keyboard_key_changed(struct arch_keyboard *kb, arch_key_id kid,
     bool up);
+
+void keyboard_key_changed_ex(struct arch_keyboard *kb, uint8_t row,
+    uint8_t col, bool up);
 
 void Kbd_Init(ARMul_State *state);
 void Kbd_StartToHost(ARMul_State *state);
