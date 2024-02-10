@@ -258,7 +258,7 @@ $(TARGET): $(OBJS) $(MODEL).o
 	$(LD) $(LDFLAGS) $(OBJS) $(LIBS) $(MODEL).o -o $@
 
 clean:
-	rm -f *.o arch/*.o $(SYSTEM)/*.o $(TARGET) core *.bb *.bbg *.da
+	rm -f *.o arch/*.o $(SYSTEM)/*.o libs/*/*.o $(TARGET) core *.bb *.bbg *.da
 
 distclean: clean
 	rm -f *~
