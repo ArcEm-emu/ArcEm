@@ -212,7 +212,11 @@ static void SDD_Name(Host_PollDisplay)(ARMul_State *state) {
 
 /* Palettised display code */
 #define PDD_Name(x) pdd_##x
-#define PDD_Row uint8_t *
+
+typedef struct {
+  ARMword *data;
+  int offset;
+} PDD_Row;
 
 static void PDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,int depth,int hz);
 
@@ -236,8 +240,11 @@ static void PDD_Name(Host_SetBorderColour)(ARMul_State *state,unsigned int phys)
 
 static inline PDD_Row PDD_Name(Host_BeginRow)(ARMul_State *state,int row,int offset,int *alignment)
 {
-  PDD_Row drow = ((PDD_Row) ((uint8_t *)sdd_surface->pixels + sdd_surface->pitch*row))+offset;
-  *alignment = 0;
+  PDD_Row drow;
+  uintptr_t base = ((uintptr_t)sdd_surface->pixels + sdd_surface->pitch*row) + offset;
+  drow.offset = ((base<<3) & 0x18); /* Just in case bytes per line isn't aligned */
+  drow.data = (ARMword *) (base & ~0x3);
+  *alignment = drow.offset;
   return drow;
 }
 
@@ -245,14 +252,16 @@ static inline void PDD_Name(Host_EndRow)(ARMul_State *state,PDD_Row *row) { /* n
 
 static inline ARMword *PDD_Name(Host_BeginUpdate)(ARMul_State *state,PDD_Row *row,unsigned int count,int *outoffset)
 {
-  *outoffset = 0;
-  return (ARMword *)(void *)(*row);
+  *outoffset = row->offset;
+  return row->data;
 }
 
 static inline void PDD_Name(Host_EndUpdate)(ARMul_State *state,PDD_Row *row) { /* nothing */ };
 
 static inline void PDD_Name(Host_AdvanceRow)(ARMul_State *state,PDD_Row *row,unsigned int count) {
-  (*row) += count >> 3;
+  row->offset += count;
+  row->data += count>>5;
+  row->offset &= 0x1f;
 }
 
 static void PDD_Name(Host_PollDisplay)(ARMul_State *state);
