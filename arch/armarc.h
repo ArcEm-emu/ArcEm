@@ -35,6 +35,7 @@ struct MEMCStruct {
   ARMword *PhysRam;
   ARMword RAMSize;
   ARMword RAMMask;
+  ARMword ROMRAMChunkSize;    /* Size of the combined ROM+RAM memory chunk, guaranteed to be 4KB multiple */
 
   int32_t PageTable[512]; /* Good old fashioned MEMC1 page table */
   ARMword ControlReg;
@@ -62,7 +63,9 @@ struct MEMCStruct {
 
   /* Fastmap memory block pointers */
   void *ROMRAMChunk;
+#ifdef ARMUL_INSTR_FUNC_CACHE
   void *EmuFuncChunk;
+#endif
 };
 
 
@@ -77,6 +80,8 @@ static FastMapRes FastMap_DecodeRead(const FastMapEntry *entry,FastMapUInt mode)
 static FastMapRes FastMap_DecodeWrite(const FastMapEntry *entry,FastMapUInt mode);
 static ARMword *FastMap_Log2Phy(const FastMapEntry *entry,ARMword addr);
 static ARMEmuFunc *FastMap_Phy2Func(ARMul_State *state,ARMword *addr);
+static void FastMap_PhyClobberFunc(ARMul_State *state,ARMword *addr);
+static void FastMap_PhyClobberFuncRange(ARMul_State *state,ARMword *addr,size_t len);
 static ARMword FastMap_LoadFunc(const FastMapEntry *entry,ARMul_State *state,ARMword addr);
 static void FastMap_StoreFunc(const FastMapEntry *entry,ARMul_State *state,ARMword addr,ARMword data,ARMword flags);
 static void FastMap_RebuildMapMode(ARMul_State *state);
@@ -111,6 +116,7 @@ static inline ARMword *FastMap_Log2Phy(const FastMapEntry *entry,ARMword addr)
 	return (ARMword*)(((FastMapUInt)addr)+(entry->FlagsAndData<<8));
 }
 
+#ifdef ARMUL_INSTR_FUNC_CACHE
 static inline ARMEmuFunc *FastMap_Phy2Func(ARMul_State *state,ARMword *addr)
 {
 	/* Return ARMEmuFunc * for an address returned by Log2Phy */
@@ -119,6 +125,25 @@ static inline ARMEmuFunc *FastMap_Phy2Func(ARMul_State *state,ARMword *addr)
 	return (ARMEmuFunc*)((((FastMapUInt)addr)<<1)+state->FastMapInstrFuncOfs);
 #else
 	return (ARMEmuFunc*)(((FastMapUInt)addr)+state->FastMapInstrFuncOfs);
+#endif
+}
+#endif
+
+static inline void FastMap_PhyClobberFunc(ARMul_State *state,ARMword *addr)
+{
+#ifdef ARMUL_INSTR_FUNC_CACHE
+	*(FastMap_Phy2Func(state,addr)) = FASTMAP_CLOBBEREDFUNC;
+#endif
+}
+
+static inline void FastMap_PhyClobberFuncRange(ARMul_State *state,ARMword *addr,size_t len)
+{
+#ifdef ARMUL_INSTR_FUNC_CACHE
+	ARMEmuFunc *func = FastMap_Phy2Func(state,addr);
+	while (len>0) {
+		*func++ = FASTMAP_CLOBBEREDFUNC;
+		len -= 4;
+	}
 #endif
 }
 

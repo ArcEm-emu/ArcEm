@@ -25,6 +25,9 @@
 
 #include "c99.h"
 
+/* Control caching of instruction handler functions */
+#define ARMUL_INSTR_FUNC_CACHE
+
 typedef uint32_t ARMword; /* must be 32 bits wide */
 
 typedef struct ARMul_State ARMul_State;
@@ -136,7 +139,9 @@ typedef uintptr_t FastMapUInt;
 #define FASTMAP_ACCESSFUNC_BYTE        0x02UL /* Only relevant for writes */
 #define FASTMAP_ACCESSFUNC_STATECHANGE 0x04UL /* Only relevant for writes */
 
+#ifdef ARMUL_INSTR_FUNC_CACHE
 #define FASTMAP_CLOBBEREDFUNC 0 /* Value written when a func gets clobbered */
+#endif
 
 typedef FastMapInt FastMapRes; /* Result of a DecodeRead/DecodeWrite function */
 
@@ -244,7 +249,9 @@ struct ARMul_State {
 
    /* Fastmap stuff */
    FastMapUInt FastMapMode;   /* Current access mode flags */
+#ifdef ARMUL_INSTR_FUNC_CACHE
    FastMapUInt FastMapInstrFuncOfs; /* Offset between the RAM/ROM data and the ARMEmuFunc data */
+#endif
    FastMapEntry *FastMap;
 
    /* Less common stuff */   

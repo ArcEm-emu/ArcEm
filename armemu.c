@@ -32,7 +32,9 @@ static bool kill_emulator;
 
 typedef struct {
   ARMword instr;
+#ifdef ARMUL_INSTR_FUNC_CACHE
   ARMEmuFunc func;
+#endif
 } PipelineEntry;
 
 static const PipelineEntry abortpipe;
@@ -57,6 +59,7 @@ ARMul_LoadInstr(ARMul_State *state,ARMword addr, PipelineEntry *p)
   {
     ARMword *data = FastMap_Log2Phy(entry,addr);
     ARMword instr = p->instr = *data;
+#ifdef ARMUL_INSTR_FUNC_CACHE
     ARMEmuFunc *pfunc = FastMap_Phy2Func(state,data);
     ARMEmuFunc temp = *pfunc;
     if(temp == FASTMAP_CLOBBEREDFUNC)
@@ -74,12 +77,15 @@ ARMul_LoadInstr(ARMul_State *state,ARMword addr, PipelineEntry *p)
     }
 #endif
     p->func = temp;
+#endif
   }
   else if(FASTMAP_RESULT_FUNC(res))
   {
     /* Use function, means we can't write back the decode result */
     ARMword instr = p->instr = FastMap_LoadFunc(entry,state,addr);
+#ifdef ARMUL_INSTR_FUNC_CACHE
     p->func = ARMul_Emulate_DecodeInstr(instr);
+#endif
   }
   else
   {
@@ -113,11 +119,14 @@ ARMul_LoadInstrTriplet(ARMul_State *state,ARMword addr,PipelineEntry *p)
   if(FASTMAP_RESULT_DIRECT(res))
   {
     ARMword *data = FastMap_Log2Phy(entry,addr);
+#ifdef ARMUL_INSTR_FUNC_CACHE
     ARMEmuFunc *pfunc = FastMap_Phy2Func(state,data);
+#endif
     int i;
     for(i=0;i<3;i++)
     {
       ARMword instr = p->instr = *data;
+#ifdef ARMUL_INSTR_FUNC_CACHE
       ARMEmuFunc temp = *pfunc;
       if(temp == FASTMAP_CLOBBEREDFUNC)
       {
@@ -125,8 +134,9 @@ ARMul_LoadInstrTriplet(ARMul_State *state,ARMword addr,PipelineEntry *p)
         temp = *pfunc = ARMul_Emulate_DecodeInstr(instr);
       }
       p->func = temp;
-      data++;
       pfunc++;
+#endif
+      data++;
       p++;
     }
   }
@@ -843,17 +853,25 @@ static void StoreMult(ARMul_State *state, ARMword instr,
                This assumes we don't differentiate between N & S cycles */
             ARMul_CLEARABORT;
             data = FastMap_Log2Phy(entry,address&~3);
-            pfunc = FastMap_Phy2Func(state,data);
             count=1;
-            *(data++) = state->Reg[temp++];
+#ifdef ARMUL_INSTR_FUNC_CACHE
+            pfunc = FastMap_Phy2Func(state,data);
             *(pfunc++) = FASTMAP_CLOBBEREDFUNC;
+#else
+            FastMap_PhyClobberFunc(state,data);
+#endif
+            *(data++) = state->Reg[temp++];
             if (BIT(21) && LHSReg != 15)
                 LSBase = WBBase;
             for(;temp<16;temp++)
                 if(BIT(temp))
                 {
-                    *(data++) = state->Reg[temp];
+#ifdef ARMUL_INSTR_FUNC_CACHE
                     *(pfunc++) = FASTMAP_CLOBBEREDFUNC;
+#else
+                    FastMap_PhyClobberFunc(state,data);
+#endif
+                    *(data++) = state->Reg[temp];
                     count++;
                 }
             state->NumCycles += count;
@@ -933,17 +951,25 @@ static void StoreSMult(ARMul_State *state, ARMword instr,
                This assumes we don't differentiate between N & S cycles */
             ARMul_CLEARABORT;
             data = FastMap_Log2Phy(entry,address&~3);
-            pfunc = FastMap_Phy2Func(state,data);
             count=1;
-            *(data++) = state->Reg[temp++];
+#ifdef ARMUL_INSTR_FUNC_CACHE
+            pfunc = FastMap_Phy2Func(state,data);
             *(pfunc++) = FASTMAP_CLOBBEREDFUNC;
+#else
+            FastMap_PhyClobberFunc(state,data);
+#endif
+            *(data++) = state->Reg[temp++];
             if (BIT(21) && LHSReg != 15)
                 LSBase = WBBase;
             for(;temp<16;temp++)
                 if(BIT(temp))
                 {
-                    *(data++) = state->Reg[temp];
+#ifdef ARMUL_INSTR_FUNC_CACHE
                     *(pfunc++) = FASTMAP_CLOBBEREDFUNC;
+#else
+                    FastMap_PhyClobberFunc(state,data);
+#endif
+                    *(data++) = state->Reg[temp];
                     count++;
                 }
             state->NumCycles += count;
@@ -1077,8 +1103,10 @@ ARMEmuFunc ARMul_Emulate_DecodeInstr(ARMword instr) {
 
 /* Pipeline entry used for prefetch aborts */
 static const PipelineEntry abortpipe = {
-  ARMul_ABORTWORD,
-  EMFUNCDECL26(SWI)
+  ARMul_ABORTWORD
+#ifdef ARMUL_INSTR_FUNC_CACHE
+  , EMFUNCDECL26(SWI)
+#endif
 };
 
 #define FLATPIPE
@@ -1088,6 +1116,22 @@ static const PipelineEntry abortpipe = {
 #else
 #define PIPESIZE 4 /* 3 or 4. 4 seems to be slightly faster? */
 #endif
+
+static inline void execute_instruction(ARMul_State *state,const PipelineEntry *entry,ARMword r15)
+{
+  ARMword instr = entry->instr;
+  if(ARMul_CCCheck(instr,(r15 & CCBITS)))
+  {
+#ifdef ARMUL_INSTR_FUNC_CACHE
+    ARMEmuFunc func = entry->func;
+#else
+    ARMEmuFunc func = ARMul_Emulate_DecodeInstr(instr);
+#endif
+    Prof_BeginFunc(func);
+    (func)(state, instr);
+    Prof_EndFunc(func);
+  }
+}
 
 void
 ARMul_Emulate26(ARMul_State *state)
@@ -1113,8 +1157,10 @@ ARMul_Emulate26(ARMul_State *state)
       pc            = state->pc;
 #endif
 
+#ifdef ARMUL_INSTR_FUNC_CACHE
       pipe[1].func = ARMul_Emulate_DecodeInstr(pipe[1].instr);
       pipe[2].func = ARMul_Emulate_DecodeInstr(pipe[2].instr);
+#endif
 #ifndef FLATPIPE
       pipeidx = 0;
 #endif
@@ -1205,18 +1251,12 @@ ARMul_Emulate26(ARMul_State *state)
         break;
       }
 
-      ARMword instr = pipe[pipeidx].instr;
-      /*dbug("exec: pc=0x%08x instr=0x%08x\n", pc, instr);*/
-      if(ARMul_CCCheck(instr,ECC))
-      {
-        Prof_BeginFunc(pipe[pipeidx].func);
-        (pipe[pipeidx].func)(state, instr);
-        Prof_EndFunc(pipe[pipeidx].func);
-      }
+      /*dbug("exec: pc=0x%08x instr=0x%08x\n", pc, pipe[pipeidx].instr);*/
+      execute_instruction(state,&pipe[pipeidx],state->Reg[15]);
 #else
 /* pipeidx = 0 */
       CycleCount local_time;
-      ARMword excep, instr;
+      ARMword excep;
       ARMword r15 = state->Reg[15];
       Prof_Begin("Fetch/decode");
       switch (state->NextInstr) {
@@ -1259,13 +1299,7 @@ ARMul_Emulate26(ARMul_State *state)
         break;
       }
 
-      instr = pipe[1].instr;
-      if(ARMul_CCCheck(instr,(r15 & CCBITS)))
-      {
-        Prof_BeginFunc(pipe[1].func);
-        (pipe[1].func)(state, instr);
-        Prof_EndFunc(pipe[1].func);
-      }
+      execute_instruction(state,&pipe[1],r15);
 
 /* pipeidx = 1 */
       r15 = state->Reg[15];
@@ -1310,13 +1344,7 @@ ARMul_Emulate26(ARMul_State *state)
         break;
       }
 
-      instr = pipe[2].instr;
-      if(ARMul_CCCheck(instr,(r15 & CCBITS)))
-      {
-        Prof_BeginFunc(pipe[2].func);
-        (pipe[2].func)(state, instr);
-        Prof_EndFunc(pipe[2].func);
-      }
+      execute_instruction(state,&pipe[2],r15);
 
 /* pipeidx = 2 */
       r15 = state->Reg[15];
@@ -1365,13 +1393,7 @@ ARMul_Emulate26(ARMul_State *state)
         break;
       }
 
-      instr = pipe[0].instr;
-      if(ARMul_CCCheck(instr,(r15 & CCBITS)))
-      {
-        Prof_BeginFunc(pipe[0].func);
-        (pipe[0].func)(state, instr);
-        Prof_EndFunc(pipe[0].func);
-      }
+      execute_instruction(state,&pipe[0],r15);
 #endif
     } /* for loop */
 

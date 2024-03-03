@@ -282,7 +282,6 @@ size_t File_ReadRAM(ARMul_State *state, FILE *pFile,ARMword uAddress,size_t uCou
     if(FASTMAP_RESULT_DIRECT(res))
     {
       size_t temp, temp2;
-      ARMEmuFunc *func;
       uint8_t *phy = (uint8_t *) FastMap_Log2Phy(entry,uAddress);
 
       /* Scan ahead to work out the size of this memory block */
@@ -310,12 +309,7 @@ size_t File_ReadRAM(ARMul_State *state, FILE *pFile,ARMword uAddress,size_t uCou
 
       /* Clobber emu funcs for that region */
       temp2 = (temp+(uAddress&3)+3)&~UINT32_C(3);
-      func = FastMap_Phy2Func(state,(ARMword *)(void *) (phy-(uAddress&3)));
-      while(temp2>0)
-      {
-        *func++ = FASTMAP_CLOBBEREDFUNC;
-        temp2-=4;
-      }
+      FastMap_PhyClobberFuncRange(state,(ARMword *)(void *) (phy-(uAddress&3)),temp2);
 
       /* Update state */
       ret += temp;
