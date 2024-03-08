@@ -31,6 +31,8 @@ HBITMAP cbmp = NULL;
 BITMAPINFO pbmi;
 BITMAPINFO cbmi;
 
+static CRITICAL_SECTION bmpCriticalSection;
+
 static const TCHAR szWindowClass[32] = TEXT("GenericClass");
 
 
@@ -57,6 +59,9 @@ static DWORD tid;
 
 void *dibbmp;
 void *curbmp;
+
+size_t dibstride;
+size_t curstride;
 
 static DWORD WINAPI threadWindow(LPVOID param)
 {
@@ -248,31 +253,37 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
       hdc = BeginPaint(hWnd, &ps);
 
-      if(rMouseHeight > 0) {
-        int rWidth = xSize - (rMouseX + rMouseWidth);
-        int bHeight = ySize - (rMouseY + rMouseHeight);
+      EnterCriticalSection(&bmpCriticalSection);
 
-        hsrc = CreateCompatibleDC(hdc);
-        SelectObject(hsrc, hbmp);
+      if (hbmp) {
+        if(rMouseHeight > 0) {
+          int rWidth = xSize - (rMouseX + rMouseWidth);
+          int bHeight = ySize - (rMouseY + rMouseHeight);
 
-        hsrc1=CreateCompatibleDC(hdc);
-        SelectObject(hsrc1, cbmp);
+          hsrc = CreateCompatibleDC(hdc);
+          SelectObject(hsrc, hbmp);
 
-        /* The mouse bitmap is already combined with the image underneath, so blit the screen in multiple parts to avoid flickering.  */
-        BitBlt(hdc, 0, 0, xSize, rMouseY, hsrc, 0, 0, SRCCOPY); /* top */
-        BitBlt(hdc, 0, rMouseY, rMouseX, rMouseHeight, hsrc, 0, rMouseY, SRCCOPY); /* left */
-        BitBlt(hdc, rMouseX, rMouseY, rMouseWidth, rMouseHeight, hsrc1, 0, 0, SRCCOPY);
-        BitBlt(hdc, rMouseX + rMouseWidth, rMouseY, rWidth, rMouseHeight, hsrc, rMouseX + rMouseWidth, rMouseY, SRCCOPY); /* right */
-        BitBlt(hdc, 0, rMouseY + rMouseHeight, xSize, bHeight, hsrc, 0, rMouseY + rMouseHeight, SRCCOPY); /* bottom */
+          hsrc1=CreateCompatibleDC(hdc);
+          SelectObject(hsrc1, cbmp);
 
-        DeleteDC(hsrc1);
-        DeleteDC(hsrc);
-      } else {
-        hsrc = CreateCompatibleDC(hdc);
-        SelectObject(hsrc, hbmp);
-        BitBlt(hdc, 0, 0, xSize, ySize, hsrc, 0, 0, SRCCOPY);
-        DeleteDC(hsrc);
+          /* The mouse bitmap is already combined with the image underneath, so blit the screen in multiple parts to avoid flickering.  */
+          BitBlt(hdc, 0, 0, xSize, rMouseY, hsrc, 0, 0, SRCCOPY); /* top */
+          BitBlt(hdc, 0, rMouseY, rMouseX, rMouseHeight, hsrc, 0, rMouseY, SRCCOPY); /* left */
+          BitBlt(hdc, rMouseX, rMouseY, rMouseWidth, rMouseHeight, hsrc1, 0, 0, SRCCOPY);
+          BitBlt(hdc, rMouseX + rMouseWidth, rMouseY, rWidth, rMouseHeight, hsrc, rMouseX + rMouseWidth, rMouseY, SRCCOPY); /* right */
+          BitBlt(hdc, 0, rMouseY + rMouseHeight, xSize, bHeight, hsrc, 0, rMouseY + rMouseHeight, SRCCOPY); /* bottom */
+
+          DeleteDC(hsrc1);
+          DeleteDC(hsrc);
+        } else {
+          hsrc = CreateCompatibleDC(hdc);
+          SelectObject(hsrc, hbmp);
+          BitBlt(hdc, 0, 0, xSize, ySize, hsrc, 0, 0, SRCCOPY);
+          DeleteDC(hsrc);
+        }
       }
+
+      LeaveCriticalSection(&bmpCriticalSection);
 
       EndPaint(hWnd, &ps);
         }
@@ -426,52 +437,82 @@ BOOL CALLBACK AboutDlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam)
 /**
  * createWindow (IMPROVE rename, as it doesn't create a window)
  *
- * Called on program startup, create the bitmaps used to
- * store the main display and cursor images.
+ * Called on program startup.
  *
  * @param x Width of video mode
  * @param y Height of video mode
  * @returns ALWAYS 0 (IMPROVE)
  */
-int createWindow(int x, int y, int bpp)
+int createWindow(int x, int y)
 {
    xSize = x;
    ySize = y;
 
-   memset(&pbmi, 0, sizeof(BITMAPINFOHEADER));
-   memset(&cbmi, 0, sizeof(BITMAPINFOHEADER));
-
-   /* Setup display bitmap */
-   pbmi.bmiHeader.biSize          = sizeof(BITMAPINFOHEADER);
-   pbmi.bmiHeader.biWidth         = x;
-   pbmi.bmiHeader.biHeight        = y;
-   pbmi.bmiHeader.biCompression   = BI_RGB; //0;
-   pbmi.bmiHeader.biPlanes        = 1;
-   pbmi.bmiHeader.biSizeImage     = 0; //wic->getWidth()*wic->getHeight()*scale;
-   pbmi.bmiHeader.biBitCount      = bpp;
-   pbmi.bmiHeader.biXPelsPerMeter = 0;
-   pbmi.bmiHeader.biYPelsPerMeter = 0;
-   pbmi.bmiHeader.biClrUsed       = 0;
-   pbmi.bmiHeader.biClrImportant  = 0;
-   hbmp = CreateDIBSection(NULL, &pbmi, DIB_RGB_COLORS, &dibbmp, NULL, 0);
-
-   /* Setup Cursor bitmap */
-   cbmi.bmiHeader.biSize          = sizeof(BITMAPINFOHEADER);
-   cbmi.bmiHeader.biWidth         = 32*2;
-   cbmi.bmiHeader.biHeight        = y;
-   cbmi.bmiHeader.biCompression   = BI_RGB; //0;
-   cbmi.bmiHeader.biPlanes        = 1;
-   cbmi.bmiHeader.biSizeImage     = 0; //wic->getWidth()*wic->getHeight()*scale;
-   cbmi.bmiHeader.biBitCount      = bpp;
-   cbmi.bmiHeader.biXPelsPerMeter = 0;
-   cbmi.bmiHeader.biYPelsPerMeter = 0;
-   cbmi.bmiHeader.biClrUsed       = 0;
-   cbmi.bmiHeader.biClrImportant  = 0;
-   cbmp = CreateDIBSection(NULL, &cbmi, DIB_RGB_COLORS, &curbmp, NULL, 0);
+   InitializeCriticalSection(&bmpCriticalSection);
 
    CreateThread(NULL, 16384, threadWindow, NULL, 0, &tid);
 
    return 0;
+}
+
+/**
+ * createBitmaps
+ *
+ * Called when vidc recieves new display start and end parameters
+ *
+ * @param hWidth  New width in pixels
+ * @param hHeight New height in pixels
+ * @param hBpp    New bits per pixel
+ * @param hXScale New X scale factor
+ * @returns ALWAYS 0 (IMPROVE)
+ */
+int createBitmaps(int hWidth, int hHeight, int hBpp, int hXScale)
+{
+  size_t dibpitch, curpitch;
+
+  EnterCriticalSection(&bmpCriticalSection);
+
+  if (hbmp) DeleteObject(hbmp);
+  if (cbmp) DeleteObject(cbmp);
+
+  memset(&pbmi, 0, sizeof(BITMAPINFOHEADER));
+  memset(&cbmi, 0, sizeof(BITMAPINFOHEADER));
+
+  /* Setup display bitmap */
+  pbmi.bmiHeader.biSize          = sizeof(BITMAPINFOHEADER);
+  pbmi.bmiHeader.biWidth         = hWidth;
+  pbmi.bmiHeader.biHeight        = -hHeight;
+  pbmi.bmiHeader.biCompression   = BI_RGB; //0;
+  pbmi.bmiHeader.biPlanes        = 1;
+  pbmi.bmiHeader.biSizeImage     = 0; //wic->getWidth()*wic->getHeight()*scale;
+  pbmi.bmiHeader.biBitCount      = hBpp;
+  pbmi.bmiHeader.biXPelsPerMeter = 0;
+  pbmi.bmiHeader.biYPelsPerMeter = 0;
+  pbmi.bmiHeader.biClrUsed       = 0;
+  pbmi.bmiHeader.biClrImportant  = 0;
+  hbmp = CreateDIBSection(NULL, &pbmi, DIB_RGB_COLORS, &dibbmp, NULL, 0);
+  dibpitch = (pbmi.bmiHeader.biWidth + 3) & ~3;
+  dibstride = (dibpitch * pbmi.bmiHeader.biBitCount) >> 3;
+
+  /* Setup Cursor bitmap */
+  cbmi.bmiHeader.biSize          = sizeof(BITMAPINFOHEADER);
+  cbmi.bmiHeader.biWidth         = 32*hXScale;
+  cbmi.bmiHeader.biHeight        = -hHeight;
+  cbmi.bmiHeader.biCompression   = BI_RGB; //0;
+  cbmi.bmiHeader.biPlanes        = 1;
+  cbmi.bmiHeader.biSizeImage     = 0; //wic->getWidth()*wic->getHeight()*scale;
+  cbmi.bmiHeader.biBitCount      = hBpp;
+  cbmi.bmiHeader.biXPelsPerMeter = 0;
+  cbmi.bmiHeader.biYPelsPerMeter = 0;
+  cbmi.bmiHeader.biClrUsed       = 0;
+  cbmi.bmiHeader.biClrImportant  = 0;
+  cbmp = CreateDIBSection(NULL, &cbmi, DIB_RGB_COLORS, &curbmp, NULL, 0);
+  curpitch = (cbmi.bmiHeader.biWidth + 3) & ~3;
+  curstride = (curpitch * cbmi.bmiHeader.biBitCount) >> 3;
+
+  LeaveCriticalSection(&bmpCriticalSection);
+
+  return 0;
 }
 
 /**

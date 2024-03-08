@@ -20,6 +20,9 @@
 extern void *dibbmp;
 extern void *curbmp;
 
+extern size_t dibstride;
+extern size_t curstride;
+
 
 
 int rMouseX = 0;
@@ -89,7 +92,7 @@ static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,in
 
 static inline SDD_Row SDD_Name(Host_BeginRow)(ARMul_State *state,int row,int offset)
 {
-  return (SDD_Row)dibbmp + ((MonitorHeight-(row+1))*MonitorWidth+offset);
+  return ((SDD_Row) ((uint8_t *)dibbmp + dibstride*row))+offset;
 }
 
 static inline void SDD_Name(Host_EndRow)(ARMul_State *state,SDD_Row *row) { /* nothing */ };
@@ -137,48 +140,14 @@ static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,in
     HD.Width  *= 2;
     HD.Height *= 2;
   }
+  createBitmaps(HD.Width,HD.Height,SDD_BitsPerPixel,HD.XScale);
   resizeWindow(HD.Width,HD.Height);
   /* Screen is expected to be cleared */
-  memset(dibbmp,0,sizeof(SDD_HostColour)*MonitorWidth*MonitorHeight);
+  memset(dibbmp,0,dibstride*HD.Height);
 }
 
-/*-----------------------------------------------------------------------------*/
-
-void MouseMoved(ARMul_State *state, int nMouseX, int nMouseY) {
-  int xdiff, ydiff;
-
-  xdiff = -(oldMouseX - nMouseX);
-  ydiff = oldMouseY - nMouseY;
-
-#ifdef DEBUG_MOUSEMOVEMENT
-  fprintf(stderr,"MouseMoved: xdiff = %d  ydiff = %d\n",
-          xdiff, ydiff);
-#endif
-
-  if (xdiff > 63)
-    xdiff=63;
-  if (xdiff < -63)
-    xdiff=-63;
-
-  if (ydiff>63)
-    ydiff=63;
-  if (ydiff<-63)
-    ydiff=-63;
-
-  oldMouseX = nMouseX;
-  oldMouseY = nMouseY;
-
-  KBD.MouseXCount = xdiff & 127;
-  KBD.MouseYCount = ydiff & 127;
-
-#ifdef DEBUG_MOUSEMOVEMENT
-  fprintf(stderr,"MouseMoved: generated counts %d,%d xdiff=%d ydifff=%d\n",KBD.MouseXCount,KBD.MouseYCount,xdiff,ydiff);
-#endif
-}; /* MouseMoved */
-
-/*-----------------------------------------------------------------------------*/
-/* Refresh the mouse's image                                                    */
-static void RefreshMouse(ARMul_State *state) {
+/* Refresh the mouse's image */
+static void SDD_Name(RefreshMouse)(ARMul_State *state) {
   int x,y,xs,offset, pix, repeat;
   int memptr;
   int HorizPos;
@@ -211,6 +180,7 @@ static void RefreshMouse(ARMul_State *state) {
   offset=0;
   memptr=MEMC.Cinit*16;
   repeat=0;
+  host_dibbmp = (SDD_HostColour *) ((uint8_t *)host_dibbmp + (rMouseY*dibstride));
   for(y=0;y<Height;y++) {
     if (offset<512*1024) {
       ARMword tmp[2];
@@ -222,10 +192,10 @@ static void RefreshMouse(ARMul_State *state) {
         pix = ((tmp[x/16]>>((x & 15)*2)) & 3);
 
         for(xs=0;xs<HD.XScale;xs++) {
-          diboffs = rMouseX + (x*HD.XScale) + xs + (MonitorHeight - rMouseY - y - 1) * MonitorWidth;
+          diboffs = rMouseX + (x*HD.XScale) + xs;
 
-          host_curbmp[(x*HD.XScale) + xs + (MonitorHeight - y - 1) * 32*2] =
-                  (pix || diboffs < 0) ?
+          host_curbmp[(x*HD.XScale) + xs] =
+                  (pix || diboffs < 0 || diboffs >= HD.Width) ?
                   cursorPal[pix] : host_dibbmp[diboffs];
         } /* xs */
       } /* x */
@@ -235,8 +205,51 @@ static void RefreshMouse(ARMul_State *state) {
       offset+=8;
       repeat = 0;
     }
+    host_dibbmp = (SDD_HostColour *) ((uint8_t *)host_dibbmp + dibstride);
+    host_curbmp = (SDD_HostColour *) ((uint8_t *)host_curbmp + curstride);
   }; /* y */
 }; /* RefreshMouse */
+
+void
+SDD_Name(Host_PollDisplay)(ARMul_State *state)
+{
+  SDD_Name(RefreshMouse)(state);
+  updateDisplay();
+}
+
+
+/*-----------------------------------------------------------------------------*/
+void MouseMoved(ARMul_State *state, int nMouseX, int nMouseY) {
+  int xdiff, ydiff;
+
+  xdiff = -(oldMouseX - nMouseX);
+  ydiff = oldMouseY - nMouseY;
+
+#ifdef DEBUG_MOUSEMOVEMENT
+  fprintf(stderr,"MouseMoved: xdiff = %d  ydiff = %d\n",
+          xdiff, ydiff);
+#endif
+
+  if (xdiff > 63)
+    xdiff=63;
+  if (xdiff < -63)
+    xdiff=-63;
+
+  if (ydiff>63)
+    ydiff=63;
+  if (ydiff<-63)
+    ydiff=-63;
+
+  oldMouseX = nMouseX;
+  oldMouseY = nMouseY;
+
+  KBD.MouseXCount = xdiff & 127;
+  KBD.MouseYCount = ydiff & 127;
+
+#ifdef DEBUG_MOUSEMOVEMENT
+  fprintf(stderr,"MouseMoved: generated counts %d,%d xdiff=%d ydifff=%d\n",KBD.MouseXCount,KBD.MouseYCount,xdiff,ydiff);
+#endif
+}; /* MouseMoved */
 
 
 /*-----------------------------------------------------------------------------*/
@@ -258,16 +271,8 @@ int
 DisplayDev_Init(ARMul_State *state)
 {
   /* Setup display and cursor bitmaps */
-  createWindow(MonitorWidth, MonitorHeight, SDD_BitsPerPixel);
+  createWindow(MonitorWidth, MonitorHeight);
   return DisplayDev_Set(state,&SDD_DisplayDev);
-}
-
-/*-----------------------------------------------------------------------------*/
-void
-SDD_Name(Host_PollDisplay)(ARMul_State *state)
-{
-  RefreshMouse(state);
-  updateDisplay();
 }
 
 /*-----------------------------------------------------------------------------*/

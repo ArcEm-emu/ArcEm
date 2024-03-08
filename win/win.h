@@ -5,7 +5,8 @@ extern int rMouseY;
 extern int rMouseWidth;
 extern int rMouseHeight;
 
-extern int createWindow(int w, int h, int bpp);
+extern int createWindow(int w, int h);
+extern int createBitmaps(int hWidth, int hHeight, int hBpp, int hXScale);
 extern int updateDisplay(void);
 extern int resizeWindow(int hWidth, int hHeight);
 
