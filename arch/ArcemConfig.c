@@ -102,7 +102,9 @@ void ArcemConfig_SetupDefaults(ArcemConfig *pConfig)
   memset(pConfig->aST506Paths, 0, sizeof(char *) * 4);
   memset(pConfig->aST506DiskShapes, 0, sizeof(struct HDCshape) * 4);
 
-
+#if defined(SYSTEM_win)
+  pConfig->eDisplayDriver = DisplayDriver_Standard;
+#endif
 #if defined(SYSTEM_riscos_single)
   pConfig->eDisplayDriver = DisplayDriver_Palettised;
   pConfig->bRedBlueSwap = false;
@@ -248,8 +250,10 @@ void ArcemConfig_ParseCommandLine(ArcemConfig *pConfig, int argc, char *argv[])
     "     '8M', '12M' or '16M'\n"
     "  --processor <value> - Set the emulated CPU\n"
     "     Where value is one of 'ARM2', 'ARM250', 'ARM3'\n"
-#if defined(SYSTEM_riscos_single)
+#if defined(SYSTEM_riscos_single) || defined(SYSTEM_win)
     "  --display <mode> - Select display driver, 'pal' or 'std'\n"
+#endif /* SYSTEM_riscos_single || SYSTEM_win */
+#if defined(SYSTEM_riscos_single)
     "  --rbswap - Swap red & blue in 16bpp mode (e.g. for Iyonix with GeForce FX)\n"
     "  --noaspect - Disable aspect ratio correction\n"
     "  --noupscale - Disable upscaling\n"
@@ -367,7 +371,7 @@ void ArcemConfig_ParseCommandLine(ArcemConfig *pConfig, int argc, char *argv[])
         ControlPane_Error(EXIT_FAILURE,"No argument following the --processor option\n");
       }
     }
-#if defined(SYSTEM_riscos_single)
+#if defined(SYSTEM_riscos_single) || defined(SYSTEM_win)
     else if(0 == strcmp("--display", argv[iArgument])) {
       if(iArgument+1 < argc) { // Is there a following argument?
         if(0 == strcmp("pal", argv[iArgument + 1])) {
@@ -384,7 +388,10 @@ void ArcemConfig_ParseCommandLine(ArcemConfig *pConfig, int argc, char *argv[])
       } else {
         ControlPane_Error(EXIT_FAILURE,"No argument following the --display option\n");
       }
-    } else if(0 == strcmp("--rbswap",argv[iArgument])) {
+    }
+#endif /* SYSTEM_riscos_single || SYSTEM_win */
+#if defined(SYSTEM_riscos_single)
+    else if(0 == strcmp("--rbswap",argv[iArgument])) {
       pConfig->bRedBlueSwap = true;
       iArgument += 1;
     } else if(0 == strcmp("--noaspect",argv[iArgument])) {

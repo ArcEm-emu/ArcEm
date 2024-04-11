@@ -26,10 +26,12 @@
 
 HBITMAP hbmp = NULL;
 HBITMAP cbmp = NULL;
+HBITMAP mbmp = NULL;
 
 //BITMAPFILEHEADER fhdr;
-BITMAPINFO pbmi;
-BITMAPINFO cbmi;
+BITMAPINFO *pbmi;
+BITMAPINFO *cbmi;
+BITMAPINFO *mbmi;
 
 static CRITICAL_SECTION bmpCriticalSection;
 
@@ -59,9 +61,11 @@ static DWORD tid;
 
 void *dibbmp;
 void *curbmp;
+void *mskbmp;
 
 size_t dibstride;
 size_t curstride;
+size_t mskstride;
 
 static DWORD WINAPI threadWindow(LPVOID param)
 {
@@ -250,6 +254,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_PAINT: {
       HDC hsrc;
       HDC hsrc1;
+      HDC hsrc2;
+      HDC hsrc3;
+      HBITMAP ibmp;
 
       hdc = BeginPaint(hWnd, &ps);
 
@@ -262,14 +269,35 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
           hsrc = CreateCompatibleDC(hdc);
           SelectObject(hsrc, hbmp);
+          SetDIBColorTable(hsrc, 0, 256, pbmi->bmiColors);
 
           hsrc1=CreateCompatibleDC(hdc);
           SelectObject(hsrc1, cbmp);
+          SetDIBColorTable(hsrc1, 0, 4, cbmi->bmiColors);
 
-          /* The mouse bitmap is already combined with the image underneath, so blit the screen in multiple parts to avoid flickering.  */
+          /* Blit the screen in multiple parts to avoid flickering.  */
           BitBlt(hdc, 0, 0, xSize, rMouseY, hsrc, 0, 0, SRCCOPY); /* top */
           BitBlt(hdc, 0, rMouseY, rMouseX, rMouseHeight, hsrc, 0, rMouseY, SRCCOPY); /* left */
-          BitBlt(hdc, rMouseX, rMouseY, rMouseWidth, rMouseHeight, hsrc1, 0, 0, SRCCOPY);
+          if (mbmp) {
+            hsrc2 = CreateCompatibleDC(hdc);
+            ibmp = CreateCompatibleBitmap(hdc, rMouseWidth, rMouseHeight);
+            SelectObject(hsrc2, ibmp);
+
+            hsrc3 = CreateCompatibleDC(hdc);
+            SelectObject(hsrc3, mbmp);
+
+            BitBlt(hsrc2, 0, 0, rMouseWidth, rMouseHeight, hsrc, rMouseX, rMouseY, SRCCOPY);
+            BitBlt(hsrc2, 0, 0, rMouseWidth, rMouseHeight, hsrc3, 0, 0, SRCAND);
+            BitBlt(hsrc2, 0, 0, rMouseWidth, rMouseHeight, hsrc1, 0, 0, SRCPAINT);
+            BitBlt(hdc, rMouseX, rMouseY, rMouseWidth, rMouseHeight, hsrc2, 0, 0, SRCCOPY);
+
+            DeleteDC(hsrc3);
+            DeleteDC(hsrc2);
+            DeleteObject(ibmp);
+          } else {
+            /* The mouse bitmap is already combined with the image underneath.  */
+            BitBlt(hdc, rMouseX, rMouseY, rMouseWidth, rMouseHeight, hsrc1, 0, 0, SRCCOPY);
+          }
           BitBlt(hdc, rMouseX + rMouseWidth, rMouseY, rWidth, rMouseHeight, hsrc, rMouseX + rMouseWidth, rMouseY, SRCCOPY); /* right */
           BitBlt(hdc, 0, rMouseY + rMouseHeight, xSize, bHeight, hsrc, 0, rMouseY + rMouseHeight, SRCCOPY); /* bottom */
 
@@ -278,6 +306,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         } else {
           hsrc = CreateCompatibleDC(hdc);
           SelectObject(hsrc, hbmp);
+          SetDIBColorTable(hsrc, 0, 256, pbmi->bmiColors);
           BitBlt(hdc, 0, 0, xSize, ySize, hsrc, 0, 0, SRCCOPY);
           DeleteDC(hsrc);
         }
@@ -448,6 +477,9 @@ int createWindow(int x, int y)
    xSize = x;
    ySize = y;
 
+   pbmi = calloc(sizeof(BITMAPINFOHEADER) + (sizeof(RGBQUAD) * 256), 1);
+   cbmi = calloc(sizeof(BITMAPINFOHEADER) + (sizeof(RGBQUAD) * 256), 1);
+   mbmi = calloc(sizeof(BITMAPINFOHEADER) + (sizeof(RGBQUAD) * 256), 1);
    InitializeCriticalSection(&bmpCriticalSection);
 
    CreateThread(NULL, 16384, threadWindow, NULL, 0, &tid);
@@ -468,51 +500,90 @@ int createWindow(int x, int y)
  */
 int createBitmaps(int hWidth, int hHeight, int hBpp, int hXScale)
 {
-  size_t dibpitch, curpitch;
+  size_t dibpitch, curpitch, mskpitch;
 
   EnterCriticalSection(&bmpCriticalSection);
 
-  if (hbmp) DeleteObject(hbmp);
-  if (cbmp) DeleteObject(cbmp);
+  if (hbmp) DeleteObject(hbmp), hbmp = NULL;
+  if (cbmp) DeleteObject(cbmp), cbmp = NULL;
+  if (mbmp) DeleteObject(mbmp), mbmp = NULL;
 
-  memset(&pbmi, 0, sizeof(BITMAPINFOHEADER));
-  memset(&cbmi, 0, sizeof(BITMAPINFOHEADER));
+  memset(pbmi, 0, sizeof(BITMAPINFOHEADER));
+  memset(cbmi, 0, sizeof(BITMAPINFOHEADER));
 
   /* Setup display bitmap */
-  pbmi.bmiHeader.biSize          = sizeof(BITMAPINFOHEADER);
-  pbmi.bmiHeader.biWidth         = hWidth;
-  pbmi.bmiHeader.biHeight        = -hHeight;
-  pbmi.bmiHeader.biCompression   = BI_RGB; //0;
-  pbmi.bmiHeader.biPlanes        = 1;
-  pbmi.bmiHeader.biSizeImage     = 0; //wic->getWidth()*wic->getHeight()*scale;
-  pbmi.bmiHeader.biBitCount      = hBpp;
-  pbmi.bmiHeader.biXPelsPerMeter = 0;
-  pbmi.bmiHeader.biYPelsPerMeter = 0;
-  pbmi.bmiHeader.biClrUsed       = 0;
-  pbmi.bmiHeader.biClrImportant  = 0;
-  hbmp = CreateDIBSection(NULL, &pbmi, DIB_RGB_COLORS, &dibbmp, NULL, 0);
-  dibpitch = (pbmi.bmiHeader.biWidth + 3) & ~3;
-  dibstride = (dibpitch * pbmi.bmiHeader.biBitCount) >> 3;
+  pbmi->bmiHeader.biSize          = sizeof(BITMAPINFOHEADER);
+  pbmi->bmiHeader.biWidth         = hWidth;
+  pbmi->bmiHeader.biHeight        = -hHeight;
+  pbmi->bmiHeader.biCompression   = BI_RGB; //0;
+  pbmi->bmiHeader.biPlanes        = 1;
+  pbmi->bmiHeader.biSizeImage     = 0; //wic->getWidth()*wic->getHeight()*scale;
+  pbmi->bmiHeader.biBitCount      = hBpp;
+  pbmi->bmiHeader.biXPelsPerMeter = 0;
+  pbmi->bmiHeader.biYPelsPerMeter = 0;
+  pbmi->bmiHeader.biClrUsed       = 0;
+  pbmi->bmiHeader.biClrImportant  = 0;
+  hbmp = CreateDIBSection(NULL, pbmi, DIB_RGB_COLORS, &dibbmp, NULL, 0);
+  dibpitch = (pbmi->bmiHeader.biWidth + 3) & ~3;
+  dibstride = (dibpitch * pbmi->bmiHeader.biBitCount) >> 3;
 
   /* Setup Cursor bitmap */
-  cbmi.bmiHeader.biSize          = sizeof(BITMAPINFOHEADER);
-  cbmi.bmiHeader.biWidth         = 32*hXScale;
-  cbmi.bmiHeader.biHeight        = -hHeight;
-  cbmi.bmiHeader.biCompression   = BI_RGB; //0;
-  cbmi.bmiHeader.biPlanes        = 1;
-  cbmi.bmiHeader.biSizeImage     = 0; //wic->getWidth()*wic->getHeight()*scale;
-  cbmi.bmiHeader.biBitCount      = hBpp;
-  cbmi.bmiHeader.biXPelsPerMeter = 0;
-  cbmi.bmiHeader.biYPelsPerMeter = 0;
-  cbmi.bmiHeader.biClrUsed       = 0;
-  cbmi.bmiHeader.biClrImportant  = 0;
-  cbmp = CreateDIBSection(NULL, &cbmi, DIB_RGB_COLORS, &curbmp, NULL, 0);
-  curpitch = (cbmi.bmiHeader.biWidth + 3) & ~3;
-  curstride = (curpitch * cbmi.bmiHeader.biBitCount) >> 3;
+  cbmi->bmiHeader.biSize          = sizeof(BITMAPINFOHEADER);
+  cbmi->bmiHeader.biWidth         = 32*hXScale;
+  cbmi->bmiHeader.biHeight        = -hHeight;
+  cbmi->bmiHeader.biCompression   = BI_RGB; //0;
+  cbmi->bmiHeader.biPlanes        = 1;
+  cbmi->bmiHeader.biSizeImage     = 0; //wic->getWidth()*wic->getHeight()*scale;
+  cbmi->bmiHeader.biBitCount      = hBpp;
+  cbmi->bmiHeader.biXPelsPerMeter = 0;
+  cbmi->bmiHeader.biYPelsPerMeter = 0;
+  cbmi->bmiHeader.biClrUsed       = 0;
+  cbmi->bmiHeader.biClrImportant  = 0;
+  cbmp = CreateDIBSection(NULL, cbmi, DIB_RGB_COLORS, &curbmp, NULL, 0);
+  curpitch = (cbmi->bmiHeader.biWidth + 3) & ~3;
+  curstride = (curpitch * cbmi->bmiHeader.biBitCount) >> 3;
+
+  if (hBpp <= 8) {
+    /* Setup Cursor mask */
+    mbmi->bmiHeader.biSize          = sizeof(BITMAPINFOHEADER);
+    mbmi->bmiHeader.biWidth         = 32*hXScale;
+    mbmi->bmiHeader.biHeight        = -hHeight;
+    mbmi->bmiHeader.biCompression   = BI_RGB; //0;
+    mbmi->bmiHeader.biPlanes        = 1;
+    mbmi->bmiHeader.biSizeImage     = 0; //wic->getWidth()*wic->getHeight()*scale;
+    mbmi->bmiHeader.biBitCount      = 1;
+    mbmi->bmiHeader.biXPelsPerMeter = 0;
+    mbmi->bmiHeader.biYPelsPerMeter = 0;
+    mbmi->bmiHeader.biClrUsed       = 0;
+    mbmi->bmiHeader.biClrImportant  = 0;
+    mbmi->bmiColors[0].rgbBlue  = 0;
+    mbmi->bmiColors[0].rgbGreen = 0;
+    mbmi->bmiColors[0].rgbRed   = 0;
+    mbmi->bmiColors[1].rgbBlue  = 255;
+    mbmi->bmiColors[1].rgbGreen = 255;
+    mbmi->bmiColors[1].rgbRed   = 255;
+    mbmp = CreateDIBSection(NULL, mbmi, DIB_RGB_COLORS, &mskbmp, NULL, 0);
+    mskpitch = (mbmi->bmiHeader.biWidth + 3) & ~3;
+    mskstride = (mskpitch * mbmi->bmiHeader.biBitCount) >> 3;
+  }
 
   LeaveCriticalSection(&bmpCriticalSection);
 
   return 0;
+}
+
+void setPaletteColour(int i, uint8_t r, uint8_t g, uint8_t b)
+{
+  pbmi->bmiColors[i].rgbBlue  = b;
+  pbmi->bmiColors[i].rgbGreen = g;
+  pbmi->bmiColors[i].rgbRed   = r;
+}
+
+void setCursorPaletteColour(int i, uint8_t r, uint8_t g, uint8_t b)
+{
+  cbmi->bmiColors[i].rgbBlue  = b;
+  cbmi->bmiColors[i].rgbGreen = g;
+  cbmi->bmiColors[i].rgbRed   = r;
 }
 
 /**
