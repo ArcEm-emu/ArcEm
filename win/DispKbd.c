@@ -4,6 +4,7 @@
 
 #include "../armdefs.h"
 #include "armarc.h"
+#include "../arch/ArcemConfig.h"
 #include "../arch/dbugsys.h"
 #include "../arch/keyboard.h"
 #include "displaydev.h"
@@ -19,9 +20,11 @@
 
 extern void *dibbmp;
 extern void *curbmp;
+extern void *mskbmp;
 
 extern size_t dibstride;
 extern size_t curstride;
+extern size_t mskstride;
 
 
 
@@ -218,6 +221,232 @@ SDD_Name(Host_PollDisplay)(ARMul_State *state)
 }
 
 
+/* ------------------------------------------------------------------ */
+
+/* Palettised display device */
+
+#define PDD_Name(x) pdd_##x
+
+typedef struct {
+  ARMword *data;
+  int offset;
+} PDD_Row;
+
+static void PDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,int depth,int hz);
+
+static void PDD_Name(Host_SetPaletteEntry)(ARMul_State *state,int i,unsigned int phys)
+{
+  uint8_t r, g, b;
+
+  /* Convert to 8-bit component values */
+  r = (phys & 0x00f);
+  g = (phys & 0x0f0);
+  b = (phys & 0xf00) >> 8;
+  /* May want to tweak this a bit at some point? */
+  r |= r<<4;
+  g |= g>>4;
+  b |= b<<4;
+
+  setPaletteColour(i, r, g, b);
+}
+
+static void PDD_Name(Host_SetCursorPaletteEntry)(ARMul_State *state,int i,unsigned int phys)
+{
+  uint8_t r, g, b;
+
+  /* Convert to 8-bit component values */
+  r = (phys & 0x00f);
+  g = (phys & 0x0f0);
+  b = (phys & 0xf00) >> 8;
+  /* May want to tweak this a bit at some point? */
+  r |= r<<4;
+  g |= g>>4;
+  b |= b<<4;
+
+  setCursorPaletteColour(i, r, g, b);
+}
+
+static void PDD_Name(Host_SetBorderColour)(ARMul_State *state,unsigned int phys)
+{
+  /* TODO */
+}
+
+static inline PDD_Row PDD_Name(Host_BeginRow)(ARMul_State *state,int row,int offset,int *alignment)
+{
+  PDD_Row drow;
+  uintptr_t base = ((uintptr_t)dibbmp + dibstride*row) + offset;
+  drow.offset = ((base<<3) & 0x18); /* Just in case bytes per line isn't aligned */
+  drow.data = (ARMword *) (base & ~0x3);
+  *alignment = drow.offset;
+  return drow;
+}
+
+static inline void PDD_Name(Host_EndRow)(ARMul_State *state,PDD_Row *row) { /* nothing */ };
+
+static inline ARMword *PDD_Name(Host_BeginUpdate)(ARMul_State *state,PDD_Row *row,unsigned int count,int *outoffset)
+{
+  *outoffset = row->offset;
+  return row->data;
+}
+
+static inline void PDD_Name(Host_EndUpdate)(ARMul_State *state,PDD_Row *row) { /* nothing */ };
+
+static inline void PDD_Name(Host_AdvanceRow)(ARMul_State *state,PDD_Row *row,unsigned int count)
+{
+  row->offset += count;
+  row->data += count>>5;
+  row->offset &= 0x1f;
+}
+
+static void
+PDD_Name(Host_PollDisplay)(ARMul_State *state);
+
+static void PDD_Name(Host_DrawBorderRect)(ARMul_State *state,int x,int y,int width,int height)
+{
+  /* TODO */
+}
+
+#include "../arch/paldisplaydev.c"
+
+void PDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,int depth,int hz)
+{
+  if((width > MonitorWidth) || (height > MonitorHeight))
+  {
+    ControlPane_Error(EXIT_FAILURE,"Mode %dx%d too big\n",width,height);
+  }
+  HD.Width = width;
+  HD.Height = height;
+  HD.XScale = 1;
+  HD.YScale = 1;
+  /* Try and detect rectangular pixel modes */
+  if((width >= height*2) && (height*2 <= MonitorHeight))
+  {
+    HD.YScale = 2;
+    HD.Height *= 2;
+  }
+  else if((height >= width) && (width*2 <= MonitorWidth))
+  {
+    HD.XScale = 2;
+    HD.Width *= 2;
+  }
+  /* Try and detect small screen resolutions */
+  else if ((width < MinimumWidth) && (width * 2 <= MonitorWidth) && (height * 2 <= MonitorHeight))
+  {
+    HD.XScale  = 2;
+    HD.YScale  = 2;
+    HD.Width  *= 2;
+    HD.Height *= 2;
+  }
+  createBitmaps(HD.Width,HD.Height,8,HD.XScale);
+  resizeWindow(HD.Width,HD.Height);
+  /* Screen is expected to be cleared */
+  memset(dibbmp,0,dibstride*HD.Height);
+
+  /* Calculate expansion params */
+  if((depth == 3) && (HD.XScale == 1))
+  {
+    /* No expansion */
+    HD.ExpandTable = NULL;
+  }
+  else
+  {
+    /* Expansion! */
+    static ARMword expandtable[256];
+    unsigned int mul = 1;
+    int i;
+    HD.ExpandFactor = 0;
+    while((1<<HD.ExpandFactor) < HD.XScale)
+      HD.ExpandFactor++;
+    HD.ExpandFactor += (3-depth);
+    HD.ExpandTable = expandtable;
+    for(i=0;i<HD.XScale;i++)
+    {
+      mul |= 1<<(i*8);
+    }
+    GenExpandTable(HD.ExpandTable,1<<depth,HD.ExpandFactor,mul);
+  }
+}
+
+/* Refresh the mouse's image */
+static void PDD_Name(RefreshMouse)(ARMul_State *state) {
+  int x,y,xs,offset, pix, repeat;
+  int memptr;
+  int HorizPos;
+  int Width = 32*HD.XScale;
+  int Height = ((int)VIDC.Vert_CursorEnd - (int)VIDC.Vert_CursorStart)*HD.YScale;
+  int VertPos;
+  uint8_t *host_dibbmp = dibbmp;
+  uint8_t *host_curbmp = curbmp;
+  uint8_t *host_mskbmp = mskbmp;
+
+  DisplayDev_GetCursorPos(state,&HorizPos,&VertPos);
+  HorizPos = HorizPos*HD.XScale+HD.XOffset;
+  VertPos = VertPos*HD.YScale+HD.YOffset;
+
+  if (Height < 0) Height = 0;
+  if (VertPos < 0) VertPos = 0;
+
+  rMouseX = HorizPos;
+  rMouseY = VertPos;
+  rMouseWidth = Width;
+  rMouseHeight = Height;
+
+  /* Cursor palette */
+  for(x=0; x<3; x++) {
+    PDD_Name(Host_SetCursorPaletteEntry)(state,x+1,VIDC.CursorPalette[x]);
+  }
+
+  offset=0;
+  memptr=MEMC.Cinit*16;
+  repeat=0;
+  host_dibbmp += rMouseY*dibstride;
+  for(y=0;y<Height;y++) {
+    if (offset<512*1024) {
+      ARMword tmp[2];
+
+      tmp[0]=MEMC.PhysRam[memptr/4];
+      tmp[1]=MEMC.PhysRam[memptr/4+1];
+
+      for(xs=0;xs<HD.XScale*4;xs++) {
+        host_mskbmp[xs] = 0;
+      }
+
+      for(x=0;x<32;x++) {
+        pix = ((tmp[x/16]>>((x & 15)*2)) & 3);
+
+        for(xs=0;xs<HD.XScale;xs++) {
+		  int idx = (x*HD.XScale) + xs;
+          host_curbmp[idx] = pix;
+          if (pix == 0) {
+            host_mskbmp[idx/8] |= 0x80 >> (idx%8);
+          }
+        } /* xs */
+      } /* x */
+    } else return;
+    if(++repeat == HD.YScale) {
+      memptr+=8;
+      offset+=8;
+      repeat = 0;
+    }
+    host_dibbmp += dibstride;
+    host_curbmp += curstride;
+    host_mskbmp += mskstride;
+  }; /* y */
+}; /* RefreshMouse */
+
+static void
+PDD_Name(Host_PollDisplay)(ARMul_State *state)
+{
+  PDD_Name(RefreshMouse)(state);
+  updateDisplay();
+}
+
+#undef DISPLAYINFO
+#undef HOSTDISPLAY
+#undef DC
+#undef HD
+
+
 /*-----------------------------------------------------------------------------*/
 void MouseMoved(ARMul_State *state, int nMouseX, int nMouseY) {
   int xdiff, ydiff;
@@ -272,7 +501,10 @@ DisplayDev_Init(ARMul_State *state)
 {
   /* Setup display and cursor bitmaps */
   createWindow(MonitorWidth, MonitorHeight);
-  return DisplayDev_Set(state,&SDD_DisplayDev);
+  if (CONFIG.eDisplayDriver == DisplayDriver_Palettised)
+    return DisplayDev_Set(state,&PDD_DisplayDev);
+  else
+    return DisplayDev_Set(state,&SDD_DisplayDev);
 }
 
 /*-----------------------------------------------------------------------------*/

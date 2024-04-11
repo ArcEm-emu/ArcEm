@@ -88,8 +88,10 @@ typedef struct ArcemConfig_s {
   struct HDCshape aST506DiskShapes[4];
 
   /* Platform-specific bits */
-#if defined(SYSTEM_riscos_single)
+#if defined(SYSTEM_riscos_single) || defined(SYSTEM_win)
   ArcemConfig_DisplayDriver eDisplayDriver;
+#endif
+#if defined(SYSTEM_riscos_single)
   bool bRedBlueSwap; /* Red/blue swap 16bpp output */
   bool bAspectRatioCorrection; /* Apply H/V scaling for aspect ratio correction */
   bool bUpscale; /* Allow upscaling to fill screen */
