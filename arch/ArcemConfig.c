@@ -129,10 +129,14 @@ static int ArcemConfig_Handler(void* user, const char* section,
             arcemconfig_StringReplace(&pConfig->sRomImageName, value);
         } else if (0 == strcmp(name, "hexcmos")) {
             arcemconfig_StringReplace(&pConfig->sCMOSFileName, value);
+#if defined(EXTNROM_SUPPORT)
         } else if (0 == strcmp(name, "extnromdir")) {
             arcemconfig_StringReplace(&pConfig->sEXTNDirectory, value);
+#endif
+#if defined(HOSTFS_SUPPORT)
         } else if (0 == strcmp(name, "hostfsdir")) {
             arcemconfig_StringReplace(&pConfig->sHostFSDirectory, value);
+#endif
         } else if (0 == strcmp(name, "memory")) {
             if (arcemconfig_StringToEnum(&uValue, value, memsize_labels)) {
                 pConfig->eMemSize = uValue;
