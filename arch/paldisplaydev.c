@@ -238,12 +238,12 @@ static inline int PDD_Name(RowFunc1XSameBitAligned)(ARMul_State *state,PDD_Row d
 
     if((flags & ROWFUNC_FORCE) || (HD.UpdateFlags[FlagsOffset] != MEMC.UpdateFlags[FlagsOffset]))
     {
-      flags |= ROWFUNC_UPDATED;
       /* Process the pixels in this region, stopping at end of row/update block/Vend */
       int outoffset;
       ARMword *out = PDD_Name(Host_BeginUpdate)(state,&drow,Available,&outoffset);
       BitCopy(out,outoffset,RAM+(Vptr>>5),Vptr&0x1f,Available);
       PDD_Name(Host_EndUpdate)(state,&drow);
+      flags |= ROWFUNC_UPDATED;
     }
     PDD_Name(Host_AdvanceRow)(state,&drow,Available);
     Vptr += Available;
@@ -279,12 +279,12 @@ static inline int PDD_Name(RowFunc1XSameByteAligned)(ARMul_State *state,PDD_Row 
 
     if((flags & ROWFUNC_FORCE) || (HD.UpdateFlags[FlagsOffset] != MEMC.UpdateFlags[FlagsOffset]))
     {
-      flags |= ROWFUNC_UPDATED;
       /* Process the pixels in this region, stopping at end of row/update block/Vend */
       int outoffset;
       ARMword *out = PDD_Name(Host_BeginUpdate)(state,&drow,Available<<3,&outoffset);
       ByteCopy(((uint8_t *)out)+(outoffset>>3),RAM+Vptr,Available);
       PDD_Name(Host_EndUpdate)(state,&drow);
+      flags |= ROWFUNC_UPDATED;
     }
     PDD_Name(Host_AdvanceRow)(state,&drow,Available<<3);
     Vptr += Available;
@@ -328,12 +328,12 @@ static inline int PDD_Name(RowFuncExpandTable)(ARMul_State *state,PDD_Row drow,i
 
     if((flags & ROWFUNC_FORCE) || (HD.UpdateFlags[FlagsOffset] != MEMC.UpdateFlags[FlagsOffset]))
     {
-      flags |= ROWFUNC_UPDATED;
       /* Process the pixels in this region, stopping at end of row/update block/Vend */
       int outoffset;
       ARMword *out = PDD_Name(Host_BeginUpdate)(state,&drow,Available<<HD.ExpandFactor,&outoffset);
       BitCopyExpand(out,outoffset,RAM+(Vptr>>5),Vptr&0x1f,Available,HD.ExpandTable,1<<DC.LastHostDepth,HD.ExpandFactor);
       PDD_Name(Host_EndUpdate)(state,&drow);
+      flags |= ROWFUNC_UPDATED;
     }
     PDD_Name(Host_AdvanceRow)(state,&drow,Available<<HD.ExpandFactor);
     Vptr += Available;
@@ -486,17 +486,22 @@ static void PDD_Name(EventFunc)(ARMul_State *state,CycleCount nowtime)
     3, /* 2/3      ->  16.0MHz     16.6MHz      24.0MHz */
     2, /* 1/1      ->  24.0MHz     25.0MHz      36.0MHz */
   };
+  uint32_t NewCR, ClockIn, FramePeriod;
+  CycleCount framelength;
+  uint8_t ClockDivider;
+  bool newDMAEn, DMAToggle;
+  int Depth, Width, Height, BPP;
 
   /* Trigger VSync interrupt */
   DisplayDev_VSync(state);
 
-  const uint32_t NewCR = VIDC.ControlReg;
-  const uint32_t ClockIn = 2*DisplayDev_GetVIDCClockIn();
-  const uint8_t ClockDivider = ClockDividers[NewCR&3]; 
+  NewCR = VIDC.ControlReg;
+  ClockIn = 2*DisplayDev_GetVIDCClockIn();
+  ClockDivider = ClockDividers[NewCR&3];
 
   /* Work out when to reschedule ourselves */
-  uint32_t FramePeriod = (VIDC.Horiz_Cycle*2+2)*(VIDC.Vert_Cycle+1);
-  CycleCount framelength = (((uint64_t) ARMul_EmuRate)*FramePeriod)*ClockDivider/ClockIn;
+  FramePeriod = (VIDC.Horiz_Cycle*2+2)*(VIDC.Vert_Cycle+1);
+  framelength = (((uint64_t) ARMul_EmuRate)*FramePeriod)*ClockDivider/ClockIn;
   framelength = MAX(framelength,1000);
   EventQ_Reschedule(state,nowtime+framelength,PDD_Name(EventFunc),EventQ_Find(state,PDD_Name(EventFunc)));
 
@@ -514,8 +519,8 @@ static void PDD_Name(EventFunc)(ARMul_State *state,CycleCount nowtime)
   DC.ModeChanged |= (DC.VIDC_CR & 3) != (NewCR & 3);
 
   /* Force full refresh if DMA just toggled on/off */
-  bool newDMAEn = (MEMC.ControlReg>>10)&1;
-  bool DMAToggle = (newDMAEn ^ DC.DMAEn);
+  newDMAEn = (MEMC.ControlReg>>10)&1;
+  DMAToggle = (newDMAEn ^ DC.DMAEn);
   DC.ForceRefresh |= DMAToggle;
   DC.DMAEn = newDMAEn;
 
@@ -527,15 +532,17 @@ static void PDD_Name(EventFunc)(ARMul_State *state,CycleCount nowtime)
 
   DC.VIDC_CR = NewCR;
 
-  int Depth = (NewCR>>2)&0x3;
-  int Width = (VIDC.Horiz_DisplayEnd-VIDC.Horiz_DisplayStart)*2;
-  int Height = (VIDC.Vert_DisplayEnd-VIDC.Vert_DisplayStart);
-  int BPP = 1<<Depth;
+  Depth = (NewCR>>2)&0x3;
+  Width = (VIDC.Horiz_DisplayEnd-VIDC.Horiz_DisplayStart)*2;
+  Height = (VIDC.Vert_DisplayEnd-VIDC.Vert_DisplayStart);
+  BPP = 1<<Depth;
   DC.BitWidth = Width*BPP;
 
   /* Handle any mode changes */
   if(DC.ModeChanged)
   {
+    int FrameRate;
+
     /* Work out new screen parameters
        TODO - Using display area isn't always appropriate, e.g. Stunt Racer 2000
        does some screen transitions by adjusting the display area height over
@@ -549,7 +556,7 @@ static void PDD_Name(EventFunc)(ARMul_State *state,CycleCount nowtime)
          Try using border size instead */
       Height = VIDC.Vert_BorderEnd-VIDC.Vert_BorderStart;
     }
-    int FrameRate = ClockIn/(FramePeriod*ClockDivider);
+    FrameRate = ClockIn/(FramePeriod*ClockDivider);
     
     if((Width != DC.LastHostWidth) || (Height != DC.LastHostHeight) || (FrameRate != DC.LastHostHz) || (Depth != DC.LastHostDepth))
     {
@@ -691,17 +698,18 @@ static void PDD_Name(EventFunc)(ARMul_State *state,CycleCount nowtime)
       {
         int hoststart = i*HD.YScale+HD.YOffset;
         int hostend = hoststart+HD.YScale;
+        ARMword Vptr = DC.Vptr;
         if(hoststart < 0)
           hoststart = 0;
         if(hostend > HD.Height)
           hostend = HD.Height;
-        ARMword Vptr = DC.Vptr;
         while(hoststart < hostend)
         {
-          DC.Vptr = Vptr;
           int alignment;
           int updated;
-          PDD_Row hrow = PDD_Name(Host_BeginRow)(state,hoststart++,HD.XOffset,&alignment);
+          PDD_Row hrow;
+          DC.Vptr = Vptr;
+          hrow = PDD_Name(Host_BeginRow)(state,hoststart++,HD.XOffset,&alignment);
           if(HD.ExpandTable)
           {
             updated = PDD_Name(RowFuncExpandTable)(state,hrow,flags);
@@ -742,16 +750,17 @@ static void PDD_Name(EventFunc)(ARMul_State *state,CycleCount nowtime)
         {
           int hoststart = i*HD.YScale+HD.YOffset;
           int hostend = hoststart+HD.YScale;
+          ARMword Vptr = DC.Vptr;
           if(hoststart < 0)
             hoststart = 0;
           if(hostend > HD.Height)
             hostend = HD.Height;
-          ARMword Vptr = DC.Vptr;
           while(hoststart < hostend)
           {
-            DC.Vptr = Vptr;
             int alignment;
-            PDD_Row hrow = PDD_Name(Host_BeginRow)(state,hoststart++,HD.XOffset,&alignment);
+            PDD_Row hrow;
+            DC.Vptr = Vptr;
+            hrow = PDD_Name(Host_BeginRow)(state,hoststart++,HD.XOffset,&alignment);
             if(HD.ExpandTable)
             {
               PDD_Name(RowFuncExpandTableNoFlags)(state,hrow);
