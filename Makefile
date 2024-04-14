@@ -193,7 +193,10 @@ LD=$(CC)
 ARM9_ARCH = -mthumb -mthumb-interwork -march=armv5te -mtune=arm946e-s
 CFLAGS += $(ARM9_ARCH) -ffunction-sections -fdata-sections -DSYSTEM_nds -DARM9 -DUSE_FAKEMAIN -DNO_OPEN64 -isystem $(DEVKITPRO)/libnds/include -Wno-cast-align -Wno-format
 LDFLAGS += -specs=ds_arm9.specs -g $(ARM9_ARCH) -Wl,--gc-sections -L$(DEVKITPRO)/libnds/lib
-LIBS += -lfilesystem -lfat -lnds9
+ifeq (${EXTNROM_SUPPORT},yes)
+LIBS += -lfilesystem
+endif
+LIBS += -lfat -lnds9
 OBJS += nds/main.o nds/img/bg.o nds/img/keys.o
 ifneq ($(DEBUG),yes)
 CFLAGS += -DNDEBUG
@@ -203,9 +206,13 @@ TARGET = ArcEm.elf
 all: ArcEm.nds
 
 %.nds: %.elf %.arm7.elf nds/arc.bmp
+ifeq (${EXTNROM_SUPPORT},yes)
 	mkdir -p romfs/extnrom
 	cp support_modules/*/*,ffa romfs/extnrom
 	ndstool -c $@ -9 $< -7 $*.arm7.elf -b nds/arc.bmp "ArcEm;Archimedes Emulator;WIP" -d romfs
+else
+	ndstool -c $@ -9 $< -7 $*.arm7.elf -b nds/arc.bmp "ArcEm;Archimedes Emulator;WIP"
+endif
 
 %.s %.h: %.png %.grit
 	grit $< -fts -o$*
