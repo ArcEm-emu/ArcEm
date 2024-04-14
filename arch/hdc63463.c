@@ -172,7 +172,7 @@ static void Dump256Block(uint8_t *Data) {
 #endif
 
 /*---------------------------------------------------------------------------*/
-uint32_t HDC_Regular(ARMul_State *state) {
+unsigned int HDC_Regular(ARMul_State *state) {
 
   if (--HDC.DelayCount) {
     return(0);
