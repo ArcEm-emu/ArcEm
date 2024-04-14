@@ -121,6 +121,13 @@ static inline void PDD_Name(Host_EndUpdate)(ARMul_State *state,PDD_Row *row)
 	row->src += count>>5;
 }
 
+static inline void PDD_Name(Host_TransferUpdate)(ARMul_State *state,PDD_Row *row,unsigned int count,const ARMword *src)
+{
+	DC_FlushRange(src, count>>3);
+	while (dmaBusy(3));
+	dmaCopyWordsAsynch(3, src, row->dst, count>>3);
+}
+
 static inline void PDD_Name(Host_AdvanceRow)(ARMul_State *state,PDD_Row *row,unsigned int count)
 {
 	row->dst += count>>3;
