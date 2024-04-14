@@ -3,7 +3,11 @@
 #include "../arch/ControlPane.h"
 
 #include <nds.h>
+#if defined(EXTNROM_SUPPORT)
 #include <filesystem.h>
+#else
+#include <fat.h>
+#endif
 
 static ArcemConfig hArcemConfig;
 
@@ -11,9 +15,15 @@ int main(int argc,char *argv[]) {
 	ARMul_State *state = NULL;
 	int exit_code;
 
+#if defined(EXTNROM_SUPPORT)
 	if (!nitroFSInit(NULL)) {
 		ControlPane_Error(EXIT_FAILURE, "Failed to initialise filesystem");
 	}
+#else
+	if (!fatInitDefault()) {
+		ControlPane_Error(EXIT_FAILURE, "Failed to initialise filesystem");
+	}
+#endif
 
 	// Setup the default values for the config system
 	ArcemConfig_SetupDefaults(&hArcemConfig);
