@@ -5,7 +5,7 @@ extern int rMouseY;
 extern int rMouseWidth;
 extern int rMouseHeight;
 
-extern int createWindow(int w, int h);
+extern int createWindow(ARMul_State *state, int w, int h);
 extern int createBitmaps(int hWidth, int hHeight, int hBpp, int hXScale);
 extern void setPaletteColour(int i, uint8_t r, uint8_t g, uint8_t b);
 extern void setCursorPaletteColour(int i, uint8_t r, uint8_t g, uint8_t b);

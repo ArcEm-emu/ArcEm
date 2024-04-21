@@ -26,6 +26,8 @@ extern size_t dibstride;
 extern size_t curstride;
 extern size_t mskstride;
 
+extern ArcemConfig_DisplayDriver requestedDriver;
+
 
 
 int rMouseX = 0;
@@ -497,11 +499,9 @@ void ProcessKey(ARMul_State *state, int nVirtKey, int lKeyData, int nKeyStat) {
 
 /*-----------------------------------------------------------------------------*/
 int
-DisplayDev_Init(ARMul_State *state)
+DisplayDev_Select(ARMul_State *state, ArcemConfig_DisplayDriver driver)
 {
-  /* Setup display and cursor bitmaps */
-  createWindow(MonitorWidth, MonitorHeight);
-  if (CONFIG.eDisplayDriver == DisplayDriver_Palettised)
+  if (driver == DisplayDriver_Palettised)
     return DisplayDev_Set(state,&PDD_DisplayDev);
   else
     return DisplayDev_Set(state,&SDD_DisplayDev);
@@ -509,9 +509,22 @@ DisplayDev_Init(ARMul_State *state)
 
 /*-----------------------------------------------------------------------------*/
 int
+DisplayDev_Init(ARMul_State *state)
+{
+  /* Setup display and cursor bitmaps */
+  createWindow(state, MonitorWidth, MonitorHeight);
+  return DisplayDev_Select(state,CONFIG.eDisplayDriver);
+}
+
+/*-----------------------------------------------------------------------------*/
+int
 Kbd_PollHostKbd(ARMul_State *state)
 {
   /* Keyboard and mouse input is handled in WndProc */
+  if (CONFIG.eDisplayDriver != requestedDriver) {
+    DisplayDev_Select(state,requestedDriver);
+    CONFIG.eDisplayDriver = requestedDriver;
+  }
   return 0;
 }
 

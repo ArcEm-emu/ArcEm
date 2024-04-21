@@ -4,6 +4,7 @@
 #include "win.h"
 #include "gui.h"
 #include "armdefs.h"
+#include "arch/ArcemConfig.h"
 #include "arch/keyboard.h"
 
 #define NR_THREADS (0x1000)
@@ -54,6 +55,8 @@ BOOL            InitInstance(HINSTANCE, int);
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 BOOL    CALLBACK AboutDlgProc (HWND, UINT, WPARAM, LPARAM);
 
+static void SelectMenuItem(HWND hWnd, ArcemConfig_DisplayDriver driver);
+
 static MSG msg;
 static HANDLE hInst;
 static HWND mainWin;
@@ -67,8 +70,12 @@ size_t dibstride;
 size_t curstride;
 size_t mskstride;
 
+ArcemConfig_DisplayDriver requestedDriver;
+
 static DWORD WINAPI threadWindow(LPVOID param)
 {
+    ARMul_State* state = (ARMul_State*)param;
+
     hInst = GetModuleHandle(NULL);
 
     MyRegisterClass((HINSTANCE)hInst);
@@ -78,6 +85,7 @@ static DWORD WINAPI threadWindow(LPVOID param)
         return FALSE;
     }
 
+    SelectMenuItem(mainWin, CONFIG.eDisplayDriver);
 
     // Main message loop:
     while (GetMessage(&msg, NULL, 0, 0)) {
@@ -163,6 +171,24 @@ static void EjectFloppyImage(HWND hWnd, int drive) {
 	EnableMenuItem(GetMenu(hWnd), IDM_EJECT0 + drive, MF_GRAYED);
 }
 
+static void SelectMenuItem(HWND hWnd, ArcemConfig_DisplayDriver driver) {
+    int wmId;
+
+    switch (driver) {
+    case DisplayDriver_Palettised:
+        wmId = IDM_PALDISPLAY;
+        break;
+    case DisplayDriver_Standard:
+        wmId = IDM_STDDISPLAY;
+        break;
+    default:
+        return;
+    }
+
+    requestedDriver = driver;
+    CheckMenuRadioItem(GetMenu(hWnd), IDM_STDDISPLAY, IDM_PALDISPLAY, wmId, MF_BYCOMMAND);
+}
+
 //
 //   FUNCTION: InitInstance(HANDLE, int)
 //
@@ -245,6 +271,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         case IDM_EXIT:
           DestroyWindow(hWnd);
           exit(0);
+          break;
+        case IDM_STDDISPLAY:
+          SelectMenuItem(hWnd, DisplayDriver_Standard);
+          break;
+        case IDM_PALDISPLAY:
+          SelectMenuItem(hWnd, DisplayDriver_Palettised);
           break;
         default:
           return DefWindowProc(hWnd, message, wParam, lParam);
@@ -472,7 +504,7 @@ BOOL CALLBACK AboutDlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam)
  * @param y Height of video mode
  * @returns ALWAYS 0 (IMPROVE)
  */
-int createWindow(int x, int y)
+int createWindow(ARMul_State *state, int x, int y)
 {
    xSize = x;
    ySize = y;
@@ -482,7 +514,7 @@ int createWindow(int x, int y)
    mbmi = calloc(sizeof(BITMAPINFOHEADER) + (sizeof(RGBQUAD) * 256), 1);
    InitializeCriticalSection(&bmpCriticalSection);
 
-   CreateThread(NULL, 16384, threadWindow, NULL, 0, &tid);
+   CreateThread(NULL, 16384, threadWindow, state, 0, &tid);
 
    return 0;
 }
