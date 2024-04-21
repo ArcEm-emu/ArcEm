@@ -29,6 +29,11 @@ BEGIN
 	MENUITEM "&Copy", IDM_COPY
 	MENUITEM "&Paste", IDM_PASTE
     END
+    POPUP "&Video"
+    BEGIN
+	MENUITEM "&Standard", IDM_STDDISPLAY
+	MENUITEM "&Paletted", IDM_PALDISPLAY
+    END
     POPUP "&Help"
     BEGIN
 	MENUITEM "&About", IDM_ABOUT

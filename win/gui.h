@@ -11,5 +11,7 @@
 #define IDM_EXIT	108
 #define IDM_COPY	110
 #define IDM_PASTE	111
-#define IDM_ABOUT	120
+#define IDM_STDDISPLAY	120
+#define IDM_PALDISPLAY	121
+#define IDM_ABOUT	130
 
