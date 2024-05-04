@@ -158,7 +158,7 @@ static void GenInterrupt(ARMul_State *state, const char *reason) {
   DBG(("FDC:GenInterrupt FIRQStatus=0x%x Mask=0x%x\n",
     ioc.FIRQStatus,ioc.FIRQMask));
   IO_UpdateNfiq(state);
-}; /* GenInterrupt */
+} /* GenInterrupt */
 
 
 /**

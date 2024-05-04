@@ -55,7 +55,7 @@ static inline SDD_Row SDD_Name(Host_BeginRow)(ARMul_State *state,int row,int off
   return dhrow;
 }
 
-static inline void SDD_Name(Host_EndRow)(ARMul_State *state,SDD_Row *row) { /* nothing */ };
+static inline void SDD_Name(Host_EndRow)(ARMul_State *state,SDD_Row *row) { /* nothing */ }
 
 static inline void SDD_Name(Host_BeginUpdate)(ARMul_State *state,SDD_Row *row,unsigned int count)
 {
@@ -65,7 +65,7 @@ static inline void SDD_Name(Host_BeginUpdate)(ARMul_State *state,SDD_Row *row,un
   UpdateMaxY = MAX(UpdateMaxY,row->y);
 }
 
-static inline void SDD_Name(Host_EndUpdate)(ARMul_State *state,SDD_Row *row) { /* nothing */ };
+static inline void SDD_Name(Host_EndUpdate)(ARMul_State *state,SDD_Row *row) { /* nothing */ }
 
 static inline void SDD_Name(Host_SkipPixels)(ARMul_State *state,SDD_Row *row,unsigned int count) { row->x += count; }
 

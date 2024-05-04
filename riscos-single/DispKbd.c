@@ -217,11 +217,11 @@ static inline SDD_Row SDD_Name(Host_BeginRow)(ARMul_State *state,int row,int off
   return ((SDD_Row) (ModeVarsOut[MODE_VAR_ADDR] + ModeVarsOut[MODE_VAR_BPL]*row))+offset;
 }
 
-static inline void SDD_Name(Host_EndRow)(ARMul_State *state,SDD_Row *row) { /* nothing */ };
+static inline void SDD_Name(Host_EndRow)(ARMul_State *state,SDD_Row *row) { /* nothing */ }
 
-static inline void SDD_Name(Host_BeginUpdate)(ARMul_State *state,SDD_Row *row,unsigned int count) { /* nothing */ };
+static inline void SDD_Name(Host_BeginUpdate)(ARMul_State *state,SDD_Row *row,unsigned int count) { /* nothing */ }
 
-static inline void SDD_Name(Host_EndUpdate)(ARMul_State *state,SDD_Row *row) { /* nothing */ };
+static inline void SDD_Name(Host_EndUpdate)(ARMul_State *state,SDD_Row *row) { /* nothing */ }
 
 static inline void SDD_Name(Host_SkipPixels)(ARMul_State *state,SDD_Row *row,unsigned int count) { (*row) += count; }
 
@@ -298,11 +298,11 @@ static inline SDD_Row SDD_Name(Host_BeginRow)(ARMul_State *state,int row,int off
   return ((SDD_Row) (ModeVarsOut[MODE_VAR_ADDR] + ModeVarsOut[MODE_VAR_BPL]*row))+offset;
 }
 
-static inline void SDD_Name(Host_EndRow)(ARMul_State *state,SDD_Row *row) { /* nothing */ };
+static inline void SDD_Name(Host_EndRow)(ARMul_State *state,SDD_Row *row) { /* nothing */ }
 
-static inline void SDD_Name(Host_BeginUpdate)(ARMul_State *state,SDD_Row *row,unsigned int count) { /* nothing */ };
+static inline void SDD_Name(Host_BeginUpdate)(ARMul_State *state,SDD_Row *row,unsigned int count) { /* nothing */ }
 
-static inline void SDD_Name(Host_EndUpdate)(ARMul_State *state,SDD_Row *row) { /* nothing */ };
+static inline void SDD_Name(Host_EndUpdate)(ARMul_State *state,SDD_Row *row) { /* nothing */ }
 
 static inline void SDD_Name(Host_SkipPixels)(ARMul_State *state,SDD_Row *row,unsigned int count) { (*row) += count; }
 
@@ -421,7 +421,7 @@ static inline PDD_Row PDD_Name(Host_BeginRow)(ARMul_State *state,int row,int off
   return drow;
 }
 
-static inline void PDD_Name(Host_EndRow)(ARMul_State *state,PDD_Row *row) { /* nothing */ };
+static inline void PDD_Name(Host_EndRow)(ARMul_State *state,PDD_Row *row) { /* nothing */ }
 
 static inline ARMword *PDD_Name(Host_BeginUpdate)(ARMul_State *state,PDD_Row *row,unsigned int count,int *outoffset)
 {
@@ -429,7 +429,7 @@ static inline ARMword *PDD_Name(Host_BeginUpdate)(ARMul_State *state,PDD_Row *ro
   return row->data;
 }
 
-static inline void PDD_Name(Host_EndUpdate)(ARMul_State *state,PDD_Row *row) { /* nothing */ };
+static inline void PDD_Name(Host_EndUpdate)(ARMul_State *state,PDD_Row *row) { /* nothing */ }
 
 static inline void PDD_Name(Host_AdvanceRow)(ARMul_State *state,PDD_Row *row,unsigned int count)
 {
@@ -601,7 +601,7 @@ static void UpdateCursorPos(ARMul_State *state,const DisplayParams *params) {
 
   _swi(OS_Word, _INR(0,1), 21, &block);
 
-}; /* UpdateCursorPos */
+} /* UpdateCursorPos */
 
 /* ------------------------------------------------------------------ */
 
@@ -696,7 +696,7 @@ static void RefreshMouse(ARMul_State *state,const DisplayParams *params) {
 
   UpdateCursorPos(state,params);
   set_cursor_palette(VIDC.CursorPalette);
-}; /* RefreshMouse */
+} /* RefreshMouse */
 
 
 #ifdef ENABLE_MENU
@@ -890,7 +890,7 @@ static void MouseMoved(ARMul_State *state, int mousex, int mousey/*,XMotionEvent
 #ifdef DEBUG_MOUSEMOVEMENT
   fprintf(stderr,"MouseMoved: generated counts %d,%d xdiff=%d ydifff=%d\n",KBD.MouseXCount,KBD.MouseYCount,xdiff,ydiff);
 #endif
-}; /* MouseMoved */
+} /* MouseMoved */
 
 /*----------------------------------------------------------------------------*/
 int

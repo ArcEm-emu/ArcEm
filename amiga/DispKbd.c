@@ -481,7 +481,7 @@ static inline PDD_Row PDD_Name(Host_BeginRow)(ARMul_State *state,int row,int off
 	return drow;
 }
 
-static inline void PDD_Name(Host_EndRow)(ARMul_State *state,PDD_Row *row) { /* nothing */ };
+static inline void PDD_Name(Host_EndRow)(ARMul_State *state,PDD_Row *row) { /* nothing */ }
 
 static inline ARMword *PDD_Name(Host_BeginUpdate)(ARMul_State *state,PDD_Row *row,unsigned int count,int *outoffset)
 {
@@ -670,7 +670,7 @@ static void pdd_refreshmouse(ARMul_State *state) {
 	OldMouseX = HorizPos;
 	OldMouseY = VertPos;
 
-}; /* RefreshMouse */
+} /* RefreshMouse */
 
 static void
 PDD_Name(Host_PollDisplay)(ARMul_State *state)

@@ -100,11 +100,11 @@ static inline SDD_Row SDD_Name(Host_BeginRow)(ARMul_State *state,int row,int off
   return ((SDD_Row) ((uint8_t *)dibbmp + dibstride*row))+offset;
 }
 
-static inline void SDD_Name(Host_EndRow)(ARMul_State *state,SDD_Row *row) { /* nothing */ };
+static inline void SDD_Name(Host_EndRow)(ARMul_State *state,SDD_Row *row) { /* nothing */ }
 
-static inline void SDD_Name(Host_BeginUpdate)(ARMul_State *state,SDD_Row *row,unsigned int count) { /* nothing */ };
+static inline void SDD_Name(Host_BeginUpdate)(ARMul_State *state,SDD_Row *row,unsigned int count) { /* nothing */ }
 
-static inline void SDD_Name(Host_EndUpdate)(ARMul_State *state,SDD_Row *row) { /* nothing */ };
+static inline void SDD_Name(Host_EndUpdate)(ARMul_State *state,SDD_Row *row) { /* nothing */ }
 
 static inline void SDD_Name(Host_SkipPixels)(ARMul_State *state,SDD_Row *row,unsigned int count) { (*row) += count; }
 
@@ -213,7 +213,7 @@ static void SDD_Name(RefreshMouse)(ARMul_State *state) {
     host_dibbmp = (SDD_HostColour *) ((uint8_t *)host_dibbmp + dibstride);
     host_curbmp = (SDD_HostColour *) ((uint8_t *)host_curbmp + curstride);
   }; /* y */
-}; /* RefreshMouse */
+} /* RefreshMouse */
 
 void
 SDD_Name(Host_PollDisplay)(ARMul_State *state)
@@ -283,7 +283,7 @@ static inline PDD_Row PDD_Name(Host_BeginRow)(ARMul_State *state,int row,int off
   return drow;
 }
 
-static inline void PDD_Name(Host_EndRow)(ARMul_State *state,PDD_Row *row) { /* nothing */ };
+static inline void PDD_Name(Host_EndRow)(ARMul_State *state,PDD_Row *row) { /* nothing */ }
 
 static inline ARMword *PDD_Name(Host_BeginUpdate)(ARMul_State *state,PDD_Row *row,unsigned int count,int *outoffset)
 {
@@ -291,7 +291,7 @@ static inline ARMword *PDD_Name(Host_BeginUpdate)(ARMul_State *state,PDD_Row *ro
   return row->data;
 }
 
-static inline void PDD_Name(Host_EndUpdate)(ARMul_State *state,PDD_Row *row) { /* nothing */ };
+static inline void PDD_Name(Host_EndUpdate)(ARMul_State *state,PDD_Row *row) { /* nothing */ }
 
 static inline void PDD_Name(Host_AdvanceRow)(ARMul_State *state,PDD_Row *row,unsigned int count)
 {
@@ -434,7 +434,7 @@ static void PDD_Name(RefreshMouse)(ARMul_State *state) {
     host_curbmp += curstride;
     host_mskbmp += mskstride;
   }; /* y */
-}; /* RefreshMouse */
+} /* RefreshMouse */
 
 static void
 PDD_Name(Host_PollDisplay)(ARMul_State *state)
@@ -480,7 +480,7 @@ void MouseMoved(ARMul_State *state, int nMouseX, int nMouseY) {
 #ifdef DEBUG_MOUSEMOVEMENT
   fprintf(stderr,"MouseMoved: generated counts %d,%d xdiff=%d ydifff=%d\n",KBD.MouseXCount,KBD.MouseYCount,xdiff,ydiff);
 #endif
-}; /* MouseMoved */
+} /* MouseMoved */
 
 
 /*-----------------------------------------------------------------------------*/
@@ -494,7 +494,7 @@ void ProcessKey(ARMul_State *state, int nVirtKey, int lKeyData, int nKeyStat) {
   }
 
   fprintf(stderr, "ProcessKey: unknown key: keysym=%u\n", nVirtKey);
-}; /* ProcessKey */
+} /* ProcessKey */
 
 
 /*-----------------------------------------------------------------------------*/

@@ -46,7 +46,7 @@ static void ProcessKey(ARMul_State *state, const SDL_KeyboardEvent *key) {
   }
 
   fprintf(stderr, "ProcessKey: unknown key: keysym=%u\n", key->keysym.sym);
-}; /* ProcessKey */
+} /* ProcessKey */
 
 /*-----------------------------------------------------------------------------*/
 static void ProcessMouseButton(ARMul_State *state, const SDL_MouseButtonEvent *button) {
@@ -70,7 +70,7 @@ static void ProcessMouseButton(ARMul_State *state, const SDL_MouseButtonEvent *b
     keyboard_key_changed(&KBD, ARCH_KEY_button_2, button->state != SDL_PRESSED);
     break;
   }
-}; /* ProcessMouseButton */
+} /* ProcessMouseButton */
 
 /*-----------------------------------------------------------------------------*/
 #if SDL_VERSION_ATLEAST(2, 0, 0)
@@ -80,7 +80,7 @@ static void ProcessMouseWheel(ARMul_State *state, const SDL_MouseWheelEvent *whe
   } else if (wheel->y < 0) {
     keyboard_key_changed(&KBD, ARCH_KEY_button_5, 1);
   }
-}; /* ProcessMouseWheel */
+} /* ProcessMouseWheel */
 #endif
 
 static void ProcessMouseMotion(ARMul_State *state, const SDL_MouseMotionEvent *motion) {

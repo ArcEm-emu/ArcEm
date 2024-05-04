@@ -2365,11 +2365,11 @@ static void SDD_Name(VIDCPutVal)(ARMul_State *state,ARMword address, ARMword dat
       break;
 
   }; /* Register switch */
-}; /* PutValVIDC */
+} /* PutValVIDC */
 
 static void SDD_Name(IOEBCRWrite)(ARMul_State *state,ARMword data) {
   DC.ModeChanged = true;
-};
+}
 
 /*
 
