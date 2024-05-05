@@ -9,11 +9,10 @@
 
 struct Directory_s {
   char *sPath;
+  size_t sPathLen;
   WIN32_FIND_DATAA w32fd;
   HANDLE hFile;  
   bool bFirstEntry;
 };
-
-#define ARCEM_PATH_MAX MAX_PATH
 
 #endif /* __FILECALLS_H */

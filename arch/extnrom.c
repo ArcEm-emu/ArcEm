@@ -152,7 +152,7 @@ extnrom_calculate_size(const char *dir, uint32_t *entry_count)
   }
 
   while ((sFilename = Directory_GetNextEntry(&hDir)) != NULL) {
-    char path[ARCEM_PATH_MAX];
+    char *path;
     FileInfo hFileInfo;
 
     /* Ignore hidden entries - those starting with '.' */
@@ -161,9 +161,7 @@ extnrom_calculate_size(const char *dir, uint32_t *entry_count)
     }
 
     /* Construct relative path to the entry */
-    strcpy(path, dir);
-    strcat(path, "/");
-    strcat(path, sFilename);
+    path = Directory_GetFullPath(&hDir, sFilename);
 
     /* Read information about the entry */
     if (!File_GetInfo(path, &hFileInfo)) {
@@ -284,7 +282,7 @@ extnrom_load(const char *dir, uint32_t size, uint32_t entry_count, void *address
 
   /* Process the modules */
   while ((sFilename = Directory_GetNextEntry(&hDir)) != NULL) {
-    char path[ARCEM_PATH_MAX];
+    char *path;
     FileInfo hFileInfo;
     ARMword offset;
     FILE *f;
@@ -295,9 +293,7 @@ extnrom_load(const char *dir, uint32_t size, uint32_t entry_count, void *address
     }
 
     /* Construct relative path to the entry */
-    strcpy(path, dir);
-    strcat(path, "/");
-    strcat(path, sFilename);
+    path = Directory_GetFullPath(&hDir, sFilename);
 
     /* Read information about the entry */
     if (!File_GetInfo(path, &hFileInfo)) {

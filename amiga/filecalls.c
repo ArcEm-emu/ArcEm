@@ -31,6 +31,15 @@ bool Directory_Open(const char *sPath, Directory *hDirectory)
   assert(*sPath);
   assert(hDirectory);
 
+  hDirectory->sPathLen = strlen(sPath);
+  hDirectory->sPath = malloc(hDirectory->sPathLen + 1);
+
+  if(NULL == hDirectory->sPath) {
+    return false;
+  } else {
+    strcpy(hDirectory->sPath, sPath);
+  }
+
   hDirectory->hDir = opendir(sPath);
 
   if(NULL == hDirectory->hDir) {
@@ -50,6 +59,7 @@ bool Directory_Open(const char *sPath, Directory *hDirectory)
 void Directory_Close(Directory hDirectory)
 {
   closedir(hDirectory.hDir);
+  free(hDirectory.sPath);
 }
 
 /**
@@ -72,6 +82,27 @@ char *Directory_GetNextEntry(Directory *hDirectory)
   } else {
     return NULL;
   }
+}
+
+/**
+ * Directory_GetFullPath
+ *
+ * Get the full path of a file in a directory
+ *
+ * @param hDirectory pointer to Directory to get the base path from
+ * @returns String of the full path or NULL on EndOfDirectory
+ */
+char *Directory_GetFullPath(Directory *hDirectory, const char *leaf) {
+  size_t len = hDirectory->sPathLen + strlen(leaf) + 1;
+  char *path = malloc(len + 1);
+  if (!path) {
+    return NULL;
+  }
+
+  strcpy(path, hDirectory->sPath);
+  strcat(path, "/");
+  strcat(path, leaf);
+  return path;
 }
 
 /**

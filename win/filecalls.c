@@ -68,7 +68,8 @@ bool Directory_Open(const char *sPath, Directory *hDir)
   hDir->bFirstEntry = true;
   hDir->hFile       = NULL;
 
-  hDir->sPath = calloc(strlen(sPath) + (bNeedsEndSlash ? 1 : 0 ) + 3 + 1, 1); /* Path + Endslash (if needed) + *.* + terminator */
+  hDir->sPathLen = strlen(sPath) + (bNeedsEndSlash ? 1 : 0 ) + 3; /* Path + Endslash (if needed) + *.* + terminator */
+  hDir->sPath = calloc(hDir->sPathLen + 1, 1);
   if(NULL == hDir->sPath) {
     fprintf(stderr, "Failed to allocate memory for directory handle path\n");
     return false;
@@ -128,6 +129,27 @@ char *Directory_GetNextEntry(Directory *hDirectory)
 }
 
 /**
+ * Directory_GetFullPath
+ *
+ * Get the full path of a file in a directory
+ *
+ * @param hDirectory pointer to Directory to get the base path from
+ * @returns String of the full path or NULL on EndOfDirectory
+ */
+char *Directory_GetFullPath(Directory *hDirectory, const char *leaf) {
+  size_t len = hDirectory->sPathLen - 3 + strlen(leaf);
+  char *path = malloc(len + 1);
+  if (!path) {
+    return NULL;
+  }
+
+  strcpy(path, hDirectory->sPath);
+  path[hDirectory->sPathLen - 3] = 0;
+  strcat(path, leaf);
+  return path;
+}
+
+/**
  * File_OpenAppData
  *
  * Open the specified file in the application data directory
@@ -139,7 +161,7 @@ char *Directory_GetNextEntry(Directory *hDirectory)
 FILE *File_OpenAppData(const char *sName, const char *sMode)
 {
     const char *sDir = "\\ArcEm\\";
-    char sAppData[ARCEM_PATH_MAX];
+    char sAppData[MAX_PATH];
     char *sPath;
     FILE *f;
 

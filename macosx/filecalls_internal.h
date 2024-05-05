@@ -7,12 +7,11 @@
 
 #include <sys/types.h>
 #include <dirent.h>
-#include <sys/syslimits.h>
 
 struct Directory_s {
   DIR *hDir;
+  char *sPath;
+  size_t sPathLen;
 };
-
-#define ARCEM_PATH_MAX PATH_MAX
 
 #endif /* __FILECALLS_H */

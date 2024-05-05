@@ -43,6 +43,16 @@ void Directory_Close(Directory hDirectory);
 char *Directory_GetNextEntry(Directory *hDirectory);
 
 /**
+ * Directory_GetFullPath
+ *
+ * Get the full path of a file in a directory
+ *
+ * @param hDirectory pointer to Directory to get the base path from
+ * @returns String of the full path or NULL on EndOfDirectory
+ */
+char *Directory_GetFullPath(Directory *hDirectory, const char *leaf);
+
+/**
  * File_OpenAppData
  *
  * Open the specified file in the application data directory

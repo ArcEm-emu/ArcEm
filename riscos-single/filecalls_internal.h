@@ -10,8 +10,8 @@
 
 struct Directory_s {
   DIR *hDir;
+  char *sPath;
+  size_t sPathLen;
 };
-
-#define ARCEM_PATH_MAX PATH_MAX
 
 #endif /* __FILECALLS_H */
