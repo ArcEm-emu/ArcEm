@@ -19,6 +19,8 @@
 /* application includes */
 #include "filecalls.h"
 
+static bool File_GetInfo(const char *sPath, FileInfo *phFileInfo);
+
 /**
  * Directory_Open
  *
@@ -73,18 +75,37 @@ void Directory_Close(Directory hDirectory)
  * @param hDirectory pointer to Directory to get entry from
  * @returns String of filename or NULL on EndOfDirectory
  */
-char *Directory_GetNextEntry(Directory *hDirectory)
+char *Directory_GetNextEntry(Directory *hDirectory, FileInfo *phFileInfo)
 {
   struct dirent *phDirEntry;
   
   assert(hDirectory);
   
   phDirEntry = readdir(hDirectory->hDir);
-  if(phDirEntry) {
-    return phDirEntry->d_name;
-  } else {
+  if(!phDirEntry) {
     return NULL;
   }
+
+  if (phFileInfo) {
+    phFileInfo->bIsRegularFile = false;
+    phFileInfo->bIsDirectory   = false;
+
+#ifdef _DIRENT_HAVE_D_TYPE
+    if (phDirEntry->d_type == DT_REG || phDirEntry->d_type == DT_DIR) {
+      phFileInfo->bIsRegularFile = (phDirEntry->d_type == DT_REG);
+      phFileInfo->bIsDirectory   = (phDirEntry->d_type == DT_DIR);
+    } else
+#endif
+    {
+      char *path = Directory_GetFullPath(hDirectory, phDirEntry->d_name);
+      if (path) {
+        File_GetInfo(path, phFileInfo);
+        free(path);
+      }
+    }
+  }
+
+  return phDirEntry->d_name;
 }
 
 /**
@@ -157,7 +178,7 @@ FILE *File_OpenAppData(const char *sName, const char *sMode)
  * @param phFileInfo pointer to FileInfo struct to fill in
  * @returns false on failure true on success
  */
-bool File_GetInfo(const char *sPath, FileInfo *phFileInfo)
+static bool File_GetInfo(const char *sPath, FileInfo *phFileInfo)
 {
   struct stat hEntryInfo;
 
@@ -181,9 +202,6 @@ bool File_GetInfo(const char *sPath, FileInfo *phFileInfo)
   if (S_ISDIR(hEntryInfo.st_mode)) {
     phFileInfo->bIsDirectory = true;
   }
-  
-  /* Fill in Size */
-  phFileInfo->ulFilesize = hEntryInfo.st_size;
   
   /* Success! */
   return true;

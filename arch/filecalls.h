@@ -12,6 +12,12 @@
 
 typedef struct Directory_s Directory;
 
+typedef struct FileInfo
+{
+  bool bIsRegularFile;
+  bool bIsDirectory;
+} FileInfo;
+
 /**
  * Directory_Open
  *
@@ -40,7 +46,7 @@ void Directory_Close(Directory hDirectory);
  * @param hDirectory pointer to Directory to get entry from
  * @returns String of filename or NULL on EndOfDirectory
  */
-char *Directory_GetNextEntry(Directory *hDirectory);
+char *Directory_GetNextEntry(Directory *hDirectory, FileInfo *phFileInfo);
 
 /**
  * Directory_GetFullPath
@@ -62,24 +68,6 @@ char *Directory_GetFullPath(Directory *hDirectory, const char *leaf);
  * @returns File handle or NULL on failure
  */
 FILE *File_OpenAppData(const char *sName, const char *sMode);
-
-typedef struct FileInfo
-{
-  uint32_t ulFilesize;      /* In bytes */
-  bool bIsRegularFile;
-  bool bIsDirectory;
-} FileInfo;
-
-/**
- * File_GetInfo
- *
- * Fills in lots of useful info about the passed in file
- *
- * @param sPath Path to file to check
- * @param phFileInfo pointer to FileInfo struct to fill in
- * @returns 0 on failure 1 on success
- */
-bool File_GetInfo(const char *sPath, FileInfo *phFileInfo);
 
 /* These next few are implemented in arch/filecommon.c */
 

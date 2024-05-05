@@ -106,7 +106,7 @@ void Directory_Close(Directory hDirectory)
  * @param hDirectory pointer to Directory to get entry from
  * @returns String of filename or NULL on EndOfDirectory
  */
-char *Directory_GetNextEntry(Directory *hDirectory)
+char *Directory_GetNextEntry(Directory *hDirectory, FileInfo *phFileInfo)
 {
 
   if(hDirectory->bFirstEntry) {
@@ -115,17 +115,26 @@ char *Directory_GetNextEntry(Directory *hDirectory)
 
     if(INVALID_HANDLE_VALUE == hDirectory->hFile) {
       return NULL;
-    } else {
-      return hDirectory->w32fd.cFileName;
     }
   } else {
     /* second or later entry */
     if(0 == FindNextFileA(hDirectory->hFile, &hDirectory->w32fd)) {
       return NULL;
-    } else {
-      return hDirectory->w32fd.cFileName;    
     }
   }
+
+  if (phFileInfo) {
+    if (hDirectory->w32fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+      phFileInfo->bIsDirectory   = true;
+      phFileInfo->bIsRegularFile = false;
+    } else {
+      /* IMPROVE guess, if not a directory then we are a regular file */
+      phFileInfo->bIsDirectory   = false;
+      phFileInfo->bIsRegularFile = true;
+    }
+  }
+
+  return hDirectory->w32fd.cFileName;
 }
 
 /**
@@ -184,59 +193,3 @@ FILE *File_OpenAppData(const char *sName, const char *sMode)
     free(sPath);
     return f;
 }
-
-/**
- * File_GetInfo
- *
- * Fills in lots of useful info about the passed in file
- *
- * @param sPath Path to file to check
- * @param phFileInfo pointer to FileInfo struct to fill in
- * @returns false on failure true on success
- */
-bool File_GetInfo(const char *sPath, FileInfo *phFileInfo)
-{
-  HANDLE hFile;
-  DWORD attributes;
-
-  assert(sPath);
-  assert(*sPath);
-  assert(phFileInfo);
-
-  /* Initialise contents */
-  phFileInfo->bIsDirectory   = false;
-  phFileInfo->bIsRegularFile = false;
-
-  /* Read the details */
-  attributes = GetFileAttributesA(sPath);
-  if (attributes == INVALID_FILE_ATTRIBUTES)
-  {
-    fprintf(stderr, "Failed to stat '%s'\n", sPath);
-    return false;
-  }
-
-  if (attributes & FILE_ATTRIBUTE_DIRECTORY) {
-    phFileInfo->bIsDirectory = true;
-  } else {
-    /* IMPROVE guess, if not a directory then we are a regular file */
-    phFileInfo->bIsRegularFile = true;
-  }
-
-  /* This works Windows 95 or earlier */
-  hFile = CreateFileA(sPath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING,
-                      FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OVERLAPPED, NULL);
-  if (hFile == INVALID_HANDLE_VALUE)
-  {
-    fprintf(stderr, "Failed to stat '%s'\n", sPath);
-    return false;
-  }
-
-  /* Fill in entries */
-  phFileInfo->ulFilesize = GetFileSize(hFile, NULL);
-
-  CloseHandle(hFile);
-
-  /* Success! */
-  return true;
-}
-

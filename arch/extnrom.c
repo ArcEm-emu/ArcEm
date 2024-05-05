@@ -137,6 +137,7 @@ uint32_t
 extnrom_calculate_size(const char *dir, uint32_t *entry_count)
 {
   Directory hDir;
+  FileInfo hFileInfo;
   char *sFilename;
   uint32_t required_size = 0;
 
@@ -151,22 +152,13 @@ extnrom_calculate_size(const char *dir, uint32_t *entry_count)
     return 0;
   }
 
-  while ((sFilename = Directory_GetNextEntry(&hDir)) != NULL) {
+  while ((sFilename = Directory_GetNextEntry(&hDir, &hFileInfo)) != NULL) {
     char *path;
-    FileInfo hFileInfo;
+    uint32_t ulFilesize;
+    FILE *f;
 
     /* Ignore hidden entries - those starting with '.' */
     if (sFilename[0] == '.') {
-      continue;
-    }
-
-    /* Construct relative path to the entry */
-    path = Directory_GetFullPath(&hDir, sFilename);
-
-    /* Read information about the entry */
-    if (!File_GetInfo(path, &hFileInfo)) {
-      warn_data("Warning: could not get info on file \'%s\'\n",
-                path);
       continue;
     }
 
@@ -175,8 +167,25 @@ extnrom_calculate_size(const char *dir, uint32_t *entry_count)
       continue;
     }
 
+    /* Construct relative path to the entry */
+    path = Directory_GetFullPath(&hDir, sFilename);
+
+    f = fopen(path, "rb");
+    if (!f) {
+      warn_data("Could not open file \'%s\': %s\n",
+                path, strerror(errno));
+      free(path);
+      continue;
+    }
+
+    fseek(f, 0, SEEK_END);
+    ulFilesize = ftell(f);
+
+    fclose(f);
+    free(path);
+
     /* Add on size of file */
-    required_size += ROUND_UP_TO_4(hFileInfo.ulFilesize);
+    required_size += ROUND_UP_TO_4(ulFilesize);
 
     /* Add on overhead for each file */
     required_size += 12; /* 8 for Chunk directory info, 4 for size prefix */
@@ -214,6 +223,7 @@ extnrom_load(const char *dir, uint32_t size, uint32_t entry_count, void *address
   ARMword *start_addr = address;
   ARMword *chunk, *modules;
   Directory hDir;
+  FileInfo hFileInfo;
   char *sFilename;
   uint32_t size_in_words = size / 4;
 
@@ -281,22 +291,14 @@ extnrom_load(const char *dir, uint32_t size, uint32_t entry_count, void *address
   modules += ROUND_UP_TO_4(strlen(DESCRIPTION_STRING) + 1) / 4;
 
   /* Process the modules */
-  while ((sFilename = Directory_GetNextEntry(&hDir)) != NULL) {
+  while ((sFilename = Directory_GetNextEntry(&hDir, &hFileInfo)) != NULL) {
     char *path;
-    FileInfo hFileInfo;
     ARMword offset;
+    uint32_t ulFilesize;
     FILE *f;
 
     /* Ignore hidden entries - those starting with '.' */
     if (sFilename[0] == '.') {
-      continue;
-    }
-
-    /* Construct relative path to the entry */
-    path = Directory_GetFullPath(&hDir, sFilename);
-
-    /* Read information about the entry */
-    if (!File_GetInfo(path, &hFileInfo)) {
       continue;
     }
 
@@ -305,29 +307,39 @@ extnrom_load(const char *dir, uint32_t size, uint32_t entry_count, void *address
       continue;
     }
 
+    /* Construct relative path to the entry */
+    path = Directory_GetFullPath(&hDir, sFilename);
+
+    f = fopen(path, "rb");
+    if (!f) {
+      warn_data("Could not open file \'%s\': %s\n",
+                path, strerror(errno));
+      free(path);
+      continue;
+    }
+
+    free(path);
+
+    fseek(f, 0, SEEK_END);
+    ulFilesize = ftell(f);
+    fseek(f, 0, SEEK_SET);
+
     /* Offset of where this module will be placed in the ROM */
     offset = (ARMword)((modules - start_addr) * 4) + 4;
 
     /* Prepare Chunk Directory information for this entry */
     chunk[0] = OS_ID_BYTE_RISCOS_MODULE |
-               (hFileInfo.ulFilesize << 8);
+               (ulFilesize << 8);
     chunk[1] = offset;
 
     /* Prepare undocumented size prefix - size includes the size data */
-    modules[0] = hFileInfo.ulFilesize + 4;
+    modules[0] = ulFilesize + 4;
 
     /* Point to next word within module area - after the size */
     modules++;
 
     /* Load module */
-    f = fopen(path, "rb");
-    if (!f) {
-      warn_data("Could not open file \'%s\': %s\n",
-                path, strerror(errno));
-      continue;
-    }
-
-    if (fread(modules, 1, hFileInfo.ulFilesize, f) != hFileInfo.ulFilesize) {
+    if (fread(modules, 1, ulFilesize, f) != ulFilesize) {
       warn_data("Error while loading file \'%s\': %s\n",
                 path, strerror(errno));
       fclose(f);
@@ -337,11 +349,11 @@ extnrom_load(const char *dir, uint32_t size, uint32_t entry_count, void *address
     fclose(f);
 
     /* Byte-swap module from little-endian to host processor */
-    extnrom_endian_correct(modules, hFileInfo.ulFilesize);
+    extnrom_endian_correct(modules, ulFilesize);
 
     /* Move chunk and module pointers on */
     chunk += 2;
-    modules += ROUND_UP_TO_4(hFileInfo.ulFilesize) / 4;
+    modules += ROUND_UP_TO_4(ulFilesize) / 4;
   }
 
   Directory_Close(hDir);
