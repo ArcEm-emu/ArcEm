@@ -8,6 +8,6 @@ WimpSlot -min 1500k -max 1500k
 Set ArcEm$Dir <Obey$Dir>
 
 RMLoad <ArcEm$Dir>.ArcEmKey
-<ArcEm$Dir>.arcem --rom <ArcEm$Dir>.ROM --hostfsdir <ArcEm$Dir>.^.hostfs --extnromdir /<ArcEm$Dir>/extnrom 2>null:
+<ArcEm$Dir>.arcem --rom <ArcEm$Dir>.ROM --hostfsdir <ArcEm$Dir>.^.hostfs --extnromdir <ArcEm$Dir>.extnrom 2>null:
 
 RMKill ArcEmKey

@@ -5,13 +5,21 @@
 #ifndef __FILECALLS_INTERNAL_H
 #define __FILECALLS_INTERNAL_H
 
-#include <sys/types.h>
-#include <dirent.h>
+#include "kernel.h"
 
 struct Directory_s {
-  DIR *hDir;
   char *sPath;
   size_t sPathLen;
+  int gbpb_entry;
+
+  struct {
+    ARMword load;
+    ARMword exec;
+    ARMword length;
+    ARMword attribs;
+    ARMword type;
+    char name[80];
+  } gbpb_buffer;
 };
 
 #endif /* __FILECALLS_H */
