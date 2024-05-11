@@ -1,0 +1,14 @@
+# graphics in tile format
+-gt
+
+# exclude map data
+-m!
+
+# graphics bit depth is 4 (16 color)
+-gB4
+
+# include palette data
+-p
+
+# use lz77 compression
+-gzl
