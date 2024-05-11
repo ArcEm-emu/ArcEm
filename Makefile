@@ -197,7 +197,7 @@ ifeq (${EXTNROM_SUPPORT},yes)
 LIBS += -lfilesystem
 endif
 LIBS += -lfat -lnds9
-OBJS += nds/main.o nds/img/bg.o nds/img/keys.o
+OBJS += nds/main.o nds/img/bg.o nds/img/keys.o nds/img/font.o
 ifneq ($(DEBUG),yes)
 CFLAGS += -DNDEBUG
 endif
@@ -219,7 +219,7 @@ endif
 %.s %.h: %.bmp %.grit
 	grit $< -fts -o$*
 
-nds/ControlPane.o: nds/KeyTable.h nds/img/bg.h nds/img/keys.h
+nds/ControlPane.o: nds/KeyTable.h nds/img/bg.h nds/img/font.h nds/img/keys.h
 
 ARM7_ARCH = -mthumb -mthumb-interwork -march=armv4t -mtune=arm7tdmi
 ARM7_CFLAGS = $(ARM7_ARCH) -Os -ffunction-sections -fdata-sections -DARM7 -isystem $(DEVKITPRO)/libnds/include
