@@ -469,7 +469,7 @@ int DisplayDev_Init(ARMul_State *state)
 #endif
 
   if (!screen) {
-      ControlPane_Error(0, "Failed to create initial window: %s", SDL_GetError());
+      ControlPane_Error(0, "Failed to create initial window: %s\n", SDL_GetError());
   } else if (screen->format->BytesPerPixel == 4) {
       return DisplayDev_Set(state,&SDD32_DisplayDev);
   } else if (screen->format->BytesPerPixel == 2) {
@@ -479,7 +479,7 @@ int DisplayDev_Init(ARMul_State *state)
       return DisplayDev_Set(state,&PDD_DisplayDev);
 #endif
   } else {
-      ControlPane_Error(0, "Unsupported bytes per pixel: %d", screen->format->BytesPerPixel);
+      ControlPane_Error(0, "Unsupported bytes per pixel: %d\n", screen->format->BytesPerPixel);
   }
 }
 

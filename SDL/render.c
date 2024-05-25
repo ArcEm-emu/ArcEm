@@ -305,12 +305,12 @@ int DisplayDev_Init(ARMul_State *state)
   window = SDL_CreateWindow("ArcEm", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                             640, 512, SDL_WINDOW_RESIZABLE);
   if (!window) {
-    ControlPane_Error(0, "Failed to create initial window: %s", SDL_GetError());
+    ControlPane_Error(0, "Failed to create initial window: %s\n", SDL_GetError());
   }
 
   renderer = SDL_CreateRenderer(window, -1, 0);
-  if (!window) {
-    ControlPane_Error(0, "Failed to create renderer: %s", SDL_GetError());
+  if (!renderer) {
+    ControlPane_Error(0, "Failed to create renderer: %s\n", SDL_GetError());
   }
 
   if (SDL_GetRendererInfo(renderer, &info) >= 0) {
@@ -335,13 +335,13 @@ int DisplayDev_Init(ARMul_State *state)
 
   format = SDL_AllocFormat(pf);
   if (!format) {
-    ControlPane_Error(0, "Failed to create pixel format: %s", SDL_GetError());
+    ControlPane_Error(0, "Failed to create pixel format: %s\n", SDL_GetError());
   } else if (format->BytesPerPixel == 4) {
     return DisplayDev_Set(state,&SDD32R_DisplayDev);
   } else if (format->BytesPerPixel == 2) {
     return DisplayDev_Set(state,&SDD16R_DisplayDev);
   } else {
-    ControlPane_Error(0, "Unsupported bytes per pixel: %d", format->BytesPerPixel);
+    ControlPane_Error(0, "Unsupported bytes per pixel: %d\n", format->BytesPerPixel);
   }
 }
 

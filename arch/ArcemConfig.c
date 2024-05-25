@@ -354,7 +354,7 @@ void ArcemConfig_ParseCommandLine(ArcemConfig *pConfig, int argc, char *argv[])
           pConfig->eMemSize = uValue;
           iArgument += 2;
         } else {
-          ControlPane_Error(EXIT_FAILURE,"Unrecognised value to the --memory option\n");
+          ControlPane_Error(EXIT_FAILURE,"Unrecognised value '%s' to the --memory option\n", argv[iArgument + 1]);
         }
 
       } else {
@@ -368,7 +368,7 @@ void ArcemConfig_ParseCommandLine(ArcemConfig *pConfig, int argc, char *argv[])
           pConfig->eProcessor = uValue;
           iArgument += 2;
         } else {
-          ControlPane_Error(EXIT_FAILURE,"Unrecognised value to the --processor option\n");
+          ControlPane_Error(EXIT_FAILURE,"Unrecognised value '%s' to the --processor option\n", argv[iArgument + 1]);
         }
       } else {
         // No argument following the --processor option
@@ -387,7 +387,7 @@ void ArcemConfig_ParseCommandLine(ArcemConfig *pConfig, int argc, char *argv[])
           iArgument += 2;
         }
         else {
-          ControlPane_Error(EXIT_FAILURE,"Unrecognised value to the --display option\n");
+          ControlPane_Error(EXIT_FAILURE,"Unrecognised value '%s' to the --display option\n", argv[iArgument + 1]);
         }
       } else {
         ControlPane_Error(EXIT_FAILURE,"No argument following the --display option\n");

@@ -245,7 +245,7 @@ ARMul_MemoryInit(ARMul_State *state)
       break;
 
     default:
-      ControlPane_Error(EXIT_FAILURE,"Unsupported memory size");
+      ControlPane_Error(EXIT_FAILURE,"Unsupported memory size\n");
   }
 
 #ifndef WIN32
@@ -270,7 +270,7 @@ ARMul_MemoryInit(ARMul_State *state)
   }
 #endif
   if (ROMFile = fopen(CONFIG.sRomImageName, "rb"), ROMFile == NULL) {
-    ControlPane_Error(2,"Couldn't open ROM file");
+    ControlPane_Error(2,"Couldn't open ROM file '%s'\n", CONFIG.sRomImageName);
   }
 
   /* Find the rom file size */
