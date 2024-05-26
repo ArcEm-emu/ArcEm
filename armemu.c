@@ -657,7 +657,7 @@ static void LoadMult(ARMul_State *state, ARMword instr,
  if (BIT(21) && LHSReg != 15)
     LSBase = WBBase;
 
-    temp2 = state->Reg[15];
+ temp2 = state->Reg[15];
 
     /* Check if we can use the fastmap */
     if((((uint32_t) (address<<20)) <= 0xfc000000) && !state->Aborted)
@@ -743,7 +743,7 @@ static void LoadSMult(ARMul_State *state, ARMword instr,
  if (BIT(21) && LHSReg != 15)
     LSBase = WBBase;
 
-    temp2 = state->Reg[15];
+ temp2 = state->Reg[15];
 
  if (!BIT(15) && state->Bank != USERBANK) {
     (void)ARMul_SwitchMode(state,temp2,USER26MODE); /* temporary reg bank switch */
@@ -888,10 +888,9 @@ static void StoreMult(ARMul_State *state, ARMword instr,
             }
         if (BIT(21) && LHSReg != 15)
             LSBase = WBBase;
-            TAKEABORT;
-            return;
-        }
-    else
+        TAKEABORT;
+        return;
+    } else
         ARMul_StoreWordN(state,address,state->Reg[temp++]);
     if (state->abortSig && !state->Aborted)
         state->Aborted = ARMul_DataAbortV;
