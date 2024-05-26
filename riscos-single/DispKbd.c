@@ -111,6 +111,8 @@ static uint32_t sdd_palette[4096];
 
 static int ChangeMode(const HostMode *mode,int depth)
 {
+  _kernel_oserror *err;
+
   while(!(mode->depths & (1<<depth)) && ((1<<depth) < mode->depths))
     depth++;
   if((mode != current_mode) || (depth != current_depth))
@@ -153,7 +155,7 @@ static int ChangeMode(const HostMode *mode,int depth)
         break;
     }
     
-    _kernel_oserror *err = _swix(OS_ScreenMode, _INR(0,1), 0, &block);
+    err = _swix(OS_ScreenMode, _INR(0,1), 0, &block);
     if(err)
     {
       ControlPane_Error(EXIT_FAILURE,"Failed to change screen mode: Error %d %s\n",err->errnum,err->errmess);
@@ -236,10 +238,12 @@ SDD_Name(Host_PollDisplay)(ARMul_State *state);
 
 static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,int hz)
 {
+  HostMode *mode;
+  int aspect;
+
   current_hz = hz;
 
   /* Search the mode list for the best match */
-  int aspect;
   if(width <= height)
     aspect = 1;
   else if(width >= height*2)
@@ -247,7 +251,7 @@ static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,in
   else
     aspect = 2;
 
-  HostMode *mode = SelectROScreenMode(width,height,aspect,1<<4,&HD.XScale,&HD.YScale);
+  mode = SelectROScreenMode(width,height,aspect,1<<4,&HD.XScale,&HD.YScale);
   ChangeMode(mode,4);
   HD.Width = ModeVarsOut[MODE_VAR_WIDTH]+1; /* Should match mode->w, mode->h, but use these just to make sure */
   HD.Height = ModeVarsOut[MODE_VAR_HEIGHT]+1;
@@ -317,10 +321,12 @@ SDD_Name(Host_PollDisplay)(ARMul_State *state);
 
 static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,int hz)
 {
+  HostMode *mode;
+  int aspect;
+
   current_hz = hz;
 
   /* Search the mode list for the best match */
-  int aspect;
   if(width <= height)
     aspect = 1;
   else if(width >= height*2)
@@ -328,7 +334,7 @@ static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,in
   else
     aspect = 2;
 
-  HostMode *mode = SelectROScreenMode(width,height,aspect,1<<5,&HD.XScale,&HD.YScale);
+  mode = SelectROScreenMode(width,height,aspect,1<<5,&HD.XScale,&HD.YScale);
   ChangeMode(mode,5);
   HD.Width = ModeVarsOut[MODE_VAR_WIDTH]+1; /* Should match mode->w, mode->h, but use these just to make sure */
   HD.Height = ModeVarsOut[MODE_VAR_HEIGHT]+1;
@@ -458,10 +464,12 @@ static void PDD_Name(Host_DrawBorderRect)(ARMul_State *state,int x,int y,int wid
 
 void PDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,int depth,int hz)
 {
+  HostMode *mode;
+  int aspect, realdepth;
+
   current_hz = hz;
 
   /* Search the mode list for the best match */
-  int aspect;
   if(width <= height)
     aspect = 1;
   else if(width >= height*2)
@@ -469,8 +477,8 @@ void PDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,int depth
   else
     aspect = 2;
 
-  HostMode *mode = SelectROScreenMode(width,height,aspect,(0xf<<depth)&0xf,&HD.XScale,&HD.YScale);
-  int realdepth = ChangeMode(mode,depth);
+  mode = SelectROScreenMode(width,height,aspect,(0xf<<depth)&0xf,&HD.XScale,&HD.YScale);
+  realdepth = ChangeMode(mode,depth);
   
   HD.Width = ModeVarsOut[MODE_VAR_WIDTH]+1; /* Should match mode->w, mode->h, but use these just to make sure */
   HD.Height = ModeVarsOut[MODE_VAR_HEIGHT]+1;
@@ -496,13 +504,13 @@ void PDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,int depth
   {
     /* Expansion! */
     static ARMword expandtable[256];
+    unsigned int mul = 1;
+    int i;
     HD.ExpandFactor = 0;
     while((1<<HD.ExpandFactor) < HD.XScale)
       HD.ExpandFactor++;
     HD.ExpandFactor += (realdepth-depth);
     HD.ExpandTable = expandtable;
-    unsigned int mul = 1;
-    int i;
     for(i=0;i<HD.XScale;i++)
     {
       mul |= 1<<(i*(1<<realdepth));
@@ -532,16 +540,18 @@ PDD_Name(Host_PollDisplay)(ARMul_State *state)
   Host_PollDisplay_Common(state,&params);
   if((BorderPalEntry == 256) && (FakeBorderPalEntry == -1))
   {
+    unsigned int pal;
+    int Width, Height, xend, yend;
     /* Work out what colour to use for the border */
     _swi(ColourTrans_InvalidateCache,0);
-    unsigned int pal = ((VIDC.BorderCol & 0xf)*0x1100) | ((VIDC.BorderCol&0xf0)*0x11000) | ((VIDC.BorderCol&0xf00)*0x110000);
+    pal = ((VIDC.BorderCol & 0xf)*0x1100) | ((VIDC.BorderCol&0xf0)*0x11000) | ((VIDC.BorderCol&0xf00)*0x110000);
     _swi(ColourTrans_ReturnColourNumber,_IN(0)|_OUT(0),pal,&FakeBorderPalEntry);
     _swi(ColourTrans_SetColour,_IN(0)|_INR(3,4),FakeBorderPalEntry,0,0);
     /* Now redraw */
-    int Width = (VIDC.Horiz_DisplayEnd-VIDC.Horiz_DisplayStart)*2;
-    int Height = (VIDC.Vert_DisplayEnd-VIDC.Vert_DisplayStart);
-    int xend = Width*params.XScale+params.XOffset;
-    int yend = Height*params.YScale+params.YOffset;
+    Width = (VIDC.Horiz_DisplayEnd-VIDC.Horiz_DisplayStart)*2;
+    Height = (VIDC.Vert_DisplayEnd-VIDC.Vert_DisplayStart);
+    xend = Width*params.XScale+params.XOffset;
+    yend = Height*params.YScale+params.YOffset;
     PDD_Name(Host_DrawBorderRect)(state,0,0,params.Width,params.YOffset);
     PDD_Name(Host_DrawBorderRect)(state,0,yend,params.Width,params.Height-yend);
     PDD_Name(Host_DrawBorderRect)(state,0,params.YOffset,params.XOffset,params.Height*params.YScale);
@@ -739,6 +749,8 @@ static void Host_PollDisplay_Common(ARMul_State *state,const DisplayParams *para
 
     if((nowtime2-oldtime) > CLOCKS_PER_SEC)
     {
+      const float scale = ((float)CLOCKS_PER_SEC)/1000000.0f;
+      float mhz;
       if(ModeVarsOut[MODE_VAR_LOG2BPP] < 4)
       {
         /* Try and select sensible text colours
@@ -749,8 +761,7 @@ static void Host_PollDisplay_Common(ARMul_State *state,const DisplayParams *para
         _swi(ColourTrans_SetTextColour,_IN(0)|_IN(3),0,128);
       }
       
-      const float scale = ((float)CLOCKS_PER_SEC)/1000000.0f;
-      float mhz = scale*((float)(ARMul_Time-oldcycles))/((float)(nowtime2-oldtime));
+      mhz = scale*((float)(ARMul_Time-oldcycles))/((float)(nowtime2-oldtime));
       printf("\x1e%.2fMHz %dx%d %dHz %dbpp %d:%d %dfps   \n",mhz,(VIDC.Horiz_DisplayEnd-VIDC.Horiz_DisplayStart)*2,VIDC.Vert_DisplayEnd-VIDC.Vert_DisplayStart,current_hz,1<<((VIDC.ControlReg>>2)&3),params->XScale,params->YScale,fps);
       oldcycles = ARMul_Time;
       oldtime = nowtime2;
@@ -759,9 +770,9 @@ static void Host_PollDisplay_Common(ARMul_State *state,const DisplayParams *para
   }
   if(do_screenshot)
   {
-    do_screenshot = 0;
     char name[32];
     static int count = 0;
+    do_screenshot = 0;
     sprintf(name,"<ArcEm$Dir>.^.screen%04d",count++);
     if(hArcemConfig.bRedBlueSwap && (ModeVarsOut[MODE_VAR_LOG2BPP] == 4))
     {
@@ -903,14 +914,17 @@ Kbd_PollHostKbd(ARMul_State *state)
 
     if (_swi (ArcEmKey_GetKey, _RETURN(0)|_OUTR(1,2), &transition, &key))
     {
+#ifdef ENABLE_MENU
+      static int key1_down = 0;
+      static int key2_down = 0;
+      static int both_down = 0;
+#endif
+
       /*printf("Processing key %d, transition %d\n",key, transition);*/
       /* Now add it to the buffer */
       keyboard_key_changed_ex(&KBD, key / 16, key % 16, transition ? 0 : 1);
 
 #ifdef ENABLE_MENU
-      static int key1_down = 0;
-      static int key2_down = 0;
-      static int both_down = 0;
       if(key == hArcemConfig.iTweakMenuKey1)
         key1_down = transition;
       else if(key == hArcemConfig.iTweakMenuKey2)
@@ -946,7 +960,7 @@ Kbd_PollHostKbd(ARMul_State *state)
 
 static void InitModeTable(void)
 {
-  int *mode_list;
+  int *mode_list, *mode;
   int count;
   int size;
   _swi(OS_ScreenMode,_IN(0)|_IN(2)|_INR(6,7)|_OUT(7),2,0,0,0,&size);
@@ -965,10 +979,12 @@ static void InitModeTable(void)
   }
   memset(ModeList,0,sizeof(HostMode)*count);
   NumModes = 0;
-  int *mode = mode_list;
+  mode = mode_list;
   /* Convert the OS mode list into one in our own format */
   while(count--)
   {
+    uint32_t ncolour,modeflags,log2bpp;
+    int i;
     /* Check block format */
     if (((mode[1] & 0xff) != 1) && ((mode[1] & 0xff) != 3))
       goto next;
@@ -976,7 +992,6 @@ static void InitModeTable(void)
     if((mode[2] < hArcemConfig.iMinResX) || (mode[3] < hArcemConfig.iMinResY))
       goto next;
     /* Determine pixel format */
-    uint32_t ncolour,modeflags,log2bpp;
     if ((mode[1] & 0xff) == 1)
     {
       log2bpp = mode[4];
@@ -998,13 +1013,14 @@ static void InitModeTable(void)
     /* Not exact scale for an LCD? */
     if(hArcemConfig.iLCDResX)
     {
+      float xscale, yscale;
       /* Simply too big? */
       if((hArcemConfig.iLCDResX < mode[2]) || (hArcemConfig.iLCDResY < mode[3]))
         goto next;
       /* Assume the monitor will scale it up while maintaining the aspect ratio
          Therefore, work out how much it can scale it before it reaches an edge, and check that value */
-      float xscale = ((float)hArcemConfig.iLCDResX)/mode[2];
-      float yscale = ((float)hArcemConfig.iLCDResY)/mode[3];
+      xscale = ((float)hArcemConfig.iLCDResX)/mode[2];
+      yscale = ((float)hArcemConfig.iLCDResY)/mode[3];
       xscale = MIN(xscale,yscale);
       if(floor(xscale) != xscale)
         goto next;
@@ -1013,7 +1029,6 @@ static void InitModeTable(void)
     colourdepths_available |= 1<<log2bpp;
 
     /* Already got this entry? (i.e. due to multiple framerates) */
-    int i;
     for(i=NumModes-1;i>=0;i--)
       if((ModeList[i].w == mode[2]) && (ModeList[i].h == mode[3]))
       {
@@ -1146,10 +1161,11 @@ static HostMode *SelectROScreenMode(int x, int y, int aspect, int depths, int *o
   int i;
   for(i=0;i<NumModes;i++)
   {
+    int xscale=1,yscale=1;
+    float score;
     if(!(ModeList[i].depths & depths))
       continue;
-    int xscale=1,yscale=1;
-    float score = ComputeFit(&ModeList[i],x,y,aspect,&xscale,&yscale);
+    score = ComputeFit(&ModeList[i],x,y,aspect,&xscale,&yscale);
     if((score > bestscore) || ((score == bestscore) && (ScaleCost(xscale,yscale) < ScaleCost(bestxscale,bestyscale))))
     {
       bestmode = &ModeList[i];
@@ -1228,9 +1244,9 @@ static void writeval(int i,uint32_t temp)
 
 static void DrawMenu(void)
 {
+  int i;
   _swi(OS_WriteC,_IN(0),12);
   printf("ArcEm tweak menu\n\n");
-  int i;
   for(i=0;i<ITEM_MAX;i++)
   {
     if(items[i].values)
@@ -1258,9 +1274,9 @@ static void GoMenu(void)
   /* Flush input buffer */
   _swi(OS_Byte,_INR(0,1),15,1);
   do {
+    unsigned int c, i;
     DrawMenu();
-    unsigned int c = toupper(_swi(OS_ReadC,_RETURN(0)));
-    unsigned int i;
+    c = toupper(_swi(OS_ReadC,_RETURN(0)));
     for(i=0;i<ITEM_MAX;i++)
       if(c == items[i].label)
         break;

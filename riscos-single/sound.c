@@ -205,26 +205,29 @@ int Sound_InitHost(ARMul_State *state)
 
 SoundData *Sound_GetHostBuffer(int32_t *destavail)
 {
+  int used, ofs, buffree;
   /* Work out how much space is available until next wrap point, or we start overwriting data */
   if(!sound_handler_id)
   {
     *destavail = BUFFER_SAMPLES>>1;
     return sound_buffer;
   }
-  int used = sound_buffer_in-sound_buffer_out;
-  int ofs = sound_buffer_in & sound_buff_mask;
-  int buffree = BUFFER_SAMPLES-MAX(ofs,used);
+  used = sound_buffer_in-sound_buffer_out;
+  ofs = sound_buffer_in & sound_buff_mask;
+  buffree = BUFFER_SAMPLES-MAX(ofs,used);
   *destavail = buffree>>1;
   return sound_buffer + ofs;
 }
 
 void Sound_HostBuffered(SoundData *buffer,int32_t numSamples)
 {
+  int used, buffree;
+
   if(!sound_handler_id)
     return;
 
-  int used = sound_buffer_in-sound_buffer_out;
-  int buffree = BUFFER_SAMPLES-used;
+  used = sound_buffer_in-sound_buffer_out;
+  buffree = BUFFER_SAMPLES-used;
 
   numSamples <<= 1;
 

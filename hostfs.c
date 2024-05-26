@@ -593,11 +593,12 @@ hostfs_read_object_info(const char *host_pathname,
                         risc_os_object_info *object_info)
 {
 #ifdef __riscos__
+  _kernel_oserror *err;
 
   assert(host_pathname);
   assert(object_info);
 
-  _kernel_oserror *err = _swix(OS_File,_INR(0,1)|_OUT(0)|_OUTR(2,5),17,host_pathname,&object_info->type,&object_info->load,&object_info->exec,&object_info->length,&object_info->attribs);
+  err = _swix(OS_File,_INR(0,1)|_OUT(0)|_OUTR(2,5),17,host_pathname,&object_info->type,&object_info->load,&object_info->exec,&object_info->length,&object_info->attribs);
 
   if(err)
   {
@@ -1786,14 +1787,14 @@ hostfs_cache_dir(const char *directory_name)
 
     if(found)
     {
+      size_t string_space;
+
       /* Copy over attributes */
       cache_entries[entry_ptr].object_info.type = (gbpb_buffer.type == OBJECT_TYPE_IMAGEFILE?OBJECT_TYPE_FILE:gbpb_buffer.type);
       cache_entries[entry_ptr].object_info.load = gbpb_buffer.load;
       cache_entries[entry_ptr].object_info.exec = gbpb_buffer.exec;
       cache_entries[entry_ptr].object_info.length = gbpb_buffer.length;
       cache_entries[entry_ptr].object_info.attribs = gbpb_buffer.attribs;
-
-      size_t string_space;
 
       /* Calculate space required to store name (+ terminator) */
       string_space = strlen(gbpb_buffer.name) + 1;
@@ -2172,6 +2173,10 @@ hostfs_reset(void)
 void
 hostfs(ARMul_State *state)
 {
+#if defined(__riscos__) && defined(__TARGET_UNIXLIB__)
+  int old_riscosify = __riscosify_control;
+#endif
+
   assert(state);
 
   /* Allow attempts to register regardless of current state */
@@ -2183,7 +2188,6 @@ hostfs(ARMul_State *state)
 #if defined(__riscos__) && defined(__TARGET_UNIXLIB__)
   /* Temporarily disable the unixlib filename translation so we can safely
      use ANSI/POSIX file functions with native RISC OS paths */
-  int old_riscosify = __riscosify_control;
   __riscosify_control = __RISCOSIFY_NO_PROCESS;
 #endif
 
