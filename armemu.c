@@ -1262,6 +1262,7 @@ ARMul_Emulate26(ARMul_State *state)
       switch (state->NextInstr) {
         case NORMAL: /* Advance the pipeline, and an S cycle */
           r15 += 4; /* Assume we don't care about the flags being corrupted by the PC wrapping */
+          /* fall through */
         case PCINCED: /* Program counter advanced, and an S cycle */
           ARMul_LoadInstr(state, r15, &pipe[0]);
           NORMALCYCLE;
@@ -1307,6 +1308,7 @@ ARMul_Emulate26(ARMul_State *state)
       switch (state->NextInstr) {
         case NORMAL: /* Advance the pipeline, and an S cycle */
           r15 += 4; /* Assume we don't care about the flags being corrupted by the PC wrapping */
+          /* fall through */
         case PCINCED: /* Program counter advanced, and an S cycle */
           ARMul_LoadInstr(state, r15, &pipe[1]);
           NORMALCYCLE;
@@ -1352,6 +1354,7 @@ ARMul_Emulate26(ARMul_State *state)
       switch (state->NextInstr) {
         case NORMAL: /* Advance the pipeline, and an S cycle */
           r15 += 4; /* Assume we don't care about the flags being corrupted by the PC wrapping */
+          /* fall through */
         case PCINCED: /* Program counter advanced, and an S cycle */
           ARMul_LoadInstr(state, r15, &pipe[2]);
           break;

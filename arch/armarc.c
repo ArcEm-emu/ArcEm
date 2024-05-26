@@ -210,9 +210,9 @@ ARMul_MemoryInit(ARMul_State *state)
       break;
 #else
       warn("256K memory size may not be working right. Rounding up to 512K\n");
-      /* fall through... */
 #endif
-      
+      /* fall through */
+
     case MemSize_512K:
       initmemsize = 512 * 1024;
       MEMC.DRAMPageSize = MEMC_PAGESIZE_O_4K;
