@@ -73,7 +73,7 @@ void Sound_UpdateDMARate(ARMul_State *state)
      Sound_DMARate = ARMul_EmuRate*16*(VIDC.SoundFreq+2)*24/VIDC_clk
  */
   Sound_DMARate = (((uint64_t) ARMul_EmuRate)*(16*24)*(VIDC.SoundFreq+2))/DisplayDev_GetVIDCClockIn();
-//  warn_vidc("UpdateDMARate: f %d r %u -> %u\n",VIDC.SoundFreq,ARMul_EmuRate,Sound_DMARate);
+/*  warn_vidc("UpdateDMARate: f %d r %u -> %u\n",VIDC.SoundFreq,ARMul_EmuRate,Sound_DMARate); */
 }
 
 #ifdef SOUND_SUPPORT

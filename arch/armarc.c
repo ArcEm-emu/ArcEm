@@ -12,7 +12,7 @@
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>
-//#include <unistd.h>
+/*#include <unistd.h>*/
 #include <math.h>
 #ifdef __riscos__
 #include <unixlib/local.h>
@@ -492,10 +492,10 @@ static ARMword ARMul_ManglePhysAddr(ARMword phy)
 static void FastMap_SetEntries(ARMul_State *state, ARMword addr,ARMword *data,FastMapAccessFunc func,FastMapUInt flags,ARMword size)
 {
   FastMapEntry *entry = FastMap_GetEntryNoWrap(state,addr);
-//  dbug("FastMap_SetEntries(%08x,%08x,%08x,%08x,%08x)\n",addr,data,func,flags,size);
+/*  dbug("FastMap_SetEntries(%08x,%08x,%08x,%08x,%08x)\n",addr,data,func,flags,size); */
   FastMapUInt offset = ((FastMapUInt)data)-addr; /* Offset so we can just add the phy addr to get a pointer back */
   flags |= offset>>8;
-//  dbug("->entry %08x\n->FlagsAndData %08x\n",entry,flags);
+/*  dbug("->entry %08x\n->FlagsAndData %08x\n",entry,flags); */
   while(size) {
     entry->FlagsAndData = flags;
     entry->AccessFunc = func;

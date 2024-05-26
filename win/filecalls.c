@@ -15,12 +15,14 @@
 
 
 /* The windows version of the directory struct */
-//struct Directory_s {
-//  char *sPath;
-//  WIN32_FIND_DATA w32fd;
-//  HANDLE hFile;  
-//  unsigned char bFirstEntry;
-//};
+#if 0
+struct Directory_s {
+  char *sPath;
+  WIN32_FIND_DATA w32fd;
+  HANDLE hFile;  
+  unsigned char bFirstEntry;
+};
+#endif
 
 /* Compatibility wrapper for Windows 95 without Internet Explorer 4 */
 static BOOL SHGetSpecialFolderPathAFunc(HWND hwnd, LPSTR pszPath, int csidl, BOOL fCreate) {

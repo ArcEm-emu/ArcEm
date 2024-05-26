@@ -40,7 +40,7 @@ struct plat_display {
   int blue_shift,blue_prec;
 
   int DoingMouseFollow;
-//  } HostDisplay;
+/*  } HostDisplay; */
 };
 
 extern struct plat_display PD;

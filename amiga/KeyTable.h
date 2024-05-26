@@ -21,7 +21,7 @@ ARCH_KEY_0,
 ARCH_KEY_minus,
 ARCH_KEY_equal,
 ARCH_KEY_backslash,
--1, // 0E
+-1, /* 0E */
 ARCH_KEY_kp_0,
 ARCH_KEY_q,
 ARCH_KEY_w,
@@ -35,7 +35,7 @@ ARCH_KEY_o,
 ARCH_KEY_p,
 ARCH_KEY_bracket_l,
 ARCH_KEY_bracket_r,
--1, // 1C
+-1, /* 1C */
 ARCH_KEY_kp_1,
 ARCH_KEY_kp_2,
 ARCH_KEY_kp_3,
@@ -51,7 +51,7 @@ ARCH_KEY_l,
 ARCH_KEY_semicolon,
 ARCH_KEY_apostrophe,
 ARCH_KEY_sterling,
--1, // 2C
+-1, /* 2C */
 ARCH_KEY_kp_4,
 ARCH_KEY_kp_5,
 ARCH_KEY_kp_6,
@@ -66,12 +66,12 @@ ARCH_KEY_m,
 ARCH_KEY_comma,
 ARCH_KEY_period,
 ARCH_KEY_slash,
--1, // 3B (Brazil ABNT keyboard only)
+-1, /* 3B (Brazil ABNT keyboard only) */
 ARCH_KEY_kp_decimal,
 ARCH_KEY_kp_7,
 ARCH_KEY_kp_8,
 ARCH_KEY_kp_9,
-ARCH_KEY_space, //40
+ARCH_KEY_space, /* 40 */
 ARCH_KEY_backspace,
 ARCH_KEY_tab,
 ARCH_KEY_kp_enter,
@@ -102,23 +102,23 @@ ARCH_KEY_kp_slash,
 ARCH_KEY_kp_star,
 ARCH_KEY_kp_hash,
 ARCH_KEY_kp_plus,
-ARCH_KEY_scroll_lock, // HELP - mapped to scroll lock on PC keyboards
+ARCH_KEY_scroll_lock, /* HELP - mapped to scroll lock on PC keyboards */
 ARCH_KEY_shift_l,
 ARCH_KEY_shift_r,
 ARCH_KEY_caps_lock,
-ARCH_KEY_control_l, // also control_r
+ARCH_KEY_control_l, /* also control_r */
 ARCH_KEY_alt_l,
 ARCH_KEY_alt_r,
--1, // lamiga
--1, // ramiga
--1, // 68
--1, // 69
--1, // 6A
-ARCH_KEY_control_r, // menu 6B
--1, // 6C (Brazil ABNT keyboard only)
+-1, /* lamiga */
+-1, /* ramiga */
+-1, /* 68 */
+-1, /* 69 */
+-1, /* 6A */
+ARCH_KEY_control_r, /* menu 6B */
+-1, /* 6C (Brazil ABNT keyboard only) */
 ARCH_KEY_print,
 ARCH_KEY_break,
 ARCH_KEY_f12,
 ARCH_KEY_home,
-ARCH_KEY_copy, // actually end
+ARCH_KEY_copy, /* actually end */
 };

@@ -36,8 +36,8 @@
 
 struct Library *ocmb;
 struct OCMIFace *IOCM = NULL;
-#endif // ONCHIPMEM_SUPPORT
-#endif // _amigaos4__
+#endif /* ONCHIPMEM_SUPPORT */
+#endif /* _amigaos4__ */
 
 struct Library *AslBase;
 struct Library *GfxBase;
@@ -189,7 +189,7 @@ static int changemode(int width,int height,int log2bpp,int *xscale,int *yscale)
 											SA_Depth,1<<log2bpp,
 											SA_Quiet,TRUE,
 											SA_ShowTitle,FALSE,
-//											SA_Type,CUSTOMSCREEN,
+											/* SA_Type,CUSTOMSCREEN, */
 											SA_PubName,"ArcEm",
 											SA_DisplayID,id,
 											TAG_DONE);
@@ -365,7 +365,7 @@ static void sdd_refreshmouse(ARMul_State *state) {
   }
 
   for(y=0;y<32;y++,memptr+=8,offset+=8) {
-// fixed height to 32
+    /* fixed height to 32 */
 
     if (offset<512*1024) {
       ARMword tmp[2];
@@ -389,13 +389,13 @@ static void sdd_refreshmouse(ARMul_State *state) {
 
       }; /* x */
 #error TODO - Needs updating for 16bpp
-		WritePixelLine8(&mouse_rp,0,y,32,line,&tmprp); // &mouseptr
+		WritePixelLine8(&mouse_rp,0,y,32,line,&tmprp); /* &mouseptr */
     } else return;
   }; /* y */
 
-// HorizPos,VertPos
+/* HorizPos,VertPos */
 
-//	WaitTOF();
+	/* WaitTOF(); */
 
 	BltBitMap(friend.BitMap,OldMouseX,OldMouseY,
 			window->RPort->BitMap,OldMouseX,OldMouseY,
@@ -613,7 +613,7 @@ static void pdd_refreshmouse(ARMul_State *state) {
 	mask[15] = 0;
 
   for(y=0;y<32;y++,memptr+=8,offset+=8) {
-// fixed height to 32
+    /* fixed height to 32 */
 
     if (offset<512*1024) {
       ARMword tmp[2];
@@ -638,13 +638,13 @@ static void pdd_refreshmouse(ARMul_State *state) {
 			mask[(y*4) + (x/8)] = (mask[(y*4) + (x/8)] << 1) | maskbit;
 
       }; /* x */
-		WritePixelLine8(&mouse_rp,0,y,32,line,&tmprp); // &mouseptr
+		WritePixelLine8(&mouse_rp,0,y,32,line,&tmprp); /* &mouseptr */
     } else return;
   }; /* y */
 
-// HorizPos,VertPos
+/* HorizPos,VertPos */
 
-//	WaitTOF();
+	/* WaitTOF(); */
 
 	BltBitMap(friend.BitMap,OldMouseX,OldMouseY,
 			window->RPort->BitMap,OldMouseX,OldMouseY,
@@ -787,7 +787,7 @@ void MouseMoved(ARMul_State *state,int xdiff,int ydiff)
 	  			KBD.MouseXCount = xdiff & 127;
   				KBD.MouseYCount = -ydiff & 127;
 
-//refreshmouse(state);
+/* refreshmouse(state); */
 }
 
 int

@@ -69,10 +69,10 @@ static void gettooltypes(struct WBArg *wbarg, ArcemConfig *pConfig)
 		{
         	char *sNewRomName = strdup(s);
         
-        	// Only replace the romname if we successfully allocated a new string
+        	/* Only replace the romname if we successfully allocated a new string */
         	if(sNewRomName)
 			{
-          		// Free up the old one
+          		/* Free up the old one */
           		free(pConfig->sRomImageName);
 
 		        pConfig->sRomImageName = sNewRomName;
@@ -86,7 +86,7 @@ static void gettooltypes(struct WBArg *wbarg, ArcemConfig *pConfig)
 
 	        if(sNewExtnRomDir)
 			{
-    	      // Free up the old one
+    	      /* Free up the old one */
         	  free(pConfig->sEXTNDirectory);
 
 	          pConfig->sEXTNDirectory = sNewExtnRomDir;
@@ -99,10 +99,10 @@ static void gettooltypes(struct WBArg *wbarg, ArcemConfig *pConfig)
 		{
 	        char *sNewHostFSDir = strdup(s);
         
-        	// Only replace the directory if we successfully allocated a new string
+        	/* Only replace the directory if we successfully allocated a new string */
         	if(sNewHostFSDir)
 			{
-          		// Free up the old one
+          		/* Free up the old one */
           		free(pConfig->sHostFSDirectory);
 
           		pConfig->sHostFSDirectory = sNewHostFSDir;

@@ -903,7 +903,7 @@ Kbd_PollHostKbd(ARMul_State *state)
 
     if (_swi (ArcEmKey_GetKey, _RETURN(0)|_OUTR(1,2), &transition, &key))
     {
-      //printf("Processing key %d, transition %d\n",key, transition);
+      /*printf("Processing key %d, transition %d\n",key, transition);*/
       /* Now add it to the buffer */
       keyboard_key_changed_ex(&KBD, key / 16, key % 16, transition ? 0 : 1);
 

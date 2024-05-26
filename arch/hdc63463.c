@@ -82,11 +82,11 @@ struct HDCStruct {
   struct HDCshape specshape;
 
   /* Actual size of the drive as set in the config file */
-//  struct HDCshape configshape[4];
+/*  struct HDCshape configshape[4]; */
 };
 
 /* The global Hard drive state structure */
-//struct HDCStruct HDCData;
+/*struct HDCStruct HDCData;*/
 struct HDCStruct HDC;
 
 

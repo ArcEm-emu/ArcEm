@@ -21,7 +21,7 @@ static uint32_t sampleRate = 44100;
 static int soundDevice;
 
 /* Threading currently doesn't work very well - no priority control is in place, so the sound thread hardly ever gets any CPU time */
-//#define SOUND_THREAD
+/*#define SOUND_THREAD*/
 
 #ifdef SOUND_THREAD
 static pthread_t thread;

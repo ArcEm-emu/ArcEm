@@ -29,7 +29,7 @@ HBITMAP hbmp = NULL;
 HBITMAP cbmp = NULL;
 HBITMAP mbmp = NULL;
 
-//BITMAPFILEHEADER fhdr;
+/*BITMAPFILEHEADER fhdr;*/
 BITMAPINFO *pbmi;
 BITMAPINFO *cbmi;
 BITMAPINFO *mbmi;
@@ -41,9 +41,9 @@ static const TCHAR szWindowClass[32] = TEXT("GenericClass");
 
 static BOOL captureMouse = FALSE;
 
-static RECT rcClip;           // new area for ClipCursor
+static RECT rcClip;           /* new area for ClipCursor */
 
-static RECT rcOldClip;        // previous area for ClipCursor
+static RECT rcOldClip;        /* previous area for ClipCursor */
 
 
 
@@ -80,14 +80,14 @@ static DWORD WINAPI threadWindow(LPVOID param)
 
     MyRegisterClass((HINSTANCE)hInst);
 
-    // Perform application initialization:
+    /* Perform application initialization: */
     if (!InitInstance ((HINSTANCE) hInst, SW_SHOWDEFAULT)) {
         return FALSE;
     }
 
     SelectMenuItem(mainWin, CONFIG.eDisplayDriver);
 
-    // Main message loop:
+    /* Main message loop: */
     while (GetMessage(&msg, NULL, 0, 0)) {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
@@ -112,7 +112,7 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
     wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW+1);
     wcex.lpszMenuName  = TEXT("GuiMenu");
     wcex.lpszClassName = szWindowClass;
-    wcex.hIconSm       = NULL; //LoadIcon(wcex.hInstance, (LPCTSTR)IDI_SMALL);
+    wcex.hIconSm       = NULL; /* LoadIcon(wcex.hInstance, (LPCTSTR)IDI_SMALL); */
 
     return RegisterClassEx(&wcex);
 }
@@ -138,16 +138,16 @@ static void insert_floppy(HWND hWnd, int drive, char *image)
 }
 
 static void OpenFloppyImageDialog(HWND hWnd, int drive) {
-	OPENFILENAMEA ofn;      // common dialog box structure
-	char szFile[260];       // buffer for file name
+	OPENFILENAMEA ofn;      /* common dialog box structure */
+	char szFile[260];       /* buffer for file name */
 
-	// Initialize OPENFILENAME
+	/* Initialize OPENFILENAME */
 	ZeroMemory(&ofn, sizeof(ofn));
 	ofn.lStructSize = sizeof(ofn);
 	ofn.hwndOwner = mainWin;
 	ofn.lpstrFile = szFile;
-	// Set lpstrFile[0] to '\0' so that GetOpenFileName does not
-	// use the contents of szFile to initialize itself.
+	/* Set lpstrFile[0] to '\0' so that GetOpenFileName does not
+	   use the contents of szFile to initialize itself. */
 	ofn.lpstrFile[0] = '\0';
 	ofn.nMaxFile = sizeof(szFile);
 	ofn.lpstrFilter = "ADF files (*.adf)\0*.ADF\0All\0*.*\0";
@@ -157,7 +157,7 @@ static void OpenFloppyImageDialog(HWND hWnd, int drive) {
 	ofn.lpstrInitialDir = NULL;
 	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
 
-	// Display the Open dialog box.
+	/* Display the Open dialog box. */
 	if (GetOpenFileNameA(&ofn)==TRUE) {
 		insert_floppy(hWnd, drive, szFile);
 	}
@@ -189,21 +189,21 @@ static void SelectMenuItem(HWND hWnd, ArcemConfig_DisplayDriver driver) {
     CheckMenuRadioItem(GetMenu(hWnd), IDM_STDDISPLAY, IDM_PALDISPLAY, wmId, MF_BYCOMMAND);
 }
 
-//
-//   FUNCTION: InitInstance(HANDLE, int)
-//
-//   PURPOSE: Saves instance handle and creates main window
-//
-//   COMMENTS:
-//
-//        In this function, we save the instance handle in a global variable and
-//        create and display the main program window.
-//
+/**
+ *   FUNCTION: InitInstance(HANDLE, int)
+ *
+ *   PURPOSE: Saves instance handle and creates main window
+ *
+ *   COMMENTS:
+ *
+ *        In this function, we save the instance handle in a global variable and
+ *        create and display the main program window.
+ */
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
    mainWin = CreateWindow( szWindowClass,
             TEXT("Archimedes Emulator"),
-            WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX, //WS_OVERLAPPEDWINDOW,
+            WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX, /* WS_OVERLAPPEDWINDOW, */
             CW_USEDEFAULT,
             CW_USEDEFAULT,
             xSize + GetSystemMetrics(SM_CXFIXEDFRAME) * 2,
@@ -226,16 +226,16 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    return TRUE;
 }
 
-//
-//  FUNCTION: WndProc(HWND, unsigned, WORD, LONG)
-//
-//  PURPOSE:  Processes messages for the main window.
-//
-//  WM_COMMAND  - process the application menu
-//  WM_PAINT    - Paint the main window
-//  WM_DESTROY  - post a quit message and return
-//
-//
+/**
+ *  FUNCTION: WndProc(HWND, unsigned, WORD, LONG)
+ *
+ *  PURPOSE:  Processes messages for the main window.
+ *
+ *  WM_COMMAND  - process the application menu
+ *  WM_PAINT    - Paint the main window
+ *  WM_DESTROY  - post a quit message and return
+ *
+ */
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
   int wmId, wmEvent, nVirtKey, nMouseX, nMouseY;
@@ -248,7 +248,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_COMMAND:
       wmId    = LOWORD(wParam);
       wmEvent = HIWORD(wParam);
-      // Parse the menu selections:
+      /* Parse the menu selections: */
       switch (wmId)
       {
         case IDM_ABOUT:
@@ -362,7 +362,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
         case WM_SYSKEYDOWN:
         case WM_KEYDOWN:
-            nVirtKey = (TCHAR) wParam;    // character code
+            nVirtKey = (TCHAR) wParam;    /* character code */
             if (wParam == VK_SHIFT || wParam == VK_CONTROL || wParam == VK_MENU)
                 nVirtKey = MapVirtualKey((lParam & 0xff0000) >> 16, MAPVK_VSC_TO_VK_EX);
 
@@ -384,7 +384,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
         case WM_SYSKEYUP:
         case WM_KEYUP:
-            nVirtKey = (TCHAR) wParam;    // character code
+            nVirtKey = (TCHAR) wParam;    /* character code */
             if (wParam == VK_SHIFT || wParam == VK_CONTROL || wParam == VK_MENU)
                 nVirtKey = MapVirtualKey((lParam & 0xff0000) >> 16, MAPVK_VSC_TO_VK_EX);
 
@@ -394,8 +394,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
         case WM_MOUSEMOVE:
 
-            nMouseX = GET_X_LPARAM(lParam);  // horizontal position of cursor
-            nMouseY = GET_Y_LPARAM(lParam);  // vertical position of cursor
+            nMouseX = GET_X_LPARAM(lParam);  /* horizontal position of cursor */
+            nMouseY = GET_Y_LPARAM(lParam);  /* vertical position of cursor */
 
             if (captureMouse) {
                 SetCursor(NULL);
@@ -444,12 +444,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 int iMouseWheelValue = GET_WHEEL_DELTA_WPARAM(wParam);
 
                 if(iMouseWheelValue > 0) {
-                    // Fire our fake button_4 wheelup event, this'll get picked up
-                    // by the scrollwheel module in RISC OS
+                    /* Fire our fake button_4 wheelup event, this'll get picked up
+                       by the scrollwheel module in RISC OS */
                     keyboard_key_changed(&KBD, ARCH_KEY_button_4, 1);
                 } else if(iMouseWheelValue < 0) {
-                    // Fire our fake button_5 wheeldown event, this'll get picked up
-                    // by the scrollwheel module in RISC OS
+                    /* Fire our fake button_5 wheeldown event, this'll get picked up
+                       by the scrollwheel module in RISC OS */
                     keyboard_key_changed(&KBD, ARCH_KEY_button_5, 1);
                 }
             }
@@ -547,9 +547,9 @@ int createBitmaps(int hWidth, int hHeight, int hBpp, int hXScale)
   pbmi->bmiHeader.biSize          = sizeof(BITMAPINFOHEADER);
   pbmi->bmiHeader.biWidth         = hWidth;
   pbmi->bmiHeader.biHeight        = -hHeight;
-  pbmi->bmiHeader.biCompression   = BI_RGB; //0;
+  pbmi->bmiHeader.biCompression   = BI_RGB; /* 0; */
   pbmi->bmiHeader.biPlanes        = 1;
-  pbmi->bmiHeader.biSizeImage     = 0; //wic->getWidth()*wic->getHeight()*scale;
+  pbmi->bmiHeader.biSizeImage     = 0; /* wic->getWidth()*wic->getHeight()*scale; */
   pbmi->bmiHeader.biBitCount      = hBpp;
   pbmi->bmiHeader.biXPelsPerMeter = 0;
   pbmi->bmiHeader.biYPelsPerMeter = 0;
@@ -563,9 +563,9 @@ int createBitmaps(int hWidth, int hHeight, int hBpp, int hXScale)
   cbmi->bmiHeader.biSize          = sizeof(BITMAPINFOHEADER);
   cbmi->bmiHeader.biWidth         = 32*hXScale;
   cbmi->bmiHeader.biHeight        = -hHeight;
-  cbmi->bmiHeader.biCompression   = BI_RGB; //0;
+  cbmi->bmiHeader.biCompression   = BI_RGB; /* 0; */
   cbmi->bmiHeader.biPlanes        = 1;
-  cbmi->bmiHeader.biSizeImage     = 0; //wic->getWidth()*wic->getHeight()*scale;
+  cbmi->bmiHeader.biSizeImage     = 0; /* wic->getWidth()*wic->getHeight()*scale; */
   cbmi->bmiHeader.biBitCount      = hBpp;
   cbmi->bmiHeader.biXPelsPerMeter = 0;
   cbmi->bmiHeader.biYPelsPerMeter = 0;
@@ -580,9 +580,9 @@ int createBitmaps(int hWidth, int hHeight, int hBpp, int hXScale)
     mbmi->bmiHeader.biSize          = sizeof(BITMAPINFOHEADER);
     mbmi->bmiHeader.biWidth         = 32*hXScale;
     mbmi->bmiHeader.biHeight        = -hHeight;
-    mbmi->bmiHeader.biCompression   = BI_RGB; //0;
+    mbmi->bmiHeader.biCompression   = BI_RGB; /* 0; */
     mbmi->bmiHeader.biPlanes        = 1;
-    mbmi->bmiHeader.biSizeImage     = 0; //wic->getWidth()*wic->getHeight()*scale;
+    mbmi->bmiHeader.biSizeImage     = 0; /* wic->getWidth()*wic->getHeight()*scale; */
     mbmi->bmiHeader.biBitCount      = 1;
     mbmi->bmiHeader.biXPelsPerMeter = 0;
     mbmi->bmiHeader.biYPelsPerMeter = 0;

@@ -54,7 +54,7 @@ ARMul_LoadInstr(ARMul_State *state,ARMword addr, PipelineEntry *p)
   
   entry = FastMap_GetEntryNoWrap(state,addr);
   res = FastMap_DecodeRead(entry,state->FastMapMode);
-//  dbug("LoadInstr: %08x maps to entry %08x res %08x (mode %08x pc %08x)\n",addr,entry,res,MEMC.FastMapMode,state->Reg[15]);
+/*  dbug("LoadInstr: %08x maps to entry %08x res %08x (mode %08x pc %08x)\n",addr,entry,res,MEMC.FastMapMode,state->Reg[15]); */
   if(FASTMAP_RESULT_DIRECT(res))
   {
     ARMword *data = FastMap_Log2Phy(entry,addr);
@@ -1075,7 +1075,7 @@ void EmuRate_Update(ARMul_State *state)
   /* Update IOC timers again, to ensure the next interrupt occurs at the right time */
   UpdateTimerRegisters(state);
 
-  //dbug("EmuRate %d IOC %.4f InvIOC %.4f\n",ARMul_EmuRate,((float)ioc.IOCRate)/65536,((float)ioc.InvIOCRate)/65536);  
+  /*dbug("EmuRate %d IOC %.4f InvIOC %.4f\n",ARMul_EmuRate,((float)ioc.IOCRate)/65536,((float)ioc.InvIOCRate)/65536);  */
 }
 
 /***************************************************************************\

@@ -28,7 +28,7 @@
 #include <workbench/startup.h>
 #endif
 
-// Local functions
+/* Local functions */
 static char *arcemconfig_StringDuplicate(const char *sInput);
 static void arcemconfig_StringReplace(char** sPtr, const char* sNew);
 static bool arcemconfig_StringToEnum(unsigned int* uPtr, const char* sInput, const ArcemConfig_Label *labels);
@@ -60,14 +60,14 @@ static const ArcemConfig_Label processor_labels[] = {
  */
 void ArcemConfig_SetupDefaults(ArcemConfig *pConfig)
 {
-  // Default to 4MB of memory
+  /* Default to 4MB of memory */
   pConfig->eMemSize = MemSize_4M;
 
-  // We default to an ARM 2AS architecture (includes SWP) without a cache
+  /* We default to an ARM 2AS architecture (includes SWP) without a cache */
   pConfig->eProcessor = Processor_ARM250;
 
   pConfig->sRomImageName = arcemconfig_StringDuplicate("ROM");
-  // If we've run out of memory this early, something is very wrong
+  /* If we've run out of memory this early, something is very wrong */
   if(NULL == pConfig->sRomImageName) {
     ControlPane_Error(EXIT_FAILURE,"Failed to allocate memory for initial configuration. Please free up more memory.\n");
   }
@@ -75,22 +75,22 @@ void ArcemConfig_SetupDefaults(ArcemConfig *pConfig)
   pConfig->sCMOSFileName = NULL;
 
 #if defined(EXTNROM_SUPPORT)
-  // The default directory is extnrom in the current working directory
+  /* The default directory is extnrom in the current working directory */
   pConfig->sEXTNDirectory = arcemconfig_StringDuplicate("extnrom");
-  // If we've run out of memory this early, something is very wrong
+  /* If we've run out of memory this early, something is very wrong */
   if(NULL == pConfig->sEXTNDirectory) {
     ControlPane_Error(EXIT_FAILURE,"Failed to allocate memory for initial configuration. Please free up more memory.\n");
   }
 #endif /* EXTNROM_SUPPORT */
 
 #if defined(HOSTFS_SUPPORT)
-  // The default directory is hostfs in the current working directory
+  /* The default directory is hostfs in the current working directory */
 #ifdef AMIGA
   pConfig->sHostFSDirectory = arcemconfig_StringDuplicate("hostfs");
 #else
   pConfig->sHostFSDirectory = arcemconfig_StringDuplicate("./hostfs");
 #endif
-  // If we've run out of memory this early, something is very wrong
+  /* If we've run out of memory this early, something is very wrong */
   if(NULL == pConfig->sHostFSDirectory) {
     ControlPane_Error(EXIT_FAILURE,"Failed to allocate memory for initial configuration. Please free up more memory.\n");
   }
@@ -269,22 +269,22 @@ void ArcemConfig_ParseCommandLine(ArcemConfig *pConfig, int argc, char *argv[])
 #endif /* SYSTEM_riscos_single */
     ;
 
-  // No commandline arguments?
+  /* No commandline arguments? */
   if(0 == argc) {
-    // There should always be at least 1, the program name
+    /* There should always be at least 1, the program name */
 #ifdef AMIGA
-// Unless we are launching from Workbench...
+/* Unless we are launching from Workbench... */
 	wblaunch((struct WBStartup *)argv, pConfig);
 #endif
     return;
   }
 
   if(1 == argc) {
-    // No arguments other than the program name, no work to do
+    /* No arguments other than the program name, no work to do */
     return;
   }
 
-  // We don't care about argument 0 as that's the program name
+  /* We don't care about argument 0 as that's the program name */
   iArgument = 1;
 
   while(iArgument < argc) {
@@ -299,57 +299,57 @@ void ArcemConfig_ParseCommandLine(ArcemConfig *pConfig, int argc, char *argv[])
       exit(EXIT_SUCCESS);
     }
     else if(0 == strcmp("--config", argv[iArgument])) {
-      if(iArgument+1 < argc) { // Is there a following argument?
+      if(iArgument+1 < argc) { /* Is there a following argument? */
         ini_parse(argv[iArgument + 1], ArcemConfig_Handler, pConfig);
         iArgument += 2;
       } else {
-        // No argument following the --config option
+        /* No argument following the --config option */
         ControlPane_Error(EXIT_FAILURE,"No argument following the --config option\n");
       }
     }
     else if(0 == strcmp("--rom", argv[iArgument])) {
-      if(iArgument+1 < argc) { // Is there a following argument?
+      if(iArgument+1 < argc) { /* Is there a following argument? */
         arcemconfig_StringReplace(&pConfig->sRomImageName, argv[iArgument + 1]);
         iArgument += 2;
       } else {
-        // No argument following the --rom option
+        /* No argument following the --rom option */
         ControlPane_Error(EXIT_FAILURE,"No argument following the --rom option\n");
       }
     }
     else if (0 == strcmp("--hexcmos", argv[iArgument])) {
-      if (iArgument + 1 < argc) { // Is there a following argument?
+      if (iArgument + 1 < argc) { /* Is there a following argument? */
         arcemconfig_StringReplace(&pConfig->sCMOSFileName, argv[iArgument + 1]);
         iArgument += 2;
       }
       else {
-        // No argument following the --hexcmos option
+        /* No argument following the --hexcmos option */
         ControlPane_Error(EXIT_FAILURE,"No argument following the --hexcmos option\n");
       }
     }
 #if defined(EXTNROM_SUPPORT)
     else if(0 == strcmp("--extnromdir", argv[iArgument])) {
-      if(iArgument+1 < argc) { // Is there a following argument?
+      if(iArgument+1 < argc) { /* Is there a following argument? */
         arcemconfig_StringReplace(&pConfig->sEXTNDirectory, argv[iArgument + 1]);
         iArgument += 2;
       } else {
-        // No argument following the --extnromdir option
+        /* No argument following the --extnromdir option */
         ControlPane_Error(EXIT_FAILURE,"No argument following the --extnromdir option\n");
       }
     }
 #endif /* EXTNROM_SUPPORT */
 #if defined(HOSTFS_SUPPORT)
     else if(0 == strcmp("--hostfsdir", argv[iArgument])) {
-      if(iArgument+1 < argc) { // Is there a following argument?
+      if(iArgument+1 < argc) { /* Is there a following argument? */
         arcemconfig_StringReplace(&pConfig->sHostFSDirectory, argv[iArgument + 1]);
         iArgument += 2;
       } else {
-        // No argument following the --hostfsdir option
+        /* No argument following the --hostfsdir option */
         ControlPane_Error(EXIT_FAILURE,"No argument following the --hostfsdir option\n");
       }
     }
 #endif /* HOSTFS_SUPPORT */
     else if(0 == strcmp("--memory", argv[iArgument])) {
-      if(iArgument+1 < argc) { // Is there a following argument?
+      if(iArgument+1 < argc) { /* Is there a following argument? */
         if (arcemconfig_StringToEnum(&uValue, argv[iArgument + 1], memsize_labels)) {
           pConfig->eMemSize = uValue;
           iArgument += 2;
@@ -358,12 +358,12 @@ void ArcemConfig_ParseCommandLine(ArcemConfig *pConfig, int argc, char *argv[])
         }
 
       } else {
-        // No argument following the --memory option
+        /* No argument following the --memory option */
         ControlPane_Error(EXIT_FAILURE,"No argument following the --memory option\n");
       }
     }
     else if(0 == strcmp("--processor", argv[iArgument])) {
-      if(iArgument+1 < argc) { // Is there a following argument?
+      if(iArgument+1 < argc) { /* Is there a following argument? */
         if (arcemconfig_StringToEnum(&uValue, argv[iArgument + 1], processor_labels)) {
           pConfig->eProcessor = uValue;
           iArgument += 2;
@@ -371,13 +371,13 @@ void ArcemConfig_ParseCommandLine(ArcemConfig *pConfig, int argc, char *argv[])
           ControlPane_Error(EXIT_FAILURE,"Unrecognised value '%s' to the --processor option\n", argv[iArgument + 1]);
         }
       } else {
-        // No argument following the --processor option
+        /* No argument following the --processor option */
         ControlPane_Error(EXIT_FAILURE,"No argument following the --processor option\n");
       }
     }
 #if defined(SYSTEM_riscos_single) || defined(SYSTEM_win)
     else if(0 == strcmp("--display", argv[iArgument])) {
-      if(iArgument+1 < argc) { // Is there a following argument?
+      if(iArgument+1 < argc) { /* Is there a following argument? */
         if(0 == strcmp("pal", argv[iArgument + 1])) {
           pConfig->eDisplayDriver = DisplayDriver_Palettised;
           iArgument += 2;
@@ -468,9 +468,9 @@ static void arcemconfig_StringReplace(char **sPtr, const char *sInput)
 {
     char *sNew = arcemconfig_StringDuplicate(sInput);
 
-    // Only replace the romname if we successfully allocated a new string
+    /* Only replace the romname if we successfully allocated a new string */
     if (sNew) {
-        // Free up the old one
+        /* Free up the old one */
         free(*sPtr);
 
         *sPtr = sNew;

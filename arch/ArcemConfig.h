@@ -48,9 +48,9 @@ typedef enum ArcemConfig_MemSize_e {
 } ArcemConfig_MemSize;
 
 typedef enum ArcemConfig_Processor_e {
-  Processor_ARM2,                 // ARM 2 
-  Processor_ARM250,               // ARM 2AS
-  Processor_ARM3                  // ARM 2AS
+  Processor_ARM2,                 /* ARM 2 */
+  Processor_ARM250,               /* ARM 2AS */
+  Processor_ARM3                  /* ARM 2AS */
 } ArcemConfig_Processor;
 
 typedef enum ArcemConfig_DisplayDriver_e {

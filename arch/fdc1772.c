@@ -16,7 +16,7 @@
 #define __USE_FIXED_PROTOTYPES__
 #include <errno.h>
 #include <stdio.h>
-//#include <unistd.h>
+/*#include <unistd.h>*/
 
 #include "../armdefs.h"
 #include "../armemu.h"
@@ -63,7 +63,7 @@ struct FDCStruct{
   int32_t DelayLatch;
   int32_t CurrentDisc;
 #ifdef MACOSX
-  char* driveFiles[4];  // In MAE, we use *real* filenames for disks
+  char* driveFiles[4];  /* In MAE, we use *real* filenames for disks */
 #endif
     floppy_drive drive[4];
     /* The bottom four bits of leds holds their current state.  If the
@@ -121,7 +121,7 @@ struct FDCStruct{
 #define TYPE2_BIT_MOTORON (1<<2)
 #define TYPE2_BIT_MULTISECTOR (1<<4)
 
-// Structure containing the state of the floppy drive controller
+/* Structure containing the state of the floppy drive controller */
 struct FDCStruct FDC;
 
 
@@ -780,7 +780,7 @@ static void FDC_NewCommand(ARMul_State *state, ARMword data)
     DBG(("FDC_NewCommand: Force interrupt data=0x%x\n",data));
     FDC.LastCommand=data;
   } else {
-    // warn_fdc("unknown FDC command received: %#x\n", data);
+    /* warn_fdc("unknown FDC command received: %#x\n", data); */
   }
 
   return;

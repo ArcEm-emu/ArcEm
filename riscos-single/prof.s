@@ -37,7 +37,7 @@ prof_fmt_str:
 #define OS_LeaveOS 0x7c
 #define OS_Hardware 0x7a
 
-//#define cortex
+/*#define cortex*/
 
 #ifdef cortex
 #define read_timer(out) mrc	p15, 0, out, c9, c13, 0 @ counts up
