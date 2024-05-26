@@ -318,8 +318,6 @@ extnrom_load(const char *dir, uint32_t size, uint32_t entry_count, void *address
       continue;
     }
 
-    free(path);
-
     fseek(f, 0, SEEK_END);
     ulFilesize = ftell(f);
     fseek(f, 0, SEEK_SET);
@@ -343,10 +341,12 @@ extnrom_load(const char *dir, uint32_t size, uint32_t entry_count, void *address
       warn_data("Error while loading file \'%s\': %s\n",
                 path, strerror(errno));
       fclose(f);
+      free(path);
       continue;
     }
 
     fclose(f);
+    free(path);
 
     /* Byte-swap module from little-endian to host processor */
     extnrom_endian_correct(modules, ulFilesize);
