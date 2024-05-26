@@ -55,7 +55,7 @@ typedef enum ArcemConfig_Processor_e {
 
 typedef enum ArcemConfig_DisplayDriver_e {
   DisplayDriver_Palettised,
-  DisplayDriver_Standard, /* i.e. 16/32bpp true colour */
+  DisplayDriver_Standard /* i.e. 16/32bpp true colour */
 } ArcemConfig_DisplayDriver;
 
 typedef struct ArcemConfig_Label_s {

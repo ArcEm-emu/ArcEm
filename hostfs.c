@@ -119,20 +119,20 @@ static char HOSTFS_ROOT[512];
 typedef enum {
   HOSTFS_STATE_UNREGISTERED,    /**< Module not yet registered */
   HOSTFS_STATE_REGISTERED,  /**< Module successfully registered */
-  HOSTFS_STATE_IGNORE,      /**< Ignoring activity after failing to register */
+  HOSTFS_STATE_IGNORE       /**< Ignoring activity after failing to register */
 } HostFSState;
 
 enum OBJECT_TYPE {
   OBJECT_TYPE_NOT_FOUND = 0,
   OBJECT_TYPE_FILE      = 1,
   OBJECT_TYPE_DIRECTORY = 2,
-  OBJECT_TYPE_IMAGEFILE = 3,
+  OBJECT_TYPE_IMAGEFILE = 3
 };
 
 enum OPEN_MODE {
   OPEN_MODE_READ               = 0,
   OPEN_MODE_CREATE_OPEN_UPDATE = 1, /* Only used by RISC OS 2 */
-  OPEN_MODE_UPDATE             = 2,
+  OPEN_MODE_UPDATE             = 2
 };
 
 enum FILE_INFO_WORD {
@@ -140,7 +140,7 @@ enum FILE_INFO_WORD {
   FILE_INFO_WORD_READ_OK            = 1U << 30,
   FILE_INFO_WORD_IS_DIR             = 1U << 29,
   FILE_INFO_WORD_UNBUFFERED_OK      = 1U << 28,
-  FILE_INFO_WORD_STREAM_INTERACTIVE = 1U << 27,
+  FILE_INFO_WORD_STREAM_INTERACTIVE = 1U << 27
 };
 
 enum FILECORE_ERROR {
@@ -153,13 +153,13 @@ enum FILECORE_ERROR {
   FILECORE_ERROR_EXISTS      = 0xc4, /* Already exists */
   FILECORE_ERROR_DISCFULL    = 0xc6,
   FILECORE_ERROR_NOTFOUND    = 0xd6, /* Not found */
-  HOSTFS_ERROR_UNKNOWN       = 0x100, /* Not a filecore error, but causes HostFS to return 'an unknown error occured' */
+  HOSTFS_ERROR_UNKNOWN       = 0x100 /* Not a filecore error, but causes HostFS to return 'an unknown error occured' */
 };
 
 enum RISC_OS_FILE_TYPE {
   RISC_OS_FILE_TYPE_OBEY = 0xfeb,
   RISC_OS_FILE_TYPE_DATA = 0xffd,
-  RISC_OS_FILE_TYPE_TEXT = 0xfff,
+  RISC_OS_FILE_TYPE_TEXT = 0xfff
 };
 
 typedef struct {

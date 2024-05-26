@@ -131,6 +131,7 @@ enum {
 #define X(key, row, col) ARCH_KEY_ ## key,
     ARCH_KEYBOARD_DEFINITION
 #undef X
+    ARCH_KEY_count
 };
 typedef uint8_t arch_key_id;
 

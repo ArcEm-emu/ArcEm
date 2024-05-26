@@ -11,7 +11,7 @@ extern CycleDiff Sound_FudgeRate; /* Extra fudge factor applied to Sound_DMARate
 
 typedef enum {
   Stereo_LeftRight, /* Data is ordered with left channel first */
-  Stereo_RightLeft, /* Data is ordered with right channel first */
+  Stereo_RightLeft  /* Data is ordered with right channel first */
 } Sound_StereoSense;
 
 extern Sound_StereoSense eSound_StereoSense;
