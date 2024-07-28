@@ -56,6 +56,7 @@ LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 BOOL    CALLBACK AboutDlgProc (HWND, UINT, WPARAM, LPARAM);
 
 static void SelectMenuItem(HWND hWnd, ArcemConfig_DisplayDriver driver);
+static bool SelectCheckbox(HWND hWnd, int wmId, bool value);
 
 static MSG msg;
 static HANDLE hInst;
@@ -71,6 +72,8 @@ size_t curstride;
 size_t mskstride;
 
 ArcemConfig_DisplayDriver requestedDriver;
+bool requestedAspect;
+bool requestedUpscale;
 
 static DWORD WINAPI threadWindow(LPVOID param)
 {
@@ -86,6 +89,8 @@ static DWORD WINAPI threadWindow(LPVOID param)
     }
 
     SelectMenuItem(mainWin, CONFIG.eDisplayDriver);
+    requestedAspect = SelectCheckbox(mainWin, IDM_ASPECT, CONFIG.bAspectRatioCorrection);
+    requestedUpscale = SelectCheckbox(mainWin, IDM_UPSCALE, CONFIG.bUpscale);
 
     /* Main message loop: */
     while (GetMessage(&msg, NULL, 0, 0)) {
@@ -189,6 +194,11 @@ static void SelectMenuItem(HWND hWnd, ArcemConfig_DisplayDriver driver) {
     CheckMenuRadioItem(GetMenu(hWnd), IDM_STDDISPLAY, IDM_PALDISPLAY, wmId, MF_BYCOMMAND);
 }
 
+static bool SelectCheckbox(HWND hWnd, int wmId, bool value) {
+    CheckMenuItem(GetMenu(hWnd), wmId, value ? MF_CHECKED : MF_UNCHECKED);
+    return value;
+}
+
 /**
  *   FUNCTION: InitInstance(HANDLE, int)
  *
@@ -277,6 +287,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
           break;
         case IDM_PALDISPLAY:
           SelectMenuItem(hWnd, DisplayDriver_Palettised);
+          break;
+        case IDM_ASPECT:
+          requestedAspect = SelectCheckbox(mainWin, IDM_ASPECT, !CONFIG.bAspectRatioCorrection);
+          break;
+        case IDM_UPSCALE:
+          requestedUpscale = SelectCheckbox(mainWin, IDM_UPSCALE, !CONFIG.bUpscale);
           break;
         default:
           return DefWindowProc(hWnd, message, wParam, lParam);

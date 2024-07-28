@@ -104,12 +104,12 @@ void ArcemConfig_SetupDefaults(ArcemConfig *pConfig)
 
 #if defined(SYSTEM_win)
   pConfig->eDisplayDriver = DisplayDriver_Standard;
+  pConfig->bAspectRatioCorrection = true;
+  pConfig->bUpscale = true;
 #endif
 #if defined(SYSTEM_riscos_single)
   pConfig->eDisplayDriver = DisplayDriver_Palettised;
   pConfig->bRedBlueSwap = false;
-  pConfig->bAspectRatioCorrection = true;
-  pConfig->bUpscale = true;
   pConfig->bNoLowColour = false;
   pConfig->iMinResX = 0;
   pConfig->iMinResY = 0;
@@ -392,17 +392,17 @@ void ArcemConfig_ParseCommandLine(ArcemConfig *pConfig, int argc, char *argv[])
       } else {
         ControlPane_Error(EXIT_FAILURE,"No argument following the --display option\n");
       }
-    }
-#endif /* SYSTEM_riscos_single || SYSTEM_win */
-#if defined(SYSTEM_riscos_single)
-    else if(0 == strcmp("--rbswap",argv[iArgument])) {
-      pConfig->bRedBlueSwap = true;
-      iArgument += 1;
     } else if(0 == strcmp("--noaspect",argv[iArgument])) {
       pConfig->bAspectRatioCorrection = false;
       iArgument += 1;
     } else if(0 == strcmp("--noupscale",argv[iArgument])) {
       pConfig->bUpscale = false;
+      iArgument += 1;
+    }
+#endif /* SYSTEM_riscos_single || SYSTEM_win */
+#if defined(SYSTEM_riscos_single)
+    else if(0 == strcmp("--rbswap",argv[iArgument])) {
+      pConfig->bRedBlueSwap = true;
       iArgument += 1;
     } else if(0 == strcmp("--nolowcolour",argv[iArgument])) {
       pConfig->bNoLowColour = true;

@@ -13,5 +13,7 @@
 #define IDM_PASTE	111
 #define IDM_STDDISPLAY	120
 #define IDM_PALDISPLAY	121
+#define IDM_ASPECT	122
+#define IDM_UPSCALE	123
 #define IDM_ABOUT	130
 

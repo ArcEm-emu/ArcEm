@@ -90,11 +90,11 @@ typedef struct ArcemConfig_s {
   /* Platform-specific bits */
 #if defined(SYSTEM_riscos_single) || defined(SYSTEM_win)
   ArcemConfig_DisplayDriver eDisplayDriver;
+  bool bAspectRatioCorrection; /* Apply H/V scaling for aspect ratio correction */
+  bool bUpscale; /* Allow upscaling to fill screen */
 #endif
 #if defined(SYSTEM_riscos_single)
   bool bRedBlueSwap; /* Red/blue swap 16bpp output */
-  bool bAspectRatioCorrection; /* Apply H/V scaling for aspect ratio correction */
-  bool bUpscale; /* Allow upscaling to fill screen */
   bool bNoLowColour; /* Disable 1/2/4bpp modes */
   int iMinResX,iMinResY;
   int iLCDResX,iLCDResY;

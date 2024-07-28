@@ -27,6 +27,8 @@ extern size_t curstride;
 extern size_t mskstride;
 
 extern ArcemConfig_DisplayDriver requestedDriver;
+extern bool requestedAspect;
+extern bool requestedUpscale;
 
 
 
@@ -127,18 +129,18 @@ static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,in
   HD.XScale = 1;
   HD.YScale = 1;
   /* Try and detect rectangular pixel modes */
-  if((width >= height*2) && (height*2 <= MonitorHeight))
+  if(CONFIG.bAspectRatioCorrection && (width >= height*2) && (height*2 <= MonitorHeight))
   {
     HD.YScale = 2;
     HD.Height *= 2;
   }
-  else if((height >= width) && (width*2 <= MonitorWidth))
+  else if(CONFIG.bAspectRatioCorrection && (height >= width) && (width*2 <= MonitorWidth))
   {
     HD.XScale = 2;
     HD.Width *= 2;
   }
   /* Try and detect small screen resolutions */
-  else if ((width < MinimumWidth) && (width * 2 <= MonitorWidth) && (height * 2 <= MonitorHeight))
+  else if (CONFIG.bUpscale && (width < MinimumWidth) && (width * 2 <= MonitorWidth) && (height * 2 <= MonitorHeight))
   {
     HD.XScale  = 2;
     HD.YScale  = 2;
@@ -321,18 +323,18 @@ void PDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,int depth
   HD.XScale = 1;
   HD.YScale = 1;
   /* Try and detect rectangular pixel modes */
-  if((width >= height*2) && (height*2 <= MonitorHeight))
+  if(CONFIG.bAspectRatioCorrection && (width >= height*2) && (height*2 <= MonitorHeight))
   {
     HD.YScale = 2;
     HD.Height *= 2;
   }
-  else if((height >= width) && (width*2 <= MonitorWidth))
+  else if(CONFIG.bAspectRatioCorrection && (height >= width) && (width*2 <= MonitorWidth))
   {
     HD.XScale = 2;
     HD.Width *= 2;
   }
   /* Try and detect small screen resolutions */
-  else if ((width < MinimumWidth) && (width * 2 <= MonitorWidth) && (height * 2 <= MonitorHeight))
+  else if (CONFIG.bUpscale && (width < MinimumWidth) && (width * 2 <= MonitorWidth) && (height * 2 <= MonitorHeight))
   {
     HD.XScale  = 2;
     HD.YScale  = 2;
@@ -521,9 +523,14 @@ int
 Kbd_PollHostKbd(ARMul_State *state)
 {
   /* Keyboard and mouse input is handled in WndProc */
-  if (CONFIG.eDisplayDriver != requestedDriver) {
+  if (CONFIG.eDisplayDriver != requestedDriver ||
+      CONFIG.bAspectRatioCorrection != requestedAspect ||
+      CONFIG.bUpscale != requestedUpscale) {
+    /* TODO: Avoid needing to recreate the driver for aspect/scale changes */
     DisplayDev_Select(state,requestedDriver);
     CONFIG.eDisplayDriver = requestedDriver;
+    CONFIG.bAspectRatioCorrection = requestedAspect;
+    CONFIG.bUpscale = requestedUpscale;
   }
   return 0;
 }
