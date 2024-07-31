@@ -65,6 +65,11 @@
     - Function that gets called when a palette entry needs updating
     - 'phys' is a 13-bit VIDC physical colour
 
+   void PDD_Name(Host_SetCursorPaletteEntry)(ARMul_State *state,int i,
+                                             uint_fast16_t phys)
+    - Function that gets called when a cursor palette entry needs updating
+    - 'phys' is a 13-bit VIDC physical colour
+
    void PDD_Name(Host_SetBorderColour)(ARMul_State *state,uint_fast16_t phys)
     - Function that gets called when the border colour needs updating
     - 'phys' is a 13-bit VIDC physical colour
@@ -527,7 +532,7 @@ static void PDD_Name(EventFunc)(ARMul_State *state,CycleCount nowtime)
   /* Ensure full palette rebuild on BPP change */
   if((DC.VIDC_CR & 0xc) != (NewCR & 0xc))
   {
-    DC.DirtyPalette = 65535;
+    DC.DirtyPalette = 0xFFFFF;
   }
 
   DC.VIDC_CR = NewCR;
@@ -580,7 +585,7 @@ static void PDD_Name(EventFunc)(ARMul_State *state,CycleCount nowtime)
       DC.ForceRefresh = true;
     }
     DC.ModeChanged = false;
-    DC.DirtyPalette = -1;
+    DC.DirtyPalette = 0xFFFFF;
   }
 
   /* Update AutoUpdateFlags */
@@ -636,10 +641,22 @@ static void PDD_Name(EventFunc)(ARMul_State *state,CycleCount nowtime)
   }
 
   /* Update host palette */
-  if(DC.DirtyPalette & 0x10000)
+  if(DC.DirtyPalette & 0x80000)
   {
     PDD_Name(Host_SetBorderColour)(state,VIDC.BorderCol);
-    DC.DirtyPalette -= 0x10000;
+    DC.DirtyPalette -= 0x80000;
+  }
+  if(DC.DirtyPalette & 0x70000)
+  {
+    int i;
+    for(i=0;i<3;i++)
+    {
+      if(DC.DirtyPalette & (0x10000<<i))
+      {
+        PDD_Name(Host_SetCursorPaletteEntry)(state,i,VIDC.CursorPalette[i]);
+      }
+    }
+    DC.DirtyPalette &= 0xffff;
   }
   if(DC.DirtyPalette)
   {
@@ -831,7 +848,7 @@ static void PDD_Name(VIDCPutVal)(ARMul_State *state,ARMword address, ARMword dat
       if(VIDC.BorderCol != val)
       {
         VIDC.BorderCol = val;
-        DC.DirtyPalette |= 0x10000;
+        DC.DirtyPalette |= 0x80000;
       }
       break;
 
@@ -840,7 +857,12 @@ static void PDD_Name(VIDCPutVal)(ARMul_State *state,ARMword address, ARMword dat
     case 0x4c: /* Cursor palette log col 3 */
       addr = (addr-0x44)>>2;
       dbug_vidc("VIDC cursor log col %d write val=0x%x\n",addr+1,val);
-      VIDC.CursorPalette[addr] = val & 0x1fff;
+      val &= 0x1fff;
+      if(VIDC.CursorPalette[addr] != val)
+      {
+        VIDC.CursorPalette[addr] = val;
+        DC.DirtyPalette |= 0x10000 << addr;
+      }
       break;
 
     case 0x60: /* Stereo image reg 7 */

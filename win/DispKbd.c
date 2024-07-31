@@ -267,7 +267,7 @@ static void PDD_Name(Host_SetCursorPaletteEntry)(ARMul_State *state,int i,unsign
   g |= g>>4;
   b |= b<<4;
 
-  setCursorPaletteColour(i, r, g, b);
+  setCursorPaletteColour(i + 1, r, g, b);
 }
 
 static void PDD_Name(Host_SetBorderColour)(ARMul_State *state,unsigned int phys)
@@ -394,11 +394,6 @@ static void PDD_Name(RefreshMouse)(ARMul_State *state) {
   rMouseY = VertPos;
   rMouseWidth = Width;
   rMouseHeight = Height;
-
-  /* Cursor palette */
-  for(x=0; x<3; x++) {
-    PDD_Name(Host_SetCursorPaletteEntry)(state,x+1,VIDC.CursorPalette[x]);
-  }
 
   offset=0;
   memptr=MEMC.Cinit*16;

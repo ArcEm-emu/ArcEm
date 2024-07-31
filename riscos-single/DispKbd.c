@@ -392,6 +392,11 @@ static void PDD_Name(Host_SetPaletteEntry)(ARMul_State *state,int i,unsigned int
     FakeBorderPalEntry = -1;
 }
 
+static void PDD_Name(Host_SetCursorPaletteEntry)(ARMul_State *state,int i,unsigned int phys)
+{
+  /* TODO */
+}
+
 static void PDD_Name(Host_SetBorderColour)(ARMul_State *state,unsigned int phys)
 {
   char buf[5];

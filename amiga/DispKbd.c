@@ -459,6 +459,11 @@ static void PDD_Name(Host_SetPaletteEntry)(ARMul_State *state,int i,unsigned int
 	SetRGB32(&screen->ViewPort,i,r,g,b);
 }
 
+static void PDD_Name(Host_SetCursorPaletteEntry)(ARMul_State *state,int i,unsigned int phys)
+{
+	/* TODO */
+}
+
 static void PDD_Name(Host_SetBorderColour)(ARMul_State *state,unsigned int phys)
 {
 	/* Set border palette entry */

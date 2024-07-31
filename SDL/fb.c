@@ -233,6 +233,11 @@ static void PDD_Name(Host_SetPaletteEntry)(ARMul_State *state,int i,unsigned int
   SDL_SetColors(sdd_surface, &col, i, 1);
 }
 
+static void PDD_Name(Host_SetCursorPaletteEntry)(ARMul_State *state,int i,unsigned int phys)
+{
+  /* TODO */
+}
+
 static void PDD_Name(Host_SetBorderColour)(ARMul_State *state,unsigned int phys)
 {
   /* TODO */
