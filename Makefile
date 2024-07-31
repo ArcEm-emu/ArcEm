@@ -194,7 +194,9 @@ CPPFLAGS += -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
 endif
 CFLAGS += $(shell $(SDL_CONFIG) --cflags)
 LIBS += $(shell $(SDL_CONFIG) --libs)
-OBJS += SDL/fb.o SDL/render.o
+OBJS += SDL/fb.o SDL/render.o SDL/sound.o
+SOUND_SUPPORT=yes
+SOUND_PTHREAD=no
 endif
 
 ifeq (${SYSTEM},X)
