@@ -65,6 +65,7 @@ set(ARCEM_SDL_SOURCES
 	SDL/fb.c
 	SDL/KeyTable.h
 	SDL/render.c
+	SDL/sound.c
 )
 set(ARCEM_X_SOURCES
 	X/ControlPane.c
@@ -144,6 +145,11 @@ if(${SYSTEM} MATCHES "^(SDL[12])$")
 		find_package(SDL REQUIRED)
 		target_include_directories(arcem PRIVATE ${SDL_INCLUDE_DIR})
 		target_link_libraries(arcem PRIVATE ${SDL_LIBRARY})
+	endif()
+
+	option(SOUND_SUPPORT "Build with sound support" ON)
+	if(SOUND_SUPPORT)
+		target_compile_definitions(arcem PRIVATE SOUND_SUPPORT)
 	endif()
 elseif(${SYSTEM} STREQUAL "X")
 	add_executable(arcem ${ARCEM_SOURCES} ${ARCEM_ARCH_SOURCES} ${ARCEM_X_SOURCES} ${ARCEM_EXTNROM_MODULES})
