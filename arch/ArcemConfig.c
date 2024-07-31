@@ -109,6 +109,8 @@ void ArcemConfig_SetupDefaults(ArcemConfig *pConfig)
 #endif
 #if defined(SYSTEM_riscos_single)
   pConfig->eDisplayDriver = DisplayDriver_Palettised;
+  pConfig->bAspectRatioCorrection = true;
+  pConfig->bUpscale = true;
   pConfig->bRedBlueSwap = false;
   pConfig->bNoLowColour = false;
   pConfig->iMinResX = 0;
