@@ -314,7 +314,7 @@ int DisplayDev_Init(ARMul_State *state)
   }
 
   if (SDL_GetRendererInfo(renderer, &info) >= 0) {
-    for (i = 0; i < 1; i++) {
+    for (i = 0; i < info.num_texture_formats; i++) {
       fmt = info.texture_formats[i];
 
       /* Reject unsupported pixel formats */
