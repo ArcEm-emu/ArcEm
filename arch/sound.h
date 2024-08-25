@@ -3,11 +3,19 @@
 
 #include "../c99.h"
 
+#ifdef SYSTEM_SDL
+#define SOUND_FUDGERATE_FRAC
+#endif
+
 typedef int16_t SoundData;
 
 extern int Sound_BatchSize; /* How many 16*2 sample batches to attempt to deliver to the platform code at once */
 extern CycleCount Sound_DMARate; /* How many cycles between DMA fetches */
-extern CycleDiff Sound_FudgeRate; /* Extra fudge factor applied to Sound_DMARate */
+#ifdef SOUND_FUDGERATE_FRAC
+extern uint32_t Sound_FudgeRate; /* New version of Sound_FudgeRate. 8.24 scale factor applied to Sound_DMARate; can be used by host code to fine-tune audio buffer levels */
+#else
+extern CycleDiff Sound_FudgeRate; /* Old version of Sound_FudgeRate. Adjustment applied to DMA event timing, to increase/decrease time between each event by the given number of cycles. Flawed because it'll will result in uneven timing if there are different numbers of samples consumed per event. */
+#endif
 
 typedef enum {
   Stereo_LeftRight, /* Data is ordered with left channel first */

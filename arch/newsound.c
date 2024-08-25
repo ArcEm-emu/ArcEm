@@ -35,7 +35,11 @@
 int Sound_BatchSize = 1; /* How many 16*2 sample batches to try to do at once */
 CycleCount Sound_DMARate; /* How many cycles between DMA fetches */
 Sound_StereoSense eSound_StereoSense = Stereo_LeftRight;
+#ifdef SOUND_FUDGERATE_FRAC
+uint32_t Sound_FudgeRate = 1<<24;
+#else
 CycleDiff Sound_FudgeRate = 0;
+#endif
 
 #ifdef SOUND_SUPPORT
 uint32_t Sound_HostRate; /* Rate of host sound system, in 1/1024 Hz */
@@ -537,7 +541,11 @@ static void Sound_DMAEvent(ARMul_State *state,CycleCount nowtime)
 #endif
   /* Work out when to reschedule the event
      TODO - This is wrong; there's no guarantee the host accepted all the data we wanted to give him */
+#ifdef SOUND_FUDGERATE_FRAC
+  next = (CycleCount) ((((uint64_t) Sound_DMARate)*Sound_FudgeRate*((uint32_t)(avail?avail:srcbatchsize))) >> 24);
+#else
   next = Sound_DMARate*(avail?avail:srcbatchsize)+Sound_FudgeRate;
+#endif
   /* Clamp to a safe minimum value */
   if(next < 100)
     next = 100;
