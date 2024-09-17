@@ -33,6 +33,9 @@
       are implimented add code for parsing and setting values
       there too.
 */
+#ifndef ARCEMCONFIG_HEADER
+#define ARCEMCONFIG_HEADER
+
 #include "arch/hdc63463.h"
 #include "../c99.h"
 
@@ -138,3 +141,5 @@ extern void ArcemConfig_ParseConfigFile(ArcemConfig* pConfig);
  * @param argv Array of char*'s represented space seperated commandline arguments
  */
 extern void ArcemConfig_ParseCommandLine(ArcemConfig* pConfig, int argc, char* argv[]);
+
+#endif
