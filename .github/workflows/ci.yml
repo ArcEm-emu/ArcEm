@@ -2,29 +2,34 @@ name: Build
 
 on: [push, pull_request]
 
+env:
+  BUILD_TYPE: Release
+
 jobs:
   build-linux:
-    name: Linux (${{ matrix.linux.platform }})
+    name: Linux (${{ matrix.linux.system }})
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
         linux:
-        - { platform: X11,  system: X, apt-packages: libx11-dev libxext-dev }
-        - { platform: SDL1, system: SDL, apt-packages: libsdl1.2-dev, sdl-config: sdl-config }
-        - { platform: SDL2, system: SDL, apt-packages: libsdl2-dev,   sdl-config: sdl2-config }
+        - { system: X,    apt-packages: libx11-dev libxext-dev }
+        - { system: SDL1, apt-packages: libsdl1.2-dev          }
+        - { system: SDL2, apt-packages: libsdl2-dev            }
 
     steps:
     - uses: actions/checkout@v3
     - name: Install dependencies
       if: ${{ matrix.linux.apt-packages != '' }}
       run: sudo apt-get update && sudo apt-get install ${{ matrix.linux.apt-packages }}
+    - name: Configure
+      run: cmake -B build/ -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DSYSTEM=${{ matrix.linux.system }} .
     - name: Build
-      run: make SYSTEM=${{ matrix.linux.system }} SDL_CONFIG=${{ matrix.linux.sdl-config }}
+      run: cmake --build build/ --config ${{env.BUILD_TYPE}} --parallel
     - uses: actions/upload-artifact@v3
       with:
         name: arcem-${{ matrix.linux.platform }}
-        path: ./arcem
+        path: ./build/arcem
 
   build-msvc:
     name: Windows (MSVC ${{ matrix.msvc.platform }})
@@ -33,19 +38,19 @@ jobs:
     strategy:
       matrix:
         msvc:
-        - { platform: Win32, artifact: vc/Release/ArcEm.exe }
-        - { platform: x64, artifact: vc/x64/Release/ArcEm.exe }
+        - { platform: Win32 }
+        - { platform: x64   }
 
     steps:
-    - name: Set up msbuild
-      uses: microsoft/setup-msbuild@v1.1.3
     - uses: actions/checkout@v3
+    - name: Configure
+      run: cmake -B build/ -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -A ${{ matrix.msvc.platform }} .
     - name: Build
-      run: msbuild vc/ArcEm.sln /m /p:BuildInParallel=true /p:Configuration=Release /p:Platform=${{ matrix.msvc.platform }}
+      run: cmake --build build/ --config ${{env.BUILD_TYPE}} --parallel
     - uses: actions/upload-artifact@v3
       with:
         name: arcem-msvc-${{ matrix.msvc.platform }}
-        path: ${{ matrix.msvc.artifact }}
+        path: build/Release/ArcEm.exe
 
   build-mingw:
     name: Windows (${{ matrix.mingw.msystem }})
@@ -66,14 +71,16 @@ jobs:
       uses: msys2/setup-msys2@v2
       with:
         msystem: ${{ matrix.mingw.msystem }}
-        install: ${{ matrix.mingw.msys-env }}-cc make
+        install: ${{ matrix.mingw.msys-env }}-cc ${{ matrix.mingw.msys-env }}-cmake
     - uses: actions/checkout@v3
+    - name: Configure
+      run: cmake -B build/ -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} .
     - name: Build
-      run: make SYSTEM=win
+      run: cmake --build build/ --config ${{env.BUILD_TYPE}} --parallel
     - uses: actions/upload-artifact@v3
       with:
         name: arcem-${{ matrix.mingw.msystem }}
-        path: ./ArcEm.exe
+        path: ./build/ArcEm.exe
 
   build-watcom:
     name: Windows (OpenWatcom)
