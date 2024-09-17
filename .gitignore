@@ -1,3 +1,4 @@
+build*/
 armsuppmov.s
 armsuppmovs.s
 armsuppmvn.s
