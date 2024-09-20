@@ -107,7 +107,7 @@ ARMul_State *ARMul_NewState(ArcemConfig *pConfig)
        state->RegBank[j][i] = 0;
     }
 
- state->Aborted = FALSE;
+ state->Aborted = ARMul_ResetV;
  state->Display = NULL;
  state->FastMap = FastMap;
  state->Config  = pConfig;
@@ -153,7 +153,7 @@ ARMword ARMul_DoProg(ARMul_State *state) {
 void ARMul_Abort(ARMul_State *state, ARMword vector) {
   ARMword temp;
   int exit_code;
-  state->Aborted = FALSE;
+  state->Aborted = ARMul_ResetV;
 
   dbug("ARMul_Abort: vector=0x%x\n",vector);
 

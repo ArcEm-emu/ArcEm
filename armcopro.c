@@ -37,7 +37,7 @@ static unsigned NoCoPro4W(ARMul_State *state,unsigned,ARMword,ARMword *);
 *         Install co-processor instruction handlers in this routine         *
 \***************************************************************************/
 
-unsigned ARMul_CoProInit(ARMul_State *state) {
+bool ARMul_CoProInit(ARMul_State *state) {
   unsigned int i;
 
   /* initialise them all first */
@@ -68,7 +68,7 @@ unsigned ARMul_CoProInit(ARMul_State *state) {
        (state->CPInit[i])(state);
      }
    }
-   return(TRUE);
+   return true;
 }
 
 

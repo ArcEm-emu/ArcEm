@@ -48,12 +48,6 @@
 
 #define ControlHeight 30
 
-#define IF_DIFF_THEN_ASSIGN_AND_SET_FLAG(a, b, f) \
-    if ((a) != (b)) { \
-        (a) = (b); \
-        (f) = TRUE; \
-    }
-
 /* ------------------------------------------------------------------ */
 static int lastmousemode=0, lastmousex=0, lastmousey=0;
 
@@ -792,14 +786,14 @@ static void MainPane_Event(ARMul_State *state,XEvent *e) {
   switch (e->type) {
     case EnterNotify:
       /*fprintf(stderr,"MainPane: Enter notify!\n"); */
-        hostdisplay_change_focus(TRUE);
+        hostdisplay_change_focus(true);
         lastmousex=e->xcrossing.x;
         lastmousey=e->xcrossing.y;
       break;
 
     case LeaveNotify:
       /*fprintf(stderr,"MainPane: Leave notify!\n"); */
-        hostdisplay_change_focus(FALSE);
+        hostdisplay_change_focus(false);
       break;
 
     case Expose:
@@ -842,12 +836,12 @@ static void CursorPane_Event(ARMul_State *state,XEvent *e) {
   switch (e->type) {
     case EnterNotify:
       fprintf(stderr,"CursorPane: Enter notify!\n");
-        hostdisplay_change_focus(TRUE);
+        hostdisplay_change_focus(true);
       break;
 
     case LeaveNotify:
       fprintf(stderr,"CursorPane: Leave notify!\n");
-        hostdisplay_change_focus(FALSE);
+        hostdisplay_change_focus(false);
       break;
 
     case Expose:
@@ -877,7 +871,7 @@ static void CursorPane_Event(ARMul_State *state,XEvent *e) {
 /* ------------------------------------------------------------------ */
 
 
-void hostdisplay_change_focus(int focus)
+void hostdisplay_change_focus(bool focus)
 {
   if (PD.visInfo.class == PseudoColor) {
     (*(focus ? XInstallColormap : XUninstallColormap))(PD.disp, PD.ArcsColormap);

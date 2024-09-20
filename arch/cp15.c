@@ -31,11 +31,11 @@ struct
  * @param hState Emulator state
  * @returns Bool of successful initialisation
  */
-unsigned ARM3_Initialise(ARMul_State *hState)
+bool ARM3_Initialise(ARMul_State *hState)
 {
   ARM3_CP15_Registers.uControlRegister = 0;
 
-  return TRUE;
+  return true;
 }
 
 /**
@@ -94,9 +94,9 @@ unsigned ARM3_MCRs(ARMul_State *hState, unsigned uType, ARMword instr, ARMword u
  * @param hState  Emulator state
  * @param uReg    Coprocessor register
  * @param puValue Place to write the value of the CP register
- * @returns TRUE on success, FALSE on disallowed reads
+ * @returns true on success, false on disallowed reads
  */
-unsigned ARM3_RegisterRead(ARMul_State *hState, unsigned uReg, ARMword *puValue)
+bool ARM3_RegisterRead(ARMul_State *hState, unsigned uReg, ARMword *puValue)
 {
   switch (uReg) {
     case ARM3_CP15_REG_0_RO_PROCESSOR_ID:
@@ -105,7 +105,7 @@ unsigned ARM3_RegisterRead(ARMul_State *hState, unsigned uReg, ARMword *puValue)
 
     case ARM3_CP15_REG_1_WO_FLUSH_CACHE:
       /* flush cache is a write only register */
-      return FALSE;
+      return false;
 
     case ARM3_CP15_REG_2_RW_MISC_CONTROL:
       *puValue = ARM3_CP15_Registers.uControlRegister;
@@ -127,7 +127,7 @@ unsigned ARM3_RegisterRead(ARMul_State *hState, unsigned uReg, ARMword *puValue)
       *puValue = 0;
   }
 
-  return TRUE;
+  return true;
 }
 
 /**
@@ -140,15 +140,15 @@ unsigned ARM3_RegisterRead(ARMul_State *hState, unsigned uReg, ARMword *puValue)
  * @param hState Emulator state
  * @param uReg   Coprocessor register
  * @param uValue Value to write to CP register
- * @returns TRUE on success, FALSE on disallowed reads
+ * @returns true on success, false on disallowed reads
  */
-unsigned ARM3_RegisterWrite(ARMul_State *hState, unsigned uReg, ARMword uValue)
+bool ARM3_RegisterWrite(ARMul_State *hState, unsigned uReg, ARMword uValue)
 {
   switch (uReg)
   {
     case ARM3_CP15_REG_0_RO_PROCESSOR_ID:
       /* PROCESSOR ID is read only register */
-      return FALSE;
+      return false;
 
     case ARM3_CP15_REG_1_WO_FLUSH_CACHE:
       /* flush our non-existant cache */
@@ -181,6 +181,6 @@ unsigned ARM3_RegisterWrite(ARMul_State *hState, unsigned uReg, ARMword uValue)
       break;
   }
 
-  return TRUE;
+  return true;
 }
 

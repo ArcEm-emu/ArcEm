@@ -188,7 +188,7 @@ static void DumpHandler(int sig) {
  * @param state
  * @returns
  */
-unsigned
+bool
 ARMul_MemoryInit(ARMul_State *state)
 {
   ARMword RAMChunkSize;
@@ -369,7 +369,7 @@ ARMul_MemoryInit(ARMul_State *state)
   hostfs_init();
 #endif
 
-  return(TRUE);
+  return true;
 }
 
 /**

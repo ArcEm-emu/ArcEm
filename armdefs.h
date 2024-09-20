@@ -33,12 +33,8 @@ typedef uint32_t ARMword; /* must be 32 bits wide */
 typedef struct ARMul_State ARMul_State;
 extern ARMul_State statestr;
 
-#define FALSE 0
-#define TRUE 1
-#define LOW 0
-#define HIGH 1
-
-#define LATEABTSIG LOW /* TODO - is this correct? */
+#define LOW false
+#define HIGH true
 
 #define MIN(a,b) ((a)<(b)?(a):(b))
 #define MAX(a,b) ((a)>(b)?(a):(b))
@@ -203,15 +199,15 @@ typedef struct {
 *                          Main emulator state                              *
 \***************************************************************************/
 
-typedef unsigned ARMul_CPInits(ARMul_State *state);
-typedef unsigned ARMul_CPExits(ARMul_State *state);
+typedef bool ARMul_CPInits(ARMul_State *state);
+typedef bool ARMul_CPExits(ARMul_State *state);
 typedef unsigned ARMul_LDCs(ARMul_State *state, unsigned type, ARMword instr, ARMword value);
 typedef unsigned ARMul_STCs(ARMul_State *state, unsigned type, ARMword instr, ARMword *value);
 typedef unsigned ARMul_MRCs(ARMul_State *state, unsigned type, ARMword instr, ARMword *value);
 typedef unsigned ARMul_MCRs(ARMul_State *state, unsigned type, ARMword instr, ARMword value);
 typedef unsigned ARMul_CDPs(ARMul_State *state, unsigned type, ARMword instr);
-typedef unsigned ARMul_CPReads(ARMul_State *state, unsigned reg, ARMword *value);
-typedef unsigned ARMul_CPWrites(ARMul_State *state, unsigned reg, ARMword value);
+typedef bool ARMul_CPReads(ARMul_State *state, unsigned reg, ARMword *value);
+typedef bool ARMul_CPWrites(ARMul_State *state, unsigned reg, ARMword value);
 
 typedef enum ARMStartIns {
   NORMAL        = 0,
@@ -232,14 +228,14 @@ struct ARMul_State {
    ARMword Reg[16];           /* the current register file */
    CycleCount NumCycles;      /* Number of cycles */
    enum ARMStartIns NextInstr;/* Pipeline state */
-   unsigned abortSig;         /* Abort state */
+   bool abortSig;             /* Abort state */
    ARMword Aborted;           /* sticky flag for aborts */
    ARMword AbortAddr;         /* to keep track of Prefetch aborts */
    ARMword Exception;         /* IRQ & FIQ pins */
    Vidc_Regs *Display;        /* VIDC regs/host display struct */
    arch_keyboard *Kbd;        /* Keyboard struct */
    ARMword Bank;              /* the current register bank */
-   unsigned NtransSig;        /* MEMC USR/SVC flag, somewhat redundant with FastMapMode */
+   bool NtransSig;            /* MEMC USR/SVC flag, somewhat redundant with FastMapMode */
    ARMword Base;              /* extra hand for base writeback */
    ArcemConfig *Config;
 
@@ -333,7 +329,7 @@ extern void ARMul_Abort(ARMul_State *state, ARMword address);
 *              Definitons of things in the memory interface                 *
 \***************************************************************************/
 
-extern unsigned ARMul_MemoryInit(ARMul_State *state);
+extern bool ARMul_MemoryInit(ARMul_State *state);
 extern void ARMul_MemoryExit(ARMul_State *state);
 
 /***************************************************************************\
@@ -349,7 +345,7 @@ extern void ARMul_MemoryExit(ARMul_State *state);
 #define ARMul_CANT 1
 #define ARMul_INC 3
 
-extern unsigned ARMul_CoProInit(ARMul_State *state);
+extern bool ARMul_CoProInit(ARMul_State *state);
 extern void ARMul_CoProExit(ARMul_State *state);
 extern void ARMul_CoProAttach(ARMul_State *state, unsigned number,
                               ARMul_CPInits *init, ARMul_CPExits *exits,

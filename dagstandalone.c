@@ -89,9 +89,9 @@ static void InitFail(int exitcode, char const *which) {
   ARMul_EmulateInit();
   emu_state = ARMul_NewState(pConfig);
   ARMul_Reset(emu_state);
-  if (ARMul_MemoryInit(emu_state) == FALSE)
+  if (!ARMul_MemoryInit(emu_state))
     InitFail(1, "Memory");
-  if (ARMul_CoProInit(emu_state) == FALSE)
+  if (!ARMul_CoProInit(emu_state))
     InitFail(2, "Co-Processor");
   ARMul_Reset(emu_state);
 

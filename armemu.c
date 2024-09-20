@@ -552,7 +552,7 @@ static ARMword GetLSRegRHS(ARMul_State *state, ARMword instr)
 * This function does the work of loading a word for a LDR instruction.      *
 \***************************************************************************/
 
-static unsigned LoadWord(ARMul_State *state, ARMword instr, ARMword address)
+static bool LoadWord(ARMul_State *state, ARMword instr, ARMword address)
 {
  ARMword dest;
 
@@ -563,7 +563,7 @@ static unsigned LoadWord(ARMul_State *state, ARMword instr, ARMword address)
  dest = ARMul_LoadWordN(state,address);
  if (state->Aborted) {
     TAKEABORT;
-    return LATEABTSIG;
+    return false; /* LATEABTSIG */
     }
  if (address & 3)
     dest = ARMul_Align(state,address,dest);
@@ -577,7 +577,7 @@ static unsigned LoadWord(ARMul_State *state, ARMword instr, ARMword address)
 * This function does the work of loading a byte for a LDRB instruction.     *
 \***************************************************************************/
 
-static unsigned LoadByte(ARMul_State *state, ARMword instr, ARMword address)
+static bool LoadByte(ARMul_State *state, ARMword instr, ARMword address)
 {
  ARMword dest;
 
@@ -588,7 +588,7 @@ static unsigned LoadByte(ARMul_State *state, ARMword instr, ARMword address)
  dest = ARMul_LoadByte(state,address);
  if (state->Aborted) {
     TAKEABORT;
-    return LATEABTSIG;
+    return false; /* LATEABTSIG */
     }
  UNDEF_LSRBPC;
  WRITEDEST(dest);
@@ -600,7 +600,7 @@ static unsigned LoadByte(ARMul_State *state, ARMword instr, ARMword address)
 * This function does the work of storing a word from a STR instruction.     *
 \***************************************************************************/
 
-static unsigned StoreWord(ARMul_State *state, ARMword instr, ARMword address)
+static bool StoreWord(ARMul_State *state, ARMword instr, ARMword address)
 {BUSUSEDINCPCN;
  if (ADDREXCEPT(address)) {
     INTERNALABORT(address);
@@ -610,16 +610,16 @@ static unsigned StoreWord(ARMul_State *state, ARMword instr, ARMword address)
     ARMul_StoreWordN(state,address,DEST);
  if (state->Aborted) {
     TAKEABORT;
-    return LATEABTSIG;
+    return false; /* LATEABTSIG */
     }
- return(TRUE);
+ return true;
 }
 
 /***************************************************************************\
 * This function does the work of storing a byte for a STRB instruction.     *
 \***************************************************************************/
 
-static unsigned StoreByte(ARMul_State *state, ARMword instr, ARMword address)
+static bool StoreByte(ARMul_State *state, ARMword instr, ARMword address)
 {BUSUSEDINCPCN;
  if (ADDREXCEPT(address)) {
     INTERNALABORT(address);
@@ -629,10 +629,10 @@ static unsigned StoreByte(ARMul_State *state, ARMword instr, ARMword address)
     ARMul_StoreByte(state,address,DEST);
  if (state->Aborted) {
     TAKEABORT;
-    return LATEABTSIG;
+    return false; /* LATEABTSIG */
     }
  UNDEF_LSRBPC;
- return(TRUE);
+ return true;
 }
 
 

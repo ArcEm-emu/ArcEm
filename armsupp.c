@@ -284,7 +284,7 @@ void ARMul_MCR(ARMul_State *state,ARMword instr, ARMword source)
 *        This function does the Busy-Waiting for an MRC instruction.        *
 \***************************************************************************/
 
-unsigned ARMul_MRC(ARMul_State *state,ARMword instr,ARMword *result)
+bool ARMul_MRC(ARMul_State *state,ARMword instr,ARMword *result)
 {unsigned cpab;
 
  cpab = (state->MRC[CPNum])(state,ARMul_FIRST,instr,result);
@@ -292,21 +292,21 @@ unsigned ARMul_MRC(ARMul_State *state,ARMword instr,ARMword *result)
     ARMul_Icycles(state,1);
     if (IntPending(state)) {
        cpab = (state->MRC[CPNum])(state,ARMul_INTERRUPT,instr,0);
-       return(FALSE);
+       return false;
        }
     else
        cpab = (state->MRC[CPNum])(state,ARMul_BUSY,instr,result);
     }
  if (cpab == ARMul_CANT) {
     ARMul_Abort(state,ARMul_UndefinedInstrV);
-    return(FALSE);
+    return false;
     }
  else {
     BUSUSEDINCPCN;
     ARMul_Icycles(state,1);
     ARMul_Icycles(state,1);
     }
- return(TRUE);
+ return true;
 }
 
 /***************************************************************************\
@@ -342,20 +342,20 @@ void ARMul_UndefInstr(ARMul_State *state,ARMword instr)
 }
 
 /***************************************************************************\
-*           Return TRUE if an interrupt is pending, FALSE otherwise.        *
+*           Return true if an interrupt is pending, false otherwise.        *
 \***************************************************************************/
 
-unsigned IntPending(ARMul_State *state)
+bool IntPending(ARMul_State *state)
 {
  ARMword excep = state->Exception & ~state->Reg[15];
  if(!excep) { /* anything? */
-   return(FALSE);
+   return false;
  } else if(excep & Exception_FIQ) { /* FIQ? */
    ARMul_Abort(state,ARMul_FIQV);
-   return(TRUE);
+   return true;
  } else { /* Must be IRQ */
    ARMul_Abort(state,ARMul_IRQV);
-   return(TRUE);
+   return true;
  }
 }
 

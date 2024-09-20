@@ -374,9 +374,9 @@ unsigned ARMul_NthReg(ARMword instr, unsigned number);
 void ARMul_LDC(ARMul_State *state,ARMword instr,ARMword address);
 void ARMul_STC(ARMul_State *state,ARMword instr,ARMword address);
 void ARMul_MCR(ARMul_State *state,ARMword instr, ARMword source);
-unsigned ARMul_MRC(ARMul_State *state,ARMword instr,ARMword *result);
+bool ARMul_MRC(ARMul_State *state,ARMword instr,ARMword *result);
 void ARMul_CDP(ARMul_State *state,ARMword instr);
-unsigned IntPending(ARMul_State *state);
+bool IntPending(ARMul_State *state);
 ARMword ARMul_Align(ARMul_State *state, ARMword address, ARMword data);
 
 

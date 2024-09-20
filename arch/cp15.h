@@ -27,7 +27,7 @@
  * @param hState Emulator state
  * @returns Bool of successful initialisation
  */
-unsigned ARM3_Initialise(ARMul_State *state);
+bool ARM3_Initialise(ARMul_State *state);
 
 /**
  * ARM3_MRCs
@@ -67,9 +67,9 @@ unsigned ARM3_MCRs(ARMul_State *state, unsigned type, ARMword instr, ARMword val
  * @param hState  Emulator state
  * @param uReg    Coprocessor register
  * @param puValue Place to write the value of the CP register
- * @returns TRUE on success, FALSE on disallowed reads
+ * @returns true on success, false on disallowed reads
  */
-unsigned ARM3_RegisterRead(ARMul_State *state, unsigned reg, ARMword *value);
+bool ARM3_RegisterRead(ARMul_State *state, unsigned reg, ARMword *value);
 
 /**
  * ARM3_RegisterWrite
@@ -81,6 +81,6 @@ unsigned ARM3_RegisterRead(ARMul_State *state, unsigned reg, ARMword *value);
  * @param hState Emulator state
  * @param uReg   Coprocessor register
  * @param uValue Value to write to CP register
- * @returns TRUE on success, FALSE on disallowed reads
+ * @returns true on success, false on disallowed reads
  */
-unsigned ARM3_RegisterWrite(ARMul_State *state, unsigned reg, ARMword value);
+bool ARM3_RegisterWrite(ARMul_State *state, unsigned reg, ARMword value);

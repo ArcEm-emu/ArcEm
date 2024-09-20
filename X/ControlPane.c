@@ -171,7 +171,7 @@ void ControlPane_Event(ARMul_State *state, XEvent *event) {
 
       } else if (sym == XK_q) {
         fputs("arcem: user requested exit\n", stderr);
-        hostdisplay_change_focus(FALSE);
+        hostdisplay_change_focus(false);
         exit(0);
       }
       break;

@@ -49,7 +49,7 @@ extern void Resize_Window(ARMul_State *state,int x,int y);
 
 extern unsigned int vidc_col_to_x_col(unsigned int col);
 
-extern void hostdisplay_change_focus(int focus);
+extern void hostdisplay_change_focus(bool focus);
 
 extern void UpdateCursorPos(ARMul_State *state,int xscale,int xoffset,int yscale,int yoffset);
 
