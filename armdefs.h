@@ -355,16 +355,6 @@ extern void ARMul_CoProAttach(ARMul_State *state, unsigned number,
                               ARMul_CPReads *reads, ARMul_CPWrites *writes);
 extern void ARMul_CoProDetach(ARMul_State *state, unsigned number);
 
-/***************************************************************************\
-*                            Host-dependent stuff                           *
-\***************************************************************************/
-
-#ifdef macintosh
-pascal void SpinCursor(short increment);        /* copied from CursorCtl.h */
-# define HOURGLASS           SpinCursor( 1 )
-# define HOURGLASS_RATE      1023   /* 2^n - 1 */
-#endif
-
 #include "arch/archio.h"
 #include "arch/armarc.h"
 #include "eventq.h"

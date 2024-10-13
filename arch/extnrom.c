@@ -44,42 +44,6 @@ enum OS_ID_BYTE {
 };
 
 #ifdef HOST_BIGENDIAN
-static void
-store_16bit_le(void *address, uint16_t data)
-{
-  uint8_t *addr = address;
-
-  assert(address != NULL);
-
-  addr[0] = data & 255;
-  addr[1] = data >> 8;
-}
-
-static void
-store_24bit_le(void *address, uint32_t data)
-{
-  uint8_t *addr = address;
-
-  assert(address != NULL);
-
-  addr[0] = data;
-  addr[1] = data >> 8;
-  addr[2] = data >> 16;
-}
-
-static void
-store_32bit_le(void *address, uint32_t data)
-{
-  uint8_t *addr = address;
-
-  assert(address != NULL);
-
-  addr[0] = data;
-  addr[1] = data >> 8;
-  addr[2] = data >> 16;
-  addr[3] = data >> 24;
-}
-
 static uint32_t
 get_32bit_le(const void *address)
 {
