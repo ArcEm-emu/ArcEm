@@ -10,7 +10,7 @@ jobs:
     strategy:
       matrix:
         linux:
-        - { platform: X11,  system: X }
+        - { platform: X11,  system: X, apt-packages: libx11-dev libxext-dev }
         - { platform: SDL1, system: SDL, apt-packages: libsdl1.2-dev, sdl-config: sdl-config }
         - { platform: SDL2, system: SDL, apt-packages: libsdl2-dev,   sdl-config: sdl2-config }
 
