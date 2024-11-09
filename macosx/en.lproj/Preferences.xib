@@ -26,19 +26,17 @@
                 <rect key="frame" x="0.0" y="0.0" width="544" height="255"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
-                    <tabView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="9">
-                        <rect key="frame" x="-11" y="-13" width="566" height="258"/>
-                        <autoresizingMask key="autoresizingMask"/>
+                    <tabView translatesAutoresizingMaskIntoConstraints="NO" id="9">
+                        <rect key="frame" x="-11" y="-13" width="566" height="262"/>
                         <font key="font" metaFont="system"/>
                         <tabViewItems>
                             <tabViewItem label="General" identifier="1" id="11">
                                 <view key="view" id="12">
-                                    <rect key="frame" x="10" y="33" width="546" height="212"/>
+                                    <rect key="frame" x="10" y="33" width="546" height="216"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <subviews>
-                                        <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="38">
-                                            <rect key="frame" x="20" y="143" width="405" height="22"/>
-                                            <autoresizingMask key="autoresizingMask"/>
+                                        <textField focusRingType="none" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="38">
+                                            <rect key="frame" x="20" y="151" width="420" height="21"/>
                                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" drawsBackground="YES" id="49">
                                                 <font key="font" metaFont="system"/>
                                                 <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -48,18 +46,16 @@
                                                 <action selector="changeDirText:" target="-2" id="42"/>
                                             </connections>
                                         </textField>
-                                        <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" setsMaxLayoutWidthAtFirstLayout="YES" translatesAutoresizingMaskIntoConstraints="NO" id="40">
-                                            <rect key="frame" x="17" y="173" width="273" height="17"/>
-                                            <autoresizingMask key="autoresizingMask"/>
+                                        <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" setsMaxLayoutWidthAtFirstLayout="YES" translatesAutoresizingMaskIntoConstraints="NO" id="40">
+                                            <rect key="frame" x="18" y="180" width="247" height="16"/>
                                             <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Directory for ArcEm ROM/hexcmos files:" id="50">
                                                 <font key="font" metaFont="system"/>
                                                 <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                                 <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                         </textField>
-                                        <button imageHugsTitle="YES" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="41">
-                                            <rect key="frame" x="433" y="137" width="100" height="32"/>
-                                            <autoresizingMask key="autoresizingMask"/>
+                                        <button imageHugsTitle="YES" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="41">
+                                            <rect key="frame" x="441" y="144" width="92" height="32"/>
                                             <buttonCell key="cell" type="push" title="Choose..." bezelStyle="rounded" alignment="center" borderStyle="border" inset="2" id="51">
                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                                 <font key="font" metaFont="system"/>
@@ -69,6 +65,16 @@
                                             </connections>
                                         </button>
                                     </subviews>
+                                    <constraints>
+                                        <constraint firstItem="41" firstAttribute="firstBaseline" secondItem="38" secondAttribute="firstBaseline" id="KcR-M9-RH0"/>
+                                        <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="40" secondAttribute="trailing" constant="20" symbolic="YES" id="OMX-bx-Mm1"/>
+                                        <constraint firstItem="38" firstAttribute="top" secondItem="40" secondAttribute="bottom" constant="8" symbolic="YES" id="OVm-r2-xJ4"/>
+                                        <constraint firstItem="40" firstAttribute="top" secondItem="12" secondAttribute="top" constant="20" symbolic="YES" id="RJR-71-VYm"/>
+                                        <constraint firstItem="41" firstAttribute="leading" secondItem="38" secondAttribute="trailing" constant="8" symbolic="YES" id="Saa-mY-gTN"/>
+                                        <constraint firstItem="40" firstAttribute="leading" secondItem="12" secondAttribute="leading" constant="20" symbolic="YES" id="TRb-T2-bkm"/>
+                                        <constraint firstAttribute="trailing" secondItem="41" secondAttribute="trailing" constant="20" symbolic="YES" id="TYL-HT-bMt"/>
+                                        <constraint firstItem="38" firstAttribute="leading" secondItem="12" secondAttribute="leading" constant="20" symbolic="YES" id="zmb-BC-yL1"/>
+                                    </constraints>
                                 </view>
                             </tabViewItem>
                             <tabViewItem label="Mouse Emulation" identifier="2" id="10">
@@ -76,9 +82,8 @@
                                     <rect key="frame" x="10" y="33" width="546" height="212"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <subviews>
-                                        <button imageHugsTitle="YES" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="15">
-                                            <rect key="frame" x="36" y="176" width="283" height="18"/>
-                                            <autoresizingMask key="autoresizingMask"/>
+                                        <button imageHugsTitle="YES" translatesAutoresizingMaskIntoConstraints="NO" id="15">
+                                            <rect key="frame" x="18" y="176" width="274" height="18"/>
                                             <buttonCell key="cell" type="check" title="Use keyboard modifiers for extra buttons" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="46">
                                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                                 <font key="font" metaFont="system"/>
@@ -87,9 +92,8 @@
                                                 <action selector="changeMouseEmulation:" target="-2" id="35"/>
                                             </connections>
                                         </button>
-                                        <matrix verticalHuggingPriority="750" fixedFrame="YES" allowsEmptySelection="NO" autosizesCells="NO" translatesAutoresizingMaskIntoConstraints="NO" id="16">
-                                            <rect key="frame" x="36" y="39" width="87" height="98"/>
-                                            <autoresizingMask key="autoresizingMask"/>
+                                        <matrix verticalHuggingPriority="750" allowsEmptySelection="NO" autosizesCells="NO" translatesAutoresizingMaskIntoConstraints="NO" id="16">
+                                            <rect key="frame" x="20" y="40" width="87" height="98"/>
                                             <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                             <size key="cellSize" width="87" height="18"/>
                                             <size key="intercellSpacing" width="4" height="2"/>
@@ -125,9 +129,8 @@
                                                 <action selector="changeMenuModifier:" target="-2" id="36"/>
                                             </connections>
                                         </matrix>
-                                        <matrix verticalHuggingPriority="750" fixedFrame="YES" allowsEmptySelection="NO" autosizesCells="NO" translatesAutoresizingMaskIntoConstraints="NO" id="24">
-                                            <rect key="frame" x="283" y="39" width="87" height="98"/>
-                                            <autoresizingMask key="autoresizingMask"/>
+                                        <matrix verticalHuggingPriority="750" allowsEmptySelection="NO" autosizesCells="NO" translatesAutoresizingMaskIntoConstraints="NO" id="24">
+                                            <rect key="frame" x="273" y="40" width="87" height="98"/>
                                             <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                             <size key="cellSize" width="87" height="18"/>
                                             <size key="intercellSpacing" width="4" height="2"/>
@@ -163,18 +166,16 @@
                                                 <action selector="changeAdjustModifier:" target="-2" id="37"/>
                                             </connections>
                                         </matrix>
-                                        <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" setsMaxLayoutWidthAtFirstLayout="YES" translatesAutoresizingMaskIntoConstraints="NO" id="30">
-                                            <rect key="frame" x="35" y="143" width="201" height="17"/>
-                                            <autoresizingMask key="autoresizingMask"/>
+                                        <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" setsMaxLayoutWidthAtFirstLayout="YES" translatesAutoresizingMaskIntoConstraints="NO" id="30">
+                                            <rect key="frame" x="18" y="144" width="176" height="16"/>
                                             <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Modifier for button 2 (menu)" id="47">
                                                 <font key="font" metaFont="system"/>
                                                 <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                                 <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                         </textField>
-                                        <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" setsMaxLayoutWidthAtFirstLayout="YES" translatesAutoresizingMaskIntoConstraints="NO" id="31">
-                                            <rect key="frame" x="282" y="143" width="204" height="17"/>
-                                            <autoresizingMask key="autoresizingMask"/>
+                                        <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" setsMaxLayoutWidthAtFirstLayout="YES" translatesAutoresizingMaskIntoConstraints="NO" id="31">
+                                            <rect key="frame" x="271" y="144" width="180" height="16"/>
                                             <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Modifier for button 3 (adjust)" id="48">
                                                 <font key="font" metaFont="system"/>
                                                 <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -182,11 +183,33 @@
                                             </textFieldCell>
                                         </textField>
                                     </subviews>
+                                    <constraints>
+                                        <constraint firstItem="30" firstAttribute="leading" secondItem="8" secondAttribute="leading" constant="20" symbolic="YES" id="07i-8Q-KQD"/>
+                                        <constraint firstItem="16" firstAttribute="leading" secondItem="8" secondAttribute="leading" constant="20" symbolic="YES" id="0aX-t5-oAj"/>
+                                        <constraint firstItem="31" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="30" secondAttribute="trailing" constant="50" id="8s2-Ne-hLR"/>
+                                        <constraint firstItem="30" firstAttribute="firstBaseline" secondItem="31" secondAttribute="firstBaseline" id="FAl-m4-zZF"/>
+                                        <constraint firstItem="30" firstAttribute="baseline" secondItem="31" secondAttribute="baseline" id="IiT-MI-okP"/>
+                                        <constraint firstItem="15" firstAttribute="top" secondItem="8" secondAttribute="top" constant="19" id="LBc-8a-2l3"/>
+                                        <constraint firstItem="30" firstAttribute="top" secondItem="15" secondAttribute="bottom" constant="17" id="M9N-nx-HsT"/>
+                                        <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="31" secondAttribute="trailing" constant="20" symbolic="YES" id="RP6-we-6cq"/>
+                                        <constraint firstItem="16" firstAttribute="top" secondItem="24" secondAttribute="top" id="Ykd-DT-T0j"/>
+                                        <constraint firstItem="15" firstAttribute="leading" secondItem="8" secondAttribute="leading" constant="20" symbolic="YES" id="aca-Fx-hgJ"/>
+                                        <constraint firstItem="16" firstAttribute="top" secondItem="30" secondAttribute="bottom" constant="6" id="eRU-tU-uBx"/>
+                                        <constraint firstItem="31" firstAttribute="leading" secondItem="8" secondAttribute="centerX" id="jNa-RG-cPL"/>
+                                        <constraint firstItem="24" firstAttribute="leading" secondItem="31" secondAttribute="leading" id="vat-Io-Vg4"/>
+                                        <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="15" secondAttribute="trailing" constant="20" symbolic="YES" id="wYI-a0-FRw"/>
+                                    </constraints>
                                 </view>
                             </tabViewItem>
                         </tabViewItems>
                     </tabView>
                 </subviews>
+                <constraints>
+                    <constraint firstAttribute="bottom" secondItem="9" secondAttribute="bottom" constant="-3" id="LGe-jx-Z3K"/>
+                    <constraint firstItem="9" firstAttribute="centerX" secondItem="6" secondAttribute="centerX" id="UVe-Qg-ocX"/>
+                    <constraint firstItem="9" firstAttribute="leading" secondItem="6" secondAttribute="leading" constant="-4" id="Vbu-U3-jh3"/>
+                    <constraint firstItem="9" firstAttribute="top" secondItem="6" secondAttribute="top" constant="12" symbolic="YES" id="ix1-jr-P1z"/>
+                </constraints>
             </view>
             <point key="canvasLocation" x="14" y="126"/>
         </window>
