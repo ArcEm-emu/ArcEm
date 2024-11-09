@@ -270,8 +270,6 @@ ArcemConfig hArcemConfig;
 {
     NSOpenPanel *panel = [NSOpenPanel openPanel];
 
-    mountDrive = 0;
-
     [panel beginSheetModalForWindow: [arcemView window] completionHandler: ^(NSModalResponse result) {
         if (result == NSModalResponseOK)
         {
@@ -290,8 +288,6 @@ ArcemConfig hArcemConfig;
 - (IBAction)menuMount1:(id)sender
 {
     NSOpenPanel *panel = [NSOpenPanel openPanel];
-
-    mountDrive = 1;
 
     [panel beginSheetModalForWindow: [arcemView window] completionHandler: ^(NSModalResponse result) {
         if (result == NSModalResponseOK)
@@ -312,8 +308,6 @@ ArcemConfig hArcemConfig;
 {
     NSOpenPanel *panel = [NSOpenPanel openPanel];
 
-    mountDrive = 2;
-    
     [panel beginSheetModalForWindow: [arcemView window] completionHandler: ^(NSModalResponse result) {
         if (result == NSModalResponseOK)
         {
@@ -332,8 +326,6 @@ ArcemConfig hArcemConfig;
 - (IBAction)menuMount3:(id)sender
 {
     NSOpenPanel *panel = [NSOpenPanel openPanel];
-
-    mountDrive = 3;
 
     [panel beginSheetModalForWindow: [arcemView window] completionHandler: ^(NSModalResponse result) {
         if (result == NSModalResponseOK)
@@ -365,14 +357,12 @@ ArcemConfig hArcemConfig;
  */
 - (IBAction)menuEject0:(id)sender
 {
-    mountDrive = 0;
-
     // Update the sim
-    FDC_EjectFloppy(mountDrive);
+    FDC_EjectFloppy(0);
     
     // Now disable the insert menu option and enable the eject menu option
-    [menuItemsMount[mountDrive] setEnabled: YES];
-    [menuItemsEject[mountDrive] setEnabled: NO];
+    [menuItemsMount[0] setEnabled: YES];
+    [menuItemsEject[0] setEnabled: NO];
 }
 
 
@@ -381,14 +371,12 @@ ArcemConfig hArcemConfig;
  */
 - (IBAction)menuEject1:(id)sender
 {
-    mountDrive = 1;
-
     // Update the sim
-    FDC_EjectFloppy(mountDrive);
+    FDC_EjectFloppy(1);
 
     // Now disable the insert menu option and enable the eject menu option
-    [menuItemsMount[mountDrive] setEnabled: YES];
-    [menuItemsEject[mountDrive] setEnabled: NO];
+    [menuItemsMount[1] setEnabled: YES];
+    [menuItemsEject[1] setEnabled: NO];
 }
 
 
@@ -398,14 +386,12 @@ ArcemConfig hArcemConfig;
  */
 - (IBAction)menuEject2:(id)sender
 {
-    mountDrive = 2;
-
     // Update the sim
-    FDC_EjectFloppy(mountDrive);
+    FDC_EjectFloppy(2);
 
     // Now disable the insert menu option and enable the eject menu option
-    [menuItemsMount[mountDrive] setEnabled: YES];
-    [menuItemsEject[mountDrive] setEnabled: NO];
+    [menuItemsMount[2] setEnabled: YES];
+    [menuItemsEject[2] setEnabled: NO];
 }
 
 
@@ -415,14 +401,12 @@ ArcemConfig hArcemConfig;
  */
 - (IBAction)menuEject3:(id)sender
 {
-    mountDrive = 3;
-
     // Update the sim
-    FDC_EjectFloppy(mountDrive);
+    FDC_EjectFloppy(3);
 
     // Now disable the insert menu option and enable the eject menu option
-    [menuItemsMount[mountDrive] setEnabled: YES];
-    [menuItemsEject[mountDrive] setEnabled: NO];
+    [menuItemsMount[3] setEnabled: YES];
+    [menuItemsEject[3] setEnabled: NO];
 }
 
 
