@@ -24,6 +24,7 @@
 
 
 #include <string.h>
+#include <dispatch/dispatch.h>
 
 #include "armdefs.h"
 #include "armarc.h"
@@ -289,7 +290,9 @@ static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,
   HD.Height = height;
   HD.XScale = 1;
   HD.YScale = 1;
-  resizeWindow(HD.Width,HD.Height);
+  dispatch_async(dispatch_get_main_queue(), ^{
+    resizeWindow(HD.Width,HD.Height);
+  });
 }
 
 #if 0
