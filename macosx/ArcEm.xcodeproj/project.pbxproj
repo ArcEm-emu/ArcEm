@@ -52,11 +52,11 @@
 		29B97325FDCFA39411CA2CEA /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		4CA3F3EE046BE8B800E6600F /* keyboard.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; path = keyboard.c; sourceTree = "<group>"; };
 		4CA3F3EF046BE8B800E6600F /* keyboard.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = keyboard.h; sourceTree = "<group>"; };
-		551316332CDED5AB0084DEE0 /* filecalls_internal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = filecalls_internal.h; sourceTree = "<group>"; };
-		551316342CDED5FF0084DEE0 /* dbugsys.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = dbugsys.h; sourceTree = "<group>"; };
-		551316352CDED7910084DEE0 /* ini.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ini.h; sourceTree = "<group>"; };
-		551316362CDED7910084DEE0 /* ini.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ini.c; sourceTree = "<group>"; };
-		5513163A2CDED8580084DEE0 /* filecalls.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = filecalls.c; sourceTree = "<group>"; };
+		551316332CDED5AB0084DEE0 /* filecalls_internal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = filecalls_internal.h; sourceTree = "<group>"; };
+		551316342CDED5FF0084DEE0 /* dbugsys.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = dbugsys.h; sourceTree = "<group>"; };
+		551316352CDED7910084DEE0 /* ini.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ini.h; sourceTree = "<group>"; };
+		551316362CDED7910084DEE0 /* ini.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ini.c; sourceTree = "<group>"; };
+		5513163A2CDED8580084DEE0 /* filecalls.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; path = filecalls.c; sourceTree = "<group>"; };
 		55202D8020C8C4A700E2DA03 /* paldisplaydev.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; path = paldisplaydev.c; sourceTree = "<group>"; };
 		557C2ACC20CAE8810084CBDB /* c99.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = c99.h; sourceTree = "<group>"; };
 		557C2ACE20CAE8D00084CBDB /* hostfs.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; path = hostfs.c; sourceTree = "<group>"; };
@@ -144,23 +144,6 @@
 			name = Classes;
 			sourceTree = "<group>";
 		};
-		1058C7A0FEA54F0111CA2CBB /* Linked Frameworks */ = {
-			isa = PBXGroup;
-			children = (
-				1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */,
-			);
-			name = "Linked Frameworks";
-			sourceTree = "<group>";
-		};
-		1058C7A2FEA54F0111CA2CBB /* Other Frameworks */ = {
-			isa = PBXGroup;
-			children = (
-				29B97325FDCFA39411CA2CEA /* Foundation.framework */,
-				29B97324FDCFA39411CA2CEA /* AppKit.framework */,
-			);
-			name = "Other Frameworks";
-			sourceTree = "<group>";
-		};
 		19C28FACFE9D520D11CA2CBB /* Products */ = {
 			isa = PBXGroup;
 			children = (
@@ -223,8 +206,9 @@
 		29B97323FDCFA39411CA2CEA /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				1058C7A0FEA54F0111CA2CBB /* Linked Frameworks */,
-				1058C7A2FEA54F0111CA2CBB /* Other Frameworks */,
+				1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */,
+				29B97325FDCFA39411CA2CEA /* Foundation.framework */,
+				29B97324FDCFA39411CA2CEA /* AppKit.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
