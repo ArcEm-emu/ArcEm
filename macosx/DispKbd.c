@@ -216,8 +216,10 @@ typedef SDD_HostColour *SDD_Row;
 
 static void SDD_Name(Host_PollDisplay)(ARMul_State *state)
 {
-  RefreshMouse(state);
-  updateDisplay(0, 0, 800, 600, 1);
+  dispatch_sync(dispatch_get_main_queue(), ^{
+    RefreshMouse(state);
+    updateDisplay(0, 0, 800, 600, 1);
+  });
 }
 
 static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,
