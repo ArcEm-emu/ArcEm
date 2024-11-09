@@ -7,7 +7,6 @@
 
 #include <sys/types.h>
 #include <dirent.h>
-#include <sys/syslimits.h>
 
 struct Directory_s {
   DIR *hDir;

@@ -224,15 +224,14 @@ static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,
 
 static SDD_HostColour SDD_Name(Host_GetColour)(ARMul_State *state,uint_fast16_t col)
 {
-  // TODO: CHECK THIS!
-  /* Convert to 5-bit component values */
-  int r = (col & 0x00f) << 1;
-  int g = (col & 0x0f0) >> 3;
-  int b = (col & 0xf00) >> 7;
+  /* Convert to 8-bit component values */
+  int r = (col & 0x00f);
+  int g = (col & 0x0f0);
+  int b = (col & 0xf00) >> 8;
   /* May want to tweak this a bit at some point? */
-  r |= r>>4;
+  r |= r<<4;
   g |= g>>4;
-  b |= b>>4;
+  b |= b<<4;
   return (r<<24) | (g<<16) | (b<<8) | 0xFF;
 }
 
