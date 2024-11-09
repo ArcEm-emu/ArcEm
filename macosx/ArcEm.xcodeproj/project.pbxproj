@@ -9,7 +9,6 @@
 /* Begin PBXBuildFile section */
 		551316392CDED7910084DEE0 /* ini.c in Sources */ = {isa = PBXBuildFile; fileRef = 551316362CDED7910084DEE0 /* ini.c */; };
 		5513163B2CDED8580084DEE0 /* filecalls.c in Sources */ = {isa = PBXBuildFile; fileRef = 5513163A2CDED8580084DEE0 /* filecalls.c */; };
-		5513163C2CDEDAA60084DEE0 /* sound.c in Sources */ = {isa = PBXBuildFile; fileRef = 55F89C3F20C8CA5800374D5B /* sound.c */; };
 		557C2AD320CB2B300084CBDB /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 557C2AD220CB2B300084CBDB /* Images.xcassets */; };
 		557C2AD820CC681E0084CBDB /* hostfs.c in Sources */ = {isa = PBXBuildFile; fileRef = 557C2ACE20CAE8D00084CBDB /* hostfs.c */; };
 		5582DD7420C8C14900931D55 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 29B97318FDCFA39411CA2CEA /* MainMenu.xib */; };
@@ -79,7 +78,6 @@
 		55F89C3720C8C96C00374D5B /* ArcemConfig.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; path = ArcemConfig.c; sourceTree = "<group>"; };
 		55F89C3A20C8C9AE00374D5B /* filecalls.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = filecalls.h; sourceTree = "<group>"; };
 		55F89C3B20C8C9AE00374D5B /* filecommon.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; path = filecommon.c; sourceTree = "<group>"; };
-		55F89C3F20C8CA5800374D5B /* sound.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; path = sound.c; sourceTree = "<group>"; };
 		55F89C4120C8CBAA00374D5B /* newsound.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; path = newsound.c; sourceTree = "<group>"; };
 		D157A5F10291D6F801123251 /* ArcemView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = ArcemView.h; sourceTree = "<group>"; };
 		D157A5F20291D6F801123251 /* ArcemView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = ArcemView.m; sourceTree = "<group>"; };
@@ -294,7 +292,6 @@
 				D1F01DDA0293D79C01CDBB35 /* KeyTable.h */,
 				D1F01D8302931F6101CDBB35 /* macarcem.h */,
 				29B97316FDCFA39411CA2CEA /* main.m */,
-				55F89C3F20C8CA5800374D5B /* sound.c */,
 				D1F01DD8029333DB01CDBB35 /* win.h */,
 			);
 			name = mac;
@@ -380,7 +377,6 @@
 				55F89C2F20C8C92F00374D5B /* extnrom.c in Sources */,
 				5582DD8120C8C14900931D55 /* archio.c in Sources */,
 				5582DD8220C8C14900931D55 /* armarc.c in Sources */,
-				5513163C2CDEDAA60084DEE0 /* sound.c in Sources */,
 				5582DD8320C8C14900931D55 /* fdc1772.c in Sources */,
 				5582DD8420C8C14900931D55 /* hdc63463.c in Sources */,
 				5582DD8520C8C14900931D55 /* i2c.c in Sources */,
