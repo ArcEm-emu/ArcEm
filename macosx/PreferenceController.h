@@ -25,18 +25,18 @@
 #import <AppKit/AppKit.h>
 #import "ArcemView.h"
 
-extern NSString *AEUseMouseEmulationKey;
-extern NSString *AEAdjustModifierKey;
-extern NSString *AEMenuModifierKey;
-extern NSString *AEDirectoryKey;
+extern NSString *const AEUseMouseEmulationKey;
+extern NSString *const AEAdjustModifierKey;
+extern NSString *const AEMenuModifierKey;
+extern NSString *const AEDirectoryKey;
 
 @interface PreferenceController : NSWindowController {
-    IBOutlet id useMouseEmulation;
-    IBOutlet id adjustModifier;
-    IBOutlet id menuModifier;
-    IBOutlet id directoryText;
+    IBOutlet NSButton *useMouseEmulation;
+    IBOutlet NSMatrix *adjustModifier;
+    IBOutlet NSMatrix *menuModifier;
+    IBOutlet NSTextField *directoryText;
 
-    ArcemView *view;
+    ArcemView *__weak view;
 }
 
 - (IBAction)changeMouseEmulation:(id)sender;
@@ -44,6 +44,6 @@ extern NSString *AEDirectoryKey;
 - (IBAction)changeMenuModifier:(id)sender;
 - (IBAction)changeDirText:(id)sender;
 - (IBAction)chooseButton:(id)sender;
-- (void)setView: (ArcemView *)aview;
+@property (weak) ArcemView *view;
 
 @end

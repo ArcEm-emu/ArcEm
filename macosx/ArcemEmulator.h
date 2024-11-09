@@ -33,10 +33,8 @@
 #import <Foundation/Foundation.h>
 
 
-@interface ArcemEmulator : NSObject {
-    NSAutoreleasePool *pool;
-}
-- (void)threadStart:(id)anObject;  // Where the thread is launched
+@interface ArcemEmulator : NSObject 
+- (void)threadStart:(id)anObject;  //!< Where the thread is launched
 - (void)threadKill;
 
 

@@ -5,7 +5,6 @@
 #include "armdefs.h"
 #include "archio.h"
 #include "armarc.h"
-#include "DispKbd.h"
 #include "ControlPane.h"
 
 #include <stdarg.h>
