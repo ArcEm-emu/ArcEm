@@ -47,10 +47,10 @@
     IBOutlet NSMenuItem *menuItemHDMount1;
     IBOutlet NSMenuItem *menuItemDoubleX;
     IBOutlet NSMenuItem *menuItemDoubleY;
-	id menuItemsEject[4];
-	id menuItemsMount[4];
-	id menuItemsHDEject[2];
-	id menuItemsHDMount[2];
+    NSMenuItem *menuItemsEject[4];
+    NSMenuItem *menuItemsMount[4];
+    NSMenuItem *menuItemsHDEject[2];
+    NSMenuItem *menuItemsHDMount[2];
     
     NSMutableData *screenBmp;		//!< Raw screen bitmap
     NSBitmapImageRep *screenImg;	//!< Image for drawing screen
