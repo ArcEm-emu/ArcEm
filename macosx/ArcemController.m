@@ -49,20 +49,19 @@ ArcemConfig hArcemConfig;
         NSString *path = [NSHomeDirectory() stringByAppendingPathComponent:@"arcem"];
         
         // Create the screen bitmap and image
-        screenBmp = [[NSMutableData alloc] initWithLength: 800 * 600 * 3];
+        screenBmp = [[NSMutableData alloc] initWithLength: 800 * 600 * 4];
         screenPlanes = (unsigned char**)malloc(sizeof(unsigned char*) * 2);
         screenPlanes[0] = [screenBmp mutableBytes];
         screenPlanes[1] = NULL;
-        memset(screenPlanes[0], 0, 800 * 600 * 3);
         screenImg = [[NSBitmapImageRep alloc] initWithBitmapDataPlanes: screenPlanes
                                                             pixelsWide: 800
                                                             pixelsHigh: 600
                                                          bitsPerSample: 8
-                                                       samplesPerPixel: 3
-                                                              hasAlpha: NO
+                                                       samplesPerPixel: 4
+                                                              hasAlpha: YES
                                                               isPlanar: NO
                                                         colorSpaceName: NSCalibratedRGBColorSpace
-                                                           bytesPerRow: 800 * 3
+                                                           bytesPerRow: 800 * 4
                                                           bitsPerPixel: 24];
 
         // Create the cursor bitmap and image
@@ -70,7 +69,6 @@ ArcemConfig hArcemConfig;
         cursorPlanes = (unsigned char**)malloc(sizeof(unsigned char*) * 2);
         cursorPlanes[0] = [cursorBmp mutableBytes];
         cursorPlanes[1] = NULL;
-        memset(cursorPlanes[0], 0, 32 * 32 * 4);
         cursorImg = [[NSBitmapImageRep alloc] initWithBitmapDataPlanes: cursorPlanes
                                                             pixelsWide: 32
                                                             pixelsHigh: 32
@@ -279,7 +277,8 @@ ArcemConfig hArcemConfig;
         {
             [self changeDriveImageAtIndex:0 toURL:panel.URL];
         }
-    }];}
+    }];
+}
 
 
 /*------------------------------------------------------------------------------
@@ -299,7 +298,8 @@ ArcemConfig hArcemConfig;
         {
             [self changeDriveImageAtIndex:1 toURL:panel.URL];
         }
-    }];}
+    }];
+}
 
 
 /*------------------------------------------------------------------------------
@@ -313,13 +313,14 @@ ArcemConfig hArcemConfig;
     NSOpenPanel *panel = [NSOpenPanel openPanel];
 
     mountDrive = 2;
-  
+    
     [panel beginSheetModalForWindow: [arcemView window] completionHandler: ^(NSModalResponse result) {
         if (result == NSModalResponseOK)
         {
             [self changeDriveImageAtIndex:2 toURL:panel.URL];
         }
-    }];}
+    }];
+}
 
 
 /*------------------------------------------------------------------------------
