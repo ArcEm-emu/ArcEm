@@ -68,7 +68,7 @@
 #define VK_BRACKETLEFT	(33)
 #define VK_BRACKETRIGHT	(30)
 #define VK_BACKTICK	(50)
-// VK_WEIRD is ¤/±
+// VK_WEIRD is Â§/Â±
 #define VK_WEIRD	(10) 
 #define VK_HELP	(47)
 #define VK_1	(18)

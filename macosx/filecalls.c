@@ -6,14 +6,120 @@
 /* application includes */
 #include "filecalls.h"
 
+static bool File_GetInfo(const char *sPath, FileInfo *phFileInfo);
+
 /**
- * File_OpenAppData
+ * Directory_Open
  *
+ * Open a directory so that it's contents can be scanned
+ *
+ * @param sPath Location of directory to scan
+ * @param hDir Pointer to a Directory struct to fill in
+ * @returns true on success false on failure
+ */
+bool Directory_Open(const char *sPath, Directory *hDirectory)
+{
+  assert(sPath);
+  assert(*sPath);
+  assert(hDirectory);
+
+  hDirectory->sPathLen = strlen(sPath);
+  hDirectory->sPath = malloc(hDirectory->sPathLen + 1);
+
+  if(NULL == hDirectory->sPath) {
+    return false;
+  } else {
+    strcpy(hDirectory->sPath, sPath);
+  }
+
+  hDirectory->hDir = opendir(sPath);
+
+  if(NULL == hDirectory->hDir) {
+    return false;
+  } else {
+    return true;
+  }
+}
+
+/**
+ * Directory_Close
+ *
+ * Close a previously opened Directory
+ *
+ * @param hDirectory Directory to close
+ */
+void Directory_Close(Directory hDirectory)
+{
+  closedir(hDirectory.hDir);
+  free(hDirectory.sPath);
+}
+
+/**
+ * Directory_GetNextEntry
+ *
+ * Get the next entry in a directory
+ *
+ * @param hDirectory pointer to Directory to get entry from
+ * @returns String of filename or NULL on EndOfDirectory
+ */
+char *Directory_GetNextEntry(Directory *hDirectory, FileInfo *phFileInfo)
+{
+  struct dirent *phDirEntry;
+  
+  assert(hDirectory);
+  
+  phDirEntry = readdir(hDirectory->hDir);
+  if(!phDirEntry) {
+    return NULL;
+  }
+
+  if (phFileInfo) {
+    phFileInfo->bIsRegularFile = false;
+    phFileInfo->bIsDirectory   = false;
+
+#ifdef _DIRENT_HAVE_D_TYPE
+    if (phDirEntry->d_type == DT_REG || phDirEntry->d_type == DT_DIR) {
+      phFileInfo->bIsRegularFile = (phDirEntry->d_type == DT_REG);
+      phFileInfo->bIsDirectory   = (phDirEntry->d_type == DT_DIR);
+    } else
+#endif
+    {
+      char *path = Directory_GetFullPath(hDirectory, phDirEntry->d_name);
+      if (path) {
+        File_GetInfo(path, phFileInfo);
+        free(path);
+      }
+    }
+  }
+
+  return phDirEntry->d_name;
+}
+
+/**
+ * Get the full path of a file in a directory
+ *
+ * @param hDirectory pointer to Directory to get the base path from
+ * @returns String of the full path or `NULL` on EndOfDirectory
+ */
+char *Directory_GetFullPath(Directory *hDirectory, const char *leaf) {
+  size_t len = hDirectory->sPathLen + strlen(leaf) + 1;
+  char *path = malloc(len + 1);
+  if (!path) {
+    return NULL;
+  }
+
+  strcpy(path, hDirectory->sPath);
+  strcat(path, "/");
+  strcat(path, leaf);
+  return path;
+}
+
+/**
  * Open the specified file in the application data directory
  *
  * @param sName Name of file to open
  * @param sMode Mode to open the file with
- * @returns File handle or NULL on failure
+ * @returns File handle or `NULL` on failure
  */
 FILE *File_OpenAppData(const char *sName, const char *sMode)
 {

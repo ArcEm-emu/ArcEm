@@ -26,10 +26,10 @@
 #import "KeyTable.h"
 
 // The keys we use for our plist
-NSString *AEUseMouseEmulationKey = @"Use Mouse Emulation";
-NSString *AEAdjustModifierKey = @"Adjust Modifier";
-NSString *AEMenuModifierKey = @"Menu Modifier";
-NSString *AEDirectoryKey = @"Directory";
+NSString *const AEUseMouseEmulationKey = @"Use Mouse Emulation";
+NSString *const AEAdjustModifierKey = @"Adjust Modifier";
+NSString *const AEMenuModifierKey = @"Menu Modifier";
+NSString *const AEDirectoryKey = @"Directory";
 
 @implementation PreferenceController
 
@@ -55,7 +55,7 @@ const static int modifier_table[5] = {VK_ALT, VK_COMMAND, VK_CONTROL, VK_FUNCTIO
     defaults = [NSUserDefaults standardUserDefaults];
 
     [useMouseEmulation setState: [defaults boolForKey:AEUseMouseEmulationKey]];
-    [directoryText setStringValue: [defaults stringForKey:AEDirectoryKey]];
+    [directoryText setStringValue: [[defaults URLForKey:AEDirectoryKey] path]];
 
     [defaults synchronize];
 }
@@ -64,10 +64,7 @@ const static int modifier_table[5] = {VK_ALT, VK_COMMAND, VK_CONTROL, VK_FUNCTIO
 /*------------------------------------------------------------------------------
  *
  */
-- (void)setView: (ArcemView *) aview
-{
-    view = aview;
-}
+@synthesize view;
 
 
 /*------------------------------------------------------------------------------
@@ -136,17 +133,17 @@ const static int modifier_table[5] = {VK_ALT, VK_COMMAND, VK_CONTROL, VK_FUNCTIO
  *
  */
 - (void)openPanelDidEnd: (NSOpenPanel *)openPanel
-             returnCode: (int)returnCode
+             returnCode: (NSModalResponse)returnCode
             contextInfo: (void *)x
 {
     if (returnCode == NSOKButton)
     {
-        NSString *path = [openPanel filename];
+        NSURL *path = [openPanel URL];
 
         [[NSUserDefaults standardUserDefaults] setObject: path
                                                   forKey: AEMenuModifierKey];        
         
-        [directoryText setStringValue: path];
+        [directoryText setStringValue: path.path];
     }
 }
 
@@ -161,13 +158,10 @@ const static int modifier_table[5] = {VK_ALT, VK_COMMAND, VK_CONTROL, VK_FUNCTIO
     [panel setCanChooseDirectories: TRUE];
     [panel setCanChooseFiles: FALSE];
     
-    [panel beginSheetForDirectory: nil
-                             file: [[NSUserDefaults standardUserDefaults] stringForKey:AEDirectoryKey]
-                            types: nil
-                   modalForWindow: [self window]
-                    modalDelegate: self
-                   didEndSelector: @selector(openPanelDidEnd:returnCode:contextInfo:)
-                      contextInfo: nil];
+    [panel setDirectoryURL:[[[NSUserDefaults standardUserDefaults] URLForKey:AEDirectoryKey] URLByDeletingLastPathComponent]];
+    [panel beginSheetModalForWindow:self.window completionHandler:^(NSModalResponse result) {
+        [self openPanelDidEnd:panel returnCode:result contextInfo:NULL];
+    }];
 }
 
 @end

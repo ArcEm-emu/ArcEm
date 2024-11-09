@@ -28,41 +28,42 @@
 #import "ArcemEmulator.h"
 
 @class PreferenceController;
+@class ArcemView;
 
 @interface ArcemController : NSObject
 {
-    IBOutlet id arcemView;		// Main screen display
-    IBOutlet id menuItemEject0;
-    IBOutlet id menuItemEject1;
-    IBOutlet id menuItemEject2;
-    IBOutlet id menuItemEject3;
-    IBOutlet id menuItemMount0;
-    IBOutlet id menuItemMount1;
-    IBOutlet id menuItemMount2;
-    IBOutlet id menuItemMount3;
-    IBOutlet id menuItemHDEject0;
-    IBOutlet id menuItemHDEject1;
-    IBOutlet id menuItemHDMount0;
-    IBOutlet id menuItemHDMount1;
-    IBOutlet id menuItemDoubleX;
-    IBOutlet id menuItemDoubleY;
-    IBOutlet id menuItemsEject[4];
-    IBOutlet id menuItemsMount[4];
-    IBOutlet id menuItemsHDEject[2];
-    IBOutlet id menuItemsHDMount[2];
+    IBOutlet ArcemView *arcemView;		//!< Main screen display
+    IBOutlet NSMenuItem *menuItemEject0;
+    IBOutlet NSMenuItem *menuItemEject1;
+    IBOutlet NSMenuItem *menuItemEject2;
+    IBOutlet NSMenuItem *menuItemEject3;
+    IBOutlet NSMenuItem *menuItemMount0;
+    IBOutlet NSMenuItem *menuItemMount1;
+    IBOutlet NSMenuItem *menuItemMount2;
+    IBOutlet NSMenuItem *menuItemMount3;
+    IBOutlet NSMenuItem *menuItemHDEject0;
+    IBOutlet NSMenuItem *menuItemHDEject1;
+    IBOutlet NSMenuItem *menuItemHDMount0;
+    IBOutlet NSMenuItem *menuItemHDMount1;
+    IBOutlet NSMenuItem *menuItemDoubleX;
+    IBOutlet NSMenuItem *menuItemDoubleY;
+	id menuItemsEject[4];
+	id menuItemsMount[4];
+	id menuItemsHDEject[2];
+	id menuItemsHDMount[2];
     
-    NSMutableData *screenBmp;		// Raw screen bitmap
-    NSBitmapImageRep *screenImg;	// Image for drawing screen
-    unsigned char **screenPlanes;	// Planes for screen
-    NSMutableData *cursorBmp;		// Raw cursos bitmap
-    NSBitmapImageRep *cursorImg;	// Image for drawing cursor
-    unsigned char **cursorPlanes;	// Planes for cursor
+    NSMutableData *screenBmp;		//!< Raw screen bitmap
+    NSBitmapImageRep *screenImg;	//!< Image for drawing screen
+    unsigned char **screenPlanes;	//!< Planes for screen
+    NSMutableData *cursorBmp;		//!< Raw cursos bitmap
+    NSBitmapImageRep *cursorImg;	//!< Image for drawing cursor
+    unsigned char **cursorPlanes;	//!< Planes for cursor
 
-    ArcemEmulator *emuThread;		// Thread controling the emulator
+    ArcemEmulator *emuThread;		//!< Thread controling the emulator
 
     PreferenceController *preferenceController;
 
-    BOOL	bFullScreen;		// Are we running in full screen mode?
+    BOOL	bFullScreen;		//!< Are we running in full screen mode?
 
     int		mountDrive;
 }
@@ -71,9 +72,25 @@
 - (IBAction)fullScreen:(id)sender;
 - (IBAction)lockMouse:(id)sender;
 
+//! give the user a file select dialog box to let the user
+//! mount a drive image. We don't want to let the user open a disk
+//! with a disk already loaded there, but we don't test here as
+//! the menu option should be disabled.
 - (IBAction)menuMount0:(id)sender;
+//! give the user a file select dialog box to let the user
+//! mount a drive image. We don't want to let the user open a disk
+//! with a disk already loaded there, but we don't test here as
+//! the menu option should be disabled.
 - (IBAction)menuMount1:(id)sender;
+//! give the user a file select dialog box to let the user
+//! mount a drive image. We don't want to let the user open a disk
+//! with a disk already loaded there, but we don't test here as
+//! the menu option should be disabled.
 - (IBAction)menuMount2:(id)sender;
+//! give the user a file select dialog box to let the user
+//! mount a drive image. We don't want to let the user open a disk
+//! with a disk already loaded there, but we don't test here as
+//! the menu option should be disabled.
 - (IBAction)menuMount3:(id)sender;
 
 - (IBAction)menuEject0:(id)sender;
@@ -96,10 +113,11 @@
 - (void)destroyEmulatorThread;
 
 - (void)openPanelDidEnd: (NSOpenPanel *)openPanel
-             returnCode: (int)returnCode
+             returnCode: (NSModalResponse)returnCode
             contextInfo: (void *)x;
+- (void)changeDriveImageAtIndex: (int)fdNum toURL: (NSURL*)newfile;
 - (void)openPanelHardDiscDidEnd: (NSOpenPanel *)openPanel
-                     returnCode: (int)returnCode
+                     returnCode: (NSModalResponse)returnCode
                     contextInfo: (void *)x;
 
 @end
