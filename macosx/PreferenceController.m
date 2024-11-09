@@ -136,7 +136,7 @@ const static int modifier_table[5] = {VK_ALT, VK_COMMAND, VK_CONTROL, VK_FUNCTIO
              returnCode: (NSModalResponse)returnCode
             contextInfo: (void *)x
 {
-    if (returnCode == NSOKButton)
+    if (returnCode == NSModalResponseOK)
     {
         NSURL *path = [openPanel URL];
 

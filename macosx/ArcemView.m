@@ -199,7 +199,7 @@ extern int rMouseHeight;
     {
         [screenImage drawInRect: bounds
                        fromRect: dispFrame
-                      operation: NSCompositeCopy
+                      operation: NSCompositingOperationCopy
                        fraction: 1.0];
     }
 
@@ -217,7 +217,7 @@ extern int rMouseHeight;
     {
         [cursorImage drawInRect: r
                        fromRect: bounds
-                      operation: NSCompositeSourceOver
+                      operation: NSCompositingOperationSourceOver
                        fraction: 1.0];
     }
 
@@ -228,7 +228,11 @@ extern int rMouseHeight;
         // set my test condition to handle this.
         const char* temp = strErrorMsg;
         strErrorMsg = NULL;
-        NSRunCriticalAlertPanel(@"ArcEm Critical Error", @"%s", nil, nil, nil, temp);
+        NSAlert *alert = [[NSAlert alloc] init];
+        alert.alertStyle = NSAlertStyleCritical;
+        alert.messageText = @"ArcEm Critical Error";
+        alert.informativeText = @(temp);
+        [alert runModal];
     }
 }
 

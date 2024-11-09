@@ -198,7 +198,7 @@ ArcemConfig hArcemConfig;
 
 
 /*------------------------------------------------------------------------------
- * fullScreen - TODO! 
+ * fullScreen - TODO: Use the newer windowing APIs.
  */
 - (IBAction)fullScreen:(id)sender
 {
@@ -275,7 +275,7 @@ ArcemConfig hArcemConfig;
     mountDrive = 0;
 
     [panel beginSheetModalForWindow: [arcemView window] completionHandler: ^(NSModalResponse result) {
-        if (result == NSOKButton)
+        if (result == NSModalResponseOK)
         {
             [self changeDriveImageAtIndex:0 toURL:panel.URL];
         }
@@ -295,7 +295,7 @@ ArcemConfig hArcemConfig;
     mountDrive = 1;
 
     [panel beginSheetModalForWindow: [arcemView window] completionHandler: ^(NSModalResponse result) {
-        if (result == NSOKButton)
+        if (result == NSModalResponseOK)
         {
             [self changeDriveImageAtIndex:1 toURL:panel.URL];
         }
@@ -315,7 +315,7 @@ ArcemConfig hArcemConfig;
     mountDrive = 2;
   
     [panel beginSheetModalForWindow: [arcemView window] completionHandler: ^(NSModalResponse result) {
-        if (result == NSOKButton)
+        if (result == NSModalResponseOK)
         {
             [self changeDriveImageAtIndex:2 toURL:panel.URL];
         }
@@ -335,7 +335,7 @@ ArcemConfig hArcemConfig;
     mountDrive = 3;
 
     [panel beginSheetModalForWindow: [arcemView window] completionHandler: ^(NSModalResponse result) {
-        if (result == NSOKButton)
+        if (result == NSModalResponseOK)
         {
             [self changeDriveImageAtIndex:3 toURL:panel.URL];
         }
@@ -346,16 +346,6 @@ ArcemConfig hArcemConfig;
 /*------------------------------------------------------------------------------
  *
  */
-- (void)openPanelDidEnd: (NSOpenPanel *)openPanel
-             returnCode: (NSModalResponse)returnCode
-            contextInfo: (void *)x
-{
-    if (returnCode == NSOKButton)
-    {
-        [self changeDriveImageAtIndex:mountDrive toURL:openPanel.URL];
-    }
-}
-
 - (void)changeDriveImageAtIndex: (int)fdNum toURL: (NSURL*)newfile
 {
     // One assumes if we managed to select a file then it exists...
@@ -367,37 +357,6 @@ ArcemConfig hArcemConfig;
     [menuItemsMount[fdNum] setEnabled: NO];
     [menuItemsEject[fdNum] setEnabled: YES];
 }
-
-/*------------------------------------------------------------------------------
- *
- */
-- (void)openPanelHardDiscDidEnd: (NSOpenPanel *)openPanel
-                     returnCode: (NSModalResponse)returnCode
-                    contextInfo: (void *)x
-{
-    if (returnCode == NSOKButton)
-    {
-#if 0
-        NSString *path = [openPanel filename];
-
-        //NSLog(@"Open file %s for drive %d\n", [path cString], mountDrive);
-
-        // One assumes it we managed to select a file then it exists...
-
-        // Note the name of the disk image
-        FDC.driveFiles[mountDrive] = (char*)malloc([path length] + 1);
-        [path getCString: FDC.driveFiles[mountDrive]];
-
-        // Force the FDC to reload that drive
-        FDC_ReOpen((struct ARMul_State*)NULL, mountDrive);
-
-        // Now disable the insert menu option and enable the eject menu option
-        [menuItemsMount[mountDrive] setEnabled: NO];
-        [menuItemsEject[mountDrive] setEnabled: YES];
-#endif
-    }
-}
-
 
 
 /*------------------------------------------------------------------------------
