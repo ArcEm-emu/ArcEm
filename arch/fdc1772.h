@@ -75,7 +75,7 @@ void FDC_ReOpen(ARMul_State *state, int drive);
  * Associate disc image with drive.Drive must be empty
  * on startup or having been previously ejected.
  *
- * @oaram drive Drive number to load image into [0-3]
+ * @param drive Drive number to load image into [0-3]
  * @param image Filename of image to load
  * @returns NULL on success or string of error message
  */
