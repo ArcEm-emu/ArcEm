@@ -59,17 +59,6 @@ void FDC_LatchAChange(ARMul_State *state);
 void FDC_LatchBChange(ARMul_State *state);
 
 /**
- * FDC_ReOpen
- *
- * Deprecated.  See FDC_InsertFloppy() and FDC_EjectFloppy().
- * IMPROVE remove the usage of this by the Mac OS X code
- *
- * @param state
- * @param drive
- */
-void FDC_ReOpen(ARMul_State *state, int drive);
-
-/**
  * FDC_InsertFloppy
  *
  * Associate disc image with drive.Drive must be empty

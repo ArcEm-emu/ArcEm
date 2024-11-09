@@ -842,42 +842,6 @@ ARMword FDC_Write(ARMul_State *state, ARMword offset, ARMword data, bool bNw) {
 } /* FDC_Write */
 
 /**
- * FDC_ReOpen
- *
- * Deprecated.  See FDC_InsertFloppy() and FDC_EjectFloppy().
- * IMPROVE remove the usage of this by the Mac OS X code
- *
- * @param state
- * @param drive
- */
-void FDC_ReOpen(ARMul_State *state, int drive) {
-  char tmp[256];
-
-  if (drive>3) {
-    return;
-  }
-
-  if (FDC.LastCommand != CMD_FORCE_INTR) {
-    warn_fdc("FDC not idle - can't change floppy\n");
-    return;
-  }
-
-  FDC_EjectFloppy(drive);
-
-#if defined(__riscos__)
-  sprintf(tmp, "<ArcEm$Dir>.^.FloppyImage%d", drive);
-#else
-  sprintf(tmp, "FloppyImage%d", drive);
-#endif
-
-  FDC_InsertFloppy(drive, tmp);
-
-  DBG(("FDC_ReOpen: Drive %d %s\n", drive,
-        (FDC.drive[drive].fp == NULL) ? "unable to reopen" :
-        "reopened"));
-} /* FDC_ReOpen */
-
-/**
  * FDC_Init
  *
  * Called on program startup, initialise the 1772 disk controller
