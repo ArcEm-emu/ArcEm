@@ -64,8 +64,6 @@
     PreferenceController *preferenceController;
 
     BOOL	bFullScreen;		//!< Are we running in full screen mode?
-
-    int		mountDrive;
 }
 - (IBAction)showPreferencePanel:(id)sender;
 - (IBAction)newSim:(id)sender;
