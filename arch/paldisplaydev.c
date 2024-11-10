@@ -506,7 +506,7 @@ static void PDD_Name(EventFunc)(ARMul_State *state,CycleCount nowtime)
 
   /* Work out when to reschedule ourselves */
   FramePeriod = (VIDC.Horiz_Cycle*2+2)*(VIDC.Vert_Cycle+1);
-  framelength = (((uint64_t) ARMul_EmuRate)*FramePeriod)*ClockDivider/ClockIn;
+  framelength = (CycleCount)((((uint64_t) ARMul_EmuRate)*FramePeriod)*ClockDivider/ClockIn);
   framelength = MAX(framelength,1000);
   EventQ_Reschedule(state,nowtime+framelength,PDD_Name(EventFunc),EventQ_Find(state,PDD_Name(EventFunc)));
 

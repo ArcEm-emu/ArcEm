@@ -1068,7 +1068,7 @@ void EmuRate_Update(ARMul_State *state)
   /* Recalculate IOC rates */
 
   iocrate = (((uint64_t) 2000000)<<16)/ARMul_EmuRate;
-  ioc.InvIOCRate = (((uint64_t) ARMul_EmuRate)<<16)/2000000;
+  ioc.InvIOCRate = (uint32_t) ((((uint64_t) ARMul_EmuRate)<<16)/2000000);
   ioc.IOCRate = (uint32_t) iocrate;
 
   /* Update IOC timers again, to ensure the next interrupt occurs at the right time */

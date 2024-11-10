@@ -854,7 +854,7 @@ static ARMword FastMap_ConIOFunc(ARMul_State *state, ARMword addr,ARMword data,A
   }
   if(flags & FASTMAP_ACCESSFUNC_WRITE)
   {
-    PutValIO(state,addr,data,flags&FASTMAP_ACCESSFUNC_BYTE);
+    PutValIO(state,addr,data,!!(flags&FASTMAP_ACCESSFUNC_BYTE));
     return 0;
   }
   return GetWord_IO(state,addr);
@@ -872,7 +872,7 @@ static ARMword FastMap_VIDCFunc(ARMul_State *state, ARMword addr,ARMword data,AR
   }
   if(flags & FASTMAP_ACCESSFUNC_WRITE)
   {
-    (DisplayDev_Current->VIDCPutVal)(state,addr,data,flags&FASTMAP_ACCESSFUNC_BYTE);
+    (DisplayDev_Current->VIDCPutVal)(state,addr,data,!!(flags&FASTMAP_ACCESSFUNC_BYTE));
     return 0;
   }
   if(MEMC.ROMLow)

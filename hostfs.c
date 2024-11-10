@@ -714,7 +714,7 @@ hostfs_read_object_info(const char *host_pathname,
     object_info->exec = (low & 255) | (high << 8);
   }
 
-  object_info->length  = info.st_size;
+  object_info->length  = (ARMword)info.st_size;
   object_info->attribs = DEFAULT_ATTRIBUTES;
 
   if (ro_leaf) {

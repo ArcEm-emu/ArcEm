@@ -172,7 +172,7 @@ typedef struct {
 
 typedef uint32_t CycleCount;
 typedef int32_t CycleDiff;
-#define MAX_CYCLES_INTO_FUTURE LONG_MAX
+#define MAX_CYCLES_INTO_FUTURE INT32_MAX
 
 typedef void (*EventQ_Func)(ARMul_State *state,CycleCount nowtime);
 

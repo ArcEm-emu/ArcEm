@@ -118,7 +118,7 @@ extnrom_calculate_size(const char *dir, uint32_t *entry_count)
 
   while ((sFilename = Directory_GetNextEntry(&hDir, &hFileInfo)) != NULL) {
     char *path;
-    uint32_t ulFilesize;
+    long ulFilesize;
     FILE *f;
 
     /* Ignore hidden entries - those starting with '.' */
@@ -258,7 +258,7 @@ extnrom_load(const char *dir, uint32_t size, uint32_t entry_count, void *address
   while ((sFilename = Directory_GetNextEntry(&hDir, &hFileInfo)) != NULL) {
     char *path;
     ARMword offset;
-    uint32_t ulFilesize;
+    ARMword ulFilesize;
     FILE *f;
 
     /* Ignore hidden entries - those starting with '.' */
@@ -283,7 +283,7 @@ extnrom_load(const char *dir, uint32_t size, uint32_t entry_count, void *address
     }
 
     fseek(f, 0, SEEK_END);
-    ulFilesize = ftell(f);
+    ulFilesize = (ARMword)ftell(f);
     fseek(f, 0, SEEK_SET);
 
     /* Offset of where this module will be placed in the ROM */

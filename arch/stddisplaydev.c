@@ -1873,7 +1873,7 @@ static void SDD_Name(Flyback)(ARMul_State *state)
     const uint_fast8_t ClockDivider = ClockDividers[NewCR&3]; 
   
     /* Calculate new line rate */
-    DC.LineRate = (((uint64_t) ARMul_EmuRate)*(VIDC.Horiz_Cycle*2+2))*ClockDivider/ClockIn;
+    DC.LineRate = (uint32_t) ((((uint64_t) ARMul_EmuRate)*(VIDC.Horiz_Cycle*2+2))*ClockDivider/ClockIn);
     if(DC.LineRate < 100)
       DC.LineRate = 100; /* Clamp to safe minimum value */
   }
@@ -1934,7 +1934,7 @@ static void SDD_Name(FrameStart)(ARMul_State *state,CycleCount nowtime)
   const uint_fast8_t ClockDivider = ClockDividers[NewCR&3];
 
   /* Calculate new line rate */
-  DC.LineRate = (((uint64_t) ARMul_EmuRate)*(VIDC.Horiz_Cycle*2+2))*ClockDivider/ClockIn;
+  DC.LineRate = (uint32_t) ((((uint64_t) ARMul_EmuRate)*(VIDC.Horiz_Cycle*2+2))*ClockDivider/ClockIn);
   if(DC.LineRate < 100)
     DC.LineRate = 100; /* Clamp to safe minimum value */
 

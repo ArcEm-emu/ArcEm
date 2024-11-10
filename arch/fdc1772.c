@@ -946,7 +946,7 @@ FDC_InsertFloppy(int drive, const char *image)
 {
   floppy_drive *dr;
   FILE *fp;
-  int32_t len;
+  long len;
   const floppy_format *ff;
 
   assert(drive >= 0 && drive < sizeof FDC.drive /

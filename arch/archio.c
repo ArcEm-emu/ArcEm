@@ -133,7 +133,7 @@ static int32_t
 GetCurrentTimerVal(ARMul_State *state,int toget)
 {
   CycleDiff timeSinceLastUpdate = ARMul_Time - ioc.TimersLastUpdated;
-  int32_t scaledTimeSlip = (((uint64_t) timeSinceLastUpdate) * ioc.IOCRate + ioc.TimerFracBit)>>16;
+  int32_t scaledTimeSlip = (int32_t)((((uint64_t) timeSinceLastUpdate) * ioc.IOCRate + ioc.TimerFracBit)>>16);
   int32_t tmpL;
   int32_t result;
 
@@ -153,7 +153,7 @@ static void UpdateTimerRegisters_Internal(ARMul_State *state,CycleCount nowtime,
   CycleDiff timeSinceLastUpdate = nowtime - ioc.TimersLastUpdated;
   /* Take into account any lost fractions of an IOC tick */
   uint64_t TimeSlip = (((uint64_t) timeSinceLastUpdate) * ioc.IOCRate)+ioc.TimerFracBit;
-  ioc.TimerFracBit = TimeSlip & 0xffff;
+  ioc.TimerFracBit = (uint16_t) (TimeSlip & 0xffff);
   scaledTimeSlip = (CycleDiff) (TimeSlip>>16);
 
   /* In theory we should be able to use MAX_CYCLES_INTO_FUTURE as our default
@@ -176,7 +176,7 @@ static void UpdateTimerRegisters_Internal(ARMul_State *state,CycleCount nowtime,
   if (ioc.TimerCount[0] < 0) ioc.TimerCount[0] += tmpL;
 
   if (ioc.Timer0CanInt) {
-    tmpL = (((uint64_t) (ioc.TimerCount[0]+1)) * ioc.InvIOCRate) >> 16;
+    tmpL = (uint32_t)((((uint64_t) (ioc.TimerCount[0]+1)) * ioc.InvIOCRate) >> 16);
     if ((int)tmpL < nextTrigger) nextTrigger = tmpL;
   }
 
@@ -191,7 +191,7 @@ static void UpdateTimerRegisters_Internal(ARMul_State *state,CycleCount nowtime,
   if (ioc.TimerCount[1] < 0) ioc.TimerCount[1] += tmpL;
 
   if (ioc.Timer1CanInt) {
-    tmpL = (((uint64_t) (ioc.TimerCount[1]+1)) * ioc.InvIOCRate) >> 16;
+    tmpL = (uint32_t)((((uint64_t) (ioc.TimerCount[1]+1)) * ioc.InvIOCRate) >> 16);
     if ((int)tmpL < nextTrigger) nextTrigger = tmpL;
   }
 
