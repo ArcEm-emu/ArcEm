@@ -32,7 +32,7 @@
 #elif !defined(__WATCOMC__)
 #include <dirent.h>
 #endif
-#ifdef WIN32
+#ifdef _WIN32
 #include <direct.h>
 #include <io.h>
 #endif
@@ -106,7 +106,7 @@ static char HOSTFS_ROOT[512];
 /* Windows mkdir() function only takes one argument name, and
    name clashes with Posix mkdir() function taking two. This
    macro allows us to use one API to work with both variants */
-#if (defined _WIN32 || defined __WIN32__ || defined __WATCOMC__) && ! defined __CYGWIN__
+#if (defined _WIN32 || defined __WATCOMC__) && ! defined __CYGWIN__
 # define mkdir(name, mode) _mkdir(name)
 #endif
 

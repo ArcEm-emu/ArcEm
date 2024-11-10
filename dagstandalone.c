@@ -37,7 +37,7 @@
 /**************************************************************/
 /* Signal handler that terminates excecution in the ARMulator */
 /**************************************************************/
-#ifndef WIN32
+#ifndef _WIN32
 #ifndef AMIGA
 static void dagstandalone_handlesignal(int sig) {
   dbug("Terminate ARMulator - excecution\n");
@@ -68,14 +68,14 @@ static void InitFail(int exitcode, char const *which) {
  *
  */
  void dagstandalone(ArcemConfig *pConfig) {
-#ifndef WIN32
+#ifndef _WIN32
 #ifndef AMIGA
   struct sigaction action;
 #endif
 #endif
   ARMul_State *emu_state = NULL;
 
-#ifndef WIN32
+#ifndef _WIN32
 #ifndef AMIGA
   /* Setup a signal handler for SIGUSR1 */
   action.sa_handler = dagstandalone_handlesignal;

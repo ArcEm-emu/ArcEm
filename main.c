@@ -29,7 +29,7 @@ ArcemConfig hArcemConfig;
 static ArcemConfig hArcemConfig;
 #endif
 
-#if defined(WIN32) && !defined(USE_FAKEMAIN)
+#if defined(_WIN32) && !defined(USE_FAKEMAIN)
 
 #include <windows.h>
 #include <stdio.h>

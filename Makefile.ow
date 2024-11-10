@@ -15,7 +15,7 @@ SRCS = armcopro.c armemu.c arminit.c armarc.c &
 	arch/ArcemConfig.c arch/cp15.c arch/newsound.c arch/displaydev.c &
 	libs/inih/ini.c
 
-CFLAGS += -DWIN32 -DSYSTEM_win -Iwin
+CFLAGS += -DSYSTEM_win -Iwin
 SRCS += win/ControlPane.c win/DispKbd.c win/filecalls.c win/win.c
 RCSRCS += win/gui.rc
 resources = win/arc.ico win/gui.ico

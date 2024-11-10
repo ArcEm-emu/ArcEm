@@ -150,7 +150,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>NOOS;NOFPE;EXTNROM_SUPPORT;HOSTFS_SUPPORT;SOUND_SUPPORT;SYSTEM_win;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NOOS;NOFPE;EXTNROM_SUPPORT;HOSTFS_SUPPORT;SOUND_SUPPORT;SYSTEM_win;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\arch;..\win;..</AdditionalIncludeDirectories>
       <CompileAs>Default</CompileAs>
     </ClCompile>
@@ -165,7 +165,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>NOOS;NOFPE;EXTNROM_SUPPORT;HOSTFS_SUPPORT;SOUND_SUPPORT;SYSTEM_win;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NOOS;NOFPE;EXTNROM_SUPPORT;HOSTFS_SUPPORT;SOUND_SUPPORT;SYSTEM_win;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\arch;..\win;..</AdditionalIncludeDirectories>
       <CompileAs>Default</CompileAs>
     </ClCompile>
@@ -180,7 +180,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>NOOS;NOFPE;EXTNROM_SUPPORT;HOSTFS_SUPPORT;SOUND_SUPPORT;SYSTEM_win;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NOOS;NOFPE;EXTNROM_SUPPORT;HOSTFS_SUPPORT;SOUND_SUPPORT;SYSTEM_win;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\arch;..\win;..</AdditionalIncludeDirectories>
       <CompileAs>Default</CompileAs>
     </ClCompile>
@@ -195,7 +195,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>NOOS;NOFPE;EXTNROM_SUPPORT;HOSTFS_SUPPORT;SOUND_SUPPORT;SYSTEM_win;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NOOS;NOFPE;EXTNROM_SUPPORT;HOSTFS_SUPPORT;SOUND_SUPPORT;SYSTEM_win;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\arch;..\win;..</AdditionalIncludeDirectories>
       <CompileAs>Default</CompileAs>
     </ClCompile>
@@ -212,7 +212,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>NOOS;NOFPE;EXTNROM_SUPPORT;HOSTFS_SUPPORT;SOUND_SUPPORT;SYSTEM_win;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NOOS;NOFPE;EXTNROM_SUPPORT;HOSTFS_SUPPORT;SOUND_SUPPORT;SYSTEM_win;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <AdditionalIncludeDirectories>..\arch;..\win;..</AdditionalIncludeDirectories>
@@ -232,7 +232,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>NOOS;NOFPE;EXTNROM_SUPPORT;HOSTFS_SUPPORT;SOUND_SUPPORT;SYSTEM_win;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NOOS;NOFPE;EXTNROM_SUPPORT;HOSTFS_SUPPORT;SOUND_SUPPORT;SYSTEM_win;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <AdditionalIncludeDirectories>..\arch;..\win;..</AdditionalIncludeDirectories>
@@ -252,7 +252,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>NOOS;NOFPE;EXTNROM_SUPPORT;HOSTFS_SUPPORT;SOUND_SUPPORT;SYSTEM_win;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NOOS;NOFPE;EXTNROM_SUPPORT;HOSTFS_SUPPORT;SOUND_SUPPORT;SYSTEM_win;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <AdditionalIncludeDirectories>..\arch;..\win;..</AdditionalIncludeDirectories>
@@ -272,7 +272,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>NOOS;NOFPE;EXTNROM_SUPPORT;HOSTFS_SUPPORT;SOUND_SUPPORT;SYSTEM_win;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NOOS;NOFPE;EXTNROM_SUPPORT;HOSTFS_SUPPORT;SOUND_SUPPORT;SYSTEM_win;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <AdditionalIncludeDirectories>..\arch;..\win;..</AdditionalIncludeDirectories>

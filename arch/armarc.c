@@ -56,7 +56,7 @@ static ARMword ARMul_ManglePhysAddr(ARMword phy);
 /*------------------------------------------------------------------------------*/
 /* OK - this is getting treated as an odds/sods engine - just hook up anything
    you need to do occasionally! */
-#ifndef WIN32
+#ifndef _WIN32
 static void DumpHandler(int sig) {
   ARMul_State *state = &statestr;
   FILE *res;
@@ -248,7 +248,7 @@ ARMul_MemoryInit(ARMul_State *state)
       ControlPane_Error(EXIT_FAILURE,"Unsupported memory size\n");
   }
 
-#ifndef WIN32
+#ifndef _WIN32
   signal(SIGUSR2,DumpHandler);
 #endif
 
