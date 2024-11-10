@@ -11,11 +11,11 @@ struct IOCStruct {
   uint8_t SerialRxData;
   uint8_t SerialTxData;
   uint8_t IOEBControlReg;
-  uint16_t IRQStatus,IRQMask;
-  uint16_t FIRQStatus,FIRQMask;
+  uint_least16_t FIRQStatus,FIRQMask;
+  uint_least16_t IRQStatus,IRQMask;
   int32_t TimerCount[4];
-  uint16_t TimerInputLatch[4];
-  uint16_t TimerOutputLatch[4];
+  uint_least16_t TimerInputLatch[4];
+  uint_least16_t TimerOutputLatch[4];
 
   struct {
     unsigned int insidebitcount;
@@ -30,7 +30,7 @@ struct IOCStruct {
 
   CycleCount TimersLastUpdated;
   CycleCount NextTimerTrigger;
-  uint16_t TimerFracBit;
+  uint_least16_t TimerFracBit;
   bool Timer0CanInt;
   bool Timer1CanInt;
 

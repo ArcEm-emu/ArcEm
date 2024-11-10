@@ -153,7 +153,7 @@ static void UpdateTimerRegisters_Internal(ARMul_State *state,CycleCount nowtime,
   CycleDiff timeSinceLastUpdate = nowtime - ioc.TimersLastUpdated;
   /* Take into account any lost fractions of an IOC tick */
   uint64_t TimeSlip = (((uint64_t) timeSinceLastUpdate) * ioc.IOCRate)+ioc.TimerFracBit;
-  ioc.TimerFracBit = (uint16_t) (TimeSlip & 0xffff);
+  ioc.TimerFracBit = (uint_least16_t) (TimeSlip & 0xffff);
   scaledTimeSlip = (CycleDiff) (TimeSlip>>16);
 
   /* In theory we should be able to use MAX_CYCLES_INTO_FUTURE as our default

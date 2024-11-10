@@ -33,7 +33,7 @@
 typedef struct {
     /* User-visible name. */
     const char *name;
-    uint16_t bytes_per_sector;
+    uint_least16_t bytes_per_sector;
     uint8_t sectors_per_track;
     uint8_t sector_base;
     uint8_t num_cyl;

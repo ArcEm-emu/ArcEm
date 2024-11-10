@@ -147,7 +147,7 @@ struct PDD_Name(DisplayInfo) {
     bool DMAEn; /* Whether video DMA is enabled for this frame */
     int LastHostWidth,LastHostHeight,LastHostDepth,LastHostHz; /* Values we used to request host mode */
     int BitWidth; /* Width of display area, in bits */
-    uint16_t VIDC_CR; /* Control register value in use for this frame */
+    uint_least16_t VIDC_CR; /* Control register value in use for this frame */
     uint32_t Vptr; /* DMA pointer, in bits, as offset from start of phys RAM */
     int FrameSkip; /* Current frame skip counter */
 
@@ -491,7 +491,8 @@ static void PDD_Name(EventFunc)(ARMul_State *state,CycleCount nowtime)
     3, /* 2/3      ->  16.0MHz     16.6MHz      24.0MHz */
     2, /* 1/1      ->  24.0MHz     25.0MHz      36.0MHz */
   };
-  uint32_t NewCR, ClockIn, FramePeriod;
+  uint32_t ClockIn, FramePeriod;
+  uint_fast16_t NewCR;
   CycleCount framelength;
   uint8_t ClockDivider;
   bool newDMAEn, DMAToggle;
@@ -670,7 +671,7 @@ static void PDD_Name(EventFunc)(ARMul_State *state,CycleCount nowtime)
           int j;
           /* Deal with the funky 8bpp palette */
           uint_fast16_t Base = VIDC.Palette[i] & 0x1737; /* Only these bits of the palette entry are used in 8bpp modes */
-          static const uint_fast16_t ExtraPal[16] = {
+          static const uint_least16_t ExtraPal[16] = {
             0x000, 0x008, 0x040, 0x048, 0x080, 0x088, 0x0c0, 0x0c8,
             0x800, 0x808, 0x840, 0x848, 0x880, 0x888, 0x8c0, 0x8c8
           };

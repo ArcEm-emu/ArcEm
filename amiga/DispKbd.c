@@ -247,7 +247,7 @@ static int changemode(int width,int height,int log2bpp,int *xscale,int *yscale)
 
 /* Standard display device */
 
-typedef unsigned short SDD_HostColour;
+typedef uint16_t SDD_HostColour;
 #define SDD_Name(x) sdd_##x
 static const int SDD_RowsAtOnce = 1;
 typedef SDD_HostColour *SDD_Row;
@@ -450,7 +450,7 @@ typedef struct {
 
 static void PDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,int depth,int hz);
 
-static void PDD_Name(Host_SetPaletteEntry)(ARMul_State *state,int i,unsigned int phys)
+static void PDD_Name(Host_SetPaletteEntry)(ARMul_State *state,int i,uint_fast16_t phys)
 {
 	ULONG r = (phys & 0xf)*0x11111111;
 	ULONG g = ((phys>>4) & 0xf)*0x11111111;
@@ -459,12 +459,12 @@ static void PDD_Name(Host_SetPaletteEntry)(ARMul_State *state,int i,unsigned int
 	SetRGB32(&screen->ViewPort,i,r,g,b);
 }
 
-static void PDD_Name(Host_SetCursorPaletteEntry)(ARMul_State *state,int i,unsigned int phys)
+static void PDD_Name(Host_SetCursorPaletteEntry)(ARMul_State *state,int i,uint_fast16_t phys)
 {
 	/* TODO */
 }
 
-static void PDD_Name(Host_SetBorderColour)(ARMul_State *state,unsigned int phys)
+static void PDD_Name(Host_SetBorderColour)(ARMul_State *state,uint_fast16_t phys)
 {
 	/* Set border palette entry */
 	if(BorderPalEntry != 256)

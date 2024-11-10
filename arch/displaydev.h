@@ -22,26 +22,26 @@ typedef struct {
 
 /* Raw VIDC registers */
 struct Vidc_Regs {
-  uint16_t Palette[16];
-  uint16_t BorderCol;
-  uint16_t CursorPalette[3];
-  uint16_t Horiz_Cycle;
-  uint16_t Horiz_SyncWidth;
-  uint16_t Horiz_BorderStart;
-  uint16_t Horiz_DisplayStart;
-  uint16_t Horiz_DisplayEnd;
-  uint16_t Horiz_BorderEnd;
-  uint16_t Horiz_CursorStart;
-  uint16_t Horiz_Interlace;
-  uint16_t Vert_Cycle;
-  uint16_t Vert_SyncWidth;
-  uint16_t Vert_BorderStart;
-  uint16_t Vert_DisplayStart;
-  uint16_t Vert_DisplayEnd;
-  uint16_t Vert_BorderEnd;
-  uint16_t Vert_CursorStart;
-  uint16_t Vert_CursorEnd;
-  uint16_t ControlReg;
+  uint_least16_t Palette[16];
+  uint_least16_t BorderCol;
+  uint_least16_t CursorPalette[3];
+  uint_least16_t Horiz_Cycle;
+  uint_least16_t Horiz_SyncWidth;
+  uint_least16_t Horiz_BorderStart;
+  uint_least16_t Horiz_DisplayStart;
+  uint_least16_t Horiz_DisplayEnd;
+  uint_least16_t Horiz_BorderEnd;
+  uint_least16_t Horiz_CursorStart;
+  uint_least16_t Horiz_Interlace;
+  uint_least16_t Vert_Cycle;
+  uint_least16_t Vert_SyncWidth;
+  uint_least16_t Vert_BorderStart;
+  uint_least16_t Vert_DisplayStart;
+  uint_least16_t Vert_DisplayEnd;
+  uint_least16_t Vert_BorderEnd;
+  uint_least16_t Vert_CursorStart;
+  uint_least16_t Vert_CursorEnd;
+  uint_least16_t ControlReg;
   uint8_t SoundFreq;
   uint8_t StereoImageReg[8];
 

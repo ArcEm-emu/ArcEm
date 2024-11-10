@@ -364,7 +364,7 @@ extern const uint_fast8_t ARMul_MultTable[]; /* Number of I cycles for a mult */
 extern ARMword ARMul_ImmedTable[]; /* Immediate DP LHS values */
 #endif
 extern uint_fast8_t ARMul_BitList[];       /* Number of bits in a byte table */
-extern uint_fast16_t ARMul_CCTable[16];
+extern uint_least16_t ARMul_CCTable[16];
 #define ARMul_CCCheck(instr,psr) (ARMul_CCTable[instr>>28] & (1<<(psr>>28)))
 
 unsigned ARMul_NthReg(ARMword instr,unsigned number);

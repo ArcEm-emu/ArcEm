@@ -54,7 +54,7 @@ typedef struct {
   int YScale;
 } DisplayParams;
 
-static void set_cursor_palette(uint16_t *pal);
+static void set_cursor_palette(uint_least16_t *pal);
 static void UpdateCursorPos(ARMul_State *state,const DisplayParams *params);
 static void Host_PollDisplay_Common(ARMul_State *state,const DisplayParams *params);
 
@@ -378,7 +378,7 @@ typedef struct {
 
 static void PDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,int depth,int hz);
 
-static void PDD_Name(Host_SetPaletteEntry)(ARMul_State *state,int i,unsigned int phys)
+static void PDD_Name(Host_SetPaletteEntry)(ARMul_State *state,int i,uint_fast16_t phys)
 {
   char buf[5];
   buf[0] = i;
@@ -392,12 +392,12 @@ static void PDD_Name(Host_SetPaletteEntry)(ARMul_State *state,int i,unsigned int
     FakeBorderPalEntry = -1;
 }
 
-static void PDD_Name(Host_SetCursorPaletteEntry)(ARMul_State *state,int i,unsigned int phys)
+static void PDD_Name(Host_SetCursorPaletteEntry)(ARMul_State *state,int i,uint_fast16_t phys)
 {
   /* TODO */
 }
 
-static void PDD_Name(Host_SetBorderColour)(ARMul_State *state,unsigned int phys)
+static void PDD_Name(Host_SetBorderColour)(ARMul_State *state,uint_fast16_t phys)
 {
   char buf[5];
   /* Set real border */
@@ -571,7 +571,7 @@ PDD_Name(Host_PollDisplay)(ARMul_State *state)
 
 /* ------------------------------------------------------------------ */
 
-static void set_cursor_palette(uint16_t *pal)
+static void set_cursor_palette(uint_least16_t *pal)
 {
   char buf[5];
   int c;
@@ -604,12 +604,12 @@ static void UpdateCursorPos(ARMul_State *state,const DisplayParams *params) {
 
   block[0]=5;
   {
-    short x = internal_x << ModeVarsOut[MODE_VAR_XEIG];
+    int16_t x = internal_x << ModeVarsOut[MODE_VAR_XEIG];
     block[1] = x & 255;
     block[2] = x >> 8;
   }
   {
-    short y = ((params->Height-1)-internal_y) << ModeVarsOut[MODE_VAR_YEIG];
+    int16_t y = ((params->Height-1)-internal_y) << ModeVarsOut[MODE_VAR_YEIG];
     block[3] = y & 255;
     block[4] = y >> 8;
   }

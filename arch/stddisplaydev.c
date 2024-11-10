@@ -26,7 +26,7 @@
 
    SDD_HostColour
     - Data type used to store a colour value. E.g.
-      "typedef unsigned short SDD_HostColour".
+      "typedef uint16_t SDD_HostColour".
 
    SDD_Name(x)
     - Macro used to convert symbol name 'x' into an instance-specific version
@@ -190,7 +190,7 @@ struct SDD_Name(DisplayInfo) {
   struct {
     /* Values which get updated by VIDCPutVal */
 
-    uint_fast16_t DirtyPalette; /* Bit flags of which palette entries have been modified */
+    uint_least16_t DirtyPalette; /* Bit flags of which palette entries have been modified */
     bool ModeChanged; /* Set if any registers change which may require the host to change mode. Remains set until valid mode is available from host (suspends all display output) */
 
     /* Values that must only get updated by the event queue/screen blit code */
@@ -202,7 +202,7 @@ struct SDD_Name(DisplayInfo) {
     int LastRow; /* Row last event was scheduled to run up to */
     int NextRow; /* Row next event is scheduled to run up to */
     int MaxRow; /* Row to stop at for this frame */
-    uint16_t VIDC_CR; /* Control register value in use for this frame */
+    uint_least16_t VIDC_CR; /* Control register value in use for this frame */
     uint32_t LineRate; /* Line rate, measured in EmuRate clock cycles */
     uint32_t Vptr; /* DMA pointer, in bits, as offset from start of phys RAM */
     uint32_t LastVinit; /* Last Vinit, so we can sync changes with the frame start */
@@ -305,7 +305,7 @@ static inline void SDD_Name(PaletteUpdate8bpp)(ARMul_State *state,SDD_HostColour
         int j;
         /* Deal with the funky 8bpp palette */
         uint_fast16_t Base = VIDC.Palette[i] & 0x1737; /* Only these bits of the palette entry are used in 8bpp modes */
-        static const uint_fast16_t ExtraPal[16] = {
+        static const uint_least16_t ExtraPal[16] = {
           0x000, 0x008, 0x040, 0x048, 0x080, 0x088, 0x0c0, 0x0c8,
           0x800, 0x808, 0x840, 0x848, 0x880, 0x888, 0x8c0, 0x8c8
         };

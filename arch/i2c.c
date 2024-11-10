@@ -59,7 +59,7 @@ struct I2CStruct {
   uint8_t OldDataState;
   uint8_t OldClockState;
   I2CState state;
-  uint_fast16_t DataBuffer;
+  uint_least16_t DataBuffer;
   uint8_t NumberOfBitsSoFar;
   bool LastrNw;
   uint8_t WordAddress; /* Note unsigned char - can never be outside Data bounds */
@@ -293,7 +293,7 @@ void I2C_Update(ARMul_State *state) {
           I2C.NumberOfBitsSoFar++;
           if (I2C.NumberOfBitsSoFar==8) {
             /* Got the whole word address */
-            I2C.WordAddress=I2C.DataBuffer;
+            I2C.WordAddress=(uint8_t)I2C.DataBuffer;
             I2C.DataBuffer=0;
             I2C.IAmTransmitter=true; /* Acknowledge */
             I2C.NumberOfBitsSoFar=0;
@@ -310,7 +310,7 @@ void I2C_Update(ARMul_State *state) {
           I2C.NumberOfBitsSoFar++;
           if (I2C.NumberOfBitsSoFar==8) {
             /* Got the data */
-            I2C.Data[I2C.WordAddress]=I2C.DataBuffer;
+            I2C.Data[I2C.WordAddress]=(uint8_t)I2C.DataBuffer;
             dbug_i2c("I2C simulator got write into address %d value=%d\n",I2C.WordAddress,
                     I2C.DataBuffer);
             SaveCMOS(state); /* RY */

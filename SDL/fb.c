@@ -220,7 +220,7 @@ typedef struct {
 
 static void PDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,int depth,int hz);
 
-static void PDD_Name(Host_SetPaletteEntry)(ARMul_State *state,int i,unsigned int phys)
+static void PDD_Name(Host_SetPaletteEntry)(ARMul_State *state,int i,uint_fast16_t phys)
 {
   SDL_Color col;
 
@@ -233,12 +233,12 @@ static void PDD_Name(Host_SetPaletteEntry)(ARMul_State *state,int i,unsigned int
   SDL_SetColors(sdd_surface, &col, i, 1);
 }
 
-static void PDD_Name(Host_SetCursorPaletteEntry)(ARMul_State *state,int i,unsigned int phys)
+static void PDD_Name(Host_SetCursorPaletteEntry)(ARMul_State *state,int i,uint_fast16_t phys)
 {
   /* TODO */
 }
 
-static void PDD_Name(Host_SetBorderColour)(ARMul_State *state,unsigned int phys)
+static void PDD_Name(Host_SetBorderColour)(ARMul_State *state,uint_fast16_t phys)
 {
   /* TODO */
 }

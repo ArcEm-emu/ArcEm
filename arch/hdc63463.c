@@ -55,13 +55,13 @@ union HDCCommandDataStr {
 
 struct HDCStruct {
   FILE *HardFile[4];
-  int_fast16_t LastCommand; /* -1=idle, 0xfff=command execution complete, other=command busy */
+  int_least16_t LastCommand; /* -1=idle, 0xfff=command execution complete, other=command busy */
   uint8_t StatusReg;
   uint32_t Track[4];
   uint32_t Sector;
   bool DREQ;
   int8_t CurrentlyOpenDataBuffer;
-  uint_fast16_t DBufPtrs[2];
+  uint_least16_t DBufPtrs[2];
   uint8_t DBufs[2][256];
   uint32_t PBPtr;
   uint8_t ParamBlock[16];

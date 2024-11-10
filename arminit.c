@@ -38,7 +38,7 @@ ARMword ARMul_ImmedTable[4096]; /* immediate DP LHS values */
 #endif
 uint_fast8_t ARMul_BitList[256]; /* number of bits in a byte table */
 
-uint_fast16_t ARMul_CCTable[16];
+uint_least16_t ARMul_CCTable[16];
 
 /***************************************************************************\
 *         Call this routine once to set up the emulator's tables.           *
