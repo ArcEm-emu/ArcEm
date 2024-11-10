@@ -1,0 +1,6 @@
+/* Localized versions of Info.plist keys */
+
+CFBundleName = "ArcEm";
+CFBundleShortVersionString = "ArcEm 1.50.2";
+CFBundleGetInfoString = "ArcEm version 1.50.2, Copyright 2002 Michael Dales.";
+NSHumanReadableCopyright = "Copyright 2002 Michael Dales.";

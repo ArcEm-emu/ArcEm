@@ -62,9 +62,6 @@ struct FDCStruct{
   int32_t DelayCount;
   int32_t DelayLatch;
   int32_t CurrentDisc;
-#ifdef MACOSX
-  char* driveFiles[4];  /* In MAE, we use *real* filenames for disks */
-#endif
     floppy_drive drive[4];
     /* The bottom four bits of leds holds their current state.  If the
      * bit is set the LED should be emitting. */
@@ -845,48 +842,6 @@ ARMword FDC_Write(ARMul_State *state, ARMword offset, ARMword data, bool bNw) {
 } /* FDC_Write */
 
 /**
- * FDC_ReOpen
- *
- * Deprecated.  See FDC_InsertFloppy() and FDC_EjectFloppy().
- * IMPROVE remove the usage of this by the Mac OS X code
- *
- * @param state
- * @param drive
- */
-void FDC_ReOpen(ARMul_State *state, int drive) {
-#ifdef MACOSX
-    char* tmp;
-#else
-  char tmp[256];
-#endif
-
-  if (drive>3) {
-    return;
-  }
-
-  if (FDC.LastCommand != CMD_FORCE_INTR) {
-    warn_fdc("FDC not idle - can't change floppy\n");
-    return;
-  }
-
-  FDC_EjectFloppy(drive);
-
-#if defined(__riscos__)
-  sprintf(tmp, "<ArcEm$Dir>.^.FloppyImage%d", drive);
-#elif defined(MACOSX)
-  tmp = FDC.driveFiles[drive];
-#else
-  sprintf(tmp, "FloppyImage%d", drive);
-#endif
-
-  FDC_InsertFloppy(drive, tmp);
-
-  DBG(("FDC_ReOpen: Drive %d %s\n", drive,
-        (FDC.drive[drive].fp == NULL) ? "unable to reopen" :
-        "reopened"));
-} /* FDC_ReOpen */
-
-/**
  * FDC_Init
  *
  * Called on program startup, initialise the 1772 disk controller
@@ -908,9 +863,6 @@ void FDC_Init(ARMul_State *state) {
   FDC.Sector_ReadAddr = 0;
 
   for (drive = 0; drive < 4; drive++) {
-#if defined(MACOSX)
-    FDC.driveFiles[drive] = NULL;
-#endif
     FDC.drive[drive].fp = NULL;
     FDC.drive[drive].form = avail_format;
   }
@@ -922,9 +874,6 @@ void FDC_Init(ARMul_State *state) {
 
     FDC_InsertFloppy(drive, FileName);
 
-#if defined(MACOSX)
-    FDC.driveFiles[drive] = FileName;
-#endif
   }
 
   FDC.DelayCount=10000;

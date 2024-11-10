@@ -15,3 +15,5 @@ cygwin1.dll
 index.html
 stdout
 stderr
+xcuserdata/
+*.pbxuser

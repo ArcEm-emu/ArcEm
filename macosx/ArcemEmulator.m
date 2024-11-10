@@ -37,6 +37,8 @@
 
 #import <pthread.h>
 
+extern ArcemConfig hArcemConfig;
+
 extern unsigned char *screenbmp;
 extern unsigned char *cursorbmp;
 ArcemView* disp;
@@ -96,7 +98,9 @@ void arcem_exit(char* msg)
 }
 
 
-@implementation ArcemEmulator
+@implementation ArcemEmulator {
+    NSAutoreleasePool *pool;
+}
 
 
 /*------------------------------------------------------------------------------
@@ -106,26 +110,33 @@ void arcem_exit(char* msg)
 {
     NSArray *params = anObject;
     NSMutableData *screen, *cursor;
-    NSString *dir;
+    NSURL *dir;
     
     pool = [[NSAutoreleasePool alloc] init];
 
-    disp = [params objectAtIndex: 0];
-    screen = [params objectAtIndex: 1];
-    cursor = [params objectAtIndex: 2];
-    controller = [params objectAtIndex: 3];
+    disp = [[params objectAtIndex: 0] retain];
+    screen = [[params objectAtIndex: 1] retain];
+    cursor = [[params objectAtIndex: 2] retain];
+    controller = [[params objectAtIndex: 3] retain];
+    [params release];
 
     screenbmp = [screen mutableBytes];
     cursorbmp = [cursor mutableBytes];
 
-    dir = [[NSUserDefaults standardUserDefaults] stringForKey:AEDirectoryKey];
-    [dir getCString: arcemDir
-          maxLength: 256];
-    
+    dir = [[NSUserDefaults standardUserDefaults] URLForKey:AEDirectoryKey];
+	strlcpy(arcemDir, dir.fileSystemRepresentation, sizeof(arcemDir));
+	
     // Start ArcEm
-    dagstandalone();
+    dagstandalone(&hArcemConfig);
 
+    [disp release];
+    disp = nil;
+    [screen release];
+    [cursor release];
+    [controller release];
+    controller = nil;
     [pool release];
+    pool = nil;
     [NSThread exit];
 
     return;
@@ -137,6 +148,7 @@ void arcem_exit(char* msg)
 - (void)threadKill
 {
     [pool release];
+    pool = nil;
     [NSThread exit];
 }
 

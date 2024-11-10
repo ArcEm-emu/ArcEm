@@ -46,7 +46,7 @@
     // Scaling info - over the top, but so we're not converting types all the time
     // when rendering the screen.
     BOOL bXScale, bYScale;
-    float fXScale, fYScale;
+    CGFloat fXScale, fYScale;
     int nXScale, nYScale;
 
     const char *strErrorMsg;
@@ -54,11 +54,28 @@
     BOOL mouseEmulation;
     int adjustModifier, menuModifier;
 }
+
+@property (readonly, getter=isYScaled) BOOL yScaled;
+@property (readonly, getter=isXScaled) BOOL xScaled;
+@property (nonatomic, getter=isMouseLocked) BOOL mouseLock;
+
+//! Pass the bitmaps from the controller.
 - (void)setBitmapsWithScreen: (NSBitmapImageRep *)si
                   withCursor: (NSBitmapImageRep *)ci;
+/*! Called when the emulator changes screen size, and
+ * adjusts the view to match
+ */
 - (void)resizeToWidth: (int)width
              toHeight: (int)height;
+/*! Activated by "Toggle Mouse Lock" menu option. When turning
+ * on, we disconnect the mouse cursor from the mouse, move it
+ * to a position where it will always be in the window
+ * regardless of the window size (to ensure mouse clicks work),
+ * activate mouse events, then hide the cursor. When turning
+ * off we do the reverse :)
+ */
 - (void)toggleMouseLock;
+//! Used when the application loses focus.
 - (void)removeMouseLock;
 - (void)toggleXScale;
 - (void)toggleYScale;
