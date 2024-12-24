@@ -995,7 +995,7 @@ FDC_InsertFloppy(int drive, const char *image)
   }
   warn_fdc("floppy format %s used for drive %d's r/%c, %d "
           "length, image.\n", dr->form->name, drive,
-          "wo"[dr->write_protected], len);
+          dr->write_protected ? 'o' : 'w', len);
 
   return NULL;
 }
