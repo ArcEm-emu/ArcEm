@@ -28,8 +28,8 @@
 
 @interface ArcemView : NSView
 {
-    NSImage *screenImage;
-    NSImage *cursorImage;
+    CGContextRef screenImage;
+    CGContextRef cursorImage;
 
     NSTrackingRectTag recttag;
 
@@ -60,8 +60,8 @@
 @property (nonatomic, getter=isMouseLocked) BOOL mouseLock;
 
 //! Pass the bitmaps from the controller.
-- (void)setBitmapsWithScreen: (NSBitmapImageRep *)si
-                  withCursor: (NSBitmapImageRep *)ci;
+- (void)setBitmapsWithScreen: (CGContextRef)si
+                  withCursor: (CGContextRef)ci;
 /*! Called when the emulator changes screen size, and
  * adjusts the view to match
  */
