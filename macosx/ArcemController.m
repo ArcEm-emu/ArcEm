@@ -25,11 +25,13 @@
 #import "PreferenceController.h"
 #import "ArcemView.h"
 #import "KeyTable.h"
+#include "ArcemConfig.h"
 
 #import "arch/armarc.h"
 #import "arch/fdc1772.h"
 
-#define CURSOR_HEIGHT 600
+extern ArcemConfig hArcemConfig;
+ArcemConfig hArcemConfig;
 
 @implementation ArcemController
 
@@ -40,42 +42,21 @@
 {
     if (self = [super init])
     {
+        ArcemConfig_SetupDefaults(&hArcemConfig);
         NSMutableDictionary *defaultValues;
-        NSString *path = [NSString stringWithFormat: @"%s/arcem", getenv("HOME")];
+        NSString *path = [NSHomeDirectory() stringByAppendingPathComponent:@"arcem"];
         
+        CGColorSpaceRef cgColorspace = CGColorSpaceCreateDeviceRGB();
+
         // Create the screen bitmap and image
-        screenBmp = [[NSMutableData alloc] initWithLength: 800 * 600 * 3];
-        screenPlanes = (unsigned char**)malloc(sizeof(char*) * 2);
-        screenPlanes[0] = [screenBmp mutableBytes];
-        screenPlanes[1] = NULL;
-        memset(screenPlanes[0], 0, 800 * 600 * 3);
-        screenImg = [[NSBitmapImageRep alloc] initWithBitmapDataPlanes: screenPlanes
-                                                            pixelsWide: 800
-                                                            pixelsHigh: 600
-                                                         bitsPerSample: 8
-                                                       samplesPerPixel: 3
-                                                              hasAlpha: NO
-                                                              isPlanar: NO
-                                                        colorSpaceName: NSCalibratedRGBColorSpace
-                                                           bytesPerRow: 800 * 3
-                                                          bitsPerPixel: 24];
+        screenBmp = [[NSMutableData alloc] initWithLength: 800 * 600 * 4];
+        screenImg = CGBitmapContextCreate([screenBmp mutableBytes], 800, 600, 8, 800 * 4, cgColorspace, kCGImageAlphaNoneSkipFirst);
 
         // Create the cursor bitmap and image
         cursorBmp = [[NSMutableData alloc] initWithLength: 32 * 32 * 4];
-        cursorPlanes = (unsigned char**)malloc(sizeof(char*) * 2);
-        cursorPlanes[0] = [cursorBmp mutableBytes];
-        cursorPlanes[1] = NULL;
-        memset(cursorPlanes[0], 0, 32 * 32 * 4);
-        cursorImg = [[NSBitmapImageRep alloc] initWithBitmapDataPlanes: cursorPlanes
-                                                            pixelsWide: 32
-                                                            pixelsHigh: 32
-                                                         bitsPerSample: 8
-                                                       samplesPerPixel: 4
-                                                              hasAlpha: YES
-                                                              isPlanar: NO
-                                                        colorSpaceName: NSCalibratedRGBColorSpace
-                                                           bytesPerRow: 32 * 4
-                                                          bitsPerPixel: 32];
+        cursorImg = CGBitmapContextCreate([cursorBmp mutableBytes], 32, 32, 8, 32 * 4, cgColorspace, kCGImageAlphaNoneSkipFirst);
+
+        CGColorSpaceRelease (cgColorspace);
 
         bFullScreen = NO;
         preferenceController = nil;
@@ -84,13 +65,13 @@
         defaultValues = [NSMutableDictionary dictionary];
 
         // ...
-        [defaultValues setObject: [NSNumber numberWithBool: YES]
+        [defaultValues setObject: @YES
                           forKey: AEUseMouseEmulationKey];
-        [defaultValues setObject: [NSNumber numberWithInt: VK_ALT]
+        [defaultValues setObject: @(VK_ALT)
                           forKey: AEMenuModifierKey];
-        [defaultValues setObject: [NSNumber numberWithInt: VK_COMMAND]
+        [defaultValues setObject: @(VK_COMMAND)
                           forKey: AEAdjustModifierKey];
-        [defaultValues setObject: path
+        [defaultValues setObject: [NSURL fileURLWithPath:path]
                           forKey: AEDirectoryKey];
 
         [[NSUserDefaults standardUserDefaults] registerDefaults: defaultValues];
@@ -111,12 +92,12 @@
     emuThread = [[ArcemEmulator alloc] init];
 
     // List the parameters for the thread - the bitmaps, and the view to send the redraw to
-    params = [NSArray arrayWithObjects: arcemView, screenBmp, cursorBmp, self, nil];
+    params = @[arcemView, screenBmp, cursorBmp, self];
 
     // Run the processing thread
     [NSThread detachNewThreadSelector: @selector(threadStart:)
                              toTarget: emuThread
-                           withObject: params];
+                           withObject: (__bridge id)CFBridgingRetain(params)];
 
     // Pass the images to the view
     [arcemView setBitmapsWithScreen: screenImg
@@ -145,6 +126,7 @@
  */
 - (void)awakeFromNib
 {
+    [super awakeFromNib];
     int i;
 
     // Create an initial emulator thread
@@ -192,7 +174,7 @@
 
 
 /*------------------------------------------------------------------------------
- * fullScreen - TODO! 
+ * fullScreen - TODO: Use the newer windowing APIs.
  */
 - (IBAction)fullScreen:(id)sender
 {
@@ -266,15 +248,12 @@
 {
     NSOpenPanel *panel = [NSOpenPanel openPanel];
 
-    mountDrive = 0;
-
-    [panel beginSheetForDirectory: nil
-                             file: nil
-                            types: nil
-                   modalForWindow: [arcemView window]
-                    modalDelegate: self
-                   didEndSelector: @selector(openPanelDidEnd:returnCode:contextInfo:)
-                      contextInfo: nil];
+    [panel beginSheetModalForWindow: [arcemView window] completionHandler: ^(NSModalResponse result) {
+        if (result == NSModalResponseOK)
+        {
+            [self changeDriveImageAtIndex:0 toURL:panel.URL];
+        }
+    }];
 }
 
 
@@ -288,15 +267,12 @@
 {
     NSOpenPanel *panel = [NSOpenPanel openPanel];
 
-    mountDrive = 1;
-
-    [panel beginSheetForDirectory: nil
-                             file: nil
-                            types: nil
-                   modalForWindow: [arcemView window]
-                    modalDelegate: self
-                   didEndSelector: @selector(openPanelDidEnd:returnCode:contextInfo:)
-                      contextInfo: nil];
+    [panel beginSheetModalForWindow: [arcemView window] completionHandler: ^(NSModalResponse result) {
+        if (result == NSModalResponseOK)
+        {
+            [self changeDriveImageAtIndex:1 toURL:panel.URL];
+        }
+    }];
 }
 
 
@@ -310,15 +286,12 @@
 {
     NSOpenPanel *panel = [NSOpenPanel openPanel];
 
-    mountDrive = 2;
-    
-    [panel beginSheetForDirectory: nil
-                             file: nil
-                            types: nil
-                   modalForWindow: [arcemView window]
-                    modalDelegate: self
-                   didEndSelector: @selector(openPanelDidEnd:returnCode:contextInfo:)
-                      contextInfo: nil];
+    [panel beginSheetModalForWindow: [arcemView window] completionHandler: ^(NSModalResponse result) {
+        if (result == NSModalResponseOK)
+        {
+            [self changeDriveImageAtIndex:2 toURL:panel.URL];
+        }
+    }];
 }
 
 
@@ -332,69 +305,28 @@
 {
     NSOpenPanel *panel = [NSOpenPanel openPanel];
 
-    mountDrive = 3;
-
-    [panel beginSheetForDirectory: nil
-                             file: nil
-                            types: nil
-                   modalForWindow: [arcemView window]
-                    modalDelegate: self
-                   didEndSelector: @selector(openPanelDidEnd:returnCode:contextInfo:)
-                      contextInfo: nil];
+    [panel beginSheetModalForWindow: [arcemView window] completionHandler: ^(NSModalResponse result) {
+        if (result == NSModalResponseOK)
+        {
+            [self changeDriveImageAtIndex:3 toURL:panel.URL];
+        }
+    }];
 }
 
 
 /*------------------------------------------------------------------------------
  *
  */
-- (void)openPanelDidEnd: (NSOpenPanel *)openPanel
-             returnCode: (int)returnCode
-            contextInfo: (void *)x
+- (void)changeDriveImageAtIndex: (int)fdNum toURL: (NSURL*)newfile
 {
-    if (returnCode == NSOKButton)
-    {
-        NSString *path = [openPanel filename];
-        
-        //NSLog(@"Open file %s for drive %d\n", [path cString], mountDrive);
-
-        // One assumes it we managed to select a file then it exists...
-        
-        // Force the FDC to reload that drive
-        FDC_InsertFloppy(mountDrive, [path cString]);
-
-        // Now disable the insert menu option and enable the eject menu option
-        [menuItemsMount[mountDrive] setEnabled: NO];
-        [menuItemsEject[mountDrive] setEnabled: YES];
-    }
-}
-
-
-/*------------------------------------------------------------------------------
- *
- */
-- (void)openPanelHardDiscDidEnd: (NSOpenPanel *)openPanel
-                     returnCode: (int)returnCode
-                    contextInfo: (void *)x
-{
-    if (returnCode == NSOKButton)
-    {
-        NSString *path = [openPanel filename];
-
-        //NSLog(@"Open file %s for drive %d\n", [path cString], mountDrive);
-
-        // One assumes it we managed to select a file then it exists...
-
-        // Note the name of the disk image
-        FDC.driveFiles[mountDrive] = (char*)malloc([path length] + 1);
-        [path getCString: FDC.driveFiles[mountDrive]];
-
-        // Force the FDC to reload that drive
-        FDC_ReOpen((struct ARMul_State*)NULL, mountDrive);
-
-        // Now disable the insert menu option and enable the eject menu option
-        [menuItemsMount[mountDrive] setEnabled: NO];
-        [menuItemsEject[mountDrive] setEnabled: YES];
-    }
+    // One assumes if we managed to select a file then it exists...
+    
+    // Force the FDC to reload that drive
+    FDC_InsertFloppy(fdNum, [newfile fileSystemRepresentation]);
+    
+    // Now disable the insert menu option and enable the eject menu option
+    [menuItemsMount[fdNum] setEnabled: NO];
+    [menuItemsEject[fdNum] setEnabled: YES];
 }
 
 
@@ -403,14 +335,12 @@
  */
 - (IBAction)menuEject0:(id)sender
 {
-    mountDrive = 0;
-
     // Update the sim
-    FDC_EjectFloppy(mountDrive);
+    FDC_EjectFloppy(0);
     
     // Now disable the insert menu option and enable the eject menu option
-    [menuItemsMount[mountDrive] setEnabled: YES];
-    [menuItemsEject[mountDrive] setEnabled: NO];
+    [menuItemsMount[0] setEnabled: YES];
+    [menuItemsEject[0] setEnabled: NO];
 }
 
 
@@ -419,14 +349,12 @@
  */
 - (IBAction)menuEject1:(id)sender
 {
-    mountDrive = 1;
-
     // Update the sim
-    FDC_EjectFloppy(mountDrive);
+    FDC_EjectFloppy(1);
 
     // Now disable the insert menu option and enable the eject menu option
-    [menuItemsMount[mountDrive] setEnabled: YES];
-    [menuItemsEject[mountDrive] setEnabled: NO];
+    [menuItemsMount[1] setEnabled: YES];
+    [menuItemsEject[1] setEnabled: NO];
 }
 
 
@@ -436,14 +364,12 @@
  */
 - (IBAction)menuEject2:(id)sender
 {
-    mountDrive = 2;
-
     // Update the sim
-    FDC_EjectFloppy(mountDrive);
+    FDC_EjectFloppy(2);
 
     // Now disable the insert menu option and enable the eject menu option
-    [menuItemsMount[mountDrive] setEnabled: YES];
-    [menuItemsEject[mountDrive] setEnabled: NO];
+    [menuItemsMount[2] setEnabled: YES];
+    [menuItemsEject[2] setEnabled: NO];
 }
 
 
@@ -453,14 +379,12 @@
  */
 - (IBAction)menuEject3:(id)sender
 {
-    mountDrive = 3;
-
     // Update the sim
-    FDC_EjectFloppy(mountDrive);
+    FDC_EjectFloppy(3);
 
     // Now disable the insert menu option and enable the eject menu option
-    [menuItemsMount[mountDrive] setEnabled: YES];
-    [menuItemsEject[mountDrive] setEnabled: NO];
+    [menuItemsMount[3] setEnabled: YES];
+    [menuItemsEject[3] setEnabled: NO];
 }
 
 
@@ -507,19 +431,30 @@
  */
 - (void)dealloc
 {
+    if (screenImg)
+        CGContextRelease(screenImg);
+    if (cursorImg)
+        CGContextRelease(cursorImg);
+}
 
-    [preferenceController release];
+- (IBAction)menuHDMount0:(id)sender
+{
     
-    if (screenPlanes)
-        free(screenPlanes);
-    if (cursorPlanes)
-        free(cursorPlanes);
-    [screenBmp release];
-    [cursorBmp release];
-    [screenImg release];
-    [cursorImg release];
+}
 
-    [super dealloc];
+- (IBAction)menuHDMount1:(id)sender
+{
+    
+}
+
+- (IBAction)menuHDEject0:(id)sender
+{
+    
+}
+
+- (IBAction)menuHDEject1:(id)sender
+{
+    
 }
 
 @end
