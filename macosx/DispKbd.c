@@ -45,6 +45,7 @@
 
 #define MonitorWidth SCREEN_WIDTH
 #define MonitorHeight SCREEN_HEIGHT
+#define MonitorSize MonitorWidth * MonitorHeight
 
 #define GETRED(x)      (unsigned char)((x >> 7) & 0xF1)
 #define GETGREEN(x)    (unsigned char)((x >> 2) & 0xF1)
@@ -216,8 +217,8 @@ typedef SDD_HostColour *SDD_Row;
 
 static void SDD_Name(Host_PollDisplay)(ARMul_State *state)
 {
+  RefreshMouse(state);
   dispatch_sync(dispatch_get_main_queue(), ^{
-    RefreshMouse(state);
     updateDisplay(0, 0, 800, 600, 1);
   });
 }
@@ -235,7 +236,7 @@ static SDD_HostColour SDD_Name(Host_GetColour)(ARMul_State *state,uint_fast16_t 
   r |= r<<4;
   g |= g>>4;
   b |= b<<4;
-  return (r<<24) | (g<<16) | (b<<8) | 0xFF;
+  return (b<<24) | (g<<16) | (r<<8) | 0xFF;
 }
 
 static void SDD_Name(Host_SkipPixels)(ARMul_State *state,SDD_Row *row,
@@ -248,7 +249,7 @@ static SDD_Row SDD_Name(Host_BeginRow)(ARMul_State *state,int row,int offset)
 {
   SDD_Row dibbmp = (unsigned int*)screenbmp;
 
-  return &dibbmp[(MonitorHeight-(row+1))*MonitorWidth+offset];
+  return &dibbmp[(row*MonitorWidth)+offset];
 }
 
 const int SDD_RowsAtOnce = 1;
@@ -862,6 +863,7 @@ static void RefreshMouse(ARMul_State *state)
   VertPos = VertPos*HD.YScale+HD.YOffset;
   
   if (Height < 0) Height = 0;
+  if (Height > 32) Height = 32;
   if (VertPos < 0) VertPos = 0;
   
   rMouseX = HorizPos;
@@ -870,16 +872,15 @@ static void RefreshMouse(ARMul_State *state)
   
   /* Cursor palette */
   cursorPal[0] = 0;
-  for(int x=1; x<4; x++) {
-    cursorPal[x] = SDD_Name(Host_GetColour)(state,VIDC.CursorPalette[x]);
+  for(int x=0; x<3; x++) {
+    cursorPal[x+1] = SDD_Name(Host_GetColour)(state,VIDC.CursorPalette[x]);
   }
   
   offset=0;
   memptr=MEMC.Cinit*16;
   repeat=0;
-  memset(cursorbmp, 0, 32 * 32 * 4);
-  for (int y=0; y < Height; y++) {
-    if (offset < 512 * 1024) {
+  for (int y=0; y < 32; y++) {
+    if (offset < 512 * 1024 && y < Height) {
       ARMword tmp[2];
       
       tmp[0]=MEMC.PhysRam[memptr/4];
@@ -887,11 +888,19 @@ static void RefreshMouse(ARMul_State *state)
       
       for (int x=0; x < 32; x++) {
         pix = ((tmp[x/16]>>((x & 15)*2)) & 3);
-        diboffs = rMouseX + x + (MonitorHeight - rMouseY - y - 1) * MonitorWidth;
+        diboffs = rMouseX + x + (rMouseY + y) * MonitorWidth;
         
-        curbmp[x + (MonitorHeight - y - 1) * 32] =
-        (pix || diboffs < 0) ?
+        curbmp[x + (y * 32)] =
+        (pix || diboffs < 0 || diboffs > MonitorSize) ?
         cursorPal[pix] : dibbmp[diboffs];
+      } /* x */
+    } else if (rMouseY + y < MonitorHeight) {
+      for (int x=0; x < 32; x++) {
+        diboffs = rMouseX + x + (rMouseY + y) * MonitorWidth;
+
+        curbmp[x + (y * 32)] =
+        (diboffs < 0 || diboffs > MonitorSize) ?
+        cursorPal[0] : dibbmp[diboffs];
       } /* x */
     } else {
       return;

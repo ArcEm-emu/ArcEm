@@ -53,11 +53,9 @@
     NSMenuItem *menuItemsHDMount[2];
     
     NSMutableData *screenBmp;		//!< Raw screen bitmap
-    NSBitmapImageRep *screenImg;	//!< Image for drawing screen
-    unsigned char **screenPlanes;	//!< Planes for screen
+    CGContextRef screenImg;     	//!< Image for drawing screen
     NSMutableData *cursorBmp;		//!< Raw cursos bitmap
-    NSBitmapImageRep *cursorImg;	//!< Image for drawing cursor
-    unsigned char **cursorPlanes;	//!< Planes for cursor
+    CGContextRef cursorImg;     	//!< Image for drawing cursor
 
     ArcemEmulator *emuThread;		//!< Thread controling the emulator
 

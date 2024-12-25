@@ -30,8 +30,6 @@
 #import "arch/armarc.h"
 #import "arch/fdc1772.h"
 
-#define CURSOR_HEIGHT 600
-
 extern ArcemConfig hArcemConfig;
 ArcemConfig hArcemConfig;
 
@@ -48,37 +46,17 @@ ArcemConfig hArcemConfig;
         NSMutableDictionary *defaultValues;
         NSString *path = [NSHomeDirectory() stringByAppendingPathComponent:@"arcem"];
         
+        CGColorSpaceRef cgColorspace = CGColorSpaceCreateDeviceRGB();
+
         // Create the screen bitmap and image
         screenBmp = [[NSMutableData alloc] initWithLength: 800 * 600 * 4];
-        screenPlanes = (unsigned char**)malloc(sizeof(unsigned char*) * 2);
-        screenPlanes[0] = [screenBmp mutableBytes];
-        screenPlanes[1] = NULL;
-        screenImg = [[NSBitmapImageRep alloc] initWithBitmapDataPlanes: screenPlanes
-                                                            pixelsWide: 800
-                                                            pixelsHigh: 600
-                                                         bitsPerSample: 8
-                                                       samplesPerPixel: 4
-                                                              hasAlpha: YES
-                                                              isPlanar: NO
-                                                        colorSpaceName: NSCalibratedRGBColorSpace
-                                                           bytesPerRow: 800 * 4
-                                                          bitsPerPixel: 24];
+        screenImg = CGBitmapContextCreate([screenBmp mutableBytes], 800, 600, 8, 800 * 4, cgColorspace, kCGImageAlphaNoneSkipFirst);
 
         // Create the cursor bitmap and image
         cursorBmp = [[NSMutableData alloc] initWithLength: 32 * 32 * 4];
-        cursorPlanes = (unsigned char**)malloc(sizeof(unsigned char*) * 2);
-        cursorPlanes[0] = [cursorBmp mutableBytes];
-        cursorPlanes[1] = NULL;
-        cursorImg = [[NSBitmapImageRep alloc] initWithBitmapDataPlanes: cursorPlanes
-                                                            pixelsWide: 32
-                                                            pixelsHigh: 32
-                                                         bitsPerSample: 8
-                                                       samplesPerPixel: 4
-                                                              hasAlpha: YES
-                                                              isPlanar: NO
-                                                        colorSpaceName: NSCalibratedRGBColorSpace
-                                                           bytesPerRow: 32 * 4
-                                                          bitsPerPixel: 32];
+        cursorImg = CGBitmapContextCreate([cursorBmp mutableBytes], 32, 32, 8, 32 * 4, cgColorspace, kCGImageAlphaNoneSkipFirst);
+
+        CGColorSpaceRelease (cgColorspace);
 
         bFullScreen = NO;
         preferenceController = nil;
@@ -453,10 +431,10 @@ ArcemConfig hArcemConfig;
  */
 - (void)dealloc
 {
-    if (screenPlanes)
-        free(screenPlanes);
-    if (cursorPlanes)
-        free(cursorPlanes);
+    if (screenImg)
+        CGContextRelease(screenImg);
+    if (cursorImg)
+        CGContextRelease(cursorImg);
 }
 
 - (IBAction)menuHDMount0:(id)sender
