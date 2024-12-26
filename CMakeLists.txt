@@ -97,6 +97,14 @@ set(ARCEM_MACOSX_RESOURCES
 	macosx/en.lproj/MainMenu.xib
 	macosx/en.lproj/Preferences.xib
 )
+set(ARCEM_NDS_SOURCES
+	nds/ControlPane.c
+	nds/ControlPane.h
+	nds/DispKbd.c
+	nds/filecalls.c
+	nds/KeyTable.h
+	nds/main.c
+)
 set(ARCEM_VC_SOURCES
 	vc/dirent.h
 )
@@ -123,13 +131,15 @@ if(WIN32)
 	set(DEFAULT_SYSTEM "win")
 elseif(APPLE)
 	set(DEFAULT_SYSTEM "macosx")
+elseif(NINTENDO_DS)
+	set(DEFAULT_SYSTEM "nds")
 elseif(UNIX AND NOT HAIKU)
 	set(DEFAULT_SYSTEM "X")
 else()
 	set(DEFAULT_SYSTEM "SDL2")
 endif()
-set(SYSTEM ${DEFAULT_SYSTEM} CACHE STRING "System to compile for. Options: X SDL3 SDL2 SDL1 macosx win")
-set_property(CACHE SYSTEM PROPERTY STRINGS X SDL3 SDL2 SDL1 macosx win)
+set(SYSTEM ${DEFAULT_SYSTEM} CACHE STRING "System to compile for. Options: X SDL3 SDL2 SDL1 macosx nds win")
+set_property(CACHE SYSTEM PROPERTY STRINGS X SDL3 SDL2 SDL1 macosx nds win)
 
 if(${SYSTEM} MATCHES "^(SDL[123])$")
 	add_executable(arcem WIN32 ${ARCEM_SOURCES} ${ARCEM_ARCH_SOURCES} ${ARCEM_SDL_SOURCES} ${ARCEM_EXTNROM_MODULES})
@@ -188,6 +198,18 @@ elseif(${SYSTEM} STREQUAL "macosx")
 	target_link_libraries(arcem PRIVATE ${FRAMEWORKS})
 
 	set_property(TARGET arcem APPEND_STRING PROPERTY COMPILE_FLAGS "-fobjc-arc")
+elseif(${SYSTEM} STREQUAL "nds")
+	add_executable(arcem ${ARCEM_SOURCES} ${ARCEM_ARCH_SOURCES} ${ARCEM_NDS_SOURCES} ${ARCEM_EXTNROM_MODULES})
+	target_compile_definitions(arcem PRIVATE SYSTEM_nds USE_FAKEMAIN NO_OPEN64)
+
+	target_compile_options(arcem PRIVATE -mthumb -mthumb-interwork)
+	target_link_options(arcem PRIVATE -Wl,--gc-sections -mthumb -mthumb-interwork)
+
+	grit_add_binary_target(bg nds/img/bg.png)
+	grit_add_binary_target(font nds/img/font.png NO_MAP)
+	grit_add_binary_target(keys nds/img/keys.png NO_MAP)
+	dkp_add_embedded_binary_library(grit_data bg font keys)
+	target_link_libraries(arcem PRIVATE grit_data filesystem fat)
 elseif(${SYSTEM} STREQUAL "win")
 	add_executable(arcem WIN32 ${ARCEM_SOURCES} ${ARCEM_ARCH_SOURCES} ${ARCEM_WIN_SOURCES} ${ARCEM_EXTNROM_MODULES})
 	target_compile_definitions(arcem PRIVATE SYSTEM_win)
@@ -241,6 +263,15 @@ elseif(APPLE)
 
 	set(CPACK_GENERATOR "DragNDrop")
 	include(CPack)
+elseif(NINTENDO_DS)
+	file(COPY ${ARCEM_EXTNROM_MODULES} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/nitrofs/extnrom)
+	set_target_properties(arcem PROPERTIES OUTPUT_NAME "ArcEm")
+	nds_create_rom(arcem
+		SUBTITLE1 "Archimedes Emulator"
+		SUBTITLE2 "WIP"
+		ICON nds/arc.bmp
+		NITROFS ${CMAKE_CURRENT_BINARY_DIR}/nitrofs
+	)
 endif()
 
 option(EXTNROM_SUPPORT "Build with Extension ROM support" ON)
@@ -282,6 +313,7 @@ source_group(src\\X FILES ${ARCEM_X_SOURCES})
 source_group(src\\SDL FILES ${ARCEM_SDL_SOURCES})
 source_group(src\\macosx FILES ${ARCEM_MACOSX_SOURCES})
 source_group(src\\macosx FILES ${ARCEM_MACOSX_RESOURCES})
+source_group(src\\nds FILES ${ARCEM_NDS_SOURCES})
 source_group(src\\vc FILES ${ARCEM_VC_SOURCES})
 source_group(src\\win FILES ${ARCEM_WIN_SOURCES})
 source_group(libs\\inih FILES ${ARCEM_INIH_SOURCES})

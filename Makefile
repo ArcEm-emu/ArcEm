@@ -186,53 +186,6 @@ riscpkg: $(TARGET)
 	mkdir ArcEm/Apps/Misc/hostfs
 endif
 
-ifeq (${SYSTEM},nds)
-CC=$(DEVKITARM)/bin/arm-none-eabi-gcc
-AS=$(DEVKITARM)/bin/arm-none-eabi-as
-LD=$(CC)
-ARM9_ARCH = -mthumb -mthumb-interwork -march=armv5te -mtune=arm946e-s
-CFLAGS += $(ARM9_ARCH) -ffunction-sections -fdata-sections -DSYSTEM_nds -DARM9 -DUSE_FAKEMAIN -DNO_OPEN64 -isystem $(DEVKITPRO)/libnds/include -Wno-cast-align -Wno-format
-LDFLAGS += -specs=ds_arm9.specs -g $(ARM9_ARCH) -Wl,--gc-sections -L$(DEVKITPRO)/libnds/lib
-ifeq (${EXTNROM_SUPPORT},yes)
-LIBS += -lfilesystem
-endif
-LIBS += -lfat -lnds9
-OBJS += nds/main.o nds/img/bg.o nds/img/keys.o nds/img/font.o
-ifneq ($(DEBUG),yes)
-CFLAGS += -DNDEBUG
-endif
-
-TARGET = ArcEm.elf
-all: ArcEm.nds
-
-%.nds: %.elf %.arm7.elf nds/arc.bmp
-ifeq (${EXTNROM_SUPPORT},yes)
-	mkdir -p romfs/extnrom
-	cp support_modules/*/*,ffa romfs/extnrom
-	ndstool -c $@ -9 $< -7 $*.arm7.elf -b nds/arc.bmp "ArcEm;Archimedes Emulator;WIP" -d romfs
-else
-	ndstool -c $@ -9 $< -7 $*.arm7.elf -b nds/arc.bmp "ArcEm;Archimedes Emulator;WIP"
-endif
-
-%.s %.h: %.png %.grit
-	grit $< -fts -o$*
-%.s %.h: %.bmp %.grit
-	grit $< -fts -o$*
-
-nds/ControlPane.o: nds/KeyTable.h nds/img/bg.h nds/img/font.h nds/img/keys.h
-
-ARM7_ARCH = -mthumb -mthumb-interwork -march=armv4t -mtune=arm7tdmi
-ARM7_CFLAGS = $(ARM7_ARCH) -Os -ffunction-sections -fdata-sections -DARM7 -isystem $(DEVKITPRO)/libnds/include
-ARM7_LDFLAGS = -specs=ds_arm7.specs -g $(ARM7_ARCH) -Wl,--gc-sections -L$(DEVKITPRO)/libnds/lib
-ARM7_LIBS = -lnds7
-
-ArcEm.arm7.elf: nds/arm7/main.arm7.o
-	$(LD) $(ARM7_LDFLAGS) $^ $(ARM7_LIBS) -o $@
-
-%.arm7.o: %.c
-	$(CC) $(ARM7_CFLAGS) -o $@ -c $<
-endif
-
 ifeq (${SYSTEM},SDL)
 SDL_CONFIG=sdl2-config
 CPPFLAGS += -DSYSTEM_SDL

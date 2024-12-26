@@ -4,8 +4,8 @@
 # graphics bit depth is 4 (16 color)
 -gB4
 
-# exclude palette data
--p!
+# include palette data
+-p
 
 # metatile is 2x2 tiles (16x16 pixels)
 -Mw2 -Mh2

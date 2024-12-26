@@ -11,9 +11,12 @@
 
 #include "KeyTable.h"
 
-#include "img/bg.h"
-#include "img/font.h"
-#include "img/keys.h"
+#include "bg_gfx.h"
+#include "bg_map.h"
+#include "bg_pal.h"
+#include "font_gfx.h"
+#include "font_pal.h"
+#include "keys_gfx.h"
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -128,9 +131,9 @@ void ControlPane_Init(ARMul_State *state)
 	{
 		BGCTRL_SUB[3] = BG_TILE_BASE(0) | BG_MAP_BASE(5) | BG_COLOR_16 | BG_32x32;
 
-		decompress(bgTiles, (void*)(CHAR_BASE_BLOCK_SUB(0) + (0x100 * 32)), LZ77Vram);
-		decompress(bgMap, (void *)SCREEN_BASE_BLOCK_SUB(5), LZ77Vram);
-		dmaCopy(bgPal, BG_PALETTE_SUB, bgPalLen);
+		decompress(bg_gfx, (void*)(CHAR_BASE_BLOCK_SUB(0) + (0x100 * 32)), LZ77Vram);
+		decompress(bg_map, (void *)SCREEN_BASE_BLOCK_SUB(5), LZ77Vram);
+		dmaCopy(bg_pal, BG_PALETTE_SUB, bg_pal_size);
 
 		ControlPane_InitWindows();
 		ControlPane_InitKeyboard(state);
@@ -358,8 +361,8 @@ static void ControlPane_InitWindows(void)
 {
 	int i;
 
-	decompress(fontTiles, (void *)CHAR_BASE_BLOCK_SUB(0), LZ77Vram);
-	dmaCopy(fontPal, BG_PALETTE_SUB + 16, fontPalLen);
+	decompress(font_gfx, (void *)CHAR_BASE_BLOCK_SUB(0), LZ77Vram);
+	dmaCopy(font_pal, BG_PALETTE_SUB + 16, font_pal_size);
 
 	for (i = 0; i < sizeof(windows)/sizeof(*windows); i++) {
 		ControlPane_CloseWindow(&windows[i]);
@@ -465,7 +468,7 @@ static void ControlPane_UpdateKeyboardLEDs(uint8_t leds);
 
 static void ControlPane_InitKeyboard(ARMul_State *state)
 {
-	static const u16 keysPal[] = {
+	static const u16 keys_pal[] = {
 		/* 0: Not pressed, shift off, leds off */
 		0x5FBD,0x6F7B,0x5EF7,0x7FFF,0x39CE,0x4E73,0x5EF7,0x0000,
 		0x0000,0x0000,0x6F7B,0x39CE,0x5FBD,0x022A,0x02FF,0x7EE0,
@@ -494,8 +497,8 @@ static void ControlPane_InitKeyboard(ARMul_State *state)
 	int i;
 
 	/* We manage sprite VRAM manually here instead of using oamAllocateGfx() */
-	decompress(keysTiles, SPRITE_GFX_SUB, LZ77Vram);
-	dmaCopy(keysPal, SPRITE_PALETTE_SUB, sizeof(keysPal));
+	decompress(keys_gfx, SPRITE_GFX_SUB, LZ77Vram);
+	dmaCopy(keys_pal, SPRITE_PALETTE_SUB, sizeof(keys_pal));
 
 	if (state)
 		KBD.leds_changed = ControlPane_UpdateKeyboardLEDs;
