@@ -180,6 +180,10 @@ elseif(${SYSTEM} STREQUAL "nds")
 	grit_add_binary_target(keys nds/img/keys.png NO_MAP)
 	dkp_add_embedded_binary_library(grit_data bg font keys)
 	target_link_libraries(arcem PRIVATE grit_data filesystem fat)
+
+	if(CALICO_ROOT)
+		target_compile_definitions(arcem PRIVATE -D__CALICO__)
+	endif()
 elseif(${SYSTEM} STREQUAL "win")
 	option(SOUND_SUPPORT "Build with sound support" ON)
 	if(SOUND_SUPPORT)
@@ -206,12 +210,22 @@ elseif(APPLE)
 elseif(NINTENDO_DS)
 	file(COPY ${ARCEM_EXTNROM_MODULES} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/nitrofs/extnrom)
 	set_target_properties(arcem PROPERTIES OUTPUT_NAME "ArcEm")
-	nds_create_rom(arcem
-		SUBTITLE1 "Archimedes Emulator"
-		SUBTITLE2 "WIP"
-		ICON nds/arc.bmp
-		NITROFS ${CMAKE_CURRENT_BINARY_DIR}/nitrofs
-	)
+	if(CALICO_ROOT)
+		nds_create_rom(arcem
+			ARM7 lykoi
+			SUBTITLE1 "Archimedes Emulator"
+			SUBTITLE2 "WIP using Calico"
+			ICON nds/arc.bmp
+			NITROFS ${CMAKE_CURRENT_BINARY_DIR}/nitrofs
+		)
+	else()
+		nds_create_rom(arcem
+			SUBTITLE1 "Archimedes Emulator"
+			SUBTITLE2 "WIP"
+			ICON nds/arc.bmp
+			NITROFS ${CMAKE_CURRENT_BINARY_DIR}/nitrofs
+		)
+	endif()
 endif()
 
 target_include_directories(arcem PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/arch)
