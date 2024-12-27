@@ -15,6 +15,3 @@
 
 # offset the bg tiles to fit alongside the font tiles
 -ma256
-
-# use lz77 compression
--gzl -mzl
