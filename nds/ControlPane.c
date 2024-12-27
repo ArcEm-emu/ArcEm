@@ -131,8 +131,8 @@ void ControlPane_Init(ARMul_State *state)
 	{
 		BGCTRL_SUB[3] = BG_TILE_BASE(0) | BG_MAP_BASE(5) | BG_COLOR_16 | BG_32x32;
 
-		decompress(bg_gfx, (void*)(CHAR_BASE_BLOCK_SUB(0) + (0x100 * 32)), LZ77Vram);
-		decompress(bg_map, (void *)SCREEN_BASE_BLOCK_SUB(5), LZ77Vram);
+		dmaCopy(bg_gfx, (void *)(CHAR_BASE_BLOCK_SUB(0) + (0x100 * 32)), bg_gfx_size);
+		dmaCopy(bg_map, (void *)SCREEN_BASE_BLOCK_SUB(5), bg_map_size);
 		dmaCopy(bg_pal, BG_PALETTE_SUB, bg_pal_size);
 
 		ControlPane_InitWindows();
@@ -160,7 +160,12 @@ void ControlPane_Error(bool fatal,const char *fmt,...)
 		vprintf(fmt,args);
 		va_end(args);
 
-		while(1) {
+#ifdef __CALICO__
+		while(pmMainLoop())
+#else
+		while(1)
+#endif
+		{
 			swiWaitForVBlank();
 			scanKeys();
 			if (keysDown() & KEY_START)
@@ -176,7 +181,15 @@ void ControlPane_Error(bool fatal,const char *fmt,...)
 	va_end(args);
 
 	w = ControlPane_MessageBox(0, "Error", msg);
-	while (w->layer >= 0) {
+
+#ifdef __CALICO__
+	while(pmMainLoop())
+#else
+	while(1)
+#endif
+	{
+		if (w->layer < 0)
+			break;
 		swiWaitForVBlank();
 		Kbd_PollHostKbd(NULL);
 	}
@@ -302,7 +315,7 @@ static Window *ControlPane_CreateWindow(int layer, int w, int h, const char *tit
 	window->bw = w;
 	window->bh = h;
 
-	dmaFillHalfWords(1<<12, window->map, 32*32*2);
+	dmaFillHalfWords(1<<12, window->map, 64*64*2);
 
 	/* Left hand side */
 	ControlPane_TextDrawBlock(window, TL,    -1, -3, 1, 3);
