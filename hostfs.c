@@ -572,11 +572,11 @@ path_construct(ARMul_State *state, const char *old_path, const char *ro_path,
 
     /* Don't set for default filetype */
     if (filetype != DEFAULT_FILE_TYPE) {
-      sprintf(new_suffix, ",%03x", filetype);
+      sprintf(new_suffix, ",%03"PRIx32, filetype);
     }
   } else {
     /* File has load and exec addresses */
-    sprintf(new_suffix, ",%x-%x", load, exec);
+    sprintf(new_suffix, ",%"PRIx32"-%"PRIx32, load, exec);
   }
 #endif
 }
@@ -689,7 +689,7 @@ hostfs_read_object_info(const char *host_pathname,
         if (!whitespace) {
           ARMword load, exec;
 
-          if (sscanf(comma + 1, "%8x-%8x", &load, &exec) == 2) {
+          if (sscanf(comma + 1, "%8"SCNx32"-%8"SCNx32, &load, &exec) == 2) {
             object_info->load = load;
             object_info->exec = exec;
             is_timestamped = false;

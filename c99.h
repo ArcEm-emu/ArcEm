@@ -46,6 +46,13 @@ typedef uint16_t uint_least16_t;
 #endif
 
 #if defined(_MSC_VER) && (_MSC_VER < 1800)
+#define PRIx32 "I32x"
+#define SCNx32 "lx"
+#else
+#include <inttypes.h>
+#endif
+
+#if defined(_MSC_VER) && (_MSC_VER < 1800)
 typedef unsigned char bool;
 #define true 1
 #define false 0
