@@ -698,7 +698,9 @@ hostfs_read_object_info(const char *host_pathname,
         }
       }
     } else if (strlen(comma + 1) == 3) {
-      if (isxdigit(comma[1]) && isxdigit(comma[2]) && isxdigit(comma[3])) {
+      if (isxdigit((unsigned char)comma[1]) &&
+          isxdigit((unsigned char)comma[2]) &&
+          isxdigit((unsigned char)comma[3])) {
         file_type = (ARMword) strtoul(comma + 1, NULL, 16);
         truncate_name = true;
       }
