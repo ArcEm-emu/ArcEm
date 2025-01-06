@@ -106,12 +106,10 @@ char *Directory_GetNextEntry(Directory *hDirectory, FileInfo *phFileInfo)
 }
 
 /**
- * Directory_GetFullPath
- *
  * Get the full path of a file in a directory
  *
  * @param hDirectory pointer to Directory to get the base path from
- * @returns String of the full path or NULL on EndOfDirectory
+ * @returns String of the full path or `NULL` on EndOfDirectory
  */
 char *Directory_GetFullPath(Directory *hDirectory, const char *leaf) {
   size_t len = hDirectory->sPathLen + strlen(leaf) + 1;
@@ -127,13 +125,11 @@ char *Directory_GetFullPath(Directory *hDirectory, const char *leaf) {
 }
 
 /**
- * File_OpenAppData
- *
  * Open the specified file in the application data directory
  *
  * @param sName Name of file to open
  * @param sMode Mode to open the file with
- * @returns File handle or NULL on failure
+ * @returns File handle or `NULL` on failure
  */
 FILE *File_OpenAppData(const char *sName, const char *sMode)
 {
@@ -141,8 +137,6 @@ FILE *File_OpenAppData(const char *sName, const char *sMode)
 }
 
 /**
- * File_GetInfo
- *
  * Fills in lots of useful info about the passed in file
  *
  * @param sPath Path to file to check
