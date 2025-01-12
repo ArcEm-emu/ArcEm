@@ -99,7 +99,7 @@ static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,in
 
 static inline SDD_Row SDD_Name(Host_BeginRow)(ARMul_State *state,int row,int offset)
 {
-  return ((SDD_Row) ((uint8_t *)dibbmp + dibstride*row))+offset;
+  return ((SDD_Row)(void *) ((uint8_t *)dibbmp + dibstride*row))+offset;
 }
 
 static inline void SDD_Name(Host_EndRow)(ARMul_State *state,SDD_Row *row) { /* nothing */ }
@@ -187,7 +187,7 @@ static void SDD_Name(RefreshMouse)(ARMul_State *state) {
   offset=0;
   memptr=MEMC.Cinit*16;
   repeat=0;
-  host_dibbmp = (SDD_HostColour *) ((uint8_t *)host_dibbmp + (rMouseY*dibstride));
+  host_dibbmp = (SDD_HostColour *)(void *) ((uint8_t *)host_dibbmp + (rMouseY*dibstride));
   for(y=0;y<Height;y++) {
     if (offset<512*1024) {
       ARMword tmp[2];
@@ -212,8 +212,8 @@ static void SDD_Name(RefreshMouse)(ARMul_State *state) {
       offset+=8;
       repeat = 0;
     }
-    host_dibbmp = (SDD_HostColour *) ((uint8_t *)host_dibbmp + dibstride);
-    host_curbmp = (SDD_HostColour *) ((uint8_t *)host_curbmp + curstride);
+    host_dibbmp = (SDD_HostColour *)(void *) ((uint8_t *)host_dibbmp + dibstride);
+    host_curbmp = (SDD_HostColour *)(void *) ((uint8_t *)host_curbmp + curstride);
   }; /* y */
 } /* RefreshMouse */
 
@@ -379,7 +379,6 @@ static void PDD_Name(RefreshMouse)(ARMul_State *state) {
   int Width = 32*HD.XScale;
   int Height = ((int)VIDC.Vert_CursorEnd - (int)VIDC.Vert_CursorStart)*HD.YScale;
   int VertPos;
-  uint8_t *host_dibbmp = dibbmp;
   uint8_t *host_curbmp = curbmp;
   uint8_t *host_mskbmp = mskbmp;
 
@@ -398,7 +397,6 @@ static void PDD_Name(RefreshMouse)(ARMul_State *state) {
   offset=0;
   memptr=MEMC.Cinit*16;
   repeat=0;
-  host_dibbmp += rMouseY*dibstride;
   for(y=0;y<Height;y++) {
     if (offset<512*1024) {
       ARMword tmp[2];
@@ -427,7 +425,6 @@ static void PDD_Name(RefreshMouse)(ARMul_State *state) {
       offset+=8;
       repeat = 0;
     }
-    host_dibbmp += dibstride;
     host_curbmp += curstride;
     host_mskbmp += mskstride;
   }; /* y */

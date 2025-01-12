@@ -180,10 +180,10 @@ else()
 		target_compile_definitions(arcem PRIVATE _LARGEFILE_SOURCE _LARGEFILE64_SOURCE _FILE_OFFSET_BITS=64)
 	endif()
 
-	target_compile_options(arcem PRIVATE -Wall -Wno-return-type -Wno-unknown-pragmas -Wshadow
-		   -Wpointer-arith -Wcast-align -Wstrict-prototypes
+	target_compile_options(arcem PRIVATE -Wall -Wextra -Wno-unused-parameter -Wno-sign-compare
+		   -Wshadow -Wpointer-arith -Wcast-align -Wstrict-prototypes
 		   -Wmissing-prototypes -Wmissing-declarations -Wnested-externs
-		   -Wcast-qual -Wwrite-strings -Wno-unused)
+		   -Wcast-qual -Wwrite-strings)
 	# TODO: Only add these for release builds
 	target_compile_options(arcem PRIVATE -funroll-loops -ffast-math -fomit-frame-pointer)
 	# These don't exist in Clang, and are enabled with -O2 when using GCC.

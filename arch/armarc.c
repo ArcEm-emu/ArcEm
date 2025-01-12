@@ -297,12 +297,12 @@ ARMul_MemoryInit(ARMul_State *state)
   /* Now allocate ROMs & RAM in one chunk */
   RAMChunkSize = MAX(MEMC.RAMSize,512*1024); /* Ensure at least 512K RAM allocated to avoid any issues caused by DMA pointers going out of range */
   MEMC.ROMRAMChunkSize = RAMChunkSize+MEMC.ROMHighSize+extnrom_size;
-  MEMC.ROMRAMChunk = calloc(MEMC.ROMRAMChunkSize+256,1);
+  MEMC.ROMRAMChunk = calloc(1,MEMC.ROMRAMChunkSize+256);
   if(MEMC.ROMRAMChunk == NULL) {
     ControlPane_Error(3,"Couldn't allocate ROMRAMChunk\n");
   }
 #ifdef ARMUL_INSTR_FUNC_CACHE
-  MEMC.EmuFuncChunk = calloc(MEMC.ROMRAMChunkSize+256,sizeof(FastMapUInt)/4);
+  MEMC.EmuFuncChunk = calloc(sizeof(FastMapUInt)/4,MEMC.ROMRAMChunkSize+256);
   if(MEMC.EmuFuncChunk == NULL) {
     ControlPane_Error(3,"Couldn't allocate EmuFuncChunk\n");
   }

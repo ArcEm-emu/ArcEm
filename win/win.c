@@ -53,7 +53,7 @@ int xSize, ySize;
 ATOM            MyRegisterClass(HINSTANCE hInstance);
 BOOL            InitInstance(HINSTANCE, int);
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
-BOOL    CALLBACK AboutDlgProc (HWND, UINT, WPARAM, LPARAM);
+INT_PTR CALLBACK AboutDlgProc (HWND, UINT, WPARAM, LPARAM);
 
 static void SelectMenuItem(HWND hWnd, ArcemConfig_DisplayDriver driver);
 static bool SelectCheckbox(HWND hWnd, int wmId, bool value);
@@ -248,7 +248,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
  */
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-  int wmId, wmEvent, nVirtKey, nMouseX, nMouseY;
+  int wmId, nVirtKey, nMouseX, nMouseY;
   PAINTSTRUCT ps;
   HDC hdc;
   ARMul_State *state = &statestr;
@@ -257,12 +257,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
   {
     case WM_COMMAND:
       wmId    = LOWORD(wParam);
-      wmEvent = HIWORD(wParam);
       /* Parse the menu selections: */
       switch (wmId)
       {
         case IDM_ABOUT:
-          DialogBox(hInst, (LPCTSTR)IDD_ABOUTBOX, hWnd, (DLGPROC)AboutDlgProc);
+          DialogBox(hInst, (LPCTSTR)IDD_ABOUTBOX, hWnd, AboutDlgProc);
           break;
         case IDM_COPY:
           break;
@@ -491,7 +490,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
  * AboutDldProc
  *
  */
-BOOL CALLBACK AboutDlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK AboutDlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (iMsg)
     {
@@ -525,9 +524,9 @@ int createWindow(ARMul_State *state, int x, int y)
    xSize = x;
    ySize = y;
 
-   pbmi = calloc(sizeof(BITMAPINFOHEADER) + (sizeof(RGBQUAD) * 256), 1);
-   cbmi = calloc(sizeof(BITMAPINFOHEADER) + (sizeof(RGBQUAD) * 256), 1);
-   mbmi = calloc(sizeof(BITMAPINFOHEADER) + (sizeof(RGBQUAD) * 256), 1);
+   pbmi = calloc(1, sizeof(BITMAPINFOHEADER) + (sizeof(RGBQUAD) * 256));
+   cbmi = calloc(1, sizeof(BITMAPINFOHEADER) + (sizeof(RGBQUAD) * 256));
+   mbmi = calloc(1, sizeof(BITMAPINFOHEADER) + (sizeof(RGBQUAD) * 256));
    InitializeCriticalSection(&bmpCriticalSection);
 
    CreateThread(NULL, 16384, threadWindow, state, 0, &tid);

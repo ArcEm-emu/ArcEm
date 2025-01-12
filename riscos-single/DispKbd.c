@@ -1217,8 +1217,8 @@ static const menu_item items[] =
 #ifdef PROFILE_ENABLED
   {'P',"Profiling",values_bool,XX(enable_profile)},
 #endif
-  {'R',"Resume",NULL,NULL},
-  {'Q',"Quit",NULL,NULL},
+  {'R',"Resume",NULL,NULL,0},
+  {'Q',"Quit",NULL,NULL,0},
 };
 
 #define ITEM_MAX (sizeof(items)/sizeof(items[0]))

@@ -38,7 +38,7 @@ void ARexx_Init()
 {
 	if((ARexxBase = OpenLibrary((char *)&"arexx.class",51)))
 	{
-		if(IARexx = (struct ARexxIFace *)GetInterface(ARexxBase,(char *)&"main",1,NULL))
+		if((IARexx = (struct ARexxIFace *)GetInterface(ARexxBase,(char *)&"main",1,NULL)))
 		{
 		
 			arexx_obj = ARexxObject,
@@ -80,7 +80,7 @@ STATIC VOID rx_quit(struct ARexxCmd *cmd, struct RexxMsg *rxm __attribute__((unu
 STATIC VOID rx_floppy(struct ARexxCmd *cmd, struct RexxMsg *rxm __attribute__((unused)))
 {
 	long drv = 0;
-	char *err;
+	const char *err;
 
 	drv = *(long *)cmd->ac_ArgList[0];
 	FDC_EjectFloppy(drv);

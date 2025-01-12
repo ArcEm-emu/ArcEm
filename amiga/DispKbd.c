@@ -499,7 +499,7 @@ static inline ARMword *PDD_Name(Host_BeginUpdate)(ARMul_State *state,PDD_Row *ro
 
 static inline void PDD_Name(Host_EndUpdate)(ARMul_State *state,PDD_Row *row)
 {
-	WritePixelLine8((struct RastPort *)&friend,row->x,row->y,row->width,RowBuffer,(struct RastPort *)&tmprp);
+	WritePixelLine8(&friend,row->x,row->y,row->width,(UBYTE *)RowBuffer,&tmprp);
 }
 
 static inline void PDD_Name(Host_AdvanceRow)(ARMul_State *state,PDD_Row *row,unsigned int count)
@@ -577,7 +577,6 @@ static void pdd_refreshmouse(ARMul_State *state) {
   DisplayDev_GetCursorPos(state,&HorizPos,&VertPos);
 	ULONG transcol = 16;
 	UBYTE line[32];
-	ULONG ptr_cols[4];
 	ULONG 	col_reg = 16+((0 & 0x06) << 1);
 	UBYTE maskbit;
 

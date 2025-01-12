@@ -170,7 +170,6 @@ static void RefreshMouse(ARMul_State *state) {
   int x,y,offset;
   int memptr;
   int Height = ((int)VIDC.Vert_CursorEnd - (int)VIDC.Vert_CursorStart);
-  int diboffs;
   SDL_Color cursorPal[3];
   uint8_t *dst;
 
@@ -232,8 +231,6 @@ static void RefreshMouse(ARMul_State *state) {
 
 static void SetupScreen(ARMul_State *state,int width,int height,int hz)
 {
-  int render_width, render_height;
-
   /* TODO: Use SDL_LockTexture() instead of creating a separate surface? */
   if (!sdd_surface)
     SDL_FreeSurface(sdd_surface);
@@ -336,12 +333,14 @@ int DisplayDev_Init(ARMul_State *state)
   format = SDL_AllocFormat(pf);
   if (!format) {
     ControlPane_Error(0, "Failed to create pixel format: %s\n", SDL_GetError());
+    return -1;
   } else if (format->BytesPerPixel == 4) {
     return DisplayDev_Set(state,&SDD32R_DisplayDev);
   } else if (format->BytesPerPixel == 2) {
     return DisplayDev_Set(state,&SDD16R_DisplayDev);
   } else {
     ControlPane_Error(0, "Unsupported bytes per pixel: %d\n", format->BytesPerPixel);
+    return -1;
   }
 }
 

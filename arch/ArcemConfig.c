@@ -26,6 +26,8 @@
 
 #ifdef AMIGA
 #include <workbench/startup.h>
+
+void wblaunch(struct WBStartup *, ArcemConfig *pConfig);
 #endif
 
 /* Local functions */

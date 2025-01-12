@@ -52,10 +52,10 @@ LD=$(CC)
 WINDRES=$(CROSS)windres
 LDFLAGS=
 
-WARN = -Wall -Wno-return-type -Wno-unknown-pragmas -Wshadow \
-   -Wpointer-arith -Wcast-align -Wstrict-prototypes \
+WARN = -Wall -Wextra -Wno-unused-parameter -Wno-sign-compare \
+   -Wshadow -Wpointer-arith -Wcast-align -Wstrict-prototypes \
    -Wmissing-prototypes -Wmissing-declarations -Wnested-externs \
-   -Wcast-qual -Wwrite-strings -Wno-unused
+   -Wcast-qual -Wwrite-strings
 
 ifeq ($(PROFILE),yes)
 CFLAGS = -O -g -pg -ftest-coverage -fprofile-arcs

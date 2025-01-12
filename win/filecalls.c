@@ -71,7 +71,7 @@ bool Directory_Open(const char *sPath, Directory *hDir)
   hDir->hFile       = NULL;
 
   hDir->sPathLen = strlen(sPath) + (bNeedsEndSlash ? 1 : 0 ) + 3; /* Path + Endslash (if needed) + *.* + terminator */
-  hDir->sPath = calloc(hDir->sPathLen + 1, 1);
+  hDir->sPath = calloc(1, hDir->sPathLen + 1);
   if(NULL == hDir->sPath) {
     fprintf(stderr, "Failed to allocate memory for directory handle path\n");
     return false;

@@ -11,7 +11,7 @@
 #define ARCEM_SWI_NANOSLEEP (ARCEM_SWI_CHUNK + 3)
 #define ARCEM_SWI_NETWORK   (ARCEM_SWI_CHUNK + 4)
 
-#define hostfs_error(code,...) ControlPane_Error(code,__VA_ARGS__)
+#define hostfs_error ControlPane_Error
 
 #define HOSTFS_ARCEM /* Build ArcEm version, not RPCEmu */
 

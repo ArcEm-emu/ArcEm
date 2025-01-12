@@ -14,7 +14,7 @@
 
 /* Information on an arch_key_id. */
 static const KbdEntry keys[] = {
-#define X(key, row, col) { row, col },
+#define X(key, row, col) { row, col, 0 },
   ARCH_KEYBOARD_DEFINITION
 #undef X
 };

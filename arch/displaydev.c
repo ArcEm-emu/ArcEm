@@ -217,14 +217,11 @@ void BitCopy(ARMword *dest,int destalign,const ARMword *src,int srcalign,int cou
   ARMword tempsrc2 = *src++;
   if(destalign)
   {
-    ARMword tempsrc3, tempdest = EndianSwap(*dest);
+    ARMword tempdest = EndianSwap(*dest);
 
     ARMword mask = (count<=invdestalign?(1<<count):0)-1;
     mask = mask<<destalign;
     tempdest &= ~mask;
-    tempsrc3 = (tempsrc1>>srcalign);
-    if(srcalign)
-      tempsrc3 |= (tempsrc2<<invsrcalign);
     tempdest |= (tempsrc1<<destalign) & mask;
     *dest++ = EndianSwap(tempdest);
 

@@ -131,29 +131,29 @@ void ARMul_CoProDetach(ARMul_State *state, unsigned number)
 
 static unsigned NoCoPro3R(ARMul_State *state, unsigned a, ARMword b)
 {
-  UNUSED(state);
-  UNUSED(a);
-  UNUSED(b);
+  UNUSED_VAR(state);
+  UNUSED_VAR(a);
+  UNUSED_VAR(b);
 
   return(ARMul_CANT);
 }
 
 static unsigned NoCoPro4R(ARMul_State *state, unsigned a, ARMword b, ARMword c)
 {
-  UNUSED(state);
-  UNUSED(a);
-  UNUSED(b);
-  UNUSED(c);
+  UNUSED_VAR(state);
+  UNUSED_VAR(a);
+  UNUSED_VAR(b);
+  UNUSED_VAR(c);
 
   return(ARMul_CANT);
 }
 
 static unsigned NoCoPro4W(ARMul_State *state, unsigned a, ARMword b, ARMword *c)
 {
-  UNUSED(state);
-  UNUSED(a);
-  UNUSED(b);
-  UNUSED(c);
+  UNUSED_VAR(state);
+  UNUSED_VAR(a);
+  UNUSED_VAR(b);
+  UNUSED_VAR(c);
 
   return(ARMul_CANT);
 }

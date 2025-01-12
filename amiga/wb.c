@@ -53,7 +53,7 @@ static void closewblibs(void)
 static void gettooltypes(struct WBArg *wbarg, ArcemConfig *pConfig)
 {
 	struct DiskObject *dobj;
-	CONST_STRPTR *toolarray;
+	char **toolarray;
 	char *s;
 
 	force8bit = 0;
@@ -63,9 +63,9 @@ static void gettooltypes(struct WBArg *wbarg, ArcemConfig *pConfig)
 
 	if((*wbarg->wa_Name) && (dobj=GetDiskObject(wbarg->wa_Name)))
 	{
-		toolarray = (CONST_STRPTR *)dobj->do_ToolTypes;
+		toolarray = dobj->do_ToolTypes;
 
-		if(s = (char *)FindToolType(toolarray,"ROM"))
+		if((s = (char *)FindToolType(toolarray,"ROM")))
 		{
         	char *sNewRomName = strdup(s);
         
@@ -80,7 +80,7 @@ static void gettooltypes(struct WBArg *wbarg, ArcemConfig *pConfig)
         }
 
 #if defined(EXTNROM_SUPPORT)
-		if(s = (char *)FindToolType(toolarray,"EXTNROMDIR"))
+		if((s = (char *)FindToolType(toolarray,"EXTNROMDIR")))
 		{
         	char *sNewExtnRomDir = strdup(s);
 
@@ -95,7 +95,7 @@ static void gettooltypes(struct WBArg *wbarg, ArcemConfig *pConfig)
 
 #endif /* EXTNROM_SUPPORT */
 #if defined(HOSTFS_SUPPORT)
-		if(s = (char *)FindToolType(toolarray,"HOSTFSDIR"))
+		if((s = (char *)FindToolType(toolarray,"HOSTFSDIR")))
 		{
 	        char *sNewHostFSDir = strdup(s);
         
@@ -110,7 +110,7 @@ static void gettooltypes(struct WBArg *wbarg, ArcemConfig *pConfig)
         }
 #endif /* HOSTFS_SUPPORT */
 
-		if(s = (char *)FindToolType(toolarray,"MEMORY"))
+		if((s = (char *)FindToolType(toolarray,"MEMORY")))
 		{
 			if(MatchToolValue(s,"256K"))
           		pConfig->eMemSize = MemSize_256K;
@@ -137,7 +137,7 @@ static void gettooltypes(struct WBArg *wbarg, ArcemConfig *pConfig)
           		pConfig->eMemSize = MemSize_16M;
       }
 
-		if(s = (char *)FindToolType(toolarray,"PROCESSOR"))
+		if((s = (char *)FindToolType(toolarray,"PROCESSOR")))
 		{
 			if(MatchToolValue(s,"ARM2"))
 		         pConfig->eProcessor = Processor_ARM2;
@@ -158,7 +158,7 @@ static void gettooltypes(struct WBArg *wbarg, ArcemConfig *pConfig)
 		if(FindToolType(toolarray, "USEUPDATEFLAGS"))
 			DisplayDev_UseUpdateFlags = 1;
 
-		if(s = (char *)FindToolType(toolarray, "FRAMESKIP"))
+		if((s = (char *)FindToolType(toolarray, "FRAMESKIP")))
 			DisplayDev_FrameSkip = atoi(s);
 		else DisplayDev_FrameSkip = 0;
 
@@ -180,7 +180,7 @@ static void gettooltypes(struct WBArg *wbarg, ArcemConfig *pConfig)
 			It is literally a copy'n'paste of the other code with fscanf(fConf)
 			changed to sscanf(s) */
 
-			if(s = (char *)FindToolType(toolarray,"ST506DISC"))
+			if((s = (char *)FindToolType(toolarray,"ST506DISC")))
 			{
 	      		unsigned int drivenum,numcyl,numheads,numsect,reclength;
     			if (sscanf(s,"%u %u %u %u %u\n",&drivenum,&numcyl,&numheads,&numsect,&reclength)!=5)
@@ -217,10 +217,10 @@ void wblaunch(struct WBStartup *WBenchMsg, ArcemConfig *pConfig)
     IExec = (struct ExecIFace *)(*(struct ExecBase **)4)->MainInterface;
 	#endif
 	
-	if(IconBase = OpenLibrary("icon.library",37))
+	if((IconBase = OpenLibrary("icon.library",37)))
 	{
 	#ifdef __amigaos4__
-		IIcon = GetInterface(IconBase,"main",1,NULL);
+		IIcon = (struct IconIFace *)GetInterface(IconBase,"main",1,NULL);
 	#endif
 	}
 	else
@@ -229,10 +229,10 @@ void wblaunch(struct WBStartup *WBenchMsg, ArcemConfig *pConfig)
 		return;
 	}
 
-	if(DOSBase = OpenLibrary("dos.library",37))
+	if((DOSBase = OpenLibrary("dos.library",37)))
 	{
 	#ifdef __amigaos4__
-		IDOS = GetInterface(DOSBase,"main",1,NULL);
+		IDOS = (struct DOSIFace *)GetInterface(DOSBase,"main",1,NULL);
 	#endif
 	}
 	else

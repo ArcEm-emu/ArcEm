@@ -2379,7 +2379,7 @@ static void SDD_Name(IOEBCRWrite)(ARMul_State *state,ARMword data) {
 
 static int SDD_Name(Init)(ARMul_State *state,const struct Vidc_Regs *Vidc)
 {
-  state->Display = calloc(sizeof(struct SDD_Name(DisplayInfo)),1);
+  state->Display = calloc(1,sizeof(struct SDD_Name(DisplayInfo)));
   if(!state->Display) {
     warn_vidc("Failed to allocate DisplayInfo\n");
     return -1;

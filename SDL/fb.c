@@ -368,7 +368,6 @@ static void RefreshMouse(ARMul_State *state,int XScale,int YScale) {
   int x,y,offset, repeat;
   int memptr;
   int Height = ((int)VIDC.Vert_CursorEnd - (int)VIDC.Vert_CursorStart)*YScale;
-  int diboffs;
   SDL_Color cursorPal[3];
   uint8_t *dst;
 
@@ -475,6 +474,7 @@ int DisplayDev_Init(ARMul_State *state)
 
   if (!screen) {
       ControlPane_Error(0, "Failed to create initial window: %s\n", SDL_GetError());
+      return -1;
   } else if (screen->format->BytesPerPixel == 4) {
       return DisplayDev_Set(state,&SDD32_DisplayDev);
   } else if (screen->format->BytesPerPixel == 2) {
@@ -485,6 +485,7 @@ int DisplayDev_Init(ARMul_State *state)
 #endif
   } else {
       ControlPane_Error(0, "Unsupported bytes per pixel: %d\n", screen->format->BytesPerPixel);
+      return -1;
   }
 }
 

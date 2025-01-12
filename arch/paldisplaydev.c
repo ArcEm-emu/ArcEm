@@ -1002,7 +1002,7 @@ static void PDD_Name(IOEBCRWrite)(ARMul_State *state,ARMword data) {
 
 static int PDD_Name(Init)(ARMul_State *state,const struct Vidc_Regs *Vidc)
 {
-  state->Display = calloc(sizeof(struct PDD_Name(DisplayInfo)),1);
+  state->Display = calloc(1,sizeof(struct PDD_Name(DisplayInfo)));
   if(!state->Display) {
     warn_vidc("Failed to allocate DisplayInfo\n");
     return -1;

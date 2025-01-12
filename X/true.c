@@ -154,7 +154,7 @@ static void RefreshMouse(ARMul_State *state) {
         int idx = ((tmp[x / 16] >> ((x & 15) * 2)) & 3);
         XPutPixel(PD.CursorImage, x, y, cursorPalette[idx-1]);
         if ((x & 7) == 0) {
-          TransPtr[x / 8] = 0xff;
+          TransPtr[x / 8] = '\xff';
           TransBit = 1;
         }
         TransPtr[x / 8] &= idx ? ~TransBit : 0xff;

@@ -1025,7 +1025,7 @@ hostfs_open(ARMul_State *state)
   }
 
   /* Find the extent of the file */
-  fseeko64(open_file[idx], UINT64_C(0), SEEK_END);
+  fseeko64(open_file[idx], 0, SEEK_END);
   state->Reg[3] = (ARMword) ftello64(open_file[idx]);
   rewind(open_file[idx]); /* Return to start */
 
@@ -1130,7 +1130,7 @@ hostfs_args_7_ensure_file_size(ARMul_State *state)
   dbug_hostfs("\tr1 = %u (our file handle)\n", state->Reg[1]);
   dbug_hostfs("\tr2 = %u (size of file to ensure)\n", state->Reg[2]);
 
-  fseeko64(f, UINT64_C(0), SEEK_END);
+  fseeko64(f, 0, SEEK_END);
 
   state->Reg[2] = (ARMword) ftello64(f);
 }
