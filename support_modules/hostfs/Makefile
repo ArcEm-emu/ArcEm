@@ -1,3 +1,7 @@
+#
+# $Id: Makefile,v 1.2 2006/03/07 15:17:10 mhowkins Exp $
+#
+
 AS = armas
 LD = armld
 OBJCOPY = armobjcopy
