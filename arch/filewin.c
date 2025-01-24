@@ -139,5 +139,29 @@ char *Directory_GetFullPath(Directory *hDirectory, const char *leaf) {
   return path;
 }
 
+/**
+ * Return disk space information about a file system.
+ *
+ * @param path Pathname of object within file system
+ * @param d    Pointer to disk_info structure that will be filled in
+ * @return     On success true is returned, on error false is returned
+ */
+bool Disk_GetInfo(const char *path, DiskInfo *d)
+{
+	ULARGE_INTEGER free, total;
+
+	assert(path != NULL);
+	assert(d != NULL);
+
+	if (GetDiskFreeSpaceEx(path, &free, &total, NULL) == 0) {
+		return false;
+	}
+
+	d->size = (uint64_t) total.QuadPart;
+	d->free = (uint64_t) free.QuadPart;
+
+	return true;
+}
+
 #endif
 

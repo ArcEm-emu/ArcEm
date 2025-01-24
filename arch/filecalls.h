@@ -23,6 +23,12 @@ typedef struct FileInfo
   bool bIsDirectory;
 } FileInfo;
 
+typedef struct DiskInfo
+{
+  uint64_t	size;		/**< Size of disk */
+  uint64_t	free;		/**< Free space on disk */
+} DiskInfo;
+
 /**
  * Directory_Open
  *
@@ -62,6 +68,15 @@ char *Directory_GetNextEntry(Directory *hDirectory, FileInfo *phFileInfo);
  * @returns String of the full path or NULL on EndOfDirectory
  */
 char *Directory_GetFullPath(Directory *hDirectory, const char *leaf);
+
+/**
+ * Return disk space information about a file system.
+ *
+ * @param path Pathname of object within file system
+ * @param d    Pointer to disk_info structure that will be filled in
+ * @return     On success 1 is returned, on error 0 is returned
+ */
+bool Disk_GetInfo(const char *path, DiskInfo *d);
 
 /**
  * File_OpenAppData
