@@ -883,7 +883,7 @@ hostfs_path_scan(const char *host_dir_path,
  * @param host_pathname Return full Host path to object (filled-in)
  * @param object_info   Return object info (filled-in)
  */
-static void
+static enum FILECORE_ERROR
 hostfs_path_process(ARMul_State *state,
                     const char *ro_path,
                     char *host_pathname,
@@ -916,21 +916,21 @@ hostfs_path_process(ARMul_State *state,
     c = strchr(ro_path, '$');
     if (c == NULL) {
       object_info->type = OBJECT_TYPE_NOT_FOUND;
-      return;
+      return FILECORE_ERROR_DISCNOTFOUND;
     }
 
     /* Ensure that '$' is preceded by '.' */
     c--;
     if (*c != '.') {
       object_info->type = OBJECT_TYPE_NOT_FOUND;
-      return;
+      return FILECORE_ERROR_DISCNOTFOUND;
     }
 
     /* The string from after the ':' to before the '.' is the disc name */
     disc_name_len = (size_t) (c - &ro_path[1]);
     if (disc_name_len >= sizeof(disc_name)) {
       object_info->type = OBJECT_TYPE_NOT_FOUND;
-      return;
+      return FILECORE_ERROR_DISCNOTFOUND;
     }
     memcpy(disc_name, ro_path + 1, disc_name_len);
     disc_name[disc_name_len] = '\0';
@@ -938,7 +938,7 @@ hostfs_path_process(ARMul_State *state,
     /* Identify the disc from the disc name */
     if (!hostfs_disc_name_valid(disc_name)) {
       object_info->type = OBJECT_TYPE_NOT_FOUND;
-      return;
+      return FILECORE_ERROR_DISCNOTFOUND;
     }
 
     /* Now process the path from '$' onwards */
@@ -952,7 +952,7 @@ hostfs_path_process(ARMul_State *state,
 
       hostfs_read_object_info(host_pathname, NULL, object_info);
       if (object_info->type == OBJECT_TYPE_NOT_FOUND) {
-        return;
+        return FILECORE_ERROR_NOTFOUND;
       }
 
       break;
@@ -971,7 +971,7 @@ hostfs_path_process(ARMul_State *state,
           /* This component of the path is invalid */
           /* Return what we have of the host_pathname */
 
-          return;
+          return FILECORE_ERROR_NOTFOUND;
         }
 
         /* Append Host's name for this component to the working Host path */
@@ -1011,13 +1011,15 @@ hostfs_path_process(ARMul_State *state,
       /* This component of the path is invalid */
       /* Return what we have of the host_pathname */
 
-      return;
+      return 0;
     }
 
     /* Append Host's name for this component to the working Host path */
     strcat(host_pathname, HOST_DIR_SEP_STR);
     strcat(host_pathname, host_name);
   }
+
+  return 0;
 }
 
 /* Search through the open_file[] array, and allocate an index.
@@ -1328,6 +1330,7 @@ hostfs_write_file(ARMul_State *state, bool with_data)
   risc_os_object_info object_info;
   FILE *f;
   size_t length, bytes_written=0;
+  enum FILECORE_ERROR error_detail;
 
   assert(state);
 
@@ -1345,11 +1348,16 @@ hostfs_write_file(ARMul_State *state, bool with_data)
   get_string(state, state->Reg[1], ro_path, sizeof(ro_path));
   dbug_hostfs("\tPATH = %s\n", ro_path);
 
-  hostfs_path_process(state, ro_path, host_pathname, &object_info);
+  error_detail = hostfs_path_process(state, ro_path, host_pathname, &object_info);
   dbug_hostfs("\tHOST_PATHNAME = %s\n", host_pathname);
 
   switch (object_info.type) {
   case OBJECT_TYPE_NOT_FOUND:
+    if (error_detail != 0) {
+      /* Invalid disk name or path, rather than merely not found */
+      state->Reg[9] = (uint32_t) error_detail;
+      return;
+    }
     strcat(host_pathname, HOST_DIR_SEP_STR);
     path_construct(state, host_pathname, ro_path,
                    new_pathname, sizeof(new_pathname),
