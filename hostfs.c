@@ -104,7 +104,7 @@ static char HOSTFS_ROOT[512];
 
 #endif /* !HOSTFS_ARCEM */
 
-#define HOSTFS_PROTOCOL_VERSION 2
+#define HOSTFS_PROTOCOL_VERSION 3
 
 /* Windows mkdir() function only takes one argument name, and
    name clashes with Posix mkdir() function taking two. This
