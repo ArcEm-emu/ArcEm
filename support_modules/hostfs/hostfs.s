@@ -26,13 +26,11 @@
 
 	@ Filing system error codes
 	FILECORE_ERROR_DIRNOTEMPTY	= 0xb4
-	FILECORE_ERROR_ACCESS		= 0xbd           
+	FILECORE_ERROR_ACCESS		= 0xbd
 	FILECORE_ERROR_ALREADYOPEN	= 0xc2
 	FILECORE_ERROR_DISCFULL		= 0xc6
-	FILECORE_ERROR_BADDISC		= 0xc8
 	FILECORE_ERROR_DISCPROT		= 0xc9
 	FILECORE_ERROR_NOTFOUND		= 0xd6
-	HOSTFS_ERROR_UNKNOWN		= 0x100
 
 	@ Filing system properties
 	FILING_SYSTEM_NUMBER = 0x99	@ TODO choose unique value
@@ -383,6 +381,9 @@ not_implemented:
 	 * Return function with error
 	 */
 hostfs_error:
+	teq	r9, #255
+	beq	not_implemented
+
 	teq	r9, #FILECORE_ERROR_DIRNOTEMPTY
 	adreq	r0, err_dirnotempty
 	beq	hostfs_return_error
@@ -397,10 +398,6 @@ hostfs_error:
 
 	teq	r9, #FILECORE_ERROR_DISCFULL
 	adreq	r0, err_discfull
-	beq	hostfs_return_error
-
-	teq	r9, #FILECORE_ERROR_BADDISC
-	adreq	r0, err_baddisc
 	beq	hostfs_return_error
 
 	teq	r9, #FILECORE_ERROR_DISCPROT
@@ -441,11 +438,6 @@ err_alreadyopen:
 err_discfull:
 	.int	0x10000 | (FILING_SYSTEM_NUMBER << 8) | FILECORE_ERROR_DISCFULL
 	.string	"Disc is full"
-	.align
-
-err_baddisc:
-	.int	0x10000 | (FILING_SYSTEM_NUMBER << 8) | FILECORE_ERROR_BADDISC
-	.string	"Disc not found"
 	.align
 
 err_discprot:
