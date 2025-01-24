@@ -120,4 +120,37 @@ char *Directory_GetFullPath(Directory *hDirectory, const char *leaf) {
   return path;
 }
 
+/**
+ * Return disk space information about a file system.
+ *
+ * @param path Pathname of object within file system
+ * @param d    Pointer to disk_info structure that will be filled in
+ * @return     On success true is returned, on error false is returned
+ */
+bool Disk_GetInfo(const char *path, DiskInfo *d)
+{
+  _kernel_oserror *err;
+  unsigned int free_lsw, free_msw, size_lsw, size_msw;
+
+  assert(path);
+
+  err = _swix(OS_FSControl, _INR(0,1)|_OUTR(0,1)|_OUTR(3,4), 55, path,
+              &free_lsw, &free_msw, &size_lsw, &size_msw);
+  if(!err) {
+    d->size = size_lsw | ((uint64_t)size_msw << 32);
+    d->free = free_lsw | ((uint64_t)free_msw << 32);
+    return true;
+  }
+
+  err = _swix(OS_FSControl, _INR(0,1)|_OUT(0)|_OUT(2), 49, path,
+              &free_lsw, &size_lsw);
+  if(!err) {
+    d->size = size_lsw;
+    d->free = free_lsw;
+    return true;
+  }
+
+  return false;
+}
+
 #endif

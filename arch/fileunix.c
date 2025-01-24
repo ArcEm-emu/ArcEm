@@ -13,6 +13,7 @@
 
 /* posix includes */
 #include <sys/stat.h>
+#include <sys/statvfs.h>
 #include <sys/types.h>
 #include <dirent.h>
 
@@ -165,6 +166,31 @@ static bool File_GetInfo(const char *sPath, FileInfo *phFileInfo)
   
   /* Success! */
   return true;
+}
+
+/**
+ * Return disk space information about a file system.
+ *
+ * @param path Pathname of object within file system
+ * @param d    Pointer to disk_info structure that will be filled in
+ * @return     On success true is returned, on error false is returned
+ */
+bool Disk_GetInfo(const char *path, DiskInfo *d)
+{
+	struct statvfs s;
+	int ret;
+
+	assert(path != NULL);
+	assert(d != NULL);
+
+	if ((ret = statvfs(path, &s)) != 0) {
+		return false;
+	}
+
+	d->size = (uint64_t) s.f_blocks * (uint64_t) s.f_frsize;
+	d->free = (uint64_t) s.f_bavail * (uint64_t) s.f_frsize;
+
+	return true;
 }
 
 #endif
