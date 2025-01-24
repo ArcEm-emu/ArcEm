@@ -477,6 +477,15 @@ riscos_path_to_host(ARMul_State *state, const char *path, char *host_path)
     case '\xA0':
       *host_path++ = 32;
       break;
+    case '?':
+      *host_path++ = '#';
+      break;
+    case '<':
+      *host_path++ = '$';
+      break;
+    case '>':
+      *host_path++ = '^';
+      break;
 #endif
     default:
       *host_path++ = *path;
@@ -510,6 +519,15 @@ name_host_to_riscos(const char *object_name, size_t len, char *riscos_name)
       break;
     case 32:
       *riscos_name++ = '\xA0';
+      break;
+    case '#':
+      *riscos_name++ = '?';
+      break;
+    case '$':
+      *riscos_name++ = '<';
+      break;
+    case '^':
+      *riscos_name++ = '>';
       break;
     default:
       *riscos_name++ = *object_name;
