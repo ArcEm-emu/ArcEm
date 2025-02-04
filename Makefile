@@ -90,6 +90,7 @@ OBJS = armcopro.o armemu.o arminit.o \
     arch/fdc1772.o $(SYSTEM)/ControlPane.o arch/hdc63463.o \
     arch/keyboard.o $(SYSTEM)/filecalls.o arch/filecommon.o \
     arch/ArcemConfig.o arch/cp15.o arch/newsound.o arch/displaydev.o \
+    arch/filero.o arch/fileunix.o arch/filewin.o \
     libs/inih/ini.o
 
 SRCS = armcopro.c armemu.c arminit.c arch/armarc.c \
@@ -99,6 +100,7 @@ SRCS = armcopro.c armemu.c arminit.c arch/armarc.c \
 	arch/keyboard.c $(SYSTEM)/filecalls.c \
 	arch/ArcemConfig.c arch/cp15.c arch/newsound.c \
 	arch/displaydev.c arch/filecommon.c \
+	arch/filero.c arch/fileunix.c arch/filewin.c \
 	libs/inih/ini.c
 
 INCS = armdefs.h armemu.h $(SYSTEM)/KeyTable.h \

@@ -12,6 +12,7 @@ SRCS = armcopro.c armemu.c arminit.c armarc.c &
 	arch/i2c.c arch/archio.c &
 	arch/fdc1772.c arch/hdc63463.c &
 	arch/keyboard.c arch/filecommon.c &
+	arch/filero.c arch/fileunix.c arch/filewin.c &
 	arch/ArcemConfig.c arch/cp15.c arch/newsound.c arch/displaydev.c &
 	libs/inih/ini.c
 

@@ -294,6 +294,9 @@
     <ClCompile Include="..\arch\extnrom.c" />
     <ClCompile Include="..\arch\fdc1772.c" />
     <ClCompile Include="..\arch\filecommon.c" />
+    <ClCompile Include="..\arch\filero.c" />
+    <ClCompile Include="..\arch\fileunix.c" />
+    <ClCompile Include="..\arch\filewin.c" />
     <ClCompile Include="..\arch\hdc63463.c" />
     <ClCompile Include="..\arch\i2c.c" />
     <ClCompile Include="..\arch\keyboard.c" />
@@ -324,6 +327,9 @@
     <ClInclude Include="..\arch\extnrom.h" />
     <ClInclude Include="..\arch\fdc1772.h" />
     <ClInclude Include="..\arch\filecalls.h" />
+    <ClInclude Include="..\arch\filero.h" />
+    <ClInclude Include="..\arch\fileunix.h" />
+    <ClInclude Include="..\arch\filewin.h" />
     <ClInclude Include="..\arch\hdc63463.h" />
     <ClInclude Include="..\arch\i2c.h" />
     <ClInclude Include="..\arch\keyboard.h" />
@@ -337,7 +343,6 @@
     <ClInclude Include="..\hostfs.h" />
     <ClInclude Include="..\libs\inih\ini.h" />
     <ClInclude Include="..\prof.h" />
-    <ClInclude Include="..\win\filecalls_internal.h" />
     <ClInclude Include="..\win\gui.h" />
     <ClInclude Include="..\win\KeyTable.h" />
     <ClInclude Include="..\win\win.h" />

@@ -36,6 +36,12 @@ set(ARCEM_ARCH_SOURCES
 	arch/fdc1772.h
 	arch/filecalls.h
 	arch/filecommon.c
+	arch/filero.c
+	arch/filero.h
+	arch/fileunix.c
+	arch/fileunix.h
+	arch/filewin.c
+	arch/filewin.h
 	arch/hdc63463.c
 	arch/hdc63463.h
 	arch/i2c.c
@@ -54,7 +60,6 @@ set(ARCEM_SDL_SOURCES
 	SDL/ControlPane.c
 	SDL/DispKbd.c
 	SDL/filecalls.c
-	SDL/filecalls_internal.h
 	SDL/fb.c
 	SDL/KeyTable.h
 	SDL/render.c
@@ -63,7 +68,6 @@ set(ARCEM_X_SOURCES
 	X/ControlPane.c
 	X/DispKbd.c
 	X/filecalls.c
-	X/filecalls_internal.h
 	X/KeyTable.h
 	X/platform.h
 	X/pseudo.c
@@ -76,7 +80,6 @@ set(ARCEM_WIN_SOURCES
 	win/ControlPane.c
 	win/DispKbd.c
 	win/filecalls.c
-	win/filecalls_internal.h
 	win/gui.h
 	win/gui.rc
 	win/KeyTable.h

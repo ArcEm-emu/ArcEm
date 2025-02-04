@@ -6,9 +6,14 @@
 #define __FILECALLS_H
 
 #include "../armdefs.h"
-/* Include this platforms required parts, note the platform directory
-   must be on the compilers include path */
-#include "filecalls_internal.h"
+
+#ifdef _WIN32
+#include "filewin.h"
+#elif defined(__riscos__)
+#include "filero.h"
+#else
+#include "fileunix.h"
+#endif
 
 typedef struct Directory_s Directory;
 

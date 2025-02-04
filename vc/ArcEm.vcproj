@@ -396,6 +396,30 @@
 				>
 			</File>
 			<File
+				RelativePath="..\arch\filero.c"
+				>
+			</File>
+			<File
+				RelativePath="..\arch\filero.h"
+				>
+			</File>
+			<File
+				RelativePath="..\arch\fileunix.c"
+				>
+			</File>
+			<File
+				RelativePath="..\arch\fileunix.h"
+				>
+			</File>
+			<File
+				RelativePath="..\arch\filewin.c"
+				>
+			</File>
+			<File
+				RelativePath="..\arch\filewin.h"
+				>
+			</File>
+			<File
 				RelativePath="..\arch\hdc63463.c"
 				>
 				<FileConfiguration
@@ -558,10 +582,6 @@
 						PreprocessorDefinitions=""
 					/>
 				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\win\filecalls_internal.h"
-				>
 			</File>
 			<File
 				RelativePath="..\win\gui.h"

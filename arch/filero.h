@@ -1,9 +1,9 @@
-/* filecalls_internal.h
+/* filero.h
    Copyright (c) 2005 Peter Howkins, covered under the GNU GPL see file COPYING for more
    details */
 
-#ifndef __FILECALLS_INTERNAL_H
-#define __FILECALLS_INTERNAL_H
+#ifndef __FILERO_H
+#define __FILERO_H
 
 #include "kernel.h"
 
@@ -22,4 +22,4 @@ struct Directory_s {
   } gbpb_buffer;
 };
 
-#endif /* __FILECALLS_H */
+#endif /* __FILERO_H */

@@ -45,6 +45,15 @@
     <ClCompile Include="..\arch\filecommon.c">
       <Filter>arch</Filter>
     </ClCompile>
+    <ClCompile Include="..\arch\filero.c">
+      <Filter>arch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\fileunix.c">
+      <Filter>arch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\filewin.c">
+      <Filter>arch</Filter>
+    </ClCompile>
     <ClCompile Include="..\arch\hdc63463.c">
       <Filter>arch</Filter>
     </ClCompile>
@@ -113,6 +122,15 @@
     <ClInclude Include="..\arch\filecalls.h">
       <Filter>arch</Filter>
     </ClInclude>
+    <ClInclude Include="..\arch\filero.h">
+      <Filter>arch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\arch\fileunix.h">
+      <Filter>arch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\arch\filewin.h">
+      <Filter>arch</Filter>
+    </ClInclude>
     <ClInclude Include="..\arch\hdc63463.h">
       <Filter>arch</Filter>
     </ClInclude>
@@ -127,9 +145,6 @@
     </ClInclude>
     <ClInclude Include="..\arch\Version.h">
       <Filter>arch</Filter>
-    </ClInclude>
-    <ClInclude Include="..\win\filecalls_internal.h">
-      <Filter>win</Filter>
     </ClInclude>
     <ClInclude Include="..\win\gui.h">
       <Filter>win</Filter>

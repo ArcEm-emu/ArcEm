@@ -111,10 +111,6 @@ SOURCE=..\win\filecalls.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\win\filecalls_internal.h
-# End Source File
-# Begin Source File
-
 SOURCE=..\win\gui.h
 # End Source File
 # Begin Source File
@@ -199,7 +195,35 @@ SOURCE=..\arch\fdc1772.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\arch\filecommon.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\arch\filecalls.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\arch\filero.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\arch\filero.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\arch\fileunix.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\arch\fileunix.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\arch\filewin.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\arch\filewin.h
 # End Source File
 # Begin Source File
 
