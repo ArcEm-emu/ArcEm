@@ -142,7 +142,7 @@ elseif(${SYSTEM} STREQUAL "X")
 	target_compile_definitions(arcem PRIVATE SYSTEM_X)
 
 	find_package(X11 REQUIRED)
-	target_include_directories(arcem PRIVATE ${X11_INCLUDE_DIRS})
+	target_include_directories(arcem PRIVATE ${X11_INCLUDE_DIR})
 	target_link_libraries(arcem PRIVATE ${X11_LIBRARIES})
 
 	if(SOUND_SUPPORT AND SOUND_PTHREAD)
