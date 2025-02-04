@@ -26,9 +26,9 @@ jobs:
       run: cmake -B build/ -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DSYSTEM=${{ matrix.linux.system }} .
     - name: Build
       run: cmake --build build/ --config ${{env.BUILD_TYPE}} --parallel
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
-        name: arcem-${{ matrix.linux.platform }}
+        name: arcem-linux-${{ matrix.linux.system }}
         path: ./build/arcem
 
   build-msvc:
@@ -47,7 +47,7 @@ jobs:
       run: cmake -B build/ -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -A ${{ matrix.msvc.platform }} .
     - name: Build
       run: cmake --build build/ --config ${{env.BUILD_TYPE}} --parallel
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         name: arcem-msvc-${{ matrix.msvc.platform }}
         path: build/Release/ArcEm.exe
@@ -77,7 +77,7 @@ jobs:
       run: cmake -B build/ -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} .
     - name: Build
       run: cmake --build build/ --config ${{env.BUILD_TYPE}} --parallel
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         name: arcem-${{ matrix.mingw.msystem }}
         path: ./build/ArcEm.exe
@@ -94,7 +94,7 @@ jobs:
     - uses: actions/checkout@v3
     - name: Build
       run: wmake -f Makefile.ow
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         name: arcem-watcom
         path: ./ArcEm.exe
@@ -108,7 +108,7 @@ jobs:
     - uses: actions/checkout@v3
     - name: Build
       run: make SYSTEM=riscos-single CROSS=arm-unknown-riscos-
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         name: arcem-riscos
         path: ./ArcEm
@@ -128,7 +128,7 @@ jobs:
     - uses: actions/checkout@v3
     - name: Build
       run: make SYSTEM=${{ matrix.amiga.system }} CROSS=${{ matrix.amiga.host }}-
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         name: arcem-${{ matrix.amiga.host }}
         path: ./arcem
