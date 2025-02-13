@@ -1,0 +1,805 @@
+REM MakeModes - Generate the ArcemModes modules
+REM Copyright (C) 2005-2006 Peter Howkins and Matthew Howkins
+REM
+REM This program is free software; you can redistribute it and/or modify
+REM it under the terms of the GNU General Public License as published by
+REM the Free Software Foundation; either version 2 of the License, or
+REM (at your option) any later version.
+REM
+REM This program is distributed in the hope that it will be useful,
+REM but WITHOUT ANY WARRANTY; without even the implied warranty of
+REM MERCHANABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
+REM GNU General Public License for more details.
+REM
+REM You should have received a copy of the GNU General Public License 
+REM along with this program; if not, write to the Free Software
+REM Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+REM
+REM Web: http://arcem.sf.net
+REM
+
+ON ERROR PRINT REPORT$;" at ";ERL:END
+
+module_size% = 40000
+
+DIM module% module_size%
+
+FOR pass% = 4 TO 7 STEP 3
+
+O% = module%
+P% = 0
+
+[   OPT pass%
+.Module_Start
+        EQUD    0
+        EQUD    0
+        EQUD    0
+        EQUD    ServiceCallHandler
+        EQUD    Title
+        EQUD    Help
+        EQUD    0
+   ;     EQUD    0
+   ;     EQUD    0
+   ;     EQUD    0
+   ;     EQUD    0
+   ;     EQUD    0
+   ;     EQUD    Flags
+.Title
+        EQUS    "ArcemModes"+CHR$(0)
+        .Help
+        EQUS    "ArcemModes"+CHR$(9)+"1.01 (27 Aug 2011) GPL"+CHR$(0)
+        ALIGN
+; .Flags
+   ;     EQUD    1
+
+
+.ServiceCallHandler
+        teq     r1,#&50
+        beq     ServiceCall_ModeExtension
+        mov     pc,r14
+
+.ServiceCall_ModeExtension
+        stmfd     r13!,{r5-r6,r14}
+
+        adr       r5,ModeTable
+
+.ModeLoop
+        ldr       r6,[r5]            ; mode number into r6
+        cmn       r6,#1              ; test for -1 end of array
+        ldmeqfd   r13!,{r5-r6,pc}^
+        cmp       r6,r2
+        addne     r5,r5,#12          ; not mode we're looking for, next entry
+        bne       ModeLoop
+        mov       r1,#0              ; found mode, claim service
+        ldr       r3,[r5,#4]
+        ldr       r4,[r5,#8]
+        adr       r5,Module_Start    ; adjust the offsets to take into account the position in memory of the module
+        add       r3,r3,r5
+        add       r4,r4,r5
+        ldmfd     r13!,{r5-r6,pc}^   ; success
+
+.ModeTable
+        equd     32: equd VIDClist32:  equd VIDCworkspacelist32
+        equd    100: equd VIDClist100: equd VIDCworkspacelist100
+        equd    101: equd VIDClist101: equd VIDCworkspacelist101
+        equd    102: equd VIDClist102: equd VIDCworkspacelist102
+        equd    104: equd VIDClist104: equd VIDCworkspacelist104
+        equd    105: equd VIDClist105: equd VIDCworkspacelist105
+        equd    108: equd VIDClist108: equd VIDCworkspacelist108
+        equd    109: equd VIDClist109: equd VIDCworkspacelist109
+        equd    112: equd VIDClist112: equd VIDCworkspacelist112
+        equd    120: equd VIDClist120: equd VIDCworkspacelist120
+        equd    122: equd VIDClist122: equd VIDCworkspacelist122
+        equd    123: equd VIDClist123: equd VIDCworkspacelist123
+        equd    124: equd VIDClist124: equd VIDCworkspacelist124
+        equd    125: equd VIDClist125: equd VIDCworkspacelist125
+        equd     -1
+
+.VIDClist32 ; 800x600x8bpp
+     equd       0 ; List format (0 = Standard)
+     equd       15
+     equd       (&88 << 24) OR (1 << 14)
+     equd       (&8C << 24) OR (15 << 14)
+     equd       (&90 << 24) OR (415 << 14)
+     equd       (&94 << 24) OR (433 << 14)
+     equd       (&80 << 24) OR (433 << 14)
+     equd       (&84 << 24) OR (1 << 14)
+     equd       (&9C << 24) OR (217 << 14)
+     equd       (&A4 << 24) OR (1 << 14)
+     equd       (&A8 << 24) OR (1 << 14)
+     equd       (&AC << 24) OR (1 << 14)
+     equd       (&B0 << 24) OR (601 << 14)
+     equd       (&B4 << 24) OR (601 << 14)
+     equd       (&A0 << 24) OR (601 << 14)
+     equd       (&E0 << 24) OR (3 << 2) OR 3
+     equd       -1       ; Terminate standard parameters
+
+.VIDClist100 ; 1024x768x1bpp
+        equd    0               ; list format (0 = Standard)
+        equd    0               ; Base mode number
+        equd    (&80 << 24) OR (531 << 14)       ; Standard VIDC parameter list
+        equd    (&84 << 24) OR (1 << 14)
+        equd    (&88 << 24) OR (1 << 14)
+        equd    (&8C << 24) OR (8 << 14)
+        equd    (&90 << 24) OR (520 << 14)
+        equd    (&94 << 24) OR (531 << 14)
+        equd    (&A0 << 24) OR (769 << 14)
+        equd    (&A4 << 24) OR (1 << 14)
+        equd    (&A8 << 24) OR (1 << 14)
+        equd    (&AC << 24) OR (1 << 14)
+        equd    (&B0 << 24) OR (769 << 14)
+        equd    (&B4 << 24) OR (769 << 14)
+        equd    (&E0 << 24) OR &000000 OR 3
+        equd    (&9C << 24) OR (266 << 14)
+        equd    -1              ; Terminate standard parameters
+
+.VIDClist101 ; 1024x768x2bpp
+        equd    0               ; list format (0 = Standard)
+        equd    8               ; Base mode number
+        equd    (&80 << 24) OR (523 << 14) ; Standard VIDC parameter list
+        equd    (&84 << 24) OR (1 << 14)
+        equd    (&88 << 24) OR (1 << 14)
+        equd    (&8C << 24) OR (6 << 14)
+        equd    (&90 << 24) OR (518 << 14)
+        equd    (&94 << 24) OR (523 << 14)
+        equd    (&A0 << 24) OR (769 << 14)
+        equd    (&A4 << 24) OR (1 << 14)
+        equd    (&A8 << 24) OR (1 << 14)
+        equd    (&AC << 24) OR (1 << 14)
+        equd    (&B0 << 24) OR (769 << 14)
+        equd    (&B4 << 24) OR (769 << 14)
+        equd    (&E0 << 24) OR &000004 OR 3
+        equd    (&9C << 24) OR (262 << 14)
+        equd    -1              ; Terminate standard parameters
+
+.VIDClist102 ; 1024x768x4bpp
+        equd    0               ; list format (0 = Standard)
+        equd    12              ; Base mode number
+        equd    (&80 << 24) OR &81C000       ; Standard VIDC parameter list
+        equd    (&84 << 24) OR (1 << 14)
+        equd    (&88 << 24) OR (1 << 14)
+        equd    (&8C << 24) OR (4 << 14)
+        equd    (&90 << 24) OR (516 << 14)
+        equd    (&94 << 24) OR (519 << 14)
+        equd    (&A0 << 24) OR (769 << 14)
+        equd    (&A4 << 24) OR (1 << 14)
+        equd    (&A8 << 24) OR (1 << 14)
+        equd    (&AC << 24) OR (1 << 14)
+        equd    (&B0 << 24) OR (769 << 14)
+        equd    (&B4 << 24) OR (769 << 14)
+        equd    (&E0 << 24) OR &000008 OR 3
+        equd    (&9C << 24) OR (260 << 14)
+        equd    -1              ; Terminate standard parameters
+
+.VIDClist104 ; 1280x1016x1bpp
+     equd       0 ; List format (0 = Standard)
+     equd       0
+     equd       (&80 << 24) OR (673 << 14)
+     equd       (&88 << 24) OR (1 << 14)
+     equd       (&8C << 24) OR (8 << 14)
+     equd       (&90 << 24) OR (648 << 14)
+     equd       (&94 << 24) OR (673 << 14)
+     equd       (&84 << 24) OR (1 << 14)
+     equd       (&9C << 24) OR (337 << 14)
+     equd       (&A4 << 24) OR (1 << 14)
+     equd       (&A8 << 24) OR (1 << 14)
+     equd       (&AC << 24) OR (1 << 14)
+     equd       (&B0 << 24) OR (1017 << 14)
+     equd       (&B4 << 24) OR (1017 << 14)
+     equd       (&A0 << 24) OR (1017 << 14)
+     equd       (&E0 << 24) OR (0 << 2) OR 3
+     equd       -1       ; Terminate standard parameters
+
+.VIDClist105 ; 1280x1016x2bpp
+        equd    0               ; list format (0 = Standard)
+        equd    8              ; Base mode number
+        equd    (&80 << 24) OR (679 << 14)       ; Standard VIDC parameter list
+        equd    (&84 << 24) OR (1 << 14)
+        equd    (&88 << 24) OR (1 << 14)
+        equd    (&8C << 24) OR (6 << 14)
+        equd    (&90 << 24) OR (646 << 14)
+        equd    (&94 << 24) OR (651 << 14)
+        equd    (&A0 << 24) OR (1017 << 14)
+        equd    (&A4 << 24) OR (1 << 14)
+        equd    (&A8 << 24) OR (1 << 14)
+        equd    (&AC << 24) OR (1 << 14)
+        equd    (&B0 << 24) OR (1017 << 14)
+        equd    (&B4 << 24) OR (1017 << 14)
+        equd    (&E0 << 24) OR &000004 OR 3
+        equd    (&9C << 24) OR (340 << 14)
+        equd    -1              ; Terminate standard parameters
+
+.VIDClist108 ; 1152x864x1bpp
+        equd    0               ; list format (0 = Standard)
+        equd    0               ; Base mode number
+        equd    (&80 << 24) OR (595 << 14) ; Standard VIDC parameter list
+        equd    (&84 << 24) OR (1 << 14)
+        equd    (&88 << 24) OR (1 << 14)
+        equd    (&8C << 24) OR (10 << 14)
+        equd    (&90 << 24) OR (586 << 14)
+        equd    (&94 << 24) OR (595 << 14)
+        equd    (&A0 << 24) OR (865 << 14)
+        equd    (&A4 << 24) OR (1 << 14)
+        equd    (&A8 << 24) OR (1 << 14)
+        equd    (&AC << 24) OR (1 << 14)
+        equd    (&B0 << 24) OR (865 << 14)
+        equd    (&B4 << 24) OR (865 << 14)
+        equd    (&E0 << 24) OR &000000 OR 3
+        equd    (&9C << 24) OR (298 << 14)
+        equd    -1              ; Terminate standard parameters
+
+.VIDClist109 ; 1152x864x2bpp
+     equd       0               ; list format (0 = Standard)
+     equd       8
+     equd       (&80 << 24) OR (609 << 14)
+     equd       (&88 << 24) OR (1 << 14)
+     equd       (&8C << 24) OR (12 << 14)
+     equd       (&90 << 24) OR (588 << 14)
+     equd       (&94 << 24) OR (609 << 14)
+     equd       (&84 << 24) OR (1 << 14)
+     equd       (&9C << 24) OR (305 << 14)
+     equd       (&A4 << 24) OR (1 << 14)
+     equd       (&A8 << 24) OR (1 << 14)
+     equd       (&AC << 24) OR (1 << 14)
+     equd       (&B0 << 24) OR (865 << 14)
+     equd       (&B4 << 24) OR (865 << 14)
+     equd       (&A0 << 24) OR (865 << 14)
+     equd       (&E0 << 24) OR (1 << 2) OR 3
+     equd       -1       ; Terminate standard parameters
+
+.VIDClist112 ; 1400x520x4bpp
+        equd    0               ; list format (0 = Standard)
+        equd    12              ; Base mode number
+        equd    (&80 << 24) OR &BDC000       ; Standard VIDC parameter list
+        equd    (&84 << 24) OR (19 << 14)
+        equd    (&88 << 24) OR (19 << 14)
+        equd    (&8C << 24) OR (10 << 14)
+        equd    (&90 << 24) OR (710 << 14)
+        equd    (&94 << 24) OR (713 << 14)
+        equd    (&A0 << 24) OR (523 << 14)
+        equd    (&A4 << 24) OR (1 << 14)
+        equd    (&A8 << 24) OR (1 << 14)
+        equd    (&AC << 24) OR (1 << 14)
+        equd    (&B0 << 24) OR (521 << 14)
+        equd    (&B4 << 24) OR (521 << 14)
+        equd    (&E0 << 24) OR &000008 OR 3
+        equd    (&9C << 24) OR (0 << 14)
+        equd    -1              ; Terminate standard parameters
+
+.VIDClist120 ; 1600x600x4bpp
+        equd    0               ; list format (0 = Standard)
+        equd    12              ; Base mode number
+        equd    (&80 << 24) OR (807 << 14)
+        equd    (&84 << 24) OR (1 << 14)
+        equd    (&88 << 24) OR (1 << 14)
+        equd    (&8C << 24) OR (4 << 14)
+        equd    (&90 << 24) OR (804 << 14)
+        equd    (&94 << 24) OR (807 << 14)
+        equd    (&A0 << 24) OR (601 << 14)
+        equd    (&A4 << 24) OR (1 << 14)
+        equd    (&A8 << 24) OR (1 << 14)
+        equd    (&AC << 24) OR (1 << 14)
+        equd    (&B0 << 24) OR (601 << 14)
+        equd    (&B4 << 24) OR (601 << 14)
+        equd    (&E0 << 24) OR &000008 OR 3
+        equd    (&9C << 24) OR (404 << 14)
+        equd    -1              ; Terminate standard parameters
+
+.VIDClist122; 240x320x1bpp
+     equd       0 ; List format (0 = Standard)
+     equd       0 ; base mode number
+     equd       (&80 << 24) OR (153 << 14)
+     equd       (&88 << 24) OR (1 << 14)
+     equd       (&8C << 24) OR (8 << 14)
+     equd       (&90 << 24) OR (128 << 14)
+     equd       (&94 << 24) OR (153 << 14)
+     equd       (&84 << 24) OR (1 << 14)
+     equd       (&9C << 24) OR (77 << 14)
+     equd       (&A4 << 24) OR (1 << 14)
+     equd       (&A8 << 24) OR (1 << 14)
+     equd       (&AC << 24) OR (1 << 14)
+     equd       (&B0 << 24) OR (321 << 14)
+     equd       (&B4 << 24) OR (321 << 14)
+     equd       (&A0 << 24) OR (321 << 14)
+     equd       (&E0 << 24) OR (0 << 2)
+     equd       -1       ; Terminate standard parameters
+
+.VIDClist123; 240x320x2bpp
+     equd       0 ; List format (0 = Standard)
+     equd       8 ; Base mode number
+     equd       (&80 << 24) OR (153 << 14)
+     equd       (&88 << 24) OR (1 << 14)
+     equd       (&8C << 24) OR (12 << 14)
+     equd       (&90 << 24) OR (132 << 14)
+     equd       (&94 << 24) OR (153 << 14)
+     equd       (&84 << 24) OR (1 << 14)
+     equd       (&9C << 24) OR (77 << 14)
+     equd       (&A4 << 24) OR (1 << 14)
+     equd       (&A8 << 24) OR (1 << 14)
+     equd       (&AC << 24) OR (1 << 14)
+     equd       (&B0 << 24) OR (321 << 14)
+     equd       (&B4 << 24) OR (321 << 14)
+     equd       (&A0 << 24) OR (321 << 14)
+     equd       (&E0 << 24) OR (1 << 2)
+     equd       -1       ; Terminate standard parameters
+
+.VIDClist124; 240x320x4bpp
+     equd       0 ; List format (0 = Standard)
+     equd       12 ; Base mode number
+     equd       (&80 << 24) OR (153 << 14)
+     equd       (&88 << 24) OR (1 << 14)
+     equd       (&8C << 24) OR (14 << 14)
+     equd       (&90 << 24) OR (134 << 14)
+     equd       (&94 << 24) OR (153 << 14)
+     equd       (&84 << 24) OR (1 << 14)
+     equd       (&9C << 24) OR (77 << 14)
+     equd       (&A4 << 24) OR (1 << 14)
+     equd       (&A8 << 24) OR (1 << 14)
+     equd       (&AC << 24) OR (1 << 14)
+     equd       (&B0 << 24) OR (321 << 14)
+     equd       (&B4 << 24) OR (321 << 14)
+     equd       (&A0 << 24) OR (321 << 14)
+     equd       (&E0 << 24) OR (2 << 2)
+     equd       -1       ; Terminate standard parameters
+
+.VIDClist125; 240x320x8bpp
+     equd       0 ; List format (0 = Standard)
+     equd       15 ; Base mode number
+     equd       (&80 << 24) OR (153 << 14)
+     equd       (&88 << 24) OR (1 << 14)
+     equd       (&8C << 24) OR (15 << 14)
+     equd       (&90 << 24) OR (135 << 14)
+     equd       (&94 << 24) OR (153 << 14)
+     equd       (&84 << 24) OR (1 << 14)
+     equd       (&9C << 24) OR (77 << 14)
+     equd       (&A4 << 24) OR (1 << 14)
+     equd       (&A8 << 24) OR (1 << 14)
+     equd       (&AC << 24) OR (1 << 14)
+     equd       (&B0 << 24) OR (321 << 14)
+     equd       (&B4 << 24) OR (321 << 14)
+     equd       (&A0 << 24) OR (321 << 14)
+     equd       (&E0 << 24) OR (3 << 2)
+     equd       -1       ; Terminate standard parameters
+
+.VIDCworkspacelist32
+     equd    0
+     equd    15
+     equd    0               ; Mode Flags
+     equd    0
+     equd    1               ; Text columns -1
+     equd    100 - 1
+     equd    2               ; Text rows -1
+     equd    75 - 1
+     equd    3               ; Maximum logical colour
+     equd    63
+     equd    4               ; XEigFactor
+     equd    1
+     equd    5               ; YEigFactor
+     equd    1
+     equd    6               ; Bytelength of one pixel-line
+     equd    800
+     equd    7               ; Bytesize of entire screen
+     equd    480000
+     equd    8               ; YShiftFactor - Don't use
+     equd    0
+     equd    9               ; BitsPerPixel = 1 << Log2BPP
+     equd    3               ; 3 = 8bpp
+     equd    10              ; BytesPerChar = 1 << Log2BPC
+     equd    3               ; 3 = 8bpc
+     equd    11              ; Number of X pixels on screen -1
+     equd    800 - 1
+     equd    12              ; Number of Y pixels on screen -1
+     equd    600 - 1
+     equd    -1
+
+.VIDCworkspacelist100
+        equd    0
+        equd    0
+        equd    0               ; Mode Flags
+        equd    0
+        equd    1               ; Text columns -1
+        equd    128 - 1
+        equd    2               ; Text rows -1
+        equd    96 - 1
+        equd    3               ; Maximum logical colour
+        equd    1
+        equd    4               ; XEigFactor
+        equd    1
+        equd    5               ; YEigFactor
+        equd    1
+        equd    6               ; Bytelength of one pixel-line
+        equd    128
+        equd    7               ; Bytesize of entire screen
+        equd    &18000
+        equd    8               ; YShiftFactor - Don't use
+        equd    &80
+        equd    9               ; BitsPerPixel = 1 << Log2BPP
+        equd    0               ; 0 = 1bpp
+        equd    10              ; BytesPerChar = 1 << Log2BPC
+        equd    0               ; 0 = 1bpc
+        equd    11              ; Number of X pixels on screen -1
+        equd    1024 - 1
+        equd    12              ; Number of Y pixels on screen -1
+        equd    768 - 1
+        equd    -1
+
+.VIDCworkspacelist101
+        equd    0
+        equd    8
+        equd    0               ; Mode Flags
+        equd    0
+        equd    1               ; Text Columns -1
+        equd    128 - 1
+        equd    2               ; Text Rows -1
+        equd    96 - 1
+        equd    3               ; Maximum Logical Colour
+        equd    3
+        equd    4               ; XEigFactor
+        equd    1
+        equd    5               ; YEigFactor
+        equd    1
+        equd    6               ; Byte length of 1 pixel-line
+        equd    &100
+        equd    7               ; Byte size of entire screen
+        equd    &30000
+        equd    8               ; YShiftFactor - Don't use
+        equd    &100
+        equd    9               ; BitsPerPixel = 1 << Log2BPP
+        equd    1               ; 2bpp
+        equd    10              ; BytesPerChar = 1 << Log2BPC
+        equd    1               ; 2bpc
+        equd    11              ; Number of X pixels on screen -1
+        equd    1024 - 1
+        equd    12              ; Number of Y pixels on screen -1
+        equd    768 - 1
+        equd    -1
+
+.VIDCworkspacelist102
+        equd    0
+        equd    12
+        equd    0               ; Mode Flags
+        equd    0
+        equd    1               ; Text Columns -1
+        equd    128 - 1
+        equd    2               ; Text Rows -1
+        equd    96 - 1
+        equd    3               ; Maximum Logical Colour
+        equd    15
+        equd    4               ; XEigFactor
+        equd    1
+        equd    5               ; YEigFactor
+        equd    1
+        equd    6               ; Byte length of 1 pixel-line
+        equd    &200
+        equd    7               ; Byte size of entire screen
+        equd    &60000
+        equd    8               ; YShiftFactor - Don't use
+        equd    &200
+        equd    9               ; BitsPerPixel = 1 << Log2BPP
+        equd    2               ; 4bpp
+        equd    10              ; BytesPerChar = 1 << Log2BPC
+        equd    2               ; 4bpp
+        equd    11              ; Number of X pixels on screen -1
+        equd    1024 - 1
+        equd    12              ; Number of Y pixels on screen -1
+        equd    768 - 1
+        equd    -1
+
+.VIDCworkspacelist104
+     equd    0               ; list format
+     equd    0
+     equd    0               ; Mode Flags
+     equd    0
+     equd    1               ; Text columns -1
+     equd    160 - 1
+     equd    2               ; Text rows -1
+     equd    127 - 1
+     equd    3               ; Maximum logical colour
+     equd    1
+     equd    4               ; XEigFactor
+     equd    1
+     equd    5               ; YEigFactor
+     equd    1
+     equd    6               ; Bytelength of one pixel-line
+     equd    160
+     equd    7               ; Bytesize of entire screen
+     equd    162560
+     equd    8               ; YShiftFactor - Don't use
+     equd    0
+     equd    9               ; BitsPerPixel = 1 << Log2BPP
+     equd    0               ; 0 = 1bpp
+     equd    10              ; BytesPerChar = 1 << Log2BPC
+     equd    0               ; 0 = 1bpc
+     equd    11              ; Number of X pixels on screen -1
+     equd    1280 - 1
+     equd    12              ; Number of Y pixels on screen -1
+     equd    1016 - 1
+     equd    -1
+
+.VIDCworkspacelist105
+        equd    0
+        equd    8
+        equd    0               ; Mode Flags
+        equd    0
+        equd    1               ; Text Columns -1
+        equd    160 - 1
+        equd    2               ; Text Rows -1
+        equd    127 - 1
+        equd    3               ; Maximum Logical Colour
+        equd    3
+        equd    4               ; XEigFactor
+        equd    1
+        equd    5               ; YEigFactor
+        equd    1
+        equd    6               ; Byte length of 1 pixel-line
+        equd    &140
+        equd    7               ; Byte size of entire screen
+        equd    &4F800
+        equd    8               ; YShiftFactor - Don't use
+        equd    &140
+        equd    9               ; BitsPerPixel = 1 << Log2BPP
+        equd    1               ; 2bpp
+        equd    10              ; BytesPerChar = 1 << Log2BPC
+        equd    1               ; 2bpc
+        equd    11              ; Number of X pixels on screen -1
+        equd    1280 - 1
+        equd    12              ; Number of Y pixels on screen -1
+        equd    1016 - 1
+        equd    -1
+
+.VIDCworkspacelist108
+        equd    0
+        equd    0
+        equd    0               ; Mode Flags
+        equd    0
+        equd    1               ; Text Columns -1
+        equd    144 - 1
+        equd    2               ; Text Rows -1
+        equd    108 - 1
+        equd    3               ; Maximum Logical Colour
+        equd    1
+        equd    4               ; XEigFactor
+        equd    1
+        equd    5               ; YEigFactor
+        equd    1
+        equd    6               ; Byte length of 1 pixel-line
+        equd    &90
+        equd    7               ; Byte size of entire screen
+        equd    &1E800
+        equd    8               ; YShiftFactor - Don't use
+        equd    &90
+        equd    9               ; BitsPerPixel = 1 << Log2BPP
+        equd    0               ; 1bpp
+        equd    10              ; BytesPerChar = 1 << Log2BPC
+        equd    0               ; 1bpc
+        equd    11              ; Number of X pixels on screen -1
+        equd    1152 - 1
+        equd    12              ; Number of Y pixels on screen -1
+        equd    864 - 1
+        equd    -1
+
+.VIDCworkspacelist109
+     equd    0               ; list format
+     equd    8
+     equd    0               ; Mode Flags
+     equd    0
+     equd    1               ; Text columns -1
+     equd    144 - 1
+     equd    2               ; Text rows -1
+     equd    108 - 1
+     equd    3               ; Maximum logical colour
+     equd    3
+     equd    4               ; XEigFactor
+     equd    1
+     equd    5               ; YEigFactor
+     equd    1
+     equd    6               ; Bytelength of one pixel-line
+     equd    288
+     equd    7               ; Bytesize of entire screen
+     equd    248832
+     equd    8               ; YShiftFactor - Don't use
+     equd    0
+     equd    9               ; BitsPerPixel = 1 << Log2BPP
+     equd    1               ; 1 = 2bpp
+     equd    10              ; BytesPerChar = 1 << Log2BPC
+     equd    1               ; 1 = 2bpc
+     equd    11              ; Number of X pixels on screen -1
+     equd    1152 - 1
+     equd    12              ; Number of Y pixels on screen -1
+     equd    864 - 1
+     equd    -1
+
+.VIDCworkspacelist112
+        equd    0
+        equd    12
+        equd    0               ; Mode Flags
+        equd    0
+        equd    1               ; Text Columns -1
+        equd    175 - 1
+        equd    2               ; Text Rows -1
+        equd    65 - 1
+        equd    3               ; Maximum Logical Colour
+        equd    15
+        equd    4               ; XEigFactor
+        equd    1
+        equd    5               ; YEigFactor
+        equd    2
+        equd    6               ; Byte length of 1 pixel-line
+        equd    &2BC
+        equd    7               ; Byte size of entire screen
+        equd    &59000
+        equd    8               ; YShiftFactor - Don't use
+        equd    &2BC
+        equd    9               ; BitsPerPixel = 1 << Log2BPP
+        equd    2               ; 4bpp
+        equd    10              ; BytesPerChar = 1 << Log2BPC
+        equd    2               ; 4bpc
+        equd    11              ; Number of X pixels on screen -1
+        equd    1400 - 1
+        equd    12              ; Number of Y pixels on screen -1
+        equd    520 - 1
+        equd    -1
+
+.VIDCworkspacelist120
+        equd    0
+        equd    12
+        equd    0               ; Mode Flags
+        equd    0
+        equd    1               ; Text Columns -1
+        equd    200 - 1
+        equd    2               ; Text Rows -1
+        equd    75 - 1
+        equd    3               ; Maximum Logical Colour
+        equd    15
+        equd    4               ; XEigFactor
+        equd    1
+        equd    5               ; YEigFactor
+        equd    2
+        equd    6               ; Byte length of 1 pixel-line
+        equd    &320
+        equd    7               ; Byte size of entire screen
+        equd    &75400
+        equd    8               ; YShiftFactor - Don't use
+        equd    &320
+        equd    9               ; BitsPerPixel = 1 << Log2BPP
+        equd    2               ; 4bpp
+        equd    10              ; BytesPerChar = 1 << Log2BPC
+        equd    2               ; 4bpc
+        equd    11              ; Number of X pixels on screen -1
+        equd    1600 - 1
+        equd    12              ; Number of Y pixels on screen -1
+        equd    600 - 1
+        equd    -1
+
+.VIDCworkspacelist122
+     equd    0               ; list format
+     equd    0               ; Base mode number
+     equd    0               ; Mode Flags
+     equd    0
+     equd    1               ; Text columns -1
+     equd    30 - 1
+     equd    2               ; Text rows -1
+     equd    40 - 1
+     equd    3               ; Maximum logical colour
+     equd    1
+     equd    4               ; XEigFactor
+     equd    1
+     equd    5               ; YEigFactor
+     equd    1
+     equd    6               ; Bytelength of one pixel-line
+     equd    30
+     equd    7               ; Bytesize of entire screen
+     equd    9600
+     equd    8               ; YShiftFactor - Don't use
+     equd    0
+     equd    9               ; BitsPerPixel = 1 << Log2BPP
+     equd    0               ; 0 = 1bpp
+     equd    10              ; BytesPerChar = 1 << Log2BPC
+     equd    0               ; 0 = 1bpc
+     equd    11              ; Number of X pixels on screen -1
+     equd    240 - 1
+     equd    12              ; Number of Y pixels on screen -1
+     equd    320 - 1
+     equd    -1
+
+.VIDCworkspacelist123
+     equd    0               ; list format
+     equd    8               ; Base mode number
+     equd    0               ; Mode Flags
+     equd    0
+     equd    1               ; Text columns -1
+     equd    30 - 1
+     equd    2               ; Text rows -1
+     equd    40 - 1
+     equd    3               ; Maximum logical colour
+     equd    3
+     equd    4               ; XEigFactor
+     equd    1
+     equd    5               ; YEigFactor
+     equd    1
+     equd    6               ; Bytelength of one pixel-line
+     equd    60
+     equd    7               ; Bytesize of entire screen
+     equd    19200
+     equd    8               ; YShiftFactor - Don't use
+     equd    0
+     equd    9               ; BitsPerPixel = 1 << Log2BPP
+     equd    1               ; 1 = 2bpp
+     equd    10              ; BytesPerChar = 1 << Log2BPC
+     equd    1               ; 1 = 2bpc
+     equd    11              ; Number of X pixels on screen -1
+     equd    240 - 1
+     equd    12              ; Number of Y pixels on screen -1
+     equd    320 - 1
+     equd    -1
+
+.VIDCworkspacelist124
+     equd    0               ; list format
+     equd    12               ; Base mode number
+     equd    0               ; Mode Flags
+     equd    0
+     equd    1               ; Text columns -1
+     equd    30 - 1
+     equd    2               ; Text rows -1
+     equd    40 - 1
+     equd    3               ; Maximum logical colour
+     equd    15
+     equd    4               ; XEigFactor
+     equd    1
+     equd    5               ; YEigFactor
+     equd    1
+     equd    6               ; Bytelength of one pixel-line
+     equd    120
+     equd    7               ; Bytesize of entire screen
+     equd    38400
+     equd    8               ; YShiftFactor - Don't use
+     equd    0
+     equd    9               ; BitsPerPixel = 1 << Log2BPP
+     equd    2               ; 2 = 4bpp
+     equd    10              ; BytesPerChar = 1 << Log2BPC
+     equd    2               ; 2 = 4bpc
+     equd    11              ; Number of X pixels on screen -1
+     equd    240 - 1
+     equd    12              ; Number of Y pixels on screen -1
+     equd    320 - 1
+     equd    -1
+
+.VIDCworkspacelist125
+     equd    0               ; list format
+     equd    15               ; Base mode number
+     equd    0               ; Mode Flags
+     equd    0
+     equd    1               ; Text columns -1
+     equd    30 - 1
+     equd    2               ; Text rows -1
+     equd    40 - 1
+     equd    3               ; Maximum logical colour
+     equd    63
+     equd    4               ; XEigFactor
+     equd    1
+     equd    5               ; YEigFactor
+     equd    1
+     equd    6               ; Bytelength of one pixel-line
+     equd    240
+     equd    7               ; Bytesize of entire screen
+     equd    76800
+     equd    8               ; YShiftFactor - Don't use
+     equd    0
+     equd    9               ; BitsPerPixel = 1 << Log2BPP
+     equd    3               ; 3 = 8bpp
+     equd    10              ; BytesPerChar = 1 << Log2BPC
+     equd    3               ; 3 = 8bpc
+     equd    11              ; Number of X pixels on screen -1
+     equd    240 - 1
+     equd    12              ; Number of Y pixels on screen -1
+     equd    320 - 1
+     equd    -1
+
+.Module_End
+]
+
+NEXT pass%
+
+PRINT "Module size = ";Module_End - Module_Start
+
+SYS "OS_File",10,"ArcemModes", &FFA, , module%, module% + (Module_End - Module_Start)

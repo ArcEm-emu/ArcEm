@@ -1,0 +1,266 @@
+REM MakeModes - Generate the ArcemModes modules
+REM Copyright (C) 2005-2006 Peter Howkins and Matthew Howkins
+REM
+REM This program is free software; you can redistribute it and/or modify
+REM it under the terms of the GNU General Public License as published by
+REM the Free Software Foundation; either version 2 of the License, or
+REM (at your option) any later version.
+REM
+REM This program is distributed in the hope that it will be useful,
+REM but WITHOUT ANY WARRANTY; without even the implied warranty of
+REM MERCHANABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
+REM GNU General Public License for more details.
+REM
+REM You should have received a copy of the GNU General Public License 
+REM along with this program; if not, write to the Free Software
+REM Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+REM
+REM Web: http://arcem.sf.net
+REM
+
+REM This program will generate a short snippet of BBC Basic, called
+REM NewMode in the current working directory, with the two tables
+REM of data you need to cut and paste into MakeModes.
+REM
+REM Limitations
+REM 
+REM  - Only supports suare pixel modes, with the X eigen and Y eigen
+REM    values of 1. 
+REM  - Does not cut and paste perfectly, you need to replace all instances
+REM    of the word „ with the word „ (BBC basic tokenisation issue).
+REM    And the labels of the code blocks are slightly broken due to 
+REM    having a dot on the fornt (another tokenisation issue).
+REM 
+REM Usage
+REM 
+REM Fill in the call to generate_mode_vidc with the following params
+REM  1: Mode number of new mode
+REM  2: X Size
+REM  3: Y Size
+REM  4: Bits Per Pixel (1, 2, 4 or 8)
+REM and run the program
+
+ON ERROR PRINT REPORT$;" at ";ERL:END
+
+REM (ModeNumber, X, Y, BPP)
+PROCgenerate_mode_vidc(125,240,320,8)
+
+PRINT "Done"
+END
+
+
+:
+DEF PROCgenerate_mode_vidc(modenum%,xres%,yres%,bpp%)
+LOCAL front_porch%,left_border%,right_border%,back_porch%
+LOCAL hsync_pulse%
+LOCAL base_mode%,mangler%
+LOCAL HBSR%,HDSR%,HDER%,HBER%,HCR%,HSWR%,HIR%
+LOCAL VSWR%,VBSR%,VDSR%,VDER%,VBER%,VCR%
+LOCAL log2bpp%,ppb% :REM Pixels per byte
+LOCAL maxcolour%
+
+front_porch% = 3
+left_border% = 32
+right_border% = 32
+back_porch% = 1
+hsync_pulse% = 4
+
+CASE bpp% OF
+ WHEN 1:log2bpp% = 0 :ppb% = 8 :base_mode% = 0  :mangler% = 19 : maxcolour% = 1
+ WHEN 2:log2bpp% = 1 :ppb% = 4 :base_mode% = 8  :mangler% = 11 : maxcolour% = 3
+ WHEN 4:log2bpp% = 2 :ppb% = 2 :base_mode% = 12 :mangler% = 7  : maxcolour% = 15
+ WHEN 8:log2bpp% = 3 :ppb% = 1 :base_mode% = 15 :mangler% = 5  : maxcolour% = 63
+ OTHERWISE:STOP
+ENDCASE
+
+HBSR% = (front_porch% - 1) / 2
+HDSR% = (front_porch% + left_border% - mangler%) / 2
+HDER% = (front_porch% + left_border% + xres% - mangler%) / 2
+HBER% = (front_porch% + left_border% + xres% + right_border% - 1) / 2
+HCR%  = (front_porch% + left_border% + xres% + right_border% + back_porch% - 2) / 2
+HSWR% = (hsync_pulse% - 2) / 2
+HIR%  = (HCR% + 1) / 2
+
+VSWR% = 1
+VBSR% = VSWR%
+VDSR% = VSWR%
+VDER% = VSWR% + yres%
+VBER% = VSWR% + yres%
+VCR%  = VSWR% + yres%
+
+REM Try and aim for a frame rate of 50Hz or better
+CLK%=3 : REM 24MHz pixel clock
+IF (HCR%*2+2)*(VCR%+1) <= 320000 THEN CLK%=2 : REM 16MHz
+IF (HCR%*2+2)*(VCR%+1) <= 240000 THEN CLK%=1 : REM 12MHz
+IF (HCR%*2+2)*(VCR%+1) <= 160000 THEN CLK%=0 : REM 8MHz
+
+fh% = OPENOUT("NewMode")
+
+
+BPUT# fh%, ".VIDClist";
+BPUT# fh%, STR$ modenum%;
+BPUT# fh%, " ; ";
+BPUT# fh%, STR$ xres%;
+BPUT# fh%, "x";
+BPUT# fh%, STR$ yres%;
+BPUT# fh%, "x";
+BPUT# fh%, STR$ bpp%;
+BPUT# fh%, "bpp";
+BPUT# fh%, 13
+BPUT# fh%, "        equd       0 ; List format (0 = Standard)";
+BPUT# fh%, 13
+BPUT# fh%, "        equd       ";
+BPUT# fh%, STR$ base_mode%;
+BPUT# fh%, " ; Base mode number";
+BPUT# fh%, 13
+BPUT# fh%, "        equd       (&80 << 24) OR (";
+BPUT# fh%, STR$ HCR%;
+BPUT# fh%, " << 14)";
+BPUT# fh%, 13
+BPUT# fh%, "        equd       (&88 << 24) OR (";
+BPUT# fh%, STR$ HBSR%;
+BPUT# fh%, " << 14)";
+BPUT# fh%, 13
+BPUT# fh%, "        equd       (&8C << 24) OR (";
+BPUT# fh%, STR$ HDSR%;
+BPUT# fh%, " << 14)";
+BPUT# fh%, 13
+BPUT# fh%, "        equd       (&90 << 24) OR (";
+BPUT# fh%, STR$ HDER%;
+BPUT# fh%, " << 14)";
+BPUT# fh%, 13
+BPUT# fh%, "        equd       (&94 << 24) OR (";
+BPUT# fh%, STR$ HBER%;
+BPUT# fh%, " << 14)";
+BPUT# fh%, 13
+BPUT# fh%, "        equd       (&84 << 24) OR (";
+BPUT# fh%, STR$ HSWR%;
+BPUT# fh%, " << 14)";
+BPUT# fh%, 13
+BPUT# fh%, "        equd       (&9C << 24) OR (";
+BPUT# fh%, STR$ HIR%;
+BPUT# fh%, " << 14)";
+BPUT# fh%, 13
+BPUT# fh%, "        equd       (&A4 << 24) OR (";
+BPUT# fh%, STR$ VSWR%;
+BPUT# fh%, " << 14)";
+BPUT# fh%, 13
+BPUT# fh%, "        equd       (&A8 << 24) OR (";
+BPUT# fh%, STR$ VBSR%;
+BPUT# fh%, " << 14)";
+BPUT# fh%, 13
+BPUT# fh%, "        equd       (&AC << 24) OR (";
+BPUT# fh%, STR$ VDSR%;
+BPUT# fh%, " << 14)";
+BPUT# fh%, 13
+BPUT# fh%, "        equd       (&B0 << 24) OR (";
+BPUT# fh%, STR$ VDER%;
+BPUT# fh%, " << 14)";
+BPUT# fh%, 13
+BPUT# fh%, "        equd       (&B4 << 24) OR (";
+BPUT# fh%, STR$ VBER%;
+BPUT# fh%, " << 14)";
+BPUT# fh%, 13
+BPUT# fh%, "        equd       (&A0 << 24) OR (";
+BPUT# fh%, STR$ VCR%;
+BPUT# fh%, " << 14)";
+BPUT# fh%, 13
+BPUT# fh%, "        equd       (&E0 << 24) OR (";
+BPUT# fh%, STR$ log2bpp%;
+BPUT# fh%, " << 2) OR ";CLK%;
+BPUT# fh%, 13
+BPUT# fh%, "        equd       -1       ; Terminate standard parameters";
+BPUT# fh%, 13
+BPUT# fh%, 13
+BPUT# fh%, ".VIDCworkspacelist";
+BPUT# fh%, STR$ modenum%;
+BPUT# fh%, 13
+BPUT# fh%, "        equd    0               ; list format";
+BPUT# fh%, 13
+BPUT# fh%, "        equd    ";
+BPUT# fh%, STR$ base_mode%;
+BPUT# fh%, "               ; Base mode number";
+BPUT# fh%, 13
+BPUT# fh%, "        equd    0               ; Mode Flags";
+BPUT# fh%, 13
+BPUT# fh%, "        equd    0";
+BPUT# fh%, 13
+BPUT# fh%, "        equd    1               ; Text columns -1";
+BPUT# fh%, 13
+BPUT# fh%, "        equd    ";
+BPUT# fh%, STR$(xres%/8);
+BPUT# fh%, " - 1";
+BPUT# fh%, 13
+BPUT# fh%, "        equd    2               ; Text rows -1";
+BPUT# fh%, 13
+BPUT# fh%, "        equd    ";
+BPUT# fh%, STR$(yres%/8);
+BPUT# fh%, " - 1";
+BPUT# fh%, 13
+BPUT# fh%, "        equd    3               ; Maximum logical colour";
+BPUT# fh%, 13
+BPUT# fh%, "        equd    ";
+BPUT# fh%, STR$ maxcolour%;
+BPUT# fh%, 13
+BPUT# fh%, "        equd    4               ; XEigFactor";
+BPUT# fh%, 13
+BPUT# fh%, "        equd    1";
+BPUT# fh%, 13
+BPUT# fh%, "        equd    5               ; YEigFactor";
+BPUT# fh%, 13
+BPUT# fh%, "        equd    1";
+BPUT# fh%, 13
+BPUT# fh%, "        equd    6               ; Bytelength of one pixel-line";
+BPUT# fh%, 13
+BPUT# fh%, "        equd    ";
+BPUT# fh%, STR$(xres%/ppb%);
+BPUT# fh%, 13
+BPUT# fh%, "        equd    7               ; Bytesize of entire screen";
+BPUT# fh%, 13
+BPUT# fh%, "        equd    ";
+BPUT# fh%, STR$((xres%/ppb%) * yres%);
+BPUT# fh%, 13
+BPUT# fh%, "        equd    8               ; YShiftFactor - Don't use";
+BPUT# fh%, 13
+BPUT# fh%, "        equd    0";
+BPUT# fh%, 13
+BPUT# fh%, "        equd    9               ; BitsPerPixel = 1 << Log2BPP";
+BPUT# fh%, 13
+BPUT# fh%, "        equd    ";
+BPUT# fh%, STR$ log2bpp%;
+BPUT# fh%, "               ; ";
+BPUT# fh%, STR$ log2bpp%;
+BPUT# fh%, " = ";
+BPUT# fh%, STR$ bpp%;
+BPUT# fh%, "bpp";
+BPUT# fh%, 13
+BPUT# fh%, "        equd    10              ; BytesPerChar = 1 << Log2BPC";
+BPUT# fh%, 13
+BPUT# fh%, "        equd    ";
+BPUT# fh%, STR$ log2bpp%;
+BPUT# fh%, "               ; ";
+BPUT# fh%, STR$ log2bpp%;
+BPUT# fh%, " = ";
+BPUT# fh%, STR$ bpp%;
+BPUT# fh%, "bpc";
+BPUT# fh%, 13
+BPUT# fh%, "        equd    11              ; Number of X pixels on screen -1";
+BPUT# fh%, 13
+BPUT# fh%, "        equd    ";
+BPUT# fh%, STR$ xres%;
+BPUT# fh%, " - 1";
+BPUT# fh%, 13
+BPUT# fh%, "        equd    12              ; Number of Y pixels on screen -1";
+BPUT# fh%, 13
+BPUT# fh%, "        equd    ";
+BPUT# fh%, STR$ yres%;
+BPUT# fh%, " - 1";
+BPUT# fh%, 13
+BPUT# fh%, "        equd    -1              ; List Terminator";
+BPUT# fh%, 13
+
+CLOSE# fh%
+
+*settype NewMode basic
+
+ENDPROC
