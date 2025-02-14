@@ -10,10 +10,14 @@
 	XOS_FSControl       = 0x20029
 	XOS_ValidateAddress = 0x2003a
 	XMessageTrans_ErrorLookup = 0x61506
+	XFree_Register		= 0x644c0
+	XFree_DeRegister	= 0x644c1
 
 	FSControl_AddFS    = 12
 	FSControl_SelectFS = 14
 	FSControl_RemoveFS = 16
+	FSControl_FreeSpace	= 49
+	FSControl_FreeSpace64	= 55
 
 	Service_FSRedeclare = 0x40
 
@@ -22,22 +26,21 @@
 	ARCEM_SWI_CHUNKX = ARCEM_SWI_CHUNK | 0x20000
 	ArcEm_HostFS    = ARCEM_SWI_CHUNKX + 1
 
-	HOSTFS_PROTOCOL_VERSION = 1
+	HOSTFS_PROTOCOL_VERSION = 3
 
 	@ Filing system error codes
 	FILECORE_ERROR_DIRNOTEMPTY	= 0xb4
-	FILECORE_ERROR_ACCESS		= 0xbd           
+	FILECORE_ERROR_ACCESS		= 0xbd
 	FILECORE_ERROR_ALREADYOPEN	= 0xc2
 	FILECORE_ERROR_DISCFULL		= 0xc6
-	FILECORE_ERROR_BADDISC		= 0xc8
 	FILECORE_ERROR_DISCPROT		= 0xc9
+	FILECORE_ERROR_DISCNOTFOUND	= 0xd4
 	FILECORE_ERROR_NOTFOUND		= 0xd6
-	HOSTFS_ERROR_UNKNOWN		= 0x100
 
 	@ Filing system properties
 	FILING_SYSTEM_NUMBER = 0x99	@ TODO choose unique value
 	MAX_OPEN_FILES       = 100	@ TODO choose sensible value
-
+	IMAGEFS_EXTENSIONS   = (1 << 23)
 
 
 	.global	_start
@@ -68,7 +71,7 @@ title:
 	.string	"RPCEmuHostFS"
 
 help:
-	.string	"RPCEmu HostFS\t0.08 (05 Nov 2011)"
+	.string	"RPCEmu HostFS\t0.10 (23 Sep 2014)"
 
 	.align
 
@@ -99,7 +102,7 @@ fs_info_block:
 	.int	fs_args		@ To Control open files (FSEntry_Args)
 	.int	fs_close	@ To Close open files (FSEntry_Close)
 	.int	fs_file		@ To perform whole-file ops (FSEntry_File)
-	.int	FILING_SYSTEM_NUMBER | (MAX_OPEN_FILES << 8)
+	.int	FILING_SYSTEM_NUMBER | (MAX_OPEN_FILES << 8) | IMAGEFS_EXTENSIONS
 				@ Filing System Information Word
 	.int	fs_func		@ To perform various ops (FSEntry_Func)
 	.int	fs_gbpb		@ To perform multi-byte ops (FSEntry_GBPB)
@@ -139,6 +142,12 @@ init:
 	mov	r3, r12
 	swi	XOS_FSControl
 
+	@ Register with Free module
+	mov	r0, #FILING_SYSTEM_NUMBER
+	adr	r1, free_routine
+	mov	r2, r12
+	swi	XFree_Register
+
 	ldmfd	sp!, {r9, pc}
 
 init_failed_registration:
@@ -165,15 +174,100 @@ err_failed_registration:
 	 *   other and flags may be corrupted
 	 */
 final:
-	@ Remove filing system
 	stmfd	sp!, {lr}
 
+	@ Deregister with Free module
+	mov	r0, #FILING_SYSTEM_NUMBER
+	adr	r1, free_routine
+	mov	r2, r12
+	swi	XFree_DeRegister
+
+	@ Remove filing system
 	mov	r0, #FSControl_RemoveFS
 	adr	r1, fs_name
 	swi	XOS_FSControl
 	cmp	pc, #0		@ Clears V (also clears N, Z, and sets C)
 
 	ldmfd	sp!, {pc}
+
+
+
+	/**
+	 * Routine registered with Free module.
+	 *
+	 * Entry:
+	 *   r0 = reason code
+	 */
+free_routine:
+	cmp	r0, #5
+	addlo	pc, pc, r0, lsl #2
+	ldmfd	sp!, {pc}		@ Reason code >= 5
+	ldmfd	sp!, {pc}		@ 0 - NoOp
+	b	free_get_device_name	@ 1
+	b	free_get_free_space	@ 2
+	b	free_compare_device	@ 3
+	b	free_get_free_space64	@ 4
+
+free_get_device_name:
+	mov	r4, r2			@ r4 = ptr to buffer
+	adr	r5, fs_name		@ r5 = ptr to name
+0:	ldrb	r6, [r5], #1
+	strb	r6, [r4], #1
+	teq	r6, #0
+	bne	0b
+	sub	r0, r4, r2
+	ldmfd	sp!, {pc}
+
+free_get_free_space:
+	stmfd	sp!, {r0 - r2, r5}
+
+	mov	r5, r2			@ Pointer to buffer to return data
+
+	mov	r0, #FSControl_FreeSpace
+	adr	r1, free_object_name
+	swi	XOS_FSControl
+
+	str	r0, [r5, #4]		@ Free space
+	str	r2, [r5, #0]		@ Total size
+
+	@ Calculate used space
+	sub	r2, r2, r0
+	str	r2, [r5, #8]		@ Used space
+
+	ldmfd	sp!, {r0 - r2, r5, pc}
+
+free_compare_device:
+	teq	r0, r0			@ Set Z
+	ldmfd	sp!, {pc}
+
+free_get_free_space64:
+	stmfd	sp!, {r1 - r5}
+
+	mov	r5, r2			@ Pointer to buffer to return data
+
+	mov	r0, #FSControl_FreeSpace64
+	adr	r1, free_object_name
+	swi	XOS_FSControl
+
+	str	r0, [r5, #8]		@ Free space lo
+	str	r1, [r5, #12]		@ Free space hi
+	str	r3, [r5, #0]		@ Total size lo
+	str	r4, [r5, #4]		@ Total size hi
+
+	@ Calculate used space
+	subs	r3, r3, r0
+	sbc	r4, r4, r1
+	str	r3, [r5, #16]		@ Used space lo
+	str	r4, [r5, #20]		@ Used space hi
+
+	mov	r0, #0			@ Return 0 to indicate success
+
+	ldmfd	sp!, {r1 - r5, pc}
+
+free_object_name:
+	.string	"HostFS::HostFS.$"
+	.align
+
 
 
 	/* Entry:
@@ -383,6 +477,9 @@ not_implemented:
 	 * Return function with error
 	 */
 hostfs_error:
+	teq	r9, #255
+	beq	not_implemented
+
 	teq	r9, #FILECORE_ERROR_DIRNOTEMPTY
 	adreq	r0, err_dirnotempty
 	beq	hostfs_return_error
@@ -399,12 +496,12 @@ hostfs_error:
 	adreq	r0, err_discfull
 	beq	hostfs_return_error
 
-	teq	r9, #FILECORE_ERROR_BADDISC
-	adreq	r0, err_baddisc
-	beq	hostfs_return_error
-
 	teq	r9, #FILECORE_ERROR_DISCPROT
 	adreq	r0, err_discprot
+	beq	hostfs_return_error
+
+	teq	r9, #FILECORE_ERROR_DISCNOTFOUND
+	adreq	r0, err_discnotfound
 	beq	hostfs_return_error
 
 	teq	r9, #FILECORE_ERROR_NOTFOUND
@@ -443,14 +540,14 @@ err_discfull:
 	.string	"Disc is full"
 	.align
 
-err_baddisc:
-	.int	0x10000 | (FILING_SYSTEM_NUMBER << 8) | FILECORE_ERROR_BADDISC
-	.string	"Disc not found"
-	.align
-
 err_discprot:
 	.int	0x10000 | (FILING_SYSTEM_NUMBER << 8) | FILECORE_ERROR_DISCPROT
 	.string	"Disc is protected for changes"
+	.align
+
+err_discnotfound:
+	.int	0x10000 | (FILING_SYSTEM_NUMBER << 8) | FILECORE_ERROR_DISCNOTFOUND
+	.string	"Disc not found"
 	.align
 
 err_notfound:
