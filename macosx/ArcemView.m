@@ -340,23 +340,16 @@ extern int rMouseHeight;
     NSRect frame;
 
     frame = [window frame];
-    
-    // I prefer it if the top left corner of the window doesn't move, and the
-    // cocoa coord system puts the origin at bottom left, so we need to adjust that
-    frame.origin.y += frame.size.height - (height + 22);
-    
+
     // Set the window size
+    frame.origin.x = 0.0;
+    frame.origin.y = 0.0;
     frame.size.width = (CGFloat)(width * nXScale);
-    frame.size.height = (CGFloat)((height * nYScale) + 22); // bad use of constant :)
+    frame.size.height = (CGFloat)(height * nYScale);
     
     // Resize the window
-    [window setFrame: frame
-             display: YES];
+    [window setContentSize: frame.size];
 
-    frame.size.height -= 22.0;
-    frame.origin.y = 0.0;
-    frame.origin.x = 0.0;
-    
     // Resize the view
     [self setFrame:frame];
     
