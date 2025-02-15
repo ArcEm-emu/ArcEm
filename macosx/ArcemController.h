@@ -41,16 +41,10 @@
     IBOutlet NSMenuItem *menuItemMount1;
     IBOutlet NSMenuItem *menuItemMount2;
     IBOutlet NSMenuItem *menuItemMount3;
-    IBOutlet NSMenuItem *menuItemHDEject0;
-    IBOutlet NSMenuItem *menuItemHDEject1;
-    IBOutlet NSMenuItem *menuItemHDMount0;
-    IBOutlet NSMenuItem *menuItemHDMount1;
     IBOutlet NSMenuItem *menuItemDoubleX;
     IBOutlet NSMenuItem *menuItemDoubleY;
     NSMenuItem *menuItemsEject[4];
     NSMenuItem *menuItemsMount[4];
-    NSMenuItem *menuItemsHDEject[2];
-    NSMenuItem *menuItemsHDMount[2];
     
     NSMutableData *screenBmp;		//!< Raw screen bitmap
     CGContextRef screenImg;     	//!< Image for drawing screen
@@ -93,12 +87,6 @@
 - (IBAction)menuEject1:(id)sender;
 - (IBAction)menuEject2:(id)sender;
 - (IBAction)menuEject3:(id)sender;
-
-- (IBAction)menuHDMount0:(id)sender;
-- (IBAction)menuHDMount1:(id)sender;
-
-- (IBAction)menuHDEject0:(id)sender;
-- (IBAction)menuHDEject1:(id)sender;
 
 - (IBAction)menuDoubleX:(id)sender;
 - (IBAction)menuDoubleY:(id)sender;

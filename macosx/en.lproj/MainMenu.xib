@@ -143,41 +143,6 @@
                                     </items>
                                 </menu>
                             </menuItem>
-                            <menuItem isSeparatorItem="YES" id="206">
-                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
-                            </menuItem>
-                            <menuItem title="Mount Hard Disc" id="265">
-                                <menu key="submenu" title="Mount Hard Disc" id="266">
-                                    <items>
-                                        <menuItem title="Disc 0" id="267">
-                                            <connections>
-                                                <action selector="menuHDMount0:" target="196" id="273"/>
-                                            </connections>
-                                        </menuItem>
-                                        <menuItem title="Disc 1" id="268">
-                                            <connections>
-                                                <action selector="menuHDMount1:" target="196" id="274"/>
-                                            </connections>
-                                        </menuItem>
-                                    </items>
-                                </menu>
-                            </menuItem>
-                            <menuItem title="Unmount Hard Disc" id="269">
-                                <menu key="submenu" title="Unmount Hard Disc" id="270">
-                                    <items>
-                                        <menuItem title="Disc 0" id="271">
-                                            <connections>
-                                                <action selector="menuHDEject0:" target="196" id="275"/>
-                                            </connections>
-                                        </menuItem>
-                                        <menuItem title="Disc 1" id="272">
-                                            <connections>
-                                                <action selector="menuHDEject1:" target="196" id="276"/>
-                                            </connections>
-                                        </menuItem>
-                                    </items>
-                                </menu>
-                            </menuItem>
                             <menuItem isSeparatorItem="YES" id="264">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
@@ -233,6 +198,7 @@
                     </menu>
                 </menuItem>
             </items>
+            <point key="canvasLocation" x="14" y="345"/>
         </menu>
         <customObject id="196" userLabel="ArcemController" customClass="ArcemController">
             <connections>
@@ -243,10 +209,6 @@
                 <outlet property="menuItemEject1" destination="234" id="244"/>
                 <outlet property="menuItemEject2" destination="235" id="245"/>
                 <outlet property="menuItemEject3" destination="242" id="246"/>
-                <outlet property="menuItemHDEject0" destination="271" id="277"/>
-                <outlet property="menuItemHDEject1" destination="272" id="278"/>
-                <outlet property="menuItemHDMount0" destination="267" id="279"/>
-                <outlet property="menuItemHDMount1" destination="268" id="280"/>
                 <outlet property="menuItemMount0" destination="228" id="247"/>
                 <outlet property="menuItemMount1" destination="229" id="248"/>
                 <outlet property="menuItemMount2" destination="230" id="249"/>

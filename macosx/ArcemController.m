@@ -148,20 +148,11 @@ ArcemConfig hArcemConfig;
     menuItemsEject[2] = menuItemEject2;
     menuItemsEject[3] = menuItemEject3;
 
-    menuItemsHDMount[0] = menuItemHDMount0;
-    menuItemsHDMount[1] = menuItemHDMount1;
-    menuItemsHDEject[0] = menuItemHDEject0;
-    menuItemsHDEject[1] = menuItemHDEject1;
-    
     // We'll manage the menu items from now on thank you very much
     [[menuItemMount0 menu] setAutoenablesItems: NO];
     [[menuItemEject0 menu] setAutoenablesItems: NO];
-    [[menuItemHDMount0 menu] setAutoenablesItems: NO];
-    [[menuItemHDEject0 menu] setAutoenablesItems: NO];
     
     for (i = 0; i < 4; i++)
-        [menuItemsEject[i] setEnabled: NO];
-    for (i = 0; i < 2; i++)
         [menuItemsEject[i] setEnabled: NO];
     
     // Now set up to receive notification of when we lose control (either we're hidden
@@ -435,26 +426,6 @@ ArcemConfig hArcemConfig;
         CGContextRelease(screenImg);
     if (cursorImg)
         CGContextRelease(cursorImg);
-}
-
-- (IBAction)menuHDMount0:(id)sender
-{
-    
-}
-
-- (IBAction)menuHDMount1:(id)sender
-{
-    
-}
-
-- (IBAction)menuHDEject0:(id)sender
-{
-    
-}
-
-- (IBAction)menuHDEject1:(id)sender
-{
-    
 }
 
 @end
