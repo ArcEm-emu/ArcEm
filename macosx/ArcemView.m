@@ -273,9 +273,9 @@ extern int rMouseHeight;
         // will note put the cursor outside the screen (as a subsequent
         // mouse click will mess things up)
 
-        // Work out the position we want to put the cursor in (the top left of the view)
-        oldMouse.x = 0.0;
-        oldMouse.y = bounds.size.height;
+        // Work out the position we want to put the cursor in (the centre of the view)
+        oldMouse.x = bounds.size.width / 2;
+        oldMouse.y = bounds.size.height / 2;
         temp = [[self window] convertPointToScreen: oldMouse];
 
         // Make a note of the current cursor position so we can restore it
