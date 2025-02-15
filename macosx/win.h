@@ -23,38 +23,9 @@
  ****************************************************************************/
 
 
-#if 0
-extern int nVirtKey;
-extern int lKeyData;
-extern int nKeyStat;
-extern int keyF;
-#else
-
-#define KB_BUFFER_SIZE 20
-extern int nVirtKey[KB_BUFFER_SIZE];
-extern int nKeyStat[KB_BUFFER_SIZE];
-extern int nKBRead;
-extern int nKBWrite;
-extern int keyF;
-#endif
-
-extern int nMouseX;
-extern int nMouseY;
-extern int mouseMF;
-
 extern int rMouseX;
 extern int rMouseY;
 extern int rMouseHeight;
-
-#if 0
-extern int nButton;
-extern int buttF;
-#else
-extern int nButton[KB_BUFFER_SIZE];
-extern int buttF;
-extern int nMouseRead;
-extern int nMouseWrite;
-#endif
 
 extern int createWindow(int w, int h);
 extern int updateDisplay(int, int, int, int, int);

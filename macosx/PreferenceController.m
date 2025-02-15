@@ -23,7 +23,8 @@
 
 
 #import "PreferenceController.h"
-#import "KeyTable.h"
+
+#include <Carbon/Carbon.h>
 
 // The keys we use for our plist
 NSString *const AEUseMouseEmulationKey = @"Use Mouse Emulation";
@@ -33,7 +34,7 @@ NSString *const AEDirectoryKey = @"Directory";
 
 @implementation PreferenceController
 
-const static int modifier_table[5] = {VK_ALT, VK_COMMAND, VK_CONTROL, VK_FUNCTION, VK_LSHIFT};
+const static int modifier_table[5] = {kVK_Option, kVK_Command, kVK_Control, kVK_Function, kVK_Shift};
 
 /*------------------------------------------------------------------------------
  *

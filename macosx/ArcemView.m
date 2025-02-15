@@ -27,59 +27,7 @@
 #include <ApplicationServices/ApplicationServices.h>
 #include <pthread.h>
 #include "win.h"
-
-
-// Welcome to the wonderful world of object orientated programming, but alas
-// we're merging lots of imperative C code from ArcEm, so here are a bunch
-// of global variables that are used to communicate events from the interface
-// back to the emulator.
-
-// I'm using a buffer for keyboard and mouse events, and I'm hoping that I
-// can avoid using a semaphore for this the golder rule is that nVirtKey
-// should be the last thing to be modified, from -1 to the value, which
-// acts like the lock.
-
-// Buffer for keyboard events
-#define KB_BUFFER_SIZE  20
-#define KEY_UP          1
-#define KEY_DOWN        0
-int nVirtKey[KB_BUFFER_SIZE];
-int nKeyStat[KB_BUFFER_SIZE];
-int keyF;
-int nKBRead;
-int nKBWrite;
-
-// Macro used to add key events to the buffer. Just in a macro to make it
-// easier to ensure the list integrity
-#define KEY_EVENT(virt, stat) {\
-    int oldpos = nKBWrite;\
-    if (((nKBWrite + 1) % KB_BUFFER_SIZE) != nKBRead) {\
-        keyF++;\
-        nKeyStat[nKBWrite] = stat;\
-        nKBWrite = ((nKBWrite + 1) % KB_BUFFER_SIZE);\
-        nVirtKey[oldpos] = virt;\
-    }\
-}\
-
-int nMouseX;
-int nMouseY;
-int mouseMF = 0;
-
-int nButton[KB_BUFFER_SIZE];
-int buttF;
-int nMouseRead;
-int nMouseWrite;
-
-// Macro used to add mouse events to the buffer. Just in a macro to make it
-// easier to ensure the list integrity
-#define MOUSE_EVENT(button) {\
-    int oldpos = nMouseWrite;\
-        if (((nMouseWrite + 1) % KB_BUFFER_SIZE) != nMouseRead) {\
-            buttF++;\
-            nMouseWrite = ((nMouseWrite + 1) % KB_BUFFER_SIZE);\
-            nButton[oldpos] = button;\
-        }\
-}\
+#include "KeyTable.h"
 
 
 extern int rMouseX;
@@ -106,20 +54,6 @@ extern int rMouseHeight;
         captureMouse = FALSE;
         memset(keyState, 0, 256);
 
-        // Init keyboard and mouse buffer
-        for (i = 0; i < KB_BUFFER_SIZE; i++)
-        {
-            nVirtKey[i] = -1;
-            nKeyStat[i] = -1;
-            nButton[i] = -1;
-        }
-        keyF = 0;
-        nKBRead = 0;
-        nKBWrite = 0;
-        nMouseRead = 0;
-        nMouseWrite = 0;
-        buttF = 0;
-        
         // Set the default display region
         dispFrame.origin.x = 0.0;
         dispFrame.origin.y = 0.0;
@@ -401,19 +335,28 @@ extern int rMouseHeight;
  */
 - (void)flagsChanged:(NSEvent *)theEvent
 {
+    ARMul_State *state = &statestr;
     int c = [theEvent keyCode];
     
     keyState[c] = (keyState[c] == 0) ? 1 : 0;
     //NSLog(@"set %d to %d\n", c, keyState[c]);
 
-    KEY_EVENT(c, keyState[c] == 1 ? 0 : 1);
+    const mac_to_arch_key *ktak;
+    for (ktak = mac_to_arch_key_map; ktak->sym >= 0; ktak++) {
+      if (ktak->sym == c) {
+        keyboard_key_changed(&KBD, ktak->kid, keyState[c] == 1 ? 0 : 1);
 
-    // Need to toggle caps lock and number lock
-    if ((c == 57) || (c == 127))
-    {
-        KEY_EVENT(c, KEY_UP);
-        keyState[c] = 0;
+        // Need to toggle caps lock and number lock
+        if ((c == kVK_CapsLock) || (c == 0x7f))
+        {
+            keyboard_key_changed(&KBD, ktak->kid, true);
+            keyState[c] = 0;
+        }
+        return;
+      }
     }
+
+    //NSLog(@"flagsChanged: unknown key: keysym=%x\n", c);
 }
 
 
@@ -422,9 +365,20 @@ extern int rMouseHeight;
  */
 - (void)keyDown:(NSEvent *)theEvent
 {
-    //NSLog(@"down char %d\n", [theEvent keyCode]);
-    
-    KEY_EVENT([theEvent keyCode], KEY_DOWN);
+    ARMul_State *state = &statestr;
+    int c = [theEvent keyCode];
+
+    //NSLog(@"down char %d\n", c);
+
+    const mac_to_arch_key *ktak;
+    for (ktak = mac_to_arch_key_map; ktak->sym >= 0; ktak++) {
+      if (ktak->sym == c) {
+        keyboard_key_changed(&KBD, ktak->kid, false);
+        return;
+      }
+    }
+
+    NSLog(@"keyDown: unknown key: keysym=%x\n", c);
 }
 
 
@@ -433,9 +387,20 @@ extern int rMouseHeight;
  */
 - (void)keyUp:(NSEvent *)theEvent
 {
-    //NSLog(@"up char %d\n", [theEvent keyCode]);
-    
-    KEY_EVENT([theEvent keyCode], KEY_UP);
+    ARMul_State *state = &statestr;
+    int c = [theEvent keyCode];
+
+    //NSLog(@"up char %d\n", c);
+
+    const mac_to_arch_key *ktak;
+    for (ktak = mac_to_arch_key_map; ktak->sym >= 0; ktak++) {
+      if (ktak->sym == c) {
+        keyboard_key_changed(&KBD, ktak->kid, true);
+        return;
+      }
+    }
+
+    NSLog(@"keyUp: unknown key: keysym=%x\n", c);
 }
 
 
@@ -445,26 +410,19 @@ extern int rMouseHeight;
  */
 - (void)mouseMoved:(NSEvent *)theEvent
 {
-    int32_t x, y;
+    ARMul_State *state = &statestr;
+    int xdiff, ydiff;
 
-    if (mouseMF == 0)
-    {
-        CGGetLastMouseDelta(&x, &y);
+    CGGetLastMouseDelta(&xdiff, &ydiff);
 
-        nMouseX = x;
-        nMouseY = -y;
+    if (xdiff > 63) xdiff=63;
+    if (xdiff < -63) xdiff=-63;
 
-        mouseMF = 1;
-    }
-    else
-    {
-        CGGetLastMouseDelta(&x, &y);
+    if (ydiff>63) ydiff=63;
+    if (ydiff<-63) ydiff=-63;
 
-        nMouseX += x;
-        nMouseY -= y;
-    }
-    //[NSThread sleepUntilDate: [[NSDate date] addTimeInterval: 0.00000001]];
-    //sched_yield();
+    KBD.MouseXCount =  xdiff & 127;
+    KBD.MouseYCount = -ydiff & 127;
 }
 
 
@@ -474,6 +432,7 @@ extern int rMouseHeight;
  */
 - (void)mouseDown: (NSEvent *)theEvent
 {
+    ARMul_State *state = &statestr;
     int button;
     
     // Whoa! Only bother then we're in capture mode
@@ -484,19 +443,19 @@ extern int rMouseHeight;
     if (mouseEmulation)
     {
         if (keyState[adjustModifier])
-            button = 0x02;
+            button = ARCH_KEY_button_3;
         else if (keyState[menuModifier])
-            button = 0x01;
+            button = ARCH_KEY_button_2;
         else
-            button = 0x00;
+            button = ARCH_KEY_button_1;
     }
     else
     {
-        button = 0x00;
+        button = ARCH_KEY_button_1;
     }
 
     // Record the button press in the mouse event queue
-    MOUSE_EVENT(button);
+    keyboard_key_changed(&KBD, button, false);
 
     // Note what went down for when it comes up, as we can't rely on
     // the l^Huser to still be holding the modifier key
@@ -509,66 +468,16 @@ extern int rMouseHeight;
  */
 - (void)mouseUp: (NSEvent *)theEvent
 {
+    ARMul_State *state = &statestr;
+
     // Only note stuff if we're in capture mode
     if (!captureMouse)
         return;
 
     // Record the up event
-    MOUSE_EVENT(nMouse | 0x80);
+    keyboard_key_changed(&KBD, nMouse, true);
 
     //NSLog(@"nMouse up = %d\n", nButton);
-}
-
-
-/*------------------------------------------------------------------------------
- * rightMouseDown - Should be adjust, if we're not using mouse emulation 
- */
-- (void)rightMouseDown: (NSEvent *)theEvent
-{
-    NSLog(@"Right mouse button down\n");
-    
-    if (mouseEmulation)
-        return;
-
-    MOUSE_EVENT(0x2);
-}
-
-
-/*------------------------------------------------------------------------------
- * rightMouseUp - Inverse of rightMouseDown!
- */
-- (void)rightMouseUp: (NSEvent *)theEvent
-{
-    if (mouseEmulation)
-        return;
-
-    MOUSE_EVENT(0x82);
-}
-
-
-/*------------------------------------------------------------------------------
- * otherMouseDown - Should be menu, if we're not using mouse emulation
- */
-- (void)otherMouseDown: (NSEvent *)theEvent
-{
-    NSLog(@"Other mouse down\n");
-    
-    if (mouseEmulation)
-        return;
-
-    MOUSE_EVENT(0x1);
-}
-
-
-/*------------------------------------------------------------------------------
- * otherMouseUp - Inverse of rightMouseDown!
- */
-- (void)otherMouseUp: (NSEvent *)theEvent
-{
-    if (mouseEmulation)
-        return;
-
-    MOUSE_EVENT(0x81);
 }
 
 
@@ -577,27 +486,94 @@ extern int rMouseHeight;
  */
 - (void)mouseDragged: (NSEvent *)theEvent
 {
-    if (captureMouse)
-    {
-        int32_t x, y;
+    if (!captureMouse)
+        return;
 
-        if (mouseMF == 0)
-        {
-            CGGetLastMouseDelta(&x, &y);
+    [self mouseMoved: theEvent];
+}
 
-            nMouseX = x;
-            nMouseY = -y;
 
-            mouseMF = 1;
-        }
-        else
-        {
-            CGGetLastMouseDelta(&x, &y);
+/*------------------------------------------------------------------------------
+ * rightMouseDown - Should be adjust, if we're not using mouse emulation 
+ */
+- (void)rightMouseDown: (NSEvent *)theEvent
+{
+    ARMul_State *state = &statestr;
 
-            nMouseX += x;
-            nMouseY -= y;
-        }
-    }
+    NSLog(@"Right mouse button down\n");
+    
+    if (mouseEmulation)
+        return;
+
+    keyboard_key_changed(&KBD, ARCH_KEY_button_3, false);
+}
+
+
+/*------------------------------------------------------------------------------
+ * rightMouseUp - Inverse of rightMouseDown!
+ */
+- (void)rightMouseUp: (NSEvent *)theEvent
+{
+    ARMul_State *state = &statestr;
+
+    if (mouseEmulation)
+        return;
+
+    keyboard_key_changed(&KBD, ARCH_KEY_button_3, true);
+}
+
+
+/*------------------------------------------------------------------------------
+ * rightMouseDragged - essentially the same as a mouse move in ArcEm's eyes
+ */
+- (void)rightMouseDragged: (NSEvent *)theEvent
+{
+    if (!captureMouse)
+        return;
+
+    [self mouseMoved: theEvent];
+}
+
+
+/*------------------------------------------------------------------------------
+ * otherMouseDown - Should be menu, if we're not using mouse emulation
+ */
+- (void)otherMouseDown: (NSEvent *)theEvent
+{
+    ARMul_State *state = &statestr;
+
+    NSLog(@"Other mouse down\n");
+    
+    if (mouseEmulation)
+        return;
+
+    keyboard_key_changed(&KBD, ARCH_KEY_button_2, false);
+}
+
+
+/*------------------------------------------------------------------------------
+ * otherMouseUp - Inverse of rightMouseDown!
+ */
+- (void)otherMouseUp: (NSEvent *)theEvent
+{
+    ARMul_State *state = &statestr;
+
+    if (mouseEmulation)
+        return;
+
+    keyboard_key_changed(&KBD, ARCH_KEY_button_2, true);
+}
+
+
+/*------------------------------------------------------------------------------
+ * otherMouseDragged - essentially the same as a mouse move in ArcEm's eyes
+ */
+- (void)otherMouseDragged: (NSEvent *)theEvent
+{
+    if (!captureMouse)
+        return;
+
+    [self mouseMoved: theEvent];
 }
 
 
