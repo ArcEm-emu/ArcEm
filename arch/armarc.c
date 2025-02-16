@@ -35,7 +35,7 @@
 #include "ControlPane.h"
 
 
-#ifdef MACOSX
+#ifdef SYSTEM_macosx
 #include <unistd.h>
 extern char arcemDir[256];
 #endif
@@ -264,7 +264,7 @@ ARMul_MemoryInit(ARMul_State *state)
   MEMC.RAMSize = initmemsize;
   MEMC.RAMMask = (initmemsize-1) & (4*1024*1024-1); /* Mask within a 4M MEMC bank */
 
-#ifdef MACOSX
+#ifdef SYSTEM_macosx
   {
     chdir(arcemDir);
   }

@@ -5,7 +5,7 @@
 #include <time.h>
 #include "../armdefs.h"
 
-#ifdef MACOSX
+#ifdef SYSTEM_macosx
 #include <unistd.h>
 extern char arcemDir[256];
 #endif
@@ -171,7 +171,7 @@ static void SaveCMOS(ARMul_State *state) {
   unsigned char val;
   FILE *OutFile;
 
-#ifdef MACOSX
+#ifdef SYSTEM_macosx
   chdir(arcemDir);
 #endif
 

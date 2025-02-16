@@ -55,7 +55,6 @@
 		29B97325FDCFA39411CA2CEA /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		4CA3F3EE046BE8B800E6600F /* keyboard.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; path = keyboard.c; sourceTree = "<group>"; };
 		4CA3F3EF046BE8B800E6600F /* keyboard.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = keyboard.h; sourceTree = "<group>"; };
-		551316332CDED5AB0084DEE0 /* filecalls_internal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = filecalls_internal.h; sourceTree = "<group>"; };
 		551316342CDED5FF0084DEE0 /* dbugsys.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = dbugsys.h; sourceTree = "<group>"; };
 		551316352CDED7910084DEE0 /* ini.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ini.h; sourceTree = "<group>"; };
 		551316362CDED7910084DEE0 /* ini.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ini.c; sourceTree = "<group>"; };
@@ -287,7 +286,6 @@
 				D1F01DDC0293E0E601CDBB35 /* ControlPane.c */,
 				D1F01DD60293339001CDBB35 /* DispKbd.c */,
 				5513163A2CDED8580084DEE0 /* filecalls.c */,
-				551316332CDED5AB0084DEE0 /* filecalls_internal.h */,
 				D1F01DDA0293D79C01CDBB35 /* KeyTable.h */,
 				D1F01D8302931F6101CDBB35 /* macarcem.h */,
 				29B97316FDCFA39411CA2CEA /* main.m */,
@@ -520,9 +518,8 @@
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
-					NOOS,
-					NOFPE,
-					MACOSX,
+					SYSTEM_macosx,
+					EXTNROM_SUPPORT,
 					HOSTFS_SUPPORT,
 					_DIRENT_HAVE_D_TYPE,
 				);
@@ -550,9 +547,8 @@
 				CURRENT_PROJECT_VERSION = 1.50.2;
 				DEAD_CODE_STRIPPING = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = (
-					NOOS,
-					NOFPE,
-					MACOSX,
+					SYSTEM_macosx,
+					EXTNROM_SUPPORT,
 					HOSTFS_SUPPORT,
 					_DIRENT_HAVE_D_TYPE,
 				);
