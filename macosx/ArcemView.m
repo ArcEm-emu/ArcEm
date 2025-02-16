@@ -22,7 +22,6 @@
  ****************************************************************************/
 
 #import "ArcemView.h"
-#import "macarcem.h"
 #import "PreferenceController.h"
 #include <ApplicationServices/ApplicationServices.h>
 #include <pthread.h>
@@ -34,12 +33,9 @@ extern int rMouseX;
 extern int rMouseY;
 extern int rMouseHeight;
 
-#define MAX_SCREEN_HEIGHT 600
 #define CURSOR_HEIGHT 32
 
 @implementation ArcemView
-@synthesize xScaled=bXScale;
-@synthesize yScaled=bYScale;
 @synthesize mouseLock=captureMouse;
 
 /*------------------------------------------------------------------------------
@@ -57,12 +53,13 @@ extern int rMouseHeight;
         // Set the default display region
         dispFrame.origin.x = 0.0;
         dispFrame.origin.y = 0.0;
-        dispFrame.size.width = 800.0;
-        dispFrame.size.height = 600.0;
+        dispFrame.size.width = MonitorWidth;
+        dispFrame.size.height = MonitorHeight;
 
+        nWidth = MonitorWidth;
+        nHeight = MonitorHeight;
         nXScale = nYScale = 1;
-        fXScale = fYScale = 1.0;
-        bXScale = bYScale = NO;
+        bAspect = bUpscale = YES;
 
         strErrorMsg = nil;
 
@@ -102,10 +99,10 @@ extern int rMouseHeight;
  */
 - (void)setNeedsScaledDisplayInRect: (NSRect)rect
 {
-    rect.origin.x *= fXScale;
-    rect.origin.y *= fYScale;
-    rect.size.width *= fXScale;
-    rect.size.height *= fYScale;
+    rect.origin.x *= nXScale;
+    rect.origin.y *= nYScale;
+    rect.size.width *= nXScale;
+    rect.size.height *= nYScale;
 
     [self setNeedsDisplayInRect: rect];
 }
@@ -122,8 +119,8 @@ extern int rMouseHeight;
     NSGraphicsContext *ctx = [NSGraphicsContext currentContext];
     CGContextRef cgc = (CGContextRef) [ctx graphicsPort];
 
-    r.size.width = nXScale * 800;
-    r.size.height = nYScale * 600;
+    r.size.width = nXScale * MonitorWidth;
+    r.size.height = nYScale * MonitorHeight;
     r.origin.x = 0;
     r.origin.y = -(r.size.height - bounds.size.height);
 
@@ -275,6 +272,32 @@ extern int rMouseHeight;
 
     frame = [window frame];
 
+    nWidth = width;
+    nHeight = height;
+
+    /* Try and detect rectangular pixel modes */
+    if(bAspect && (width >= height*2))
+    {
+        nXScale = 1;
+        nYScale = 2;
+    }
+    else if(bAspect && (height >= width))
+    {
+        nXScale = 2;
+        nYScale = 1;
+    }
+    /* Try and detect small screen resolutions */
+    else if (bUpscale && (width < MinimumWidth))
+    {
+        nXScale = 2;
+        nYScale = 2;
+    }
+    else
+    {
+        nXScale = 1;
+        nYScale = 1;
+    }
+
     // Set the window size
     frame.origin.x = 0.0;
     frame.origin.y = 0.0;
@@ -294,7 +317,7 @@ extern int rMouseHeight;
 
     // We need to shift the image as the screen is draw top right of the
     // bitmap, but cocoa will use the origin as bottom left
-    dispFrame.origin.y = MAX_SCREEN_HEIGHT - height;
+    dispFrame.origin.y = MonitorHeight - height;
 }
 
 
@@ -580,48 +603,40 @@ extern int rMouseHeight;
 /*------------------------------------------------------------------------------
  *
  */
-- (void)toggleXScale
+- (void)toggleAspect
 {
-    if (bXScale == NO)
+    if (bAspect == NO)
     {
-        bXScale = YES;
-        nXScale = 2;
-        fXScale = 2.0;
+        bAspect = YES;
     }
     else
     {
-        bXScale = NO;
-        nXScale = 1;
-        fXScale = 1.0;
+        bAspect = NO;
     }
 
     // Force a resize
-    [self resizeToWidth: dispFrame.size.width
-               toHeight: dispFrame.size.height];
+    [self resizeToWidth: nWidth
+               toHeight: nHeight];
 }
 
 
 /*------------------------------------------------------------------------------
  *
  */
-- (void)toggleYScale
+- (void)toggleUpscale
 {
-    if (bYScale == NO)
+    if (bUpscale == NO)
     {
-        bYScale = YES;
-        nYScale = 2;
-        fYScale = 2.0;
+        bUpscale = YES;
     }
     else
     {
-        bYScale = NO;
-        nYScale = 1;
-        fYScale = 1.0;
+        bUpscale = NO;
     }
 
     // Force a resize
-    [self resizeToWidth: dispFrame.size.width
-               toHeight: dispFrame.size.height];
+    [self resizeToWidth: nWidth
+               toHeight: nHeight];
 }
 
 

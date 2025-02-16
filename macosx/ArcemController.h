@@ -41,8 +41,8 @@
     IBOutlet NSMenuItem *menuItemMount1;
     IBOutlet NSMenuItem *menuItemMount2;
     IBOutlet NSMenuItem *menuItemMount3;
-    IBOutlet NSMenuItem *menuItemDoubleX;
-    IBOutlet NSMenuItem *menuItemDoubleY;
+    IBOutlet NSMenuItem *menuItemAspect;
+    IBOutlet NSMenuItem *menuItemUpscale;
     NSMenuItem *menuItemsEject[4];
     NSMenuItem *menuItemsMount[4];
     
@@ -88,8 +88,8 @@
 - (IBAction)menuEject2:(id)sender;
 - (IBAction)menuEject3:(id)sender;
 
-- (IBAction)menuDoubleX:(id)sender;
-- (IBAction)menuDoubleY:(id)sender;
+- (IBAction)menuAspect:(id)sender;
+- (IBAction)menuUpscale:(id)sender;
 
 - (IBAction)menuReset:(id)sender;
 

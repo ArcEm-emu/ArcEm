@@ -32,13 +32,8 @@
 #include "arch/keyboard.h"
 #include "arch/displaydev.h"
 #include "arch/dbugsys.h"
-#include "macarcem.h"
 #include "win.h"
 #include "ControlPane.h"
-
-#define MonitorWidth SCREEN_WIDTH
-#define MonitorHeight SCREEN_HEIGHT
-#define MonitorSize MonitorWidth * MonitorHeight
 
 unsigned char *screenbmp;
 unsigned char *cursorbmp;
@@ -58,7 +53,7 @@ static void SDD_Name(Host_PollDisplay)(ARMul_State *state)
 {
   RefreshMouse(state);
   dispatch_sync(dispatch_get_main_queue(), ^{
-    updateDisplay(0, 0, 800, 600, 1);
+    updateDisplay(0, 0, MonitorWidth, MonitorHeight, 1);
   });
 }
 

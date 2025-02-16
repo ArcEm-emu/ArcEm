@@ -165,14 +165,14 @@
                             <menuItem isSeparatorItem="YES" id="256">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
-                            <menuItem title="Double Horizontal" id="257">
+                            <menuItem title="Aspect ratio correction" state="on" keyEquivalent="a" id="257">
                                 <connections>
-                                    <action selector="menuDoubleX:" target="196" id="259"/>
+                                    <action selector="menuAspect:" target="196" id="GUE-jf-0Cv"/>
                                 </connections>
                             </menuItem>
-                            <menuItem title="Double Vertical" id="258">
+                            <menuItem title="Upscale" state="on" keyEquivalent="u" id="258">
                                 <connections>
-                                    <action selector="menuDoubleY:" target="196" id="260"/>
+                                    <action selector="menuUpscale:" target="196" id="3Xq-Ce-pcA"/>
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="92">
@@ -203,8 +203,7 @@
         <customObject id="196" userLabel="ArcemController" customClass="ArcemController">
             <connections>
                 <outlet property="arcemView" destination="195" id="197"/>
-                <outlet property="menuItemDoubleX" destination="257" id="261"/>
-                <outlet property="menuItemDoubleY" destination="258" id="262"/>
+                <outlet property="menuItemAspect" destination="257" id="LjX-WB-bSA"/>
                 <outlet property="menuItemEject0" destination="233" id="237"/>
                 <outlet property="menuItemEject1" destination="234" id="244"/>
                 <outlet property="menuItemEject2" destination="235" id="245"/>
@@ -213,6 +212,7 @@
                 <outlet property="menuItemMount1" destination="229" id="248"/>
                 <outlet property="menuItemMount2" destination="230" id="249"/>
                 <outlet property="menuItemMount3" destination="241" id="250"/>
+                <outlet property="menuItemUpscale" destination="258" id="XtN-Ge-H3Z"/>
             </connections>
         </customObject>
     </objects>

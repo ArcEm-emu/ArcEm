@@ -23,6 +23,11 @@
  ****************************************************************************/
 
 
+#define MinimumWidth 512
+#define MonitorWidth 800
+#define MonitorHeight 600
+#define MonitorSize MonitorWidth * MonitorHeight
+
 extern int rMouseX;
 extern int rMouseY;
 extern int rMouseHeight;

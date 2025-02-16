@@ -45,9 +45,9 @@
 
     // Scaling info - over the top, but so we're not converting types all the time
     // when rendering the screen.
-    BOOL bXScale, bYScale;
-    CGFloat fXScale, fYScale;
+    BOOL bAspect, bUpscale;
     int nXScale, nYScale;
+    int nWidth, nHeight;
 
     const char *strErrorMsg;
     
@@ -55,8 +55,6 @@
     int adjustModifier, menuModifier;
 }
 
-@property (readonly, getter=isYScaled) BOOL yScaled;
-@property (readonly, getter=isXScaled) BOOL xScaled;
 @property (nonatomic, getter=isMouseLocked) BOOL mouseLock;
 
 //! Pass the bitmaps from the controller.
@@ -77,8 +75,8 @@
 - (void)toggleMouseLock;
 //! Used when the application loses focus.
 - (void)removeMouseLock;
-- (void)toggleXScale;
-- (void)toggleYScale;
+- (void)toggleAspect;
+- (void)toggleUpscale;
 - (void)prefsUpdated;
 - (void)setNeedsScaledDisplayInRect: (NSRect)rect;
 - (void)emulatorError: (const char*)message;

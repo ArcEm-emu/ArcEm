@@ -25,6 +25,7 @@
 #import "PreferenceController.h"
 #import "ArcemView.h"
 #include "ArcemConfig.h"
+#include "win.h"
 
 #import "arch/armarc.h"
 #import "arch/fdc1772.h"
@@ -50,8 +51,8 @@ ArcemConfig hArcemConfig;
         CGColorSpaceRef cgColorspace = CGColorSpaceCreateDeviceRGB();
 
         // Create the screen bitmap and image
-        screenBmp = [[NSMutableData alloc] initWithLength: 800 * 600 * 4];
-        screenImg = CGBitmapContextCreate([screenBmp mutableBytes], 800, 600, 8, 800 * 4, cgColorspace, kCGImageAlphaNoneSkipFirst);
+        screenBmp = [[NSMutableData alloc] initWithLength: MonitorSize * 4];
+        screenImg = CGBitmapContextCreate([screenBmp mutableBytes], MonitorWidth, MonitorHeight, 8, MonitorWidth * 4, cgColorspace, kCGImageAlphaNoneSkipFirst);
 
         // Create the cursor bitmap and image
         cursorBmp = [[NSMutableData alloc] initWithLength: 32 * 32 * 4];
@@ -383,9 +384,9 @@ ArcemConfig hArcemConfig;
 /*------------------------------------------------------------------------------
  * 
  */
-- (IBAction)menuDoubleX:(id)sender
+- (IBAction)menuAspect:(id)sender
 {
-    [arcemView toggleXScale];
+    [arcemView toggleAspect];
 
     if ([sender state] == NSOnState)
         [sender setState: NSOffState];
@@ -397,9 +398,9 @@ ArcemConfig hArcemConfig;
 /*------------------------------------------------------------------------------
  *
  */
-- (IBAction)menuDoubleY:(id)sender
+- (IBAction)menuUpscale:(id)sender
 {
-    [arcemView toggleYScale];
+    [arcemView toggleUpscale];
 
     if ([sender state] == NSOnState)
         [sender setState: NSOffState];
