@@ -45,6 +45,10 @@ ArcemConfig hArcemConfig;
     if (self = [super init])
     {
         ArcemConfig_SetupDefaults(&hArcemConfig);
+
+        /* Parse the config file to overrule the defaults */
+        ArcemConfig_ParseConfigFile(&hArcemConfig);
+
         NSMutableDictionary *defaultValues;
         NSString *path = [NSHomeDirectory() stringByAppendingPathComponent:@"arcem"];
         

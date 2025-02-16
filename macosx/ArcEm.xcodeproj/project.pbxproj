@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		551316392CDED7910084DEE0 /* ini.c in Sources */ = {isa = PBXBuildFile; fileRef = 551316362CDED7910084DEE0 /* ini.c */; };
-		5513163B2CDED8580084DEE0 /* filecalls.c in Sources */ = {isa = PBXBuildFile; fileRef = 5513163A2CDED8580084DEE0 /* filecalls.c */; };
 		557C2AD320CB2B300084CBDB /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 557C2AD220CB2B300084CBDB /* Images.xcassets */; };
 		557C2AD820CC681E0084CBDB /* hostfs.c in Sources */ = {isa = PBXBuildFile; fileRef = 557C2ACE20CAE8D00084CBDB /* hostfs.c */; };
 		5582DD7420C8C14900931D55 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 29B97318FDCFA39411CA2CEA /* MainMenu.xib */; };
@@ -41,6 +40,7 @@
 		55F89C3D20C8C9AE00374D5B /* filecommon.c in Sources */ = {isa = PBXBuildFile; fileRef = 55F89C3B20C8C9AE00374D5B /* filecommon.c */; };
 		55F89C4220C8CBAA00374D5B /* newsound.c in Sources */ = {isa = PBXBuildFile; fileRef = 55F89C4120C8CBAA00374D5B /* newsound.c */; };
 		55F89C4320C8CC9200374D5B /* DispKbd.c in Sources */ = {isa = PBXBuildFile; fileRef = D1F01DD60293339001CDBB35 /* DispKbd.c */; };
+		7E89E4E22D6200CC0079EC01 /* filecalls.m in Sources */ = {isa = PBXBuildFile; fileRef = 7E89E4E12D6200CC0079EC01 /* filecalls.m */; };
 		7E9CB4FB2D60026C00DBB7B9 /* filero.c in Sources */ = {isa = PBXBuildFile; fileRef = 7E9CB4F62D60026C00DBB7B9 /* filero.c */; };
 		7E9CB4FC2D60026C00DBB7B9 /* fileunix.c in Sources */ = {isa = PBXBuildFile; fileRef = 7E9CB4F82D60026C00DBB7B9 /* fileunix.c */; };
 		7E9CB4FD2D60026C00DBB7B9 /* filewin.c in Sources */ = {isa = PBXBuildFile; fileRef = 7E9CB4FA2D60026C00DBB7B9 /* filewin.c */; };
@@ -58,7 +58,6 @@
 		551316342CDED5FF0084DEE0 /* dbugsys.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = dbugsys.h; sourceTree = "<group>"; };
 		551316352CDED7910084DEE0 /* ini.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ini.h; sourceTree = "<group>"; };
 		551316362CDED7910084DEE0 /* ini.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ini.c; sourceTree = "<group>"; };
-		5513163A2CDED8580084DEE0 /* filecalls.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; path = filecalls.c; sourceTree = "<group>"; };
 		55202D8020C8C4A700E2DA03 /* paldisplaydev.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; path = paldisplaydev.c; sourceTree = "<group>"; };
 		557C2ACC20CAE8810084CBDB /* c99.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = c99.h; sourceTree = "<group>"; };
 		557C2ACE20CAE8D00084CBDB /* hostfs.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; path = hostfs.c; sourceTree = "<group>"; };
@@ -81,6 +80,7 @@
 		55F89C3A20C8C9AE00374D5B /* filecalls.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = filecalls.h; sourceTree = "<group>"; };
 		55F89C3B20C8C9AE00374D5B /* filecommon.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; path = filecommon.c; sourceTree = "<group>"; };
 		55F89C4120C8CBAA00374D5B /* newsound.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; path = newsound.c; sourceTree = "<group>"; };
+		7E89E4E12D6200CC0079EC01 /* filecalls.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = filecalls.m; sourceTree = "<group>"; };
 		7E9CB4F52D60026C00DBB7B9 /* filero.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = filero.h; sourceTree = "<group>"; };
 		7E9CB4F62D60026C00DBB7B9 /* filero.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = filero.c; sourceTree = "<group>"; };
 		7E9CB4F72D60026C00DBB7B9 /* fileunix.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = fileunix.h; sourceTree = "<group>"; };
@@ -284,7 +284,7 @@
 			children = (
 				D1F01DDC0293E0E601CDBB35 /* ControlPane.c */,
 				D1F01DD60293339001CDBB35 /* DispKbd.c */,
-				5513163A2CDED8580084DEE0 /* filecalls.c */,
+				7E89E4E12D6200CC0079EC01 /* filecalls.m */,
 				D1F01DDA0293D79C01CDBB35 /* KeyTable.h */,
 				29B97316FDCFA39411CA2CEA /* main.m */,
 				D1F01DD8029333DB01CDBB35 /* win.h */,
@@ -364,7 +364,6 @@
 				7E9CB4FB2D60026C00DBB7B9 /* filero.c in Sources */,
 				7E9CB4FC2D60026C00DBB7B9 /* fileunix.c in Sources */,
 				7E9CB4FD2D60026C00DBB7B9 /* filewin.c in Sources */,
-				5513163B2CDED8580084DEE0 /* filecalls.c in Sources */,
 				5582DD7B20C8C14900931D55 /* ArcemView.m in Sources */,
 				55F89C2420C8C79700374D5B /* cp15.c in Sources */,
 				5582DD7C20C8C14900931D55 /* ArcemController.m in Sources */,
@@ -380,6 +379,7 @@
 				5582DD8520C8C14900931D55 /* i2c.c in Sources */,
 				55F89C3D20C8C9AE00374D5B /* filecommon.c in Sources */,
 				55F89C4220C8CBAA00374D5B /* newsound.c in Sources */,
+				7E89E4E22D6200CC0079EC01 /* filecalls.m in Sources */,
 				55F89C2620C8C7B400374D5B /* ControlPane.c in Sources */,
 				5582DD8720C8C14900931D55 /* armcopro.c in Sources */,
 				5582DD8820C8C14900931D55 /* armemu.c in Sources */,
