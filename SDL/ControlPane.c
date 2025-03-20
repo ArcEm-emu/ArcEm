@@ -6,11 +6,10 @@
 #include "archio.h"
 #include "armarc.h"
 #include "ControlPane.h"
+#include "platform.h"
 
 #include <stdarg.h>
 #include <stdio.h>
-
-#include <SDL.h>
 
 void ControlPane_Init(ARMul_State *state)
 {
