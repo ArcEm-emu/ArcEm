@@ -6,11 +6,9 @@
 /* ansi includes */
 #include <stdio.h>
 
-/* SDL includes */
-#include <SDL.h>
-
 /* application includes */
 #include "filecalls.h"
+#include "platform.h"
 
 /**
  * File_OpenAppData
