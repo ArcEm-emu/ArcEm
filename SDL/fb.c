@@ -7,7 +7,7 @@
 
 */
 
-#include <SDL.h>
+#include "platform.h"
 
 /* TODO: Allow selecting the display device at runtime? */
 #if !SDL_VERSION_ATLEAST(2, 0, 0)
@@ -20,6 +20,7 @@
 #include "arch/dbugsys.h"
 #include "arch/displaydev.h"
 #include "ControlPane.h"
+#include <stdlib.h>
 
 /* An upper limit on how big to support monitor size, used for
    allocating a scanline buffer and bounds checking. It's much
@@ -29,9 +30,6 @@
 #define MaxVideoWidth 2048
 #define MaxVideoHeight 1536
 
-#if SDL_VERSION_ATLEAST(2, 0, 0)
-static SDL_Window *window = NULL;
-#endif
 static SDL_Surface *screen = NULL;
 static SDL_Surface *sdd_surface = NULL;
 static SDL_Surface *mouse_surface = NULL;
@@ -359,13 +357,20 @@ static uint32_t GetColour(ARMul_State *state,unsigned int col)
   g = ((col>>4) & 0xf)*0x11;
   b = ((col>>8) & 0xf)*0x11;
 
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+  return SDL_MapRGB(SDL_GetPixelFormatDetails(screen->format), NULL, r, g, b);
+#else
   return SDL_MapRGB(screen->format, r, g, b);
+#endif
 }
 
 #undef HD
 
 /* Refresh the mouse's image                                                    */
 static void RefreshMouse(ARMul_State *state,int XScale,int YScale) {
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+  SDL_Palette *palette;
+#endif
   int x,y,offset, repeat;
   int memptr;
   int Height = ((int)VIDC.Vert_CursorEnd - (int)VIDC.Vert_CursorStart)*YScale;
@@ -375,10 +380,18 @@ static void RefreshMouse(ARMul_State *state,int XScale,int YScale) {
   if (Height < 0) Height = 0;
 
   if (mouse_surface && mouse_surface->h != Height)
-      SDL_FreeSurface(mouse_surface), mouse_surface = NULL;
+      SDL_DestroySurface(mouse_surface), mouse_surface = NULL;
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+  if (!mouse_surface) {
+      mouse_surface = SDL_CreateSurface(32, Height, SDL_PIXELFORMAT_INDEX8);
+      palette = SDL_CreateSurfacePalette(mouse_surface);
+  } else {
+      palette = SDL_GetSurfacePalette(mouse_surface);
+  }
+#else
   if (!mouse_surface)
       mouse_surface = SDL_CreateRGBSurface(SDL_SWSURFACE, 32, Height, 8, 0, 0, 0, 0);
-
+#endif
   mouse_rect.w = 32;
   mouse_rect.h = Height;
 
@@ -388,14 +401,18 @@ static void RefreshMouse(ARMul_State *state,int XScale,int YScale) {
     cursorPal[x].r = (phys & 0xf)*0x11;
     cursorPal[x].g = ((phys>>4) & 0xf)*0x11;
     cursorPal[x].b = ((phys>>8) & 0xf)*0x11;
-  }
 #if SDL_VERSION_ATLEAST(2, 0, 0)
+    cursorPal[x].a = SDL_ALPHA_OPAQUE;
+#endif
+  }
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+  SDL_SetPaletteColors(palette, cursorPal, 1, 3);
+#elif SDL_VERSION_ATLEAST(2, 0, 0)
   SDL_SetPaletteColors(mouse_surface->format->palette, cursorPal, 1, 3);
-  SDL_SetColorKey(mouse_surface, SDL_TRUE, 0);
 #else
   SDL_SetColors(mouse_surface, cursorPal, 1, 3);
-  SDL_SetColorKey(mouse_surface, SDL_SRCCOLORKEY, 0);
 #endif
+  SDL_SetSurfaceColorKey(mouse_surface, true, 0);
 
   SDL_LockSurface(mouse_surface);
 
@@ -428,7 +445,7 @@ static void RefreshMouse(ARMul_State *state,int XScale,int YScale) {
 static void SetupScreen(ARMul_State *state,int *width,int *height,int hz,int bpp)
 {
   if (!sdd_surface)
-      SDL_FreeSurface(sdd_surface);
+      SDL_DestroySurface(sdd_surface);
 #if SDL_VERSION_ATLEAST(2, 0, 0)
   SDL_SetWindowSize(window, *width, *height);
   screen = SDL_GetWindowSurface(window);
@@ -436,12 +453,16 @@ static void SetupScreen(ARMul_State *state,int *width,int *height,int hz,int bpp
   screen = SDL_SetVideoMode(*width, *height, screen->format->BitsPerPixel,
                             SDL_SWSURFACE | SDL_HWPALETTE);
 #endif
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+  sdd_surface = SDL_CreateSurface(screen->w, screen->h, screen->format);
+#else
   sdd_surface = SDL_CreateRGBSurface(SDL_SWSURFACE, screen->w, screen->h,
                                      screen->format->BitsPerPixel,
                                      screen->format->Rmask,
                                      screen->format->Gmask,
                                      screen->format->Bmask,
                                      screen->format->Amask);
+#endif
   *width = screen->w;
   *height = screen->h;
 }
@@ -463,29 +484,37 @@ static void PollDisplay(ARMul_State *state,int XScale,int YScale)
 /*-----------------------------------------------------------------------------*/
 int DisplayDev_Init(ARMul_State *state)
 {
+  int bpp;
+
   /* Setup display and cursor bitmaps */
-#if SDL_VERSION_ATLEAST(2, 0, 0)
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+  window = SDL_CreateWindow("ArcEm", 640, 512, 0);
+  screen = SDL_GetWindowSurface(window);
+  bpp = SDL_BYTESPERPIXEL(screen->format);
+#elif SDL_VERSION_ATLEAST(2, 0, 0)
   window = SDL_CreateWindow("ArcEm", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                             640, 512, 0);
   screen = SDL_GetWindowSurface(window);
+  bpp = screen->format->BytesPerPixel;
 #else
   screen = SDL_SetVideoMode(640, 512, 0, SDL_SWSURFACE);
   SDL_WM_SetCaption("ArcEm", "ArcEm");
+  bpp = screen->format->BytesPerPixel;
 #endif
 
   if (!screen) {
       ControlPane_Error(0, "Failed to create initial window: %s\n", SDL_GetError());
       return -1;
-  } else if (screen->format->BytesPerPixel == 4) {
+  } else if (bpp == 4) {
       return DisplayDev_Set(state,&SDD32_DisplayDev);
-  } else if (screen->format->BytesPerPixel == 2) {
+  } else if (bpp == 2) {
       return DisplayDev_Set(state,&SDD16_DisplayDev);
 #if !SDL_VERSION_ATLEAST(2, 0, 0)
-  } else if (screen->format->BytesPerPixel == 1) {
+  } else if (bpp == 1) {
       return DisplayDev_Set(state,&PDD_DisplayDev);
 #endif
   } else {
-      ControlPane_Error(0, "Unsupported bytes per pixel: %d\n", screen->format->BytesPerPixel);
+      ControlPane_Error(0, "Unsupported bytes per pixel: %d\n", bpp);
       return -1;
   }
 }

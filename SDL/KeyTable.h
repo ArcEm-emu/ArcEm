@@ -1,23 +1,5 @@
 /* Virtual Key codes */
 
-#if !SDL_VERSION_ATLEAST(2, 0, 0)
-#define SDLK_NUMLOCKCLEAR SDLK_NUMLOCK
-#define SDLK_SCROLLLOCK SDLK_SCROLLOCK
-#define SDLK_PRINTSCREEN SDLK_PRINT
-#define SDLK_KP_1 SDLK_KP1
-#define SDLK_KP_2 SDLK_KP2
-#define SDLK_KP_3 SDLK_KP3
-#define SDLK_KP_4 SDLK_KP4
-#define SDLK_KP_5 SDLK_KP5
-#define SDLK_KP_6 SDLK_KP6
-#define SDLK_KP_7 SDLK_KP7
-#define SDLK_KP_8 SDLK_KP8
-#define SDLK_KP_9 SDLK_KP9
-#define SDLK_KP_0 SDLK_KP0
-
-typedef SDLKey SDL_Keycode;
-#endif
-
 typedef struct {
     SDL_Keycode sym;
     arch_key_id kid;
@@ -39,7 +21,7 @@ static const sdlk_to_arch_key sdlk_to_arch_key_map[] = {
     X(F11, f11)
     X(F12, f12)
 
-    X(BACKQUOTE, grave)
+    X(GRAVE, grave)
     X(1, 1)
     X(2, 2)
     X(3, 3)
@@ -56,42 +38,42 @@ static const sdlk_to_arch_key sdlk_to_arch_key_map[] = {
     X(BACKSPACE, backspace)
 
     X(TAB, tab)
-    X(q, q)
-    X(w, w)
-    X(e, e)
-    X(r, r)
-    X(t, t)
-    X(y, y)
-    X(u, u)
-    X(i, i)
-    X(o, o)
-    X(p, p)
+    X(Q, q)
+    X(W, w)
+    X(E, e)
+    X(R, r)
+    X(T, t)
+    X(Y, y)
+    X(U, u)
+    X(I, i)
+    X(O, o)
+    X(P, p)
     X(LEFTBRACKET, bracket_l)
     X(RIGHTBRACKET, bracket_r)
     X(BACKSLASH, backslash)
 
     X(LCTRL, control_l)
-    X(a, a)
-    X(s, s)
-    X(d, d)
-    X(f, f)
-    X(g, g)
-    X(h, h)
-    X(j, j)
-    X(k, k)
-    X(l, l)
+    X(A, a)
+    X(S, s)
+    X(D, d)
+    X(F, f)
+    X(G, g)
+    X(H, h)
+    X(J, j)
+    X(K, k)
+    X(L, l)
     X(SEMICOLON, semicolon)
-    X(QUOTE, apostrophe)
+    X(APOSTROPHE, apostrophe)
     X(RETURN, return)
 
     X(LSHIFT, shift_l)
-    X(z, z)
-    X(x, x)
-    X(c, c)
-    X(v, v)
-    X(b, b)
-    X(n, n)
-    X(m, m)
+    X(Z, z)
+    X(X, x)
+    X(C, c)
+    X(V, v)
+    X(B, b)
+    X(N, n)
+    X(M, m)
     X(COMMA, comma)
     X(PERIOD, period)
     X(SLASH, slash)
