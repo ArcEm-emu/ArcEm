@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <SDL.h>
+#include "platform.h"
 
 #include "armdefs.h"
 #include "arch/dbugsys.h"
@@ -17,10 +17,28 @@
 
 #include "KeyTable.h"
 
-static void ToggleGrab(void) {
 #if SDL_VERSION_ATLEAST(2, 0, 0)
+SDL_Window *window = NULL;
+#endif
+
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+static void ToggleGrab(void) {
+  SDL_SetWindowRelativeMouseMode(window, !SDL_GetWindowRelativeMouseMode(window));
+}
+
+static bool IsGrabbed(void) {
+  return SDL_GetWindowRelativeMouseMode(window);
+}
+#elif SDL_VERSION_ATLEAST(2, 0, 0)
+static void ToggleGrab(void) {
   SDL_SetRelativeMouseMode(!SDL_GetRelativeMouseMode());
+}
+
+static bool IsGrabbed(void) {
+  return SDL_GetRelativeMouseMode();
+}
 #else
+static void ToggleGrab(void) {
   if (SDL_WM_GrabInput(SDL_GRAB_QUERY) == SDL_GRAB_OFF) {
     SDL_WM_GrabInput(SDL_GRAB_ON);
     SDL_ShowCursor(0);
@@ -28,45 +46,55 @@ static void ToggleGrab(void) {
     SDL_WM_GrabInput(SDL_GRAB_OFF);
     SDL_ShowCursor(1);
   }
-#endif
 }
 
+static bool IsGrabbed(void) {
+  return (SDL_WM_GrabInput(SDL_GRAB_QUERY) != SDL_GRAB_OFF);
+}
+#endif
+
 /*-----------------------------------------------------------------------------*/
-static void ProcessKey(ARMul_State *state, const SDL_KeyboardEvent *key) {
-  if (key->keysym.sym == SDLK_KP_PLUS && key->state != SDL_PRESSED)
+static void ProcessKey(ARMul_State *state, const SDL_KeyboardEvent *key, bool up) {
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+  const SDL_Keycode sym = key->key;
+#else
+  const SDL_Keycode sym = key->keysym.sym;
+#endif
+
+  if (sym == SDLK_KP_PLUS && up)
       ToggleGrab();
 
   const sdlk_to_arch_key *ktak;
   for (ktak = sdlk_to_arch_key_map; ktak->sym; ktak++) {
-    if (ktak->sym == key->keysym.sym) {
-      keyboard_key_changed(&KBD, ktak->kid, key->state != SDL_PRESSED);
+    if (ktak->sym == sym) {
+      keyboard_key_changed(&KBD, ktak->kid, up);
       return;
     }
   }
 
-  warn_kbd("ProcessKey: unknown key: keysym=%u\n", key->keysym.sym);
+  warn_kbd("ProcessKey: unknown key: keysym=%u\n", sym);
 } /* ProcessKey */
 
 /*-----------------------------------------------------------------------------*/
-static void ProcessMouseButton(ARMul_State *state, const SDL_MouseButtonEvent *button) {
+static void ProcessMouseButton(ARMul_State *state, const SDL_MouseButtonEvent *button, bool up) {
   switch (button->button) {
   case SDL_BUTTON_LEFT:
-    keyboard_key_changed(&KBD, ARCH_KEY_button_1, button->state != SDL_PRESSED);
+    keyboard_key_changed(&KBD, ARCH_KEY_button_1, up);
     break;
   case SDL_BUTTON_RIGHT:
-    keyboard_key_changed(&KBD, ARCH_KEY_button_3, button->state != SDL_PRESSED);
+    keyboard_key_changed(&KBD, ARCH_KEY_button_3, up);
     break;
 #if !SDL_VERSION_ATLEAST(2, 0, 0)
   case SDL_BUTTON_WHEELUP:
-    keyboard_key_changed(&KBD, ARCH_KEY_button_4, button->state != SDL_PRESSED);
+    keyboard_key_changed(&KBD, ARCH_KEY_button_4, up);
     break;
   case SDL_BUTTON_WHEELDOWN:
-    keyboard_key_changed(&KBD, ARCH_KEY_button_5, button->state != SDL_PRESSED);
+    keyboard_key_changed(&KBD, ARCH_KEY_button_5, up);
     break;
 #endif
   case SDL_BUTTON_MIDDLE:
   default:
-    keyboard_key_changed(&KBD, ARCH_KEY_button_2, button->state != SDL_PRESSED);
+    keyboard_key_changed(&KBD, ARCH_KEY_button_2, up);
     break;
   }
 } /* ProcessMouseButton */
@@ -85,13 +113,8 @@ static void ProcessMouseWheel(ARMul_State *state, const SDL_MouseWheelEvent *whe
 static void ProcessMouseMotion(ARMul_State *state, const SDL_MouseMotionEvent *motion) {
   int xdiff, ydiff;
 
-#if SDL_VERSION_ATLEAST(2, 0, 0)
-  if (!SDL_GetRelativeMouseMode())
+  if (!IsGrabbed())
     return;
-#else
-  if (SDL_WM_GrabInput(SDL_GRAB_QUERY) == SDL_GRAB_OFF)
-    return;
-#endif
 
   xdiff =  (motion->xrel);
   ydiff = -(motion->yrel);
@@ -123,22 +146,26 @@ Kbd_PollHostKbd(ARMul_State *state)
   SDL_Event event;
   while (SDL_PollEvent(&event)) {
     switch (event.type) {
-    case SDL_QUIT:
+    case SDL_EVENT_QUIT:
       ARMul_Exit(state, 0);
       break;
-    case SDL_KEYDOWN:
-    case SDL_KEYUP:
-      ProcessKey(state, &event.key);
+    case SDL_EVENT_KEY_DOWN:
+      ProcessKey(state, &event.key, false);
       break;
-    case SDL_MOUSEBUTTONDOWN:
-    case SDL_MOUSEBUTTONUP:
-      ProcessMouseButton(state, &event.button);
+    case SDL_EVENT_KEY_UP:
+      ProcessKey(state, &event.key, true);
       break;
-    case SDL_MOUSEMOTION:
+    case SDL_EVENT_MOUSE_BUTTON_DOWN:
+      ProcessMouseButton(state, &event.button, false);
+      break;
+    case SDL_EVENT_MOUSE_BUTTON_UP:
+      ProcessMouseButton(state, &event.button, true);
+      break;
+    case SDL_EVENT_MOUSE_MOTION:
       ProcessMouseMotion(state, &event.motion);
       break;
 #if SDL_VERSION_ATLEAST(2, 0, 0)
-    case SDL_MOUSEWHEEL:
+    case SDL_EVENT_MOUSE_WHEEL:
       ProcessMouseWheel(state, &event.wheel);
       break;
 #endif

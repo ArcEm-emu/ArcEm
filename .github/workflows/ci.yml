@@ -13,15 +13,22 @@ jobs:
     strategy:
       matrix:
         linux:
-        - { system: X,    apt-packages: libx11-dev libxext-dev, cmake-flags: -DSOUND_SUPPORT=ON }
-        - { system: SDL1, apt-packages: libsdl1.2-dev                                           }
-        - { system: SDL2, apt-packages: libsdl2-dev                                             }
+        - { system: X,    apt-packages: libinih-dev libx11-dev libxext-dev, cmake-flags: -DSOUND_SUPPORT=ON }
+        - { system: SDL1, apt-packages: libinih-dev libsdl1.2-dev                                           }
+        - { system: SDL2, apt-packages: libinih-dev libsdl2-dev                                             }
+        - { system: SDL3, apt-packages: libinih-dev }
 
     steps:
     - uses: actions/checkout@v3
     - name: Install dependencies
       if: ${{ matrix.linux.apt-packages != '' }}
-      run: sudo apt-get update && sudo apt-get install libinih-dev ${{ matrix.linux.apt-packages }}
+      run: sudo apt-get update && sudo apt-get install ${{ matrix.linux.apt-packages }}
+    - name: Install SDL3
+      if: ${{ matrix.linux.system == 'SDL3' }}
+      uses: libsdl-org/setup-sdl@main
+      with:
+        version: 3-latest
+        build-type: ${{env.BUILD_TYPE}}
     - name: Configure
       run: cmake -B build/ -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DSYSTEM=${{ matrix.linux.system }} -DUSE_SYSTEM_INIH=ON ${{ matrix.linux.cmake-flags }} .
     - name: Build
@@ -42,6 +49,7 @@ jobs:
         - { system: X,      brew-packages: xquartz      }
         - { system: SDL1,   brew-packages: sdl12-compat }
         - { system: SDL2,   brew-packages: sdl2         }
+        - { system: SDL3,   brew-packages: sdl3         }
 
     steps:
     - uses: actions/checkout@v3

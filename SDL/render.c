@@ -7,7 +7,7 @@
 
 */
 
-#include <SDL.h>
+#include "platform.h"
 
 #if SDL_VERSION_ATLEAST(2, 0, 0)
 
@@ -17,6 +17,7 @@
 #include "arch/dbugsys.h"
 #include "arch/displaydev.h"
 #include "ControlPane.h"
+#include <stdlib.h>
 
 /* An upper limit on how big to support monitor size, used for
    allocating a scanline buffer and bounds checking. It's much
@@ -26,14 +27,17 @@
 #define MaxVideoWidth 2048
 #define MaxVideoHeight 1536
 
-static SDL_Window *window = NULL;
 static SDL_Renderer *renderer = NULL;
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+static const SDL_PixelFormatDetails *format = NULL;
+#else
 static SDL_PixelFormat *format = NULL;
+#endif
 static SDL_Surface *sdd_surface = NULL;
 static SDL_Texture *sdd_texture = NULL;
 static SDL_Surface *mouse_surface = NULL;
 static SDL_Texture *mouse_texture = NULL;
-static SDL_Rect mouse_rect;
+static SDL_FRect mouse_rect;
 static int xscale = 1, yscale = 1;
 
 static uint32_t GetColour(ARMul_State *state,unsigned int col);
@@ -161,11 +165,18 @@ static uint32_t GetColour(ARMul_State *state,unsigned int col)
   g = ((col>>4) & 0xf)*0x11;
   b = ((col>>8) & 0xf)*0x11;
 
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+  return SDL_MapRGB(format, NULL, r, g, b);
+#else
   return SDL_MapRGB(format, r, g, b);
+#endif
 }
 
 /* Refresh the mouse's image                                                    */
 static void RefreshMouse(ARMul_State *state) {
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+  SDL_Palette *palette;
+#endif
   int x,y,offset;
   int memptr;
   int Height = ((int)VIDC.Vert_CursorEnd - (int)VIDC.Vert_CursorStart);
@@ -175,10 +186,18 @@ static void RefreshMouse(ARMul_State *state) {
   if (Height < 0) Height = 0;
 
   if (mouse_surface && mouse_surface->h != Height)
-      SDL_FreeSurface(mouse_surface), mouse_surface = NULL;
+      SDL_DestroySurface(mouse_surface), mouse_surface = NULL;
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+  if (!mouse_surface) {
+      mouse_surface = SDL_CreateSurface(32, Height, SDL_PIXELFORMAT_INDEX8);
+      palette = SDL_CreateSurfacePalette(mouse_surface);
+  } else {
+      palette = SDL_GetSurfacePalette(mouse_surface);
+  }
+#else
   if (!mouse_surface)
-      mouse_surface = SDL_CreateRGBSurface(SDL_SWSURFACE, 32, Height, 8, 0, 0, 0, 0);
-
+      mouse_surface = SDL_CreateSurface(32, Height, SDL_PIXELFORMAT_INDEX8);
+#endif
   mouse_rect.x = 0;
   mouse_rect.y = 0;
   mouse_rect.w = 32 * xscale;
@@ -192,13 +211,12 @@ static void RefreshMouse(ARMul_State *state) {
     cursorPal[x].b = ((phys>>8) & 0xf)*0x11;
     cursorPal[x].a = SDL_ALPHA_OPAQUE;
   }
-#if SDL_VERSION_ATLEAST(2, 0, 0)
-  SDL_SetPaletteColors(mouse_surface->format->palette, cursorPal, 1, 3);
-  SDL_SetColorKey(mouse_surface, SDL_TRUE, 0);
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+  SDL_SetPaletteColors(palette, cursorPal, 1, 3);
 #else
-  SDL_SetColors(mouse_surface, cursorPal, 1, 3);
-  SDL_SetColorKey(mouse_surface, SDL_SRCCOLORKEY, 0);
+  SDL_SetPaletteColors(mouse_surface->format->palette, cursorPal, 1, 3);
 #endif
+  SDL_SetSurfaceColorKey(mouse_surface, true, 0);
 
   SDL_LockSurface(mouse_surface);
 
@@ -232,13 +250,8 @@ static void SetupScreen(ARMul_State *state,int width,int height,int hz)
 {
   /* TODO: Use SDL_LockTexture() instead of creating a separate surface? */
   if (!sdd_surface)
-    SDL_FreeSurface(sdd_surface);
-  sdd_surface = SDL_CreateRGBSurface(SDL_SWSURFACE, width, height,
-                                     format->BitsPerPixel,
-                                     format->Rmask,
-                                     format->Gmask,
-                                     format->Bmask,
-                                     format->Amask);
+    SDL_DestroySurface(sdd_surface);
+  sdd_surface = SDL_CreateSurface(width, height, format->format);
 
   if (!sdd_texture)
     SDL_DestroyTexture(sdd_texture);
@@ -272,72 +285,106 @@ static void SetupScreen(ARMul_State *state,int width,int height,int hz)
   }
 
   SDL_SetWindowSize(window, width, height);
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+  SDL_SetRenderLogicalPresentation(renderer, width, height, SDL_LOGICAL_PRESENTATION_INTEGER_SCALE);
+#else
   SDL_RenderSetLogicalSize(renderer, width, height);
+#endif
 }
 
 static void PollDisplay(ARMul_State *state)
 {
+  int x, y;
+
   SDL_UpdateTexture(sdd_texture, NULL, sdd_surface->pixels, sdd_surface->pitch);
   RefreshMouse(state);
 
-  DisplayDev_GetCursorPos(state,&mouse_rect.x,&mouse_rect.y);
-  mouse_rect.x *= xscale;
-  mouse_rect.y *= yscale;
+  DisplayDev_GetCursorPos(state,&x,&y);
+  mouse_rect.x = x * xscale;
+  mouse_rect.y = y * yscale;
 
   SDL_RenderClear(renderer);
-  SDL_RenderCopy(renderer, sdd_texture, NULL, NULL);
-  SDL_RenderCopy(renderer, mouse_texture, NULL, &mouse_rect);
+  SDL_RenderTexture(renderer, sdd_texture, NULL, NULL);
+  SDL_RenderTexture(renderer, mouse_texture, NULL, &mouse_rect);
   SDL_RenderPresent(renderer);
+}
+
+static Uint32 ExaminePixelFormat(Uint32 fmt, Uint32 last)
+{
+  /* Reject unsupported pixel formats */
+  if ((SDL_BYTESPERPIXEL(fmt) != 2 && SDL_BYTESPERPIXEL(fmt) != 4) ||
+      !SDL_ISPIXELFORMAT_PACKED(fmt))
+    return last;
+
+  /* Prefer 16-bit pixel formats where possible */
+  if (SDL_BYTESPERPIXEL(fmt) >= SDL_BYTESPERPIXEL(last) &&
+      last != SDL_PIXELFORMAT_UNKNOWN)
+    return last;
+
+  return fmt;
 }
 
 /*-----------------------------------------------------------------------------*/
 int DisplayDev_Init(ARMul_State *state)
 {
-  Uint32 i, fmt, pf = SDL_PIXELFORMAT_UNKNOWN;
+  Uint32 i, pf = SDL_PIXELFORMAT_UNKNOWN;
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+  const SDL_PixelFormat *texture_formats;
+#else
   SDL_RendererInfo info;
+#endif
 
   /* Setup display and cursor bitmaps */
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+  window = SDL_CreateWindow("ArcEm", 640, 512, SDL_WINDOW_RESIZABLE);
+#else
   window = SDL_CreateWindow("ArcEm", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                             640, 512, SDL_WINDOW_RESIZABLE);
+#endif
   if (!window) {
     ControlPane_Error(0, "Failed to create initial window: %s\n", SDL_GetError());
   }
 
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+  renderer = SDL_CreateRenderer(window, NULL);
+#else
   renderer = SDL_CreateRenderer(window, -1, 0);
+#endif
   if (!renderer) {
     ControlPane_Error(0, "Failed to create renderer: %s\n", SDL_GetError());
   }
 
-  if (SDL_GetRendererInfo(renderer, &info) >= 0) {
-    for (i = 0; i < info.num_texture_formats; i++) {
-      fmt = info.texture_formats[i];
-
-      /* Reject unsupported pixel formats */
-      if ((SDL_BYTESPERPIXEL(fmt) != 2 && SDL_BYTESPERPIXEL(fmt) != 4) ||
-          !SDL_ISPIXELFORMAT_PACKED(fmt))
-        continue;
-
-      /* Prefer 16-bit pixel formats where possible */
-      if (SDL_BYTESPERPIXEL(fmt) >= SDL_BYTESPERPIXEL(pf) &&
-          pf != SDL_PIXELFORMAT_UNKNOWN)
-        continue;
-
-      pf = fmt;
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+  texture_formats = (const SDL_PixelFormat *)SDL_GetPointerProperty(SDL_GetRendererProperties(renderer), SDL_PROP_RENDERER_TEXTURE_FORMATS_POINTER, NULL);
+  if (texture_formats) {
+    for (i = 0; i < texture_formats[i]; ++i) {
+      pf = ExaminePixelFormat(texture_formats[i], pf);
     }
   }
+#else
+  if (SDL_GetRendererInfo(renderer, &info) >= 0) {
+    for (i = 0; i < info.num_texture_formats; i++) {
+      pf = ExaminePixelFormat(info.texture_formats[i], pf);
+    }
+  }
+#endif
   if (pf == SDL_PIXELFORMAT_UNKNOWN)
     pf = SDL_PIXELFORMAT_RGBA32;
 
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+  format = SDL_GetPixelFormatDetails(pf);
+#else
   format = SDL_AllocFormat(pf);
+#endif
   if (!format) {
     ControlPane_Error(0, "Failed to create pixel format: %s\n", SDL_GetError());
     return -1;
-  } else if (format->BytesPerPixel == 4) {
+  } else if (SDL_BYTESPERPIXEL(pf) == 4) {
     return DisplayDev_Set(state,&SDD32R_DisplayDev);
-  } else if (format->BytesPerPixel == 2) {
+  } else if (SDL_BYTESPERPIXEL(pf) == 2) {
     return DisplayDev_Set(state,&SDD16R_DisplayDev);
   } else {
-    ControlPane_Error(0, "Unsupported bytes per pixel: %d\n", format->BytesPerPixel);
+    ControlPane_Error(0, "Unsupported bytes per pixel: %d\n", SDL_BYTESPERPIXEL(pf));
     return -1;
   }
 }

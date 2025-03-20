@@ -6,11 +6,9 @@
 /* ansi includes */
 #include <stdio.h>
 
-/* SDL includes */
-#include <SDL.h>
-
 /* application includes */
 #include "filecalls.h"
+#include "platform.h"
 
 /**
  * File_OpenAppData
@@ -62,7 +60,30 @@ FILE *File_OpenAppData(const char *sName, const char *sMode)
  */
 Directory *Directory_OpenAppDir(const char *sName)
 {
-#if SDL_VERSION_ATLEAST(2, 0, 1)
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+    const char *sBasePath;
+    char *sPath;
+    size_t sLen;
+    Directory *ret;
+
+    sBasePath = SDL_GetBasePath();
+    if (!sBasePath) {
+        return NULL;
+    }
+
+    sLen = SDL_strlen(sBasePath) + SDL_strlen(sName) + 1;
+    sPath = SDL_malloc(sLen);
+    if (!sPath) {
+        return NULL;
+    }
+
+    SDL_strlcpy(sPath, sBasePath, sLen);
+    SDL_strlcat(sPath, sName, sLen);
+    ret = Directory_Open(sPath);
+
+    SDL_free(sPath);
+    return ret;
+#elif SDL_VERSION_ATLEAST(2, 0, 1)
     char *sBasePath, *sPath;
     size_t sLen;
     Directory *ret;
