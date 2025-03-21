@@ -146,7 +146,7 @@ struct PDD_Name(DisplayInfo) {
     
     bool DMAEn; /* Whether video DMA is enabled for this frame */
     int LastHostWidth,LastHostHeight,LastHostDepth,LastHostHz; /* Values we used to request host mode */
-    int BitWidth; /* Width of display area, in bits */
+    unsigned int BitWidth; /* Width of display area, in bits */
     uint_least16_t VIDC_CR; /* Control register value in use for this frame */
     uint32_t Vptr; /* DMA pointer, in bits, as offset from start of phys RAM */
     int FrameSkip; /* Current frame skip counter */
@@ -227,7 +227,7 @@ static inline int PDD_Name(RowFunc1XSameBitAligned)(ARMul_State *state,PDD_Row d
   uint32_t Vstart = MEMC.Vstart<<7;
   uint32_t Vend = (MEMC.Vend+1)<<7; /* Point to pixel after end */
   const ARMword *RAM = MEMC.PhysRam;
-  int Remaining = DC.BitWidth;
+  unsigned int Remaining = DC.BitWidth;
 
   /* Sanity checks to avoid looping forever */
   if((Vptr >= Vend) || (Vstart >= Vend))
@@ -239,7 +239,7 @@ static inline int PDD_Name(RowFunc1XSameBitAligned)(ARMul_State *state,PDD_Row d
   while(Remaining > 0)
   {
     uint32_t FlagsOffset = Vptr/(8*UPDATEBLOCKSIZE);
-    int Available = MIN(Remaining,MIN(((FlagsOffset+1)*8*UPDATEBLOCKSIZE)-Vptr,Vend-Vptr));
+    unsigned int Available = MIN(Remaining,MIN(((FlagsOffset+1)*8*UPDATEBLOCKSIZE)-Vptr,Vend-Vptr));
 
     if((flags & ROWFUNC_FORCE) || (HD.UpdateFlags[FlagsOffset] != MEMC.UpdateFlags[FlagsOffset]))
     {
@@ -268,7 +268,7 @@ static inline int PDD_Name(RowFunc1XSameByteAligned)(ARMul_State *state,PDD_Row 
   uint32_t Vstart = MEMC.Vstart<<4;
   uint32_t Vend = (MEMC.Vend+1)<<4; /* Point to pixel after end */
   const uint8_t *RAM = (uint8_t *) MEMC.PhysRam;
-  int Remaining = DC.BitWidth>>3;
+  unsigned int Remaining = DC.BitWidth>>3;
 
   /* Sanity checks to avoid looping forever */
   if((Vptr >= Vend) || (Vstart >= Vend))
@@ -280,7 +280,7 @@ static inline int PDD_Name(RowFunc1XSameByteAligned)(ARMul_State *state,PDD_Row 
   while(Remaining > 0)
   {
     uint32_t FlagsOffset = Vptr/UPDATEBLOCKSIZE;
-    int Available = MIN(Remaining,MIN(((FlagsOffset+1)*UPDATEBLOCKSIZE)-Vptr,Vend-Vptr));
+    unsigned int Available = MIN(Remaining,MIN(((FlagsOffset+1)*UPDATEBLOCKSIZE)-Vptr,Vend-Vptr));
 
     if((flags & ROWFUNC_FORCE) || (HD.UpdateFlags[FlagsOffset] != MEMC.UpdateFlags[FlagsOffset]))
     {
@@ -317,7 +317,7 @@ static inline int PDD_Name(RowFuncExpandTable)(ARMul_State *state,PDD_Row drow,i
   uint32_t Vstart = MEMC.Vstart<<7;
   uint32_t Vend = (MEMC.Vend+1)<<7; /* Point to pixel after end */
   const ARMword *RAM = MEMC.PhysRam;
-  int Remaining = DC.BitWidth;
+  unsigned int Remaining = DC.BitWidth;
 
   /* Sanity checks to avoid looping forever */
   if((Vptr >= Vend) || (Vstart >= Vend))
@@ -329,7 +329,7 @@ static inline int PDD_Name(RowFuncExpandTable)(ARMul_State *state,PDD_Row drow,i
   while(Remaining > 0)
   {
     uint32_t FlagsOffset = Vptr/(8*UPDATEBLOCKSIZE);
-    int Available = MIN(Remaining,MIN(((FlagsOffset+1)*8*UPDATEBLOCKSIZE)-Vptr,Vend-Vptr));
+    unsigned int Available = MIN(Remaining,MIN(((FlagsOffset+1)*8*UPDATEBLOCKSIZE)-Vptr,Vend-Vptr));
 
     if((flags & ROWFUNC_FORCE) || (HD.UpdateFlags[FlagsOffset] != MEMC.UpdateFlags[FlagsOffset]))
     {
@@ -366,7 +366,7 @@ static inline void PDD_Name(RowFunc1XSameBitAlignedNoFlags)(ARMul_State *state,P
   uint32_t Vstart = MEMC.Vstart<<7;
   uint32_t Vend = (MEMC.Vend+1)<<7; /* Point to pixel after end */
   const ARMword *RAM = MEMC.PhysRam;
-  int Remaining = DC.BitWidth;
+  unsigned int Remaining = DC.BitWidth;
 
   /* Sanity checks to avoid looping forever */
   if((Vptr >= Vend) || (Vstart >= Vend))
@@ -377,7 +377,7 @@ static inline void PDD_Name(RowFunc1XSameBitAlignedNoFlags)(ARMul_State *state,P
   /* Process the row */
   while(Remaining > 0)
   {
-    int Available = MIN(Remaining,Vend-Vptr);
+    unsigned int Available = MIN(Remaining,Vend-Vptr);
 
     /* Process the pixels in this region, stopping at end of row/Vend */
     int outoffset;
@@ -401,7 +401,7 @@ static inline void PDD_Name(RowFunc1XSameByteAlignedNoFlags)(ARMul_State *state,
   uint32_t Vstart = MEMC.Vstart<<4;
   uint32_t Vend = (MEMC.Vend+1)<<4; /* Point to pixel after end */
   const uint8_t *RAM = (uint8_t *) MEMC.PhysRam;
-  int Remaining = DC.BitWidth>>3;
+  unsigned int Remaining = DC.BitWidth>>3;
 
   /* Sanity checks to avoid looping forever */
   if((Vptr >= Vend) || (Vstart >= Vend))
@@ -412,7 +412,7 @@ static inline void PDD_Name(RowFunc1XSameByteAlignedNoFlags)(ARMul_State *state,
   /* Process the row */
   while(Remaining > 0)
   {
-    int Available = MIN(Remaining,Vend-Vptr);
+    unsigned int Available = MIN(Remaining,Vend-Vptr);
 
     /* Process the pixels in this region, stopping at end of row/update block/Vend */
     int outoffset;
@@ -444,7 +444,7 @@ static inline void PDD_Name(RowFuncExpandTableNoFlags)(ARMul_State *state,PDD_Ro
   uint32_t Vstart = MEMC.Vstart<<7;
   uint32_t Vend = (MEMC.Vend+1)<<7; /* Point to pixel after end */
   const ARMword *RAM = MEMC.PhysRam;
-  int Remaining = DC.BitWidth;
+  unsigned int Remaining = DC.BitWidth;
 
   /* Sanity checks to avoid looping forever */
   if((Vptr >= Vend) || (Vstart >= Vend))
@@ -455,7 +455,7 @@ static inline void PDD_Name(RowFuncExpandTableNoFlags)(ARMul_State *state,PDD_Ro
   /* Process the row */
   while(Remaining > 0)
   {
-    int Available = MIN(Remaining,Vend-Vptr);
+    unsigned int Available = MIN(Remaining,Vend-Vptr);
 
     /* Process the pixels in this region, stopping at end of row/update block/Vend */
     int outoffset;

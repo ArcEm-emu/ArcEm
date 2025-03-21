@@ -68,7 +68,7 @@ void FDC_LatchBChange(ARMul_State *state);
  * @param image Filename of image to load
  * @returns NULL on success or string of error message
  */
-const char *FDC_InsertFloppy(int drive, const char *image);
+const char *FDC_InsertFloppy(unsigned int drive, const char *image);
 
 /**
  * FDC_EjectFloppy
@@ -79,7 +79,7 @@ const char *FDC_InsertFloppy(int drive, const char *image);
  * @param drive Drive number to unload image [0-3]
  * @returns NULL on success or string of error message
  */
-const char *FDC_EjectFloppy(int drive);
+const char *FDC_EjectFloppy(unsigned int drive);
 
 /**
  * FDC_IsFloppyInserted
@@ -89,7 +89,7 @@ const char *FDC_EjectFloppy(int drive);
  * @param drive Drive number to check [0-3]
  * @returns true if a disc is inserted, false otherwise
  */
-bool FDC_IsFloppyInserted(int drive);
+bool FDC_IsFloppyInserted(unsigned int drive);
 
 /**
  * FDC_Regular

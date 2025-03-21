@@ -74,7 +74,7 @@ static int colourdepths_available = 0;
 
 static int current_hz;
 static const HostMode *current_mode=NULL;
-static int current_depth=-1;
+static unsigned int current_depth=UINT_MAX;
 
 static HostMode *SelectROScreenMode(int x, int y, int aspect, int depths, int *outxscale, int *outyscale);
 
@@ -109,11 +109,11 @@ static int CursorYOffset=0; /* How many rows were skipped from the top of the cu
 /* Lookup table for 16/32bpp display drivers - populated on mode change to avoid any SWI overheads in Host_GetColour */
 static uint32_t sdd_palette[4096];
 
-static int ChangeMode(const HostMode *mode,int depth)
+static int ChangeMode(const HostMode *mode,unsigned int depth)
 {
   _kernel_oserror *err;
 
-  while(!(mode->depths & (1<<depth)) && ((1<<depth) < mode->depths))
+  while(!(mode->depths & (1<<depth)) && ((1u<<depth) < mode->depths))
     depth++;
   if((mode != current_mode) || (depth != current_depth))
   {
@@ -1249,7 +1249,7 @@ static void writeval(int i,uint32_t temp)
 
 static void DrawMenu(void)
 {
-  int i;
+  unsigned int i;
   _swi(OS_WriteC,_IN(0),12);
   printf("ArcEm tweak menu\n\n");
   for(i=0;i<ITEM_MAX;i++)

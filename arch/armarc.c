@@ -578,7 +578,7 @@ static void ARMul_PurgeFastMapPTIdx(ARMul_State *state,ARMword idx)
         if(idx2 != idx)
         {
           int32_t pt2 = MEMC.PageTable[idx2];
-          if((pt2 > 0) && ((pt2 & mask) == pt))
+          if((pt2 > 0) && (((ARMword)pt2 & mask) == (ARMword)pt))
           {
             /* We've found a suitable replacement */
             ARMul_RebuildFastMapPTIdx(state, idx2); /* Take the easy way out */

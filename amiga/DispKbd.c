@@ -67,9 +67,9 @@ struct IOStdReq *ir;
 struct MsgPort *mport;
 
 ULONG oldid=INVALID_ID;
-ULONG oldwidth = 0;
-ULONG oldheight = 0;
-ULONG oldlog2bpp = 0;
+int oldwidth = 0;
+int oldheight = 0;
+int oldlog2bpp = 0;
 
 static ULONG OldMouseX = 0;
 static ULONG OldMouseY = 0;

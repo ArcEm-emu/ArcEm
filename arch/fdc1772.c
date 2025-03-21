@@ -256,7 +256,7 @@ void FDC_LatchAChange(ARMul_State *state) {
   DBG(("LatchA: 0x%x\n",ioc.LatchA));
 
   /* Start up test */
-  if (ioc.LatchAold==-1) {
+  if (ioc.LatchAold==UINT_MAX) {
     diffmask=0xff;
   }
 
@@ -326,7 +326,7 @@ void FDC_LatchBChange(ARMul_State *state) {
 
   DBG(("LatchB: 0x%x\n",ioc.LatchB));
   /* Start up test */
-  if (ioc.LatchBold==-1) {
+  if (ioc.LatchBold==UINT_MAX) {
     diffmask=0xff;
   }
 
@@ -891,15 +891,14 @@ void FDC_Init(ARMul_State *state) {
  * @returns NULL on success or string of error message
  */
 const char *
-FDC_InsertFloppy(int drive, const char *image)
+FDC_InsertFloppy(unsigned int drive, const char *image)
 {
   floppy_drive *dr;
   FILE *fp;
   long len;
   const floppy_format *ff;
 
-  assert(drive >= 0 && drive < sizeof FDC.drive /
-      sizeof FDC.drive[0]);
+  assert(drive < sizeof FDC.drive / sizeof FDC.drive[0]);
   assert(image);
 
   if (FDC.LastCommand != CMD_FORCE_INTR) {
@@ -959,12 +958,11 @@ FDC_InsertFloppy(int drive, const char *image)
  * @returns NULL on success or string of error message
  */
 const char *
-FDC_EjectFloppy(int drive)
+FDC_EjectFloppy(unsigned int drive)
 {
   floppy_drive *dr;
 
-  assert(drive >= 0 && drive < sizeof FDC.drive /
-         sizeof FDC.drive[0]);
+  assert(drive < sizeof FDC.drive / sizeof FDC.drive[0]);
 
   dr = FDC.drive + drive;
 
@@ -1001,12 +999,11 @@ FDC_EjectFloppy(int drive)
  * @returns true if a disc is inserted, false otherwise
  */
 bool
-FDC_IsFloppyInserted(int drive)
+FDC_IsFloppyInserted(unsigned int drive)
 {
     floppy_drive* dr;
 
-    assert(drive >= 0 && drive < sizeof FDC.drive /
-        sizeof FDC.drive[0]);
+    assert(drive < sizeof FDC.drive / sizeof FDC.drive[0]);
 
     dr = FDC.drive + drive;
 

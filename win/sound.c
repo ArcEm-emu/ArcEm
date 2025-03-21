@@ -59,7 +59,7 @@ void Sound_HostBuffered(SoundData *buffer,int32_t numSamples)
 		if(current->dwFlags & WHDR_PREPARED)
 			waveOutUnprepareHeader(hWaveOut, current, sizeof(WAVEHDR));
 
-		if(size < (int)(BLOCK_SIZE - current->dwUser)) {
+		if(size < (BLOCK_SIZE - current->dwUser)) {
 			memcpy(current->lpData + current->dwUser, lpbuffer, size);
 			current->dwUser += size;
 			break;

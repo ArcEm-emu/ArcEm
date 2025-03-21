@@ -294,9 +294,8 @@ static void PollDisplay(ARMul_State *state)
 /*-----------------------------------------------------------------------------*/
 int DisplayDev_Init(ARMul_State *state)
 {
-  Uint32 fmt, pf = SDL_PIXELFORMAT_UNKNOWN;
+  Uint32 i, fmt, pf = SDL_PIXELFORMAT_UNKNOWN;
   SDL_RendererInfo info;
-  int i;
 
   /* Setup display and cursor bitmaps */
   window = SDL_CreateWindow("ArcEm", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,

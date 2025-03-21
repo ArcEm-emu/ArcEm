@@ -60,7 +60,7 @@ static inline void SDD_Name(Host_EndRow)(ARMul_State *state,SDD_Row *row) { /* n
 static inline void SDD_Name(Host_BeginUpdate)(ARMul_State *state,SDD_Row *row,unsigned int count)
 {
   UpdateMinX = MIN(UpdateMinX,row->x);
-  UpdateMaxX = MAX(UpdateMaxX,row->x+count-1);
+  UpdateMaxX = MAX(UpdateMaxX,(int)(row->x+count-1));
   UpdateMinY = MIN(UpdateMinY,row->y);
   UpdateMaxY = MAX(UpdateMaxY,row->y);
 }

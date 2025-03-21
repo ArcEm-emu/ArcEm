@@ -714,8 +714,8 @@ static void MouseMoved(ARMul_State *state,XMotionEvent *xmotion)
   }
   else
   {
-    unsigned ScreenWidth  = (VIDC.Horiz_DisplayEnd - VIDC.Horiz_DisplayStart) * 2;
-    unsigned ScreenHeight = VIDC.Vert_DisplayEnd - VIDC.Vert_DisplayStart;
+    int ScreenWidth  = (VIDC.Horiz_DisplayEnd - VIDC.Horiz_DisplayStart) * 2;
+    int ScreenHeight = VIDC.Vert_DisplayEnd - VIDC.Vert_DisplayStart;
 
     /* Well the coordinates of the mouse cursor are now in xmotion->x and
        xmotion->y, I'm going to compare those against the cursor position

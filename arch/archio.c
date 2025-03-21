@@ -47,7 +47,7 @@ IO_Init(ARMul_State *state)
   ioc.FIRQMask = 0;
   ioc.kbd.CurrentKeyVal = 0xff;
   ioc.LatchA = ioc.LatchB = 0xff;
-  ioc.LatchAold = ioc.LatchBold = -1;
+  ioc.LatchAold = ioc.LatchBold = UINT_MAX;
   ioc.TimerInputLatch[0] = 0xffff;
   ioc.TimerInputLatch[1] = 0xffff;
   ioc.TimerInputLatch[2] = 0xffff;

@@ -52,7 +52,7 @@ LD=$(CC)
 WINDRES=$(CROSS)windres
 LDFLAGS=
 
-WARN = -Wall -Wextra -Wno-unused-parameter -Wno-sign-compare \
+WARN = -Wall -Wextra -Wno-unused-parameter \
    -Wshadow -Wpointer-arith -Wcast-align -Wstrict-prototypes \
    -Wmissing-prototypes -Wmissing-declarations -Wnested-externs \
    -Wcast-qual -Wwrite-strings

@@ -435,7 +435,7 @@ static void Cause_Error(ARMul_State *state, int errcode) {
 /* FIXME: should have just one definition of this. */
 #define DIM(a) ((sizeof (a)) / sizeof (a)[0])
 
-static int SetFilePtr(ARMul_State *state, int drive, uint32_t head,
+static int SetFilePtr(ARMul_State *state, unsigned int drive, uint32_t head,
     uint32_t cyl, uint32_t sect)
 {
     struct HDCshape *disc;
@@ -443,7 +443,7 @@ static int SetFilePtr(ARMul_State *state, int drive, uint32_t head,
 
     dbug("SetFilePtr: drive=%d head=%u cyl=%u sec=%u\n", drive, head, cyl, sect);
 
-    if (drive < 0 || drive > DIM(CONFIG.aST506DiskShapes)) {
+    if (drive > DIM(CONFIG.aST506DiskShapes)) {
         ControlPane_Error(1,"SetFilePtr: drive %d out of range 0..%d\n",
             drive, (int) DIM(CONFIG.aST506DiskShapes));
     }

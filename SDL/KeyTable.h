@@ -14,10 +14,12 @@
 #define SDLK_KP_8 SDLK_KP8
 #define SDLK_KP_9 SDLK_KP9
 #define SDLK_KP_0 SDLK_KP0
+
+typedef SDLKey SDL_Keycode;
 #endif
 
 typedef struct {
-    int sym;
+    SDL_Keycode sym;
     arch_key_id kid;
 } sdlk_to_arch_key;
 
