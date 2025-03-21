@@ -22,6 +22,7 @@
 
 #include "../armdefs.h"
 #include "dbugsys.h"
+#include "displaydev.h"
 #include "filecalls.h"
 #include "extnrom.h"
 #include "ArcemConfig.h"
@@ -38,42 +39,6 @@ enum OS_ID_BYTE {
   OS_ID_BYTE_RISCOS_MODULE = 0x81,
   OS_ID_BYTE_DEVICE_DESCR  = 0xf5
 };
-
-#ifdef HOST_BIGENDIAN
-static uint32_t
-get_32bit_le(const void *address)
-{
-  const uint8_t *addr = address;
-  uint32_t result;
-
-  assert(address != NULL);
-
-  result = (uint32_t) addr[0];
-  result |= ((uint32_t) addr[1]) << 8;
-  result |= ((uint32_t) addr[2]) << 16;
-  result |= ((uint32_t) addr[3]) << 24;
-
-  return result;
-}
-
-static void
-extnrom_endian_correct(ARMword *start_addr, uint32_t size)
-{
-  uint32_t size_in_words = ROUND_UP_TO_4(size) / 4;
-  uint32_t word_num;
-  ARMword word;
-
-  assert(start_addr != NULL);
-  assert(size > 0);
-
-  for (word_num = 0; word_num < size_in_words; word_num++) {
-    word = get_32bit_le(start_addr + word_num); /* Read little-endian */
-    start_addr[word_num] = word;                /* Write host-endian */
-  }
-}
-#else
-#define extnrom_endian_correct(A,B) ((void)0)
-#endif
 
 static uint32_t
 extnrom_calculate_checksum(const ARMword *start_addr, uint32_t size)
@@ -247,8 +212,7 @@ extnrom_load(const char *dir, uint32_t size, uint32_t entry_count, void *address
              (ARMword)((strlen(DESCRIPTION_STRING) + 1) << 8);
   chunk[1] = (ARMword)(modules - start_addr) * 4; /* offset in bytes */
 
-  strcpy((char *) modules, DESCRIPTION_STRING);
-  extnrom_endian_correct(modules, strlen(DESCRIPTION_STRING) + 1);
+  InvByteCopy(modules, DESCRIPTION_STRING, strlen(DESCRIPTION_STRING) + 1);
 
   /* Move chunk and module pointers on */
   chunk += 2;
@@ -301,7 +265,7 @@ extnrom_load(const char *dir, uint32_t size, uint32_t entry_count, void *address
     modules++;
 
     /* Load module */
-    if (fread(modules, 1, ulFilesize, f) != ulFilesize) {
+    if (File_ReadEmu(f, (uint8_t *)modules, ulFilesize) != ulFilesize) {
       warn_data("Error while loading file \'%s\': %s\n",
                 path, strerror(errno));
       fclose(f);
@@ -311,9 +275,6 @@ extnrom_load(const char *dir, uint32_t size, uint32_t entry_count, void *address
 
     fclose(f);
     free(path);
-
-    /* Byte-swap module from little-endian to host processor */
-    extnrom_endian_correct(modules, ulFilesize);
 
     /* Move chunk and module pointers on */
     chunk += 2;
@@ -332,9 +293,8 @@ extnrom_load(const char *dir, uint32_t size, uint32_t entry_count, void *address
   start_addr[size_in_words - 3] = extnrom_calculate_checksum(start_addr, size);
 
   /* Fill in Extension ROM id */
-  /* memcpy() used to ensure no zero-terminator */
-  memcpy(start_addr + size_in_words - 2, "ExtnROM0", 8);
-  extnrom_endian_correct(start_addr + size_in_words - 2, 8);
+  /* InvByteCopy() used to ensure no zero-terminator */
+  InvByteCopy(start_addr + size_in_words - 2, "ExtnROM0", 8);
 
   /*{
     FILE *f = fopen("extnrom_dump", "wb");

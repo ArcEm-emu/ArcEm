@@ -88,10 +88,10 @@ static inline void EndianWordCpy(ARMword *dest,const ARMword *src,size_t count)
 }
 
 /* src = little-endian emu memory, dest = big-endian host memory */
-extern void ByteCopy(uint8_t *dest,const uint8_t *src,size_t size);
+extern void ByteCopy(void *dest,const void *src,size_t size);
 
 /* src = big-endian host memory, dest = little-endian emu memory */
-extern void InvByteCopy(uint8_t *dest,const uint8_t *src,size_t size);
+extern void InvByteCopy(void *dest,const void *src,size_t size);
 #else
 #include <string.h>
 

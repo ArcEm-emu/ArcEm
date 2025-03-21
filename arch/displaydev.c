@@ -93,8 +93,10 @@ void DisplayDev_VSync(ARMul_State *state)
   (instead of just endian swapping the destination, as suggested above)
 
 */
-void ByteCopy(uint8_t *dest,const uint8_t *src,size_t size)
+void ByteCopy(void *destp,const void *srcp,size_t size)
 {
+  const uint8_t *src = (const uint8_t *)srcp;
+  uint8_t *dest = (uint8_t *)destp;
   if(!size)
     return;
   /* Align source */
@@ -149,8 +151,10 @@ void ByteCopy(uint8_t *dest,const uint8_t *src,size_t size)
   This time we need to do endian swapping on the destination address
 
 */
-void InvByteCopy(uint8_t *dest,const uint8_t *src,size_t size)
+void InvByteCopy(void *destp,const void *srcp,size_t size)
 {
+  const uint8_t *src = (const uint8_t *)srcp;
+  uint8_t *dest = (uint8_t *)destp;
   if(!size)
     return;
   /* Align destination */
