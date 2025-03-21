@@ -345,7 +345,7 @@ static void EMFUNCDECL26(TstRegMrs1SwpNorm) (ARMul_State *state, ARMword instr) 
   EMFUNC_CONDTEST
              if (BITS(4,11) == 9) { /* SWP */
                 if (Processor_ARM2 == CONFIG.eProcessor) {
-                  ARMul_UndefInstr(state,instr);
+                  ARMul_Abort(state,ARMul_UndefinedInstrV);
                   return;
                 }
 
@@ -401,7 +401,7 @@ static void EMFUNCDECL26(CmpRegMrs2SwpNorm) (ARMul_State *state, ARMword instr) 
 
              if (BITS(4,11) == 9) { /* SWP */
                 if (Processor_ARM2 == CONFIG.eProcessor) {
-                  ARMul_UndefInstr(state,instr);
+                  ARMul_Abort(state,ARMul_UndefinedInstrV);
                   return;
                 }
 
@@ -535,7 +535,7 @@ static void EMFUNCDECL26(TstRegMrs1SwpPC) (ARMul_State *state, ARMword instr) {
   EMFUNC_CONDTEST
              if (BITS(4,11) == 9) { /* SWP */
                 if (Processor_ARM2 == CONFIG.eProcessor) {
-                  ARMul_UndefInstr(state,instr);
+                  ARMul_Abort(state,ARMul_UndefinedInstrV);
                   return;
                 }
 
@@ -586,7 +586,7 @@ static void EMFUNCDECL26(CmpRegMrs2SwpPC) (ARMul_State *state, ARMword instr) {
 
              if (BITS(4,11) == 9) { /* SWP */
                 if (Processor_ARM2 == CONFIG.eProcessor) {
-                  ARMul_UndefInstr(state,instr);
+                  ARMul_Abort(state,ARMul_UndefinedInstrV);
                   return;
                 }
 
@@ -1565,7 +1565,7 @@ static void EMFUNCDECL26(LoadBWritePreIncReg) (ARMul_State *state, ARMword instr
 
 static void EMFUNCDECL26(Undef) (ARMul_State *state, ARMword instr) {
   EMFUNC_CONDTEST
-  ARMul_UndefInstr(state,instr);
+  ARMul_Abort(state,ARMul_UndefinedInstrV);
 }
 
 static void EMFUNCDECL26(MultiStorePostDec) (ARMul_State *state, ARMword instr) {

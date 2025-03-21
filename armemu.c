@@ -162,18 +162,24 @@ ARMul_LoadInstrTriplet(ARMul_State *state,ARMword addr,PipelineEntry *p)
   }
 }
 
-void ARMul_Icycles(ARMul_State *state,unsigned number)
-{
-  state->NumCycles += number;
-  ARMul_CLEARABORT;
-}
+/***************************************************************************\
+*               Align a word access to a non word boundary                  *
+\***************************************************************************/
 
+static inline ARMword
+ARMul_Align(ARMul_State *state, ARMword address, ARMword data)
+{/* this code assumes the address is really unaligned,
+    as a shift by 32 is undefined in C */
+
+ address = (address & 3) << 3; /* get the word address */
+ return( ( data >> address) | (data << (32 - address)) ); /* rot right */
+}
 
 /***************************************************************************\
 * Assigns the N and Z flags depending on the value of result                *
 \***************************************************************************/
 
-static void
+static inline void
 ARMul_NegZero(ARMul_State *state, ARMword result)
 {
   ASSIGNN(NEG(result));
@@ -185,7 +191,7 @@ ARMul_NegZero(ARMul_State *state, ARMword result)
 * Assigns the C flag after an addition of a and b to give result            *
 \***************************************************************************/
 
-static void
+static inline void
 ARMul_AddCarry(ARMul_State *state, ARMword a, ARMword b, ARMword result)
 {
   ASSIGNC( (NEG(a) && (NEG(b) || POS(result))) ||
@@ -196,7 +202,7 @@ ARMul_AddCarry(ARMul_State *state, ARMword a, ARMword b, ARMword result)
 * Assigns the V flag after an addition of a and b to give result            *
 \***************************************************************************/
 
-static void
+static inline void
 ARMul_AddOverflow(ARMul_State *state, ARMword a, ARMword b, ARMword result)
 {
   ASSIGNV( (NEG(a) && NEG(b) && POS(result)) ||
@@ -208,7 +214,7 @@ ARMul_AddOverflow(ARMul_State *state, ARMword a, ARMword b, ARMword result)
 * Assigns the C flag after an subtraction of a and b to give result         *
 \***************************************************************************/
 
-static void
+static inline void
 ARMul_SubCarry(ARMul_State *state, ARMword a, ARMword b, ARMword result)
 {
   ASSIGNC( (NEG(a) && POS(b)) ||
@@ -220,7 +226,7 @@ ARMul_SubCarry(ARMul_State *state, ARMword a, ARMword b, ARMword result)
 * Assigns the V flag after an subtraction of a and b to give result         *
 \***************************************************************************/
 
-static void
+static inline void
 ARMul_SubOverflow(ARMul_State *state, ARMword a, ARMword b, ARMword result)
 {
   ASSIGNV( (NEG(a) && POS(b) && POS(result)) ||
@@ -309,7 +315,7 @@ static ARMword RHSFunc_ROR_Reg(ARMul_State *state,ARMword instr,ARMword base)
 }
 
 static const RHSFunc RHSFuncs[8] = {RHSFunc_LSL_Imm,RHSFunc_LSL_Reg,RHSFunc_LSR_Imm,RHSFunc_LSR_Reg,RHSFunc_ASR_Imm,RHSFunc_ASR_Reg,RHSFunc_ROR_Imm,RHSFunc_ROR_Reg};
-static ARMword
+static inline ARMword
 GetDPRegRHS(ARMul_State *state, ARMword instr)
 {
  return (RHSFuncs[BITS(4,6)])(state,instr,RHSReg);
@@ -492,7 +498,7 @@ GetDPSRegRHS(ARMul_State *state, ARMword instr)
 * This routine handles writes to register 15 when the S bit is not set.     *
 \***************************************************************************/
 
-static void WriteR15(ARMul_State *state, ARMword src)
+static inline void WriteR15(ARMul_State *state, ARMword src)
 {
  SETPC(src);
  ARMul_R15Altered(state);
@@ -504,7 +510,7 @@ static void WriteR15(ARMul_State *state, ARMword src)
 * This routine handles writes to register 15 when the S bit is set.         *
 \***************************************************************************/
 
-static void WriteSR15(ARMul_State *state, ARMword src)
+static inline void WriteSR15(ARMul_State *state, ARMword src)
 {
  if (state->Bank == USERBANK)
     state->Reg[15] = (src & (CCBITS | R15PCBITS)) | R15INTMODE;

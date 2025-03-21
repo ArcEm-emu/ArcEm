@@ -357,7 +357,12 @@ static inline ARMword inlLHS(ARMul_State *state,ARMword r)
 \***************************************************************************/
 
 void ARMul_Emulate26(ARMul_State *state);
-void ARMul_Icycles(ARMul_State *state,unsigned number);
+
+static inline void ARMul_Icycles(ARMul_State *state,unsigned number)
+{
+  state->NumCycles += number;
+  ARMul_CLEARABORT;
+}
 
 extern const uint_fast8_t ARMul_MultTable[]; /* Number of I cycles for a mult */
 #ifdef ARMUL_USE_IMMEDTABLE
@@ -377,14 +382,11 @@ void ARMul_MCR(ARMul_State *state,ARMword instr, ARMword source);
 bool ARMul_MRC(ARMul_State *state,ARMword instr,ARMword *result);
 void ARMul_CDP(ARMul_State *state,ARMword instr);
 bool IntPending(ARMul_State *state);
-ARMword ARMul_Align(ARMul_State *state, ARMword address, ARMword data);
 
 
 /***************************************************************************\
 *                               ARM Support                                 *
 \***************************************************************************/
-
-void ARMul_UndefInstr(ARMul_State *state,ARMword instr);
 
 /* An estimate of how many cycles the host is executing per second */
 extern uint32_t ARMul_EmuRate;

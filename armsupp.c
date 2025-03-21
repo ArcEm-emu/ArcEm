@@ -333,15 +333,6 @@ void ARMul_CDP(ARMul_State *state,ARMword instr)
 }
 
 /***************************************************************************\
-*      This function handles Undefined instructions, as CP instruction      *
-\***************************************************************************/
-
-void ARMul_UndefInstr(ARMul_State *state,ARMword instr)
-{
- ARMul_Abort(state,ARMul_UndefinedInstrV);
-}
-
-/***************************************************************************\
 *           Return true if an interrupt is pending, false otherwise.        *
 \***************************************************************************/
 
@@ -358,16 +349,3 @@ bool IntPending(ARMul_State *state)
    return true;
  }
 }
-
-/***************************************************************************\
-*               Align a word access to a non word boundary                  *
-\***************************************************************************/
-
-ARMword ARMul_Align(ARMul_State *state, ARMword address, ARMword data)
-{/* this code assumes the address is really unaligned,
-    as a shift by 32 is undefined in C */
-
- address = (address & 3) << 3; /* get the word address */
- return( ( data >> address) | (data << (32 - address)) ); /* rot right */
-}
-

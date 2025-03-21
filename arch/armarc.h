@@ -74,17 +74,17 @@ extern struct MEMCStruct memc;
 #define MEMC (memc)
 
 /* ------------------- inlined FastMap functions ------------------------------ */
-static FastMapEntry *FastMap_GetEntry(ARMul_State *state,ARMword addr);
-static FastMapEntry *FastMap_GetEntryNoWrap(ARMul_State *state,ARMword addr);
-static FastMapRes FastMap_DecodeRead(const FastMapEntry *entry,FastMapUInt mode);
-static FastMapRes FastMap_DecodeWrite(const FastMapEntry *entry,FastMapUInt mode);
-static ARMword *FastMap_Log2Phy(const FastMapEntry *entry,ARMword addr);
-static ARMEmuFunc *FastMap_Phy2Func(ARMul_State *state,ARMword *addr);
-static void FastMap_PhyClobberFunc(ARMul_State *state,ARMword *addr);
-static void FastMap_PhyClobberFuncRange(ARMul_State *state,ARMword *addr,size_t len);
-static ARMword FastMap_LoadFunc(const FastMapEntry *entry,ARMul_State *state,ARMword addr);
-static void FastMap_StoreFunc(const FastMapEntry *entry,ARMul_State *state,ARMword addr,ARMword data,ARMword flags);
-static void FastMap_RebuildMapMode(ARMul_State *state);
+static inline FastMapEntry *FastMap_GetEntry(ARMul_State *state,ARMword addr);
+static inline FastMapEntry *FastMap_GetEntryNoWrap(ARMul_State *state,ARMword addr);
+static inline FastMapRes FastMap_DecodeRead(const FastMapEntry *entry,FastMapUInt mode);
+static inline FastMapRes FastMap_DecodeWrite(const FastMapEntry *entry,FastMapUInt mode);
+static inline ARMword *FastMap_Log2Phy(const FastMapEntry *entry,ARMword addr);
+static inline ARMEmuFunc *FastMap_Phy2Func(ARMul_State *state,ARMword *addr);
+static inline void FastMap_PhyClobberFunc(ARMul_State *state,ARMword *addr);
+static inline void FastMap_PhyClobberFuncRange(ARMul_State *state,ARMword *addr,size_t len);
+static inline ARMword FastMap_LoadFunc(const FastMapEntry *entry,ARMul_State *state,ARMword addr);
+static inline void FastMap_StoreFunc(const FastMapEntry *entry,ARMul_State *state,ARMword addr,ARMword data,ARMword flags);
+static inline void FastMap_RebuildMapMode(ARMul_State *state);
 
 static inline FastMapEntry *FastMap_GetEntry(ARMul_State *state,ARMword addr)
 {
@@ -175,7 +175,7 @@ static inline void FastMap_RebuildMapMode(ARMul_State *state)
 #define FASTMAP_INLINE
 
 #ifdef FASTMAP_INLINE
-#define FASTMAP_PROTO static
+#define FASTMAP_PROTO static inline
 #else
 #define FASTMAP_PROTO extern
 #endif
