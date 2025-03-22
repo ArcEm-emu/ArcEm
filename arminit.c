@@ -19,6 +19,7 @@
 #include "armdefs.h"
 #include "armemu.h"
 #include "armarc.h"
+#include "arch/ArcemConfig.h"
 #include "arch/dbugsys.h"
 #include "hostfs.h"
 
@@ -111,6 +112,22 @@ ARMul_State *ARMul_NewState(ArcemConfig *pConfig)
  state->Display = NULL;
  state->FastMap = FastMap;
  state->Config  = pConfig;
+
+ switch (CONFIG.eProcessor) {
+ case Processor_ARM2:
+     state->HasSWP  = false;
+     state->HasCP15 = false;
+     break;
+ case Processor_ARM250:
+     state->HasSWP  = true;
+     state->HasCP15 = false;
+     break;
+ case Processor_ARM3:
+ default:
+     state->HasSWP  = true;
+     state->HasCP15 = true;
+     break;
+ }
  
  ARMul_Reset(state);
  EventQ_Init(state);

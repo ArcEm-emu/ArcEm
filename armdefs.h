@@ -254,6 +254,7 @@ struct ARMul_State {
    ARMword RegBank[4][16];    /* all the registers */
    ARMword instr, pc, temp;   /* saved register state */
    ARMword loaded, decoded;   /* saved pipeline state */
+   bool HasSWP, HasCP15;      /* enabled CPU features */
 
    /* Rare stuff */
    ARMul_CPInits *CPInit[16]; /* coprocessor initialisers */
