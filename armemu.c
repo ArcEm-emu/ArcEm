@@ -27,9 +27,6 @@
 
 ARMul_State statestr;
 
-/* global used to terminate the emulator */
-static bool kill_emulator;
-
 typedef struct {
   ARMword instr;
 #ifdef ARMUL_INSTR_FUNC_CACHE
@@ -1152,8 +1149,8 @@ ARMul_Emulate26(ARMul_State *state)
   /**************************************************************************\
    *                        Execute the next instruction                    *
   \**************************************************************************/
-  kill_emulator = false;
-  while (kill_emulator == false) {
+  state->KillEmulator = false;
+  while (!state->KillEmulator) {
     Prof_Begin("ARMul_Emulate26 prime");
     if (state->NextInstr < PRIMEPIPE) {
       pipe[1].instr = state->decoded;

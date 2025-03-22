@@ -230,6 +230,7 @@ struct ARMul_State {
    arch_keyboard *Kbd;        /* Keyboard struct */
    ARMword Bank;              /* the current register bank */
    bool NtransSig;            /* MEMC USR/SVC flag, somewhat redundant with FastMapMode */
+   bool KillEmulator;         /* global used to terminate the emulator */
    ARMword Base;              /* extra hand for base writeback */
    ArcemConfig *Config;
 
