@@ -17,15 +17,27 @@
 
 #include "armdefs.h"
 
+#include "armcopro.h"
+#include "armemu.h"
 #include "arch/cp15.h"
 
+#include <assert.h>
+
 /***************************************************************************\
-*                            Dummy Co-processors                            *
+*                            Dummy Co-processor                             *
 \***************************************************************************/
 
-static unsigned NoCoPro3R(ARMul_State *state,unsigned,ARMword);
-static unsigned NoCoPro4R(ARMul_State *state,unsigned,ARMword,ARMword);
-static unsigned NoCoPro4W(ARMul_State *state,unsigned,ARMword,ARMword *);
+static const ARMul_CoPro DummyCoPro = {
+  NULL,            /* CPInit */
+  NULL,            /* CPExit */
+  ARMul_NoCoPro4R, /* LDC */
+  ARMul_NoCoPro4W, /* STC */
+  ARMul_NoCoPro4W, /* MRC */
+  ARMul_NoCoPro4R, /* MCR */
+  ARMul_NoCoPro3R, /* CDP */
+  NULL,            /* CPRead */
+  NULL             /* CPWrite */
+};
 
 /***************************************************************************\
 *                Define Co-Processor instruction handlers here              *
@@ -44,27 +56,20 @@ bool ARMul_CoProInit(ARMul_State *state) {
     ARMul_CoProDetach(state, i);
   }
 
- /* Install CoPro Instruction handlers here
-    The format is
-    ARMul_CoProAttach(state, CP Number, Init routine, Exit routine
-                      LDC routine, STC routine, MRC routine, MCR routine,
-                      CDP routine, Read Reg routine, Write Reg routine);
-   */
+  /* Install CoPro Instruction handlers here */
 
     /* Add in the ARM3 processor CPU control coprocessor if the user
        wants it */
     if(state->HasCP15) {
-      ARMul_CoProAttach(state, 15, ARM3_Initialise, NULL,
-                        NULL, NULL, ARM3_MRCs, ARM3_MCRs,
-                        NULL, ARM3_RegisterRead, ARM3_RegisterWrite);
+      ARM3_CoProAttach(state);
     }
 
     /* No handlers below here */
 
     for (i = 0; i < 16; i++) {
       /* Call all the initialisation routines */
-     if (state->CPInit[i]) {
-       (state->CPInit[i])(state);
+     if (state->CoPro[i]->CPInit) {
+       (state->CoPro[i]->CPInit)(state);
      }
    }
    return true;
@@ -79,8 +84,8 @@ void ARMul_CoProExit(ARMul_State *state) {
   unsigned int i;
 
   for (i = 0; i < 16; i++)
-    if (state->CPExit[i])
-      (state->CPExit[i])(state);
+    if (state->CoPro[i]->CPExit)
+      (state->CoPro[i]->CPExit)(state);
   for (i = 0; i < 16; i++) /* Detach all handlers */
      ARMul_CoProDetach(state, i);
 }
@@ -90,45 +95,28 @@ void ARMul_CoProExit(ARMul_State *state) {
 \***************************************************************************/
 
 void ARMul_CoProAttach(ARMul_State *state, unsigned number,
-                       ARMul_CPInits *init,  ARMul_CPExits *exits,
-                       ARMul_LDCs *ldc,  ARMul_STCs *stc,
-                       ARMul_MRCs *mrc,  ARMul_MCRs *mcr,  ARMul_CDPs *cdp,
-                       ARMul_CPReads *reads, ARMul_CPWrites *writes)
-{if (init != NULL)
-    state->CPInit[number] = init;
- if (exits != NULL)
-    state->CPExit[number] = exits;
- if (ldc != NULL)
-    state->LDC[number] = ldc;
- if (stc != NULL)
-    state->STC[number] = stc;
- if (mrc != NULL)
-    state->MRC[number] = mrc;
- if (mcr != NULL)
-    state->MCR[number] = mcr;
- if (cdp != NULL)
-    state->CDP[number] = cdp;
- if (reads != NULL)
-    state->CPRead[number] = reads;
- if (writes != NULL)
-    state->CPWrite[number] = writes;
+                       const ARMul_CoPro *copro)
+{
+ assert(copro);
+ assert(copro->LDC);
+ assert(copro->STC);
+ assert(copro->MRC);
+ assert(copro->MCR);
+ assert(copro->CDP);
+
+ state->CoPro[number] = copro;
 }
 
 void ARMul_CoProDetach(ARMul_State *state, unsigned number)
-{ARMul_CoProAttach(state, number, NULL, NULL,
-                   NoCoPro4R, NoCoPro4W, NoCoPro4W, NoCoPro4R,
-                   NoCoPro3R, NULL, NULL);
- state->CPInit[number] = NULL;
- state->CPExit[number] = NULL;
- state->CPRead[number] = NULL;
- state->CPWrite[number] = NULL;
+{
+ ARMul_CoProAttach(state, number, &DummyCoPro);
 }
 
 /***************************************************************************\
 *         There is no CoPro around, so Undefined Instruction trap           *
 \***************************************************************************/
 
-static unsigned NoCoPro3R(ARMul_State *state, unsigned a, ARMword b)
+unsigned ARMul_NoCoPro3R(ARMul_State *state, unsigned a, ARMword b)
 {
   UNUSED_VAR(state);
   UNUSED_VAR(a);
@@ -137,7 +125,7 @@ static unsigned NoCoPro3R(ARMul_State *state, unsigned a, ARMword b)
   return(ARMul_CANT);
 }
 
-static unsigned NoCoPro4R(ARMul_State *state, unsigned a, ARMword b, ARMword c)
+unsigned ARMul_NoCoPro4R(ARMul_State *state, unsigned a, ARMword b, ARMword c)
 {
   UNUSED_VAR(state);
   UNUSED_VAR(a);
@@ -147,7 +135,7 @@ static unsigned NoCoPro4R(ARMul_State *state, unsigned a, ARMword b, ARMword c)
   return(ARMul_CANT);
 }
 
-static unsigned NoCoPro4W(ARMul_State *state, unsigned a, ARMword b, ARMword *c)
+unsigned ARMul_NoCoPro4W(ARMul_State *state, unsigned a, ARMword b, ARMword *c)
 {
   UNUSED_VAR(state);
   UNUSED_VAR(a);
@@ -155,4 +143,192 @@ static unsigned NoCoPro4W(ARMul_State *state, unsigned a, ARMword b, ARMword *c)
   UNUSED_VAR(c);
 
   return(ARMul_CANT);
+}
+
+/***************************************************************************\
+*           Return true if an interrupt is pending, false otherwise.        *
+\***************************************************************************/
+
+static inline bool IntPending(ARMul_State *state)
+{
+ ARMword excep = state->Exception & ~state->Reg[15];
+ if(!excep) { /* anything? */
+   return false;
+ } else if(excep & Exception_FIQ) { /* FIQ? */
+   ARMul_Abort(state,ARMul_FIQV);
+   return true;
+ } else { /* Must be IRQ */
+   ARMul_Abort(state,ARMul_IRQV);
+   return true;
+ }
+}
+
+/***************************************************************************\
+* This function does the work of generating the addresses used in an        *
+* LDC instruction.  The code here is always post-indexed, it's up to the    *
+* caller to get the input address correct and to handle base register       *
+* modification. It also handles the Busy-Waiting.                           *
+\***************************************************************************/
+
+void ARMul_LDC(ARMul_State *state,ARMword instr,ARMword address)
+{
+ unsigned cpab;
+ ARMword data;
+
+ UNDEF_LSCPCBaseWb;
+ if (ADDREXCEPT(address)) {
+    INTERNALABORT(address);
+    }
+ cpab = (state->CoPro[CPNum]->LDC)(state,ARMul_FIRST,instr,0);
+ while (cpab == ARMul_BUSY) {
+    ARMul_Icycles(state,1);
+    if (IntPending(state)) {
+       cpab = (state->CoPro[CPNum]->LDC)(state,ARMul_INTERRUPT,instr,0);
+       return;
+       }
+    else
+       cpab = (state->CoPro[CPNum]->LDC)(state,ARMul_BUSY,instr,0);
+    }
+ if (cpab == ARMul_CANT) {
+    CPTAKEABORT;
+    return;
+    }
+ cpab = (state->CoPro[CPNum]->LDC)(state,ARMul_TRANSFER,instr,0);
+ data = ARMul_LoadWordN(state,address);
+ BUSUSEDINCPCN;
+ if (BIT(21))
+    LSBase = state->Base;
+ cpab = (state->CoPro[CPNum]->LDC)(state,ARMul_DATA,instr,data);
+ while (cpab == ARMul_INC) {
+    address += 4;
+    data = ARMul_LoadWordN(state,address);
+    cpab = (state->CoPro[CPNum]->LDC)(state,ARMul_DATA,instr,data);
+    }
+ if (state->abortSig || state->Aborted) {
+    TAKEABORT;
+    }
+ }
+
+/***************************************************************************\
+* This function does the work of generating the addresses used in an        *
+* STC instruction.  The code here is always post-indexed, it's up to the    *
+* caller to get the input address correct and to handle base register       *
+* modification. It also handles the Busy-Waiting.                           *
+\***************************************************************************/
+
+void ARMul_STC(ARMul_State *state,ARMword instr,ARMword address)
+{unsigned cpab;
+ ARMword data;
+
+ UNDEF_LSCPCBaseWb;
+ if (ADDREXCEPT(address)) {
+    INTERNALABORT(address);
+    }
+ cpab = (state->CoPro[CPNum]->STC)(state,ARMul_FIRST,instr,&data);
+ while (cpab == ARMul_BUSY) {
+    ARMul_Icycles(state,1);
+    if (IntPending(state)) {
+       cpab = (state->CoPro[CPNum]->STC)(state,ARMul_INTERRUPT,instr,0);
+       return;
+       }
+    else
+       cpab = (state->CoPro[CPNum]->STC)(state,ARMul_BUSY,instr,&data);
+    }
+ if (cpab == ARMul_CANT) {
+    CPTAKEABORT;
+    return;
+    }
+ if (ADDREXCEPT(address) ) {
+    INTERNALABORT(address);
+    }
+ BUSUSEDINCPCN;
+ if (BIT(21))
+    LSBase = state->Base;
+ cpab = (state->CoPro[CPNum]->STC)(state,ARMul_DATA,instr,&data);
+ ARMul_StoreWordN(state,address,data);
+ while (cpab == ARMul_INC) {
+    address += 4;
+    cpab = (state->CoPro[CPNum]->STC)(state,ARMul_DATA,instr,&data);
+    ARMul_StoreWordN(state,address,data);
+    }
+ if (state->abortSig || state->Aborted) {
+    TAKEABORT;
+    }
+ }
+
+/***************************************************************************\
+*        This function does the Busy-Waiting for an MCR instruction.        *
+\***************************************************************************/
+
+void ARMul_MCR(ARMul_State *state,ARMword instr, ARMword source)
+{unsigned cpab;
+
+ cpab = (state->CoPro[CPNum]->MCR)(state,ARMul_FIRST,instr,source);
+ while (cpab == ARMul_BUSY) {
+    ARMul_Icycles(state,1);
+    if (IntPending(state)) {
+       cpab = (state->CoPro[CPNum]->MCR)(state,ARMul_INTERRUPT,instr,0);
+       return;
+       }
+    else
+       cpab = (state->CoPro[CPNum]->MCR)(state,ARMul_BUSY,instr,source);
+    }
+ if (cpab == ARMul_CANT)
+    ARMul_Abort(state,ARMul_UndefinedInstrV);
+ else {
+    BUSUSEDINCPCN;
+    ARMul_Icycles(state,1); /* Should be C */
+    }
+ }
+
+/***************************************************************************\
+*        This function does the Busy-Waiting for an MRC instruction.        *
+\***************************************************************************/
+
+bool ARMul_MRC(ARMul_State *state,ARMword instr,ARMword *result)
+{unsigned cpab;
+
+ cpab = (state->CoPro[CPNum]->MRC)(state,ARMul_FIRST,instr,result);
+ while (cpab == ARMul_BUSY) {
+    ARMul_Icycles(state,1);
+    if (IntPending(state)) {
+       cpab = (state->CoPro[CPNum]->MRC)(state,ARMul_INTERRUPT,instr,0);
+       return false;
+       }
+    else
+       cpab = (state->CoPro[CPNum]->MRC)(state,ARMul_BUSY,instr,result);
+    }
+ if (cpab == ARMul_CANT) {
+    ARMul_Abort(state,ARMul_UndefinedInstrV);
+    return false;
+    }
+ else {
+    BUSUSEDINCPCN;
+    ARMul_Icycles(state,1);
+    ARMul_Icycles(state,1);
+    }
+ return true;
+}
+
+/***************************************************************************\
+*        This function does the Busy-Waiting for an CDP instruction.        *
+\***************************************************************************/
+
+void ARMul_CDP(ARMul_State *state,ARMword instr)
+{unsigned cpab;
+
+ cpab = (state->CoPro[CPNum]->CDP)(state,ARMul_FIRST,instr);
+ while (cpab == ARMul_BUSY) {
+    ARMul_Icycles(state,1);
+    if (IntPending(state)) {
+       cpab = (state->CoPro[CPNum]->CDP)(state,ARMul_INTERRUPT,instr);
+       return;
+       }
+    else
+       cpab = (state->CoPro[CPNum]->CDP)(state,ARMul_BUSY,instr);
+    }
+ if (cpab == ARMul_CANT)
+    ARMul_Abort(state,ARMul_UndefinedInstrV);
+ else
+    BUSUSEDN;
 }

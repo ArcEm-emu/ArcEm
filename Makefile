@@ -103,7 +103,7 @@ SRCS = armcopro.c armemu.c arminit.c arch/armarc.c \
 	arch/filero.c arch/fileunix.c arch/filewin.c \
 	libs/inih/ini.c
 
-INCS = armdefs.h armemu.h $(SYSTEM)/KeyTable.h \
+INCS = armcopro.h armdefs.h armemu.h $(SYSTEM)/KeyTable.h \
   arch/i2c.h arch/archio.h arch/fdc1772.h arch/ControlPane.h \
   arch/hdc63463.h arch/keyboard.h arch/ArcemConfig.h arch/cp15.h \
   libs/inih/ini.h

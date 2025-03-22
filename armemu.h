@@ -376,12 +376,6 @@ unsigned ARMul_NthReg(ARMword instr,unsigned number);
 void ARMul_R15Altered(ARMul_State *state);
 ARMword ARMul_SwitchMode(ARMul_State *state,ARMword oldmode, ARMword newmode);
 unsigned ARMul_NthReg(ARMword instr, unsigned number);
-void ARMul_LDC(ARMul_State *state,ARMword instr,ARMword address);
-void ARMul_STC(ARMul_State *state,ARMword instr,ARMword address);
-void ARMul_MCR(ARMul_State *state,ARMword instr, ARMword source);
-bool ARMul_MRC(ARMul_State *state,ARMword instr,ARMword *result);
-void ARMul_CDP(ARMul_State *state,ARMword instr);
-bool IntPending(ARMul_State *state);
 
 
 /***************************************************************************\

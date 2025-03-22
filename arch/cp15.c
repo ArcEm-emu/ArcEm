@@ -1,6 +1,7 @@
 /* (c) Peter Howkins 2006 - see Readme file for copying info
    with assistance from Tom Walker */
 #include "../armdefs.h"
+#include "../armcopro.h"
 #include "cp15.h"
 
 /* VLSI ARM3 VL86C020 */
@@ -14,7 +15,7 @@
 #define ARM3_CP15_REG_4_RW_UPDATABLE_AREAS   4
 #define ARM3_CP15_REG_5_RW_DISRUPTIVE_AREAS  5
 
-struct
+static struct
 {
   ARMword uControlRegister;
   ARMword uCachableAreas;
@@ -31,57 +32,11 @@ struct
  * @param hState Emulator state
  * @returns Bool of successful initialisation
  */
-bool ARM3_Initialise(ARMul_State *hState)
+static bool ARM3_Initialise(ARMul_State *hState)
 {
   ARM3_CP15_Registers.uControlRegister = 0;
 
   return true;
-}
-
-/**
- * ARM3_MRCs
- *
- * Read a value from one of the registers on the
- * ARM3 cpu control coprocessor.
- *
- * @param hState  Emulator state
- * @param uType   Unused
- * @param instr   The raw MRC instruction value (including the CP register number)
- * @param puValue Place to write the value of the CP register
- * @returns ARMul_DONE on success ARMul_CANT when not allowed
- */
-unsigned ARM3_MRCs(ARMul_State *hState, unsigned uType, ARMword instr, ARMword *puValue)
-{
-  unsigned uReg = BITS(16, 19); /* coprocessor register number is stored in the instruction */
-
-  if(ARM3_RegisterRead(hState, uReg, puValue)) {
-    return ARMul_DONE;
-  } else {
-    return ARMul_CANT;
-  }
-}
-
-/**
- * ARM3_MCRs
- *
- * Write a value to one of the registers on the
- * ARM3 cpu control coprocessor.
- *
- * @param hState Emulator state
- * @param uType  Unused
- * @param instr  The raw MRC instruction value (including the CP register number)
- * @param uValue Value to write to CP register
- * @returns ARMul_DONE on success ARMul_CANT when not allowed
- */
-unsigned ARM3_MCRs(ARMul_State *hState, unsigned uType, ARMword instr, ARMword uValue)
-{
-  unsigned uReg = BITS(16, 19); /* coprocessor register number is stored in the instruction */
-
-  if(ARM3_RegisterWrite(hState, uReg, uValue)) {
-    return ARMul_DONE;
-  } else {
-    return ARMul_CANT;
-  }
 }
 
 /**
@@ -96,7 +51,7 @@ unsigned ARM3_MCRs(ARMul_State *hState, unsigned uType, ARMword instr, ARMword u
  * @param puValue Place to write the value of the CP register
  * @returns true on success, false on disallowed reads
  */
-bool ARM3_RegisterRead(ARMul_State *hState, unsigned uReg, ARMword *puValue)
+static bool ARM3_RegisterRead(ARMul_State *hState, unsigned uReg, ARMword *puValue)
 {
   switch (uReg) {
     case ARM3_CP15_REG_0_RO_PROCESSOR_ID:
@@ -142,7 +97,7 @@ bool ARM3_RegisterRead(ARMul_State *hState, unsigned uReg, ARMword *puValue)
  * @param uValue Value to write to CP register
  * @returns true on success, false on disallowed reads
  */
-bool ARM3_RegisterWrite(ARMul_State *hState, unsigned uReg, ARMword uValue)
+static bool ARM3_RegisterWrite(ARMul_State *hState, unsigned uReg, ARMword uValue)
 {
   switch (uReg)
   {
@@ -184,3 +139,72 @@ bool ARM3_RegisterWrite(ARMul_State *hState, unsigned uReg, ARMword uValue)
   return true;
 }
 
+/**
+ * ARM3_MRCs
+ *
+ * Read a value from one of the registers on the
+ * ARM3 cpu control coprocessor.
+ *
+ * @param hState  Emulator state
+ * @param uType   Unused
+ * @param instr   The raw MRC instruction value (including the CP register number)
+ * @param puValue Place to write the value of the CP register
+ * @returns ARMul_DONE on success ARMul_CANT when not allowed
+ */
+static unsigned ARM3_MRCs(ARMul_State *hState, unsigned uType, ARMword instr, ARMword *puValue)
+{
+  unsigned uReg = BITS(16, 19); /* coprocessor register number is stored in the instruction */
+
+  if(ARM3_RegisterRead(hState, uReg, puValue)) {
+    return ARMul_DONE;
+  } else {
+    return ARMul_CANT;
+  }
+}
+
+/**
+ * ARM3_MCRs
+ *
+ * Write a value to one of the registers on the
+ * ARM3 cpu control coprocessor.
+ *
+ * @param hState Emulator state
+ * @param uType  Unused
+ * @param instr  The raw MRC instruction value (including the CP register number)
+ * @param uValue Value to write to CP register
+ * @returns ARMul_DONE on success ARMul_CANT when not allowed
+ */
+static unsigned ARM3_MCRs(ARMul_State *hState, unsigned uType, ARMword instr, ARMword uValue)
+{
+  unsigned uReg = BITS(16, 19); /* coprocessor register number is stored in the instruction */
+
+  if(ARM3_RegisterWrite(hState, uReg, uValue)) {
+    return ARMul_DONE;
+  } else {
+    return ARMul_CANT;
+  }
+}
+
+static const ARMul_CoPro ARM3CoPro = {
+  ARM3_Initialise,    /* CPInit */
+  NULL,               /* CPExit */
+  ARMul_NoCoPro4R,    /* LDC */
+  ARMul_NoCoPro4W,    /* STC */
+  ARM3_MRCs,          /* MRC */
+  ARM3_MCRs,          /* MCR */
+  ARMul_NoCoPro3R,    /* CDP */
+  ARM3_RegisterRead,  /* CPRead */
+  ARM3_RegisterWrite  /* CPWrite */
+};
+
+/**
+ * ARM3_CoProAttach
+ *
+ * Attach the ARM3 cpu control coprocessor.
+ *
+ * @param hState Emulator state
+ */
+void ARM3_CoProAttach(ARMul_State *state)
+{
+  ARMul_CoProAttach(state, 15, &ARM3CoPro);
+}

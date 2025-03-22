@@ -29,6 +29,7 @@
 
 #include "dagstandalone.h"
 #include "armdefs.h"
+#include "armcopro.h"
 #include "dbugsys.h"
 
 #include "ArcemConfig.h"

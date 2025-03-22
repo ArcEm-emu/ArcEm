@@ -6,6 +6,7 @@ project(ArcEm LANGUAGES C)
 
 set(ARCEM_SOURCES
 	armcopro.c
+	armcopro.h
 	armdefs.h
 	armemu.c
 	armemu.h

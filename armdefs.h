@@ -199,16 +199,6 @@ typedef struct {
 *                          Main emulator state                              *
 \***************************************************************************/
 
-typedef bool ARMul_CPInits(ARMul_State *state);
-typedef bool ARMul_CPExits(ARMul_State *state);
-typedef unsigned ARMul_LDCs(ARMul_State *state, unsigned type, ARMword instr, ARMword value);
-typedef unsigned ARMul_STCs(ARMul_State *state, unsigned type, ARMword instr, ARMword *value);
-typedef unsigned ARMul_MRCs(ARMul_State *state, unsigned type, ARMword instr, ARMword *value);
-typedef unsigned ARMul_MCRs(ARMul_State *state, unsigned type, ARMword instr, ARMword value);
-typedef unsigned ARMul_CDPs(ARMul_State *state, unsigned type, ARMword instr);
-typedef bool ARMul_CPReads(ARMul_State *state, unsigned reg, ARMword *value);
-typedef bool ARMul_CPWrites(ARMul_State *state, unsigned reg, ARMword value);
-
 typedef enum ARMStartIns {
   NORMAL        = 0,
   PCINCED       = 1,
@@ -219,6 +209,7 @@ typedef enum ARMStartIns {
 typedef struct arch_keyboard arch_keyboard;
 typedef struct Vidc_Regs Vidc_Regs;
 typedef struct ArcemConfig_s ArcemConfig;
+typedef struct ARMul_CoPro ARMul_CoPro;
 
 #define Exception_IRQ R15IBIT
 #define Exception_FIQ R15FBIT
@@ -257,17 +248,7 @@ struct ARMul_State {
    bool HasSWP, HasCP15;      /* enabled CPU features */
 
    /* Rare stuff */
-   ARMul_CPInits *CPInit[16]; /* coprocessor initialisers */
-   ARMul_CPExits *CPExit[16]; /* coprocessor finalisers */
-   ARMul_LDCs *LDC[16];       /* LDC instruction */
-   ARMul_STCs *STC[16];       /* STC instruction */
-   ARMul_MRCs *MRC[16];       /* MRC instruction */
-   ARMul_MCRs *MCR[16];       /* MCR instruction */
-   ARMul_CDPs *CDP[16];       /* CDP instruction */
-   ARMul_CPReads *CPRead[16]; /* Read CP register */
-   ARMul_CPWrites *CPWrite[16]; /* Write CP register */
-   unsigned char *CPData[16]; /* Coprocessor data */
-
+   const ARMul_CoPro *CoPro[16]; /* coprocessor interface */
  };
 
 #ifdef AMIGA
@@ -332,29 +313,6 @@ extern void ARMul_Abort(ARMul_State *state, ARMword address);
 
 extern bool ARMul_MemoryInit(ARMul_State *state);
 extern void ARMul_MemoryExit(ARMul_State *state);
-
-/***************************************************************************\
-*            Definitons of things in the co-processor interface             *
-\***************************************************************************/
-
-#define ARMul_FIRST 0
-#define ARMul_TRANSFER 1
-#define ARMul_BUSY 2
-#define ARMul_DATA 3
-#define ARMul_INTERRUPT 4
-#define ARMul_DONE 0
-#define ARMul_CANT 1
-#define ARMul_INC 3
-
-extern bool ARMul_CoProInit(ARMul_State *state);
-extern void ARMul_CoProExit(ARMul_State *state);
-extern void ARMul_CoProAttach(ARMul_State *state, unsigned number,
-                              ARMul_CPInits *init, ARMul_CPExits *exits,
-                              ARMul_LDCs *ldc, ARMul_STCs *stc,
-                              ARMul_MRCs *mrc, ARMul_MCRs *mcr,
-                              ARMul_CDPs *cdp,
-                              ARMul_CPReads *reads, ARMul_CPWrites *writes);
-extern void ARMul_CoProDetach(ARMul_State *state, unsigned number);
 
 #include "arch/archio.h"
 #include "arch/armarc.h"

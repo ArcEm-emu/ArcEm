@@ -20,67 +20,10 @@
 
  
 /**
- * ARM3_Initialise
+ * ARM3_CoProAttach
  *
- * Initialise the ARM3 cpu control coprocessor.
- *
- * @param hState Emulator state
- * @returns Bool of successful initialisation
- */
-bool ARM3_Initialise(ARMul_State *state);
-
-/**
- * ARM3_MRCs
- *
- * Read a value from one of the registers on the
- * ARM3 cpu control coprocessor.
- *
- * @param hState  Emulator state
- * @param uType   Unused
- * @param instr   The raw MRC instruction value (including the CP register number)
- * @param puValue Place to write the value of the CP register
- * @returns ARMul_DONE on success ARMul_CANT when not allowed
- */
-unsigned ARM3_MRCs(ARMul_State *state, unsigned type, ARMword instr, ARMword *value);
-
-/**
- * ARM3_MCRs
- *
- * Write a value to one of the registers on the
- * ARM3 cpu control coprocessor.
+ * Attach the ARM3 cpu control coprocessor.
  *
  * @param hState Emulator state
- * @param uType  Unused
- * @param instr  The raw MRC instruction value (including the CP register number)
- * @param uValue Value to write to CP register
- * @returns ARMul_DONE on success ARMul_CANT when not allowed
  */
-unsigned ARM3_MCRs(ARMul_State *state, unsigned type, ARMword instr, ARMword value);
-
-/**
- * ARM3_RegisterRead
- *
- * Read a value from one of the registers on the
- * ARM3 cpu control coprocessor. This is the interface
- * used by the RDI system.
- *
- * @param hState  Emulator state
- * @param uReg    Coprocessor register
- * @param puValue Place to write the value of the CP register
- * @returns true on success, false on disallowed reads
- */
-bool ARM3_RegisterRead(ARMul_State *state, unsigned reg, ARMword *value);
-
-/**
- * ARM3_RegisterWrite
- *
- * Write a value to one of the registers on the
- * ARM3 cpu control coprocessor. This is the interface
- * used by the RDI system.
- *
- * @param hState Emulator state
- * @param uReg   Coprocessor register
- * @param uValue Value to write to CP register
- * @returns true on success, false on disallowed reads
- */
-bool ARM3_RegisterWrite(ARMul_State *state, unsigned reg, ARMword value);
+void ARM3_CoProAttach(ARMul_State *state);

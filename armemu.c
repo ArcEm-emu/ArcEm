@@ -19,6 +19,7 @@
     (arcem@treblig.org) */
 #include "armdefs.h"
 #include "armemu.h"
+#include "armcopro.h"
 #include <time.h>
 #include "prof.h"
 #include "arch/archio.h"
