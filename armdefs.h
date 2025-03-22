@@ -28,6 +28,9 @@
 /* Control caching of instruction handler functions */
 #define ARMUL_INSTR_FUNC_CACHE
 
+/* Support coprocessors for ARM3 cache control */
+#define ARMUL_COPRO_SUPPORT
+
 typedef uint32_t ARMword; /* must be 32 bits wide */
 
 typedef struct ARMul_State ARMul_State;
@@ -247,8 +250,10 @@ struct ARMul_State {
    ARMword loaded, decoded;   /* saved pipeline state */
    bool HasSWP, HasCP15;      /* enabled CPU features */
 
+#ifdef ARMUL_COPRO_SUPPORT
    /* Rare stuff */
    const ARMul_CoPro *CoPro[16]; /* coprocessor interface */
+#endif
  };
 
 #ifdef AMIGA

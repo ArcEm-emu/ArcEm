@@ -21,6 +21,8 @@
 
 #include "armdefs.h"
 
+#ifdef ARMUL_COPRO_SUPPORT
+
 /***************************************************************************\
 *            Definitons of things in the co-processor interface             *
 \***************************************************************************/
@@ -75,5 +77,44 @@ extern void ARMul_CDP(ARMul_State *state,ARMword instr);
 unsigned ARMul_NoCoPro3R(ARMul_State *state,unsigned,ARMword);
 unsigned ARMul_NoCoPro4R(ARMul_State *state,unsigned,ARMword,ARMword);
 unsigned ARMul_NoCoPro4W(ARMul_State *state,unsigned,ARMword,ARMword *);
+
+#else
+#include "armemu.h"
+
+static inline void ARMul_LDC(ARMul_State *state,ARMword instr,ARMword address)
+{
+ UNDEF_LSCPCBaseWb;
+ if (ADDREXCEPT(address)) {
+    INTERNALABORT(address);
+    }
+ CPTAKEABORT;
+}
+
+static inline void ARMul_STC(ARMul_State *state,ARMword instr,ARMword address)
+{
+ UNDEF_LSCPCBaseWb;
+ if (ADDREXCEPT(address)) {
+    INTERNALABORT(address);
+    }
+ CPTAKEABORT;
+}
+
+static inline void ARMul_MCR(ARMul_State *state,ARMword instr, ARMword source)
+{
+ ARMul_Abort(state,ARMul_UndefinedInstrV);
+}
+
+static inline bool ARMul_MRC(ARMul_State *state,ARMword instr,ARMword *result)
+{
+ ARMul_Abort(state,ARMul_UndefinedInstrV);
+ return false;
+}
+
+static inline void ARMul_CDP(ARMul_State *state,ARMword instr)
+{
+ ARMul_Abort(state,ARMul_UndefinedInstrV);
+}
+
+#endif
 
 #endif

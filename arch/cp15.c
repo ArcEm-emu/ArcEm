@@ -1,6 +1,8 @@
 /* (c) Peter Howkins 2006 - see Readme file for copying info
    with assistance from Tom Walker */
 #include "../armdefs.h"
+
+#ifdef ARMUL_COPRO_SUPPORT
 #include "../armcopro.h"
 #include "cp15.h"
 
@@ -208,3 +210,5 @@ void ARM3_CoProAttach(ARMul_State *state)
 {
   ARMul_CoProAttach(state, 15, &ARM3CoPro);
 }
+
+#endif

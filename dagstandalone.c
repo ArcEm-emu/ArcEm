@@ -92,8 +92,13 @@ static void InitFail(int exitcode, char const *which) {
   ARMul_Reset(emu_state);
   if (!ARMul_MemoryInit(emu_state))
     InitFail(1, "Memory");
+#ifdef ARMUL_COPRO_SUPPORT
   if (!ARMul_CoProInit(emu_state))
     InitFail(2, "Co-Processor");
+#else
+  if (emu_state->HasCP15)
+    ControlPane_Error(2, "ARM3 support is not available in this build of ArcEm. Exiting\n");
+#endif
   ARMul_Reset(emu_state);
 
   /* Excecute */
@@ -101,6 +106,8 @@ static void InitFail(int exitcode, char const *which) {
   emu_state->Reg[15] -= 8; /* undo the pipeline (bogus?) */
 
   /* Close and Finalise */
+#ifdef ARMUL_COPRO_SUPPORT
   ARMul_CoProExit(emu_state);
+#endif
   ARMul_MemoryExit(emu_state);
 }

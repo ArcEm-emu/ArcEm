@@ -17,6 +17,7 @@
 
 #include "armdefs.h"
 
+#ifdef ARMUL_COPRO_SUPPORT
 #include "armcopro.h"
 #include "armemu.h"
 #include "arch/cp15.h"
@@ -332,3 +333,5 @@ void ARMul_CDP(ARMul_State *state,ARMword instr)
  else
     BUSUSEDN;
 }
+
+#endif

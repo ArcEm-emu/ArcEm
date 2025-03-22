@@ -15,6 +15,10 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. */
 
+/* DAG - added header recursion tests */
+#ifndef ARMEMU_HEADER
+#define ARMEMU_HEADER
+
 /* Control the use of the immediate constant table (ARMul_ImmedTable)
    On ARM we don't want to use it, as it's about 8% slower than using the barrel shifter directly
    Other platforms with decent a rotate right instruction may want to avoid using the table too
@@ -420,4 +424,6 @@ void EmuRate_Update(ARMul_State *state);
 #define UNDEF_IllegalMode
 #define UNDEF_Prog32SigChange
 #define UNDEF_Data32SigChange
+
+#endif
 
