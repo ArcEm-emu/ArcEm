@@ -9,6 +9,8 @@
 #include "../arch/fdc1772.h"
 #include <string.h>
 
+#ifdef __amigaos4__
+
 struct Library *ARexxBase;
 struct ARexxIFace *IARexx;
 
@@ -104,4 +106,6 @@ STATIC VOID rx_led(struct ARexxCmd *cmd, struct RexxMsg *rxm __attribute__((unus
 	(KBD.Leds & 4) Scroll
 */
 }
+
+#endif
 

@@ -39,10 +39,10 @@ struct OCMIFace *IOCM = NULL;
 #endif /* ONCHIPMEM_SUPPORT */
 #endif /* _amigaos4__ */
 
+#ifdef __amigaos4__
 struct Library *AslBase;
 struct Library *GfxBase;
 struct Library *IntuitionBase;
-#ifdef __amigaos4__
 struct AslIFace *IAsl;
 struct GraphicsIFace *IGraphics;
 struct IntuitionIFace *IIntuition;
@@ -100,7 +100,11 @@ void *state_alloc(int s)
 #endif
 
 	if(p == NULL) {
+#ifdef __amigaos4__
 		p = AllocVec(s, MEMF_PRIVATE);
+#else
+		p = AllocVec(s, MEMF_ANY);
+#endif
 	}
 	
 	return p;
