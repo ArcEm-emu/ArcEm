@@ -39,8 +39,8 @@
 
 extern ArcemConfig hArcemConfig;
 
-extern unsigned char *screenbmp;
-extern unsigned char *cursorbmp;
+extern uint32_t *screenbmp;
+extern uint32_t *cursorbmp;
 ArcemView* disp;
 ArcemController* controller;
 char arcemDir[256];

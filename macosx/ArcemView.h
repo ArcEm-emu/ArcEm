@@ -37,7 +37,7 @@
 
     NSRect dispFrame;
     
-    char keyState[256];
+    bool keyState[256];
     int nMouse;
 
     // Lets us return the mouse after we capture it

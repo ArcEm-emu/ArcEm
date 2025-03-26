@@ -84,7 +84,7 @@ static void draw_floppy_leds(unsigned int leds)
 
 static void insert_or_eject_floppy(int drive)
 {
-    static char got_disc[4];
+    static bool got_disc[4];
     static char image[] = "FloppyImage#";
     const char *err;
 
@@ -92,14 +92,14 @@ static void insert_or_eject_floppy(int drive)
         err = FDC_EjectFloppy(drive);
         fprintf(stderr, "ejecting drive %d: %s\n", drive,
             err ? err : "ok");
+        got_disc[drive] = err ? true : false;
     } else {
         image[sizeof image - 2] = '0' + drive;
         err = FDC_InsertFloppy(drive, image);
         fprintf(stderr, "inserting floppy image %s into drive %d: %s\n",
             image, drive, err ? err : "ok");
+        got_disc[drive] = err ? false : true;
     }
-
-    got_disc[drive] ^= !err;
 }
 
 

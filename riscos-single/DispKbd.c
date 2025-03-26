@@ -379,7 +379,7 @@ static void PDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,in
 
 static void PDD_Name(Host_SetPaletteEntry)(ARMul_State *state,int i,uint_fast16_t phys)
 {
-  char buf[5];
+  uint8_t buf[5];
   buf[0] = i;
   buf[1] = 16;
   buf[2] = (phys & 0xf)*0x11;
@@ -398,7 +398,7 @@ static void PDD_Name(Host_SetCursorPaletteEntry)(ARMul_State *state,int i,uint_f
 
 static void PDD_Name(Host_SetBorderColour)(ARMul_State *state,uint_fast16_t phys)
 {
-  char buf[5];
+  uint8_t buf[5];
   /* Set real border */
   buf[0] = 0;
   buf[1] = 24;
@@ -572,7 +572,7 @@ PDD_Name(Host_PollDisplay)(ARMul_State *state)
 
 static void set_cursor_palette(uint_least16_t *pal)
 {
-  char buf[5];
+  uint8_t buf[5];
   int c;
 
   buf[1] = 25;
@@ -591,7 +591,7 @@ static void set_cursor_palette(uint_least16_t *pal)
 /* Move the cursor image                                                      */
 static void UpdateCursorPos(ARMul_State *state,const DisplayParams *params) {
   int internal_x, internal_y;
-  char block[5];
+  uint8_t block[5];
 
   /* Calculate correct cursor position, relative to the display start */
   DisplayDev_GetCursorPos(state,&internal_x,&internal_y);
@@ -662,8 +662,8 @@ static void RefreshMouse(ARMul_State *state,const DisplayParams *params) {
     /* Double the width of the image; might not work too well */
     static ARMword double_data[2*32];
     int x,y;
-    char *src = (char *) pointer_data;
-    char *dest = (char *) double_data;
+    uint8_t *src = (uint8_t *) pointer_data;
+    uint8_t *dest = (uint8_t *) double_data;
     /* RISC OS tends to store the image in the right half of the buffer, so shift the image left as far as possible to avoid losing any columns
        Note that we're only doing it 4 columns at a time here to keep the code simple */
     for(;CursorXOffset<16;CursorXOffset += 4)
@@ -679,7 +679,7 @@ static void RefreshMouse(ARMul_State *state,const DisplayParams *params) {
     {
       for(x=0;x<4;x++)
       {
-        char c = *src;
+        uint8_t c = *src;
         *dest++ = ((c&0x3)*0x5) | (((c&0xc)>>2)*0x50);
         *dest++ = (((c&0x30)>>4)*0x5) | (((c&0xc0)>>6)*0x50);
         src++;
@@ -690,7 +690,7 @@ static void RefreshMouse(ARMul_State *state,const DisplayParams *params) {
   }
 
   {
-    char block[10];
+    uint8_t block[10];
 
     block[0] = 0;
     block[1] = 2;
@@ -855,7 +855,7 @@ static void MouseMoved(ARMul_State *state, int mousex, int mousey/*,XMotionEvent
   if ((mousex==xmid) && (mousey==ymid)) return;
 
   {
-    char block[5];
+    uint8_t block[5];
     int x=xmid;
     int y=ymid;
 
@@ -875,11 +875,9 @@ static void MouseMoved(ARMul_State *state, int mousex, int mousey/*,XMotionEvent
   xdiff=mousex-xmid;
   if (KBD.MouseXCount!=0) {
     if (KBD.MouseXCount & 64) {
-      signed char tmpC;
-      int tmpI;
+      int8_t tmpC;
       tmpC=KBD.MouseXCount | 128;
-      tmpI=(signed int)tmpC;
-      xdiff+=tmpI;
+      xdiff+=tmpC;
     } else {
       xdiff+=KBD.MouseXCount;
     };
@@ -890,7 +888,7 @@ static void MouseMoved(ARMul_State *state, int mousex, int mousey/*,XMotionEvent
 
   ydiff=mousey-ymid;
   if (KBD.MouseYCount & 64) {
-    signed char tmpC;
+    int8_t tmpC;
     tmpC=KBD.MouseYCount | 128; /* Sign extend */
     ydiff+=tmpC;
   } else {

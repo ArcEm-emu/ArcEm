@@ -62,7 +62,7 @@ struct I2CStruct {
   uint_least16_t DataBuffer;
   uint8_t NumberOfBitsSoFar;
   bool LastrNw;
-  uint8_t WordAddress; /* Note unsigned char - can never be outside Data bounds */
+  uint8_t WordAddress; /* Note uint8_t - can never be outside Data bounds */
 };
 
 static struct I2CStruct I2C;
@@ -70,7 +70,7 @@ static struct I2CStruct I2C;
 /* These are "sensible" defaults from the git hexcmos file,
    as opposed to "factory" defaults, which are not quite as sensible */
 
-static const unsigned char CMOSDefaults[] = {
+static const uint_least8_t CMOSDefaults[] = {
 	0x0,0xfe,0x0,0xeb,0x0,0x8,0x0,0x0,0x0,0x0,
 	0x10,0x50,0x1d,0xc,0x0,0x2e,0x80,0x2,0x0,0x0,
 	0x0,0x0,0x3,0xa,0x0,0x1,0x0,0x0,0x2,0x0,
@@ -168,7 +168,7 @@ static void SaveCMOS(ARMul_State *state) {
   const char *defaultFile = "hexcmos";
 #endif
   int loop,dest;
-  unsigned char val;
+  uint_fast8_t val;
   FILE *OutFile;
 
 #ifdef SYSTEM_macosx

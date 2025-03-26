@@ -744,11 +744,9 @@ static void MouseMoved(ARMul_State *state,XMotionEvent *xmotion)
 
   if (KBD.MouseXCount != 0) {
     if (KBD.MouseXCount & 64) {
-      signed char tmpC;
-      int tmpI;
+      int8_t tmpC;
       tmpC = KBD.MouseXCount | 128;
-      tmpI = (signed int)tmpC;
-      xdiff += tmpI;
+      xdiff += tmpC;
     } else {
       xdiff += KBD.MouseXCount;
     }
@@ -760,7 +758,7 @@ static void MouseMoved(ARMul_State *state,XMotionEvent *xmotion)
     xdiff = -63;
 
   if (KBD.MouseYCount & 64) {
-    signed char tmpC;
+    int8_t tmpC;
     tmpC = KBD.MouseYCount | 128; /* Sign extend */
     ydiff += tmpC;
   } else {

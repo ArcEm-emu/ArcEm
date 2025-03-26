@@ -34,8 +34,8 @@
 #include "win.h"
 #include "ControlPane.h"
 
-unsigned char *screenbmp;
-unsigned char *cursorbmp;
+uint32_t *screenbmp;
+uint32_t *cursorbmp;
 
 int rMouseX = 0;
 int rMouseY = 0;
@@ -80,7 +80,7 @@ static void SDD_Name(Host_SkipPixels)(ARMul_State *state,SDD_Row *row,
 
 static SDD_Row SDD_Name(Host_BeginRow)(ARMul_State *state,int row,int offset)
 {
-  SDD_Row dibbmp = (unsigned int*)screenbmp;
+  SDD_Row dibbmp = screenbmp;
 
   return &dibbmp[(row*MonitorWidth)+offset];
 }
@@ -133,8 +133,8 @@ static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,
 
 static void RefreshMouse(ARMul_State *state)
 {
-  SDD_Row curbmp = (unsigned int*)cursorbmp;
-  SDD_Row dibbmp = (unsigned int*)screenbmp;
+  SDD_Row curbmp = cursorbmp;
+  SDD_Row dibbmp = screenbmp;
   int offset, pix, repeat;
   int memptr;
   int HorizPos;

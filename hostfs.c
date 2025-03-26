@@ -204,7 +204,7 @@ static const char *disc_name_default = "HostFS";
 
 static FILE *open_file[MAX_OPEN_FILES + 1]; /* array subscript 0 is never used */
 
-static unsigned char *buffer = NULL;
+static uint8_t *buffer = NULL;
 static size_t buffer_size = 0;
 
 static cache_directory_entry *cache_entries = NULL;

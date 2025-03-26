@@ -48,7 +48,7 @@ extern int rMouseHeight;
         int i;
         
         captureMouse = FALSE;
-        memset(keyState, 0, 256);
+        memset(keyState, false, sizeof(keyState));
 
         // Set the default display region
         dispFrame.origin.x = 0.0;
@@ -361,19 +361,19 @@ extern int rMouseHeight;
     ARMul_State *state = &statestr;
     int c = [theEvent keyCode];
     
-    keyState[c] = (keyState[c] == 0) ? 1 : 0;
+    keyState[c] = !keyState[c];
     //NSLog(@"set %d to %d\n", c, keyState[c]);
 
     const mac_to_arch_key *ktak;
     for (ktak = mac_to_arch_key_map; ktak->sym >= 0; ktak++) {
       if (ktak->sym == c) {
-        keyboard_key_changed(&KBD, ktak->kid, keyState[c] == 1 ? 0 : 1);
+        keyboard_key_changed(&KBD, ktak->kid, !keyState[c]);
 
         // Need to toggle caps lock and number lock
         if ((c == kVK_CapsLock) || (c == 0x7f))
         {
             keyboard_key_changed(&KBD, ktak->kid, true);
-            keyState[c] = 0;
+            keyState[c] = false;
         }
         return;
       }

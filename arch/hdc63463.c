@@ -1133,7 +1133,7 @@ static void CheckData_DoNextBufferFull(ARMul_State *state) {
                  HDC.CommandData.ReadData.SCNTH,
                  HDC.CommandData.ReadData.SCNTL);
   } else {
-    static char tmpbuff[256];
+    static uint8_t tmpbuff[256];
     size_t retval;
 
     /* Fill here up! */
@@ -1296,7 +1296,7 @@ static void WriteFormat_DoNextBufferFull(ARMul_State *state) {
   to do */
   int ptr=0;
   int sectorsleft=HDC.CommandData.WriteFormat.SectorsLeft;
-  char *fillbuffer; /* A buffer which holds a block of data to write */
+  uint8_t *fillbuffer; /* A buffer which holds a block of data to write */
 
   if (fillbuffer=malloc(8192),fillbuffer==NULL) {
     ControlPane_Error(1,"HDC:WriteFormat_DoNextBufferFull: Couldn't allocate memory for fillbuffer\n");
