@@ -12,7 +12,6 @@
 #include "../armdefs.h"
 #include "../arch/sound.h"
 #include "../arch/displaydev.h"
-#include "../armemu.h"
 
 static uint32_t format = AFMT_S16_LE;
 static uint32_t channels = 2;

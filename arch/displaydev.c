@@ -12,7 +12,6 @@
 #include "armdefs.h"
 #include "displaydev.h"
 #include "archio.h"
-#include "armemu.h"
 
 const DisplayDev *DisplayDev_Current = NULL;
 

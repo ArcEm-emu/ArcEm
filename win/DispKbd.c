@@ -10,7 +10,6 @@
 #include "displaydev.h"
 #include "win.h"
 #include "KeyTable.h"
-#include "../armemu.h"
 #include "ControlPane.h"
 
 

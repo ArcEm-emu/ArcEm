@@ -19,7 +19,6 @@
 #include "arch/keyboard.h"
 #include "archio.h"
 #include "hdc63463.h"
-#include "../armemu.h"
 #include "arch/displaydev.h"
 #include "arch/ArcemConfig.h"
 #include "../prof.h"

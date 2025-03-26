@@ -28,7 +28,6 @@
 #include "arch/armarc.h"
 #include "arch/dbugsys.h"
 #include "arch/sound.h"
-#include "../armemu.h"
 #include "displaydev.h"
 
 #define MAX_BATCH_SIZE 1024

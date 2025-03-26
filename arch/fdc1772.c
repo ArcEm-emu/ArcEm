@@ -19,7 +19,6 @@
 /*#include <unistd.h>*/
 
 #include "../armdefs.h"
-#include "../armemu.h"
 
 #include "ArcemConfig.h"
 #include "armarc.h"

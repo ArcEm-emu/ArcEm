@@ -5,7 +5,6 @@
 #include <signal.h>
 
 #include "../armdefs.h"
-#include "../armemu.h"
 
 #include "dbugsys.h"
 

@@ -214,8 +214,8 @@ typedef struct Vidc_Regs Vidc_Regs;
 typedef struct ArcemConfig_s ArcemConfig;
 typedef struct ARMul_CoPro ARMul_CoPro;
 
-#define Exception_IRQ R15IBIT
-#define Exception_FIQ R15FBIT
+#define Exception_IRQ (UINT32_C(1) << 27)
+#define Exception_FIQ (UINT32_C(1) << 26)
 
 struct ARMul_State {
    /* Most common stuff, current register file first to ease indexing */
@@ -319,6 +319,19 @@ extern void ARMul_Abort(ARMul_State *state, ARMword address);
 
 extern bool ARMul_MemoryInit(ARMul_State *state);
 extern void ARMul_MemoryExit(ARMul_State *state);
+
+/***************************************************************************\
+*                               ARM Support                                 *
+\***************************************************************************/
+
+/* An estimate of how many cycles the host is executing per second */
+extern uint32_t ARMul_EmuRate;
+
+/* Reset the EmuRate code, to cope with situations where the emulator has just been resumed after being suspended for a period of time (i.e. > 1 second) */
+void EmuRate_Reset(ARMul_State *state);
+
+/* Update the EmuRate value. Note: Manipulates event queue! */
+void EmuRate_Update(ARMul_State *state);
 
 #include "arch/archio.h"
 #include "arch/armarc.h"

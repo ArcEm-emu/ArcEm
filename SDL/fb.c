@@ -15,7 +15,6 @@
 #include "../armdefs.h"
 #include "armarc.h"
 #include "archio.h"
-#include "../armemu.h"
 #include "arch/dbugsys.h"
 #include "arch/displaydev.h"
 #include "ControlPane.h"

@@ -28,7 +28,6 @@
 
 #include "armdefs.h"
 #include "armarc.h"
-#include "armemu.h"
 #include "arch/keyboard.h"
 #include "arch/displaydev.h"
 #include "arch/dbugsys.h"

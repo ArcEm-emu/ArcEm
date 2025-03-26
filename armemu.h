@@ -96,9 +96,9 @@
 #define ZBIT (UINT32_C(1) << 30)
 #define CBIT (UINT32_C(1) << 29)
 #define VBIT (UINT32_C(1) << 28)
-#define R15IBIT (UINT32_C(1) << 27)
-#define R15FBIT (UINT32_C(1) << 26)
-#define R15IFBITS (UINT32_C(3) << 26)
+#define R15IBIT Exception_IRQ
+#define R15FBIT Exception_FIQ
+#define R15IFBITS (R15IBIT|R15FBIT)
 
 #define POS(i) ( (~(i)) >> 31 )
 #define NEG(i) ( (i) >> 31 )
@@ -381,19 +381,6 @@ void ARMul_R15Altered(ARMul_State *state);
 ARMword ARMul_SwitchMode(ARMul_State *state,ARMword oldmode, ARMword newmode);
 unsigned ARMul_NthReg(ARMword instr, unsigned number);
 
-
-/***************************************************************************\
-*                               ARM Support                                 *
-\***************************************************************************/
-
-/* An estimate of how many cycles the host is executing per second */
-extern uint32_t ARMul_EmuRate;
-
-/* Reset the EmuRate code, to cope with situations where the emulator has just been resumed after being suspended for a period of time (i.e. > 1 second) */
-void EmuRate_Reset(ARMul_State *state);
-
-/* Update the EmuRate value. Note: Manipulates event queue! */
-void EmuRate_Update(ARMul_State *state);
 
 /***************************************************************************\
 *                      Macros to scrutinise instructions                    *

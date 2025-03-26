@@ -26,7 +26,6 @@
 #include "arch/dbugsys.h"
 #include "arch/keyboard.h"
 #include "archio.h"
-#include "../armemu.h"
 #include "arch/displaydev.h"
 #include "platform.h"
 #include "ControlPane.h"
