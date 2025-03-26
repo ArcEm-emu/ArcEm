@@ -61,7 +61,7 @@ void Sound_UpdateDMARate(ARMul_State *state)
      ioc.IOEBControlReg - the VIDC clock source */
   static uint8_t oldsoundfreq = 0;
   static uint32_t oldemurate = 0;
-  static uint8_t oldioebcr = 0;
+  static uint_least8_t oldioebcr = 0;
   if((VIDC.SoundFreq == oldsoundfreq) && (ARMul_EmuRate == oldemurate) && (ioc.IOEBControlReg == oldioebcr))
     return;
   oldsoundfreq = VIDC.SoundFreq;
@@ -445,7 +445,7 @@ static void Sound_Process(ARMul_State *state,int32_t avail)
 {
   /* Recalc soundTimeStep */
   static uint8_t oldsoundfreq=0;
-  static uint8_t oldioebcr=0;
+  static uint_least8_t oldioebcr=0;
   static uint32_t oldhostrate=0;
   if((VIDC.SoundFreq != oldsoundfreq) || (ioc.IOEBControlReg != oldioebcr) || (Sound_HostRate != oldhostrate))
   {

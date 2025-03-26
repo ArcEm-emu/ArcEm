@@ -255,7 +255,7 @@ void FDC_LatchAChange(ARMul_State *state) {
   DBG(("LatchA: 0x%x\n",ioc.LatchA));
 
   /* Start up test */
-  if (ioc.LatchAold==UINT_MAX) {
+  if (ioc.LatchAold>0xff) {
     diffmask=0xff;
   }
 
@@ -325,7 +325,7 @@ void FDC_LatchBChange(ARMul_State *state) {
 
   DBG(("LatchB: 0x%x\n",ioc.LatchB));
   /* Start up test */
-  if (ioc.LatchBold==UINT_MAX) {
+  if (ioc.LatchBold>0xff) {
     diffmask=0xff;
   }
 

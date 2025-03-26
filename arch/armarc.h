@@ -213,17 +213,6 @@ FASTMAP_PROTO ARMword ARMul_SwapByte(ARMul_State *state, ARMword address, ARMwor
  */
 #define ARMul_StoreWordN ARMul_StoreWordS /* These were 100% equivalent in the original implementation! */
 
-/* ------------------- access routines for other sections of code ------------- */
-/* Returns a byte in the keyboard serialiser tx register - or -1 if there isn't
-   one. Clears the tx register full flag                                        */
-int ArmArc_ReadKbdTx(ARMul_State *state);
-
-
-/* Places a byte in the keyboard serialiser rx register; returns -1 if its
-   still full.                                                                  */
-int ArmArc_WriteKbdRx(ARMul_State *state, unsigned char value);
-
-
 void ARMul_RebuildFastMap(ARMul_State *state);
 
 #endif

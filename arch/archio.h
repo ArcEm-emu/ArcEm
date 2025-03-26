@@ -6,27 +6,22 @@
 #include "../armdefs.h"
 
 struct IOCStruct {
-  uint8_t ControlReg;
-  uint8_t ControlRegInputData;
-  uint8_t SerialRxData;
-  uint8_t SerialTxData;
-  uint8_t IOEBControlReg;
-  uint_least16_t FIRQStatus,FIRQMask;
+  uint_least8_t ControlReg;
+  uint_least8_t ControlRegInputData;
+  uint_least8_t SerialRxData;
+  uint_least8_t SerialTxData;
+  uint_least8_t IOEBControlReg;
+
+  uint_least8_t LatchA;
+  uint_least8_t LatchB;
+  uint_least16_t LatchAold;
+  uint_least16_t LatchBold;
+
+  uint_least8_t FIRQStatus,FIRQMask;
   uint_least16_t IRQStatus,IRQMask;
   int32_t TimerCount[4];
   uint_least16_t TimerInputLatch[4];
   uint_least16_t TimerOutputLatch[4];
-
-  struct {
-    unsigned int insidebitcount;
-    unsigned int bitinbytecount;
-    unsigned char CurrentKeyVal;
-  } kbd;
-
-  unsigned int LatchA;     /* NOTE: int's to allow -1 at startup */
-  unsigned int LatchAold;
-  unsigned int LatchB;
-  unsigned int LatchBold;
 
   CycleCount TimersLastUpdated;
   CycleCount NextTimerTrigger;
@@ -85,7 +80,7 @@ ARMword GetWord_IO(ARMul_State *state, ARMword address);
 void PutValIO(ARMul_State *state,ARMword address, ARMword data,bool bNw);
 
 /*-----------------------------------------------------------------------------*/
-int IOC_WriteKbdRx(ARMul_State *state, uint8_t value);
+int IOC_WriteKbdRx(ARMul_State *state, uint_least8_t value);
 /*-----------------------------------------------------------------------------*/
 int IOC_ReadKbdTx(ARMul_State *state);
 

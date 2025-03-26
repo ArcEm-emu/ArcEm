@@ -44,9 +44,8 @@ IO_Init(ARMul_State *state)
   ioc.IRQMask = 0;
   ioc.FIRQStatus = 0;
   ioc.FIRQMask = 0;
-  ioc.kbd.CurrentKeyVal = 0xff;
   ioc.LatchA = ioc.LatchB = 0xff;
-  ioc.LatchAold = ioc.LatchBold = UINT_MAX;
+  ioc.LatchAold = ioc.LatchBold = 0xffff;
   ioc.TimerInputLatch[0] = 0xffff;
   ioc.TimerInputLatch[1] = 0xffff;
   ioc.TimerInputLatch[2] = 0xffff;
@@ -376,7 +375,7 @@ PutVal_IOCReg(ARMul_State *state, int Register, ARMword data, bool bNw)
       break;
 
     case 1: /* Serial Tx Data */
-      ioc.SerialTxData = data; /* Should tell the keyboard about this */
+      ioc.SerialTxData = data & 0xff; /* Should tell the keyboard about this */
       ioc.IRQStatus &= ~IRQB_STX; /* Clear KART Tx empty */
       dbug_ioc("IOC Write: Serial Tx Reg Val=0x%x\n", data);
       IO_UpdateNirq(state);
@@ -673,7 +672,7 @@ int
 IOC_ReadKbdTx(ARMul_State *state)
 {
   if ((ioc.IRQStatus & IRQB_STX) == 0) {
-    /*dbug_ioc("ArmArc_ReadKbdTx: Value=0x%x\n", ioc.SerialTxData); */
+    /*dbug_ioc("IOC_ReadKbdTx: Value=0x%x\n", ioc.SerialTxData); */
     /* There is a byte present (Kart TX not empty) */
     /* Mark as empty and then return the value */
     ioc.IRQStatus |= IRQB_STX;
@@ -686,9 +685,9 @@ IOC_ReadKbdTx(ARMul_State *state)
  *  still full.
  */
 int
-IOC_WriteKbdRx(ARMul_State *state, uint8_t value)
+IOC_WriteKbdRx(ARMul_State *state, uint_least8_t value)
 {
-  /*dbug_ioc("ArmArc_WriteKbdRx: value=0x%x\n", value); */
+  /*dbug_ioc("IOC_WriteKbdRx: value=0x%x\n", value); */
   if (ioc.IRQStatus & IRQB_SRX) {
     /* Still full */
     return -1;
