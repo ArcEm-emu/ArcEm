@@ -74,6 +74,14 @@ set(ARCEM_X_SOURCES
 	X/pseudo.c
 	X/true.c
 )
+set(ARCEM_NDS_SOURCES
+	nds/ControlPane.c
+	nds/ControlPane.h
+	nds/DispKbd.c
+	nds/filecalls.c
+	nds/KeyTable.h
+	nds/main.c
+)
 set(ARCEM_VC_SOURCES
 	vc/dirent.h
 )
@@ -87,16 +95,25 @@ set(ARCEM_WIN_SOURCES
 	win/win.c
 	win/win.h
 )
+set(ARCEM_EXTNROM_MODULES
+	support_modules/hostfs/hostfs,ffa
+	support_modules/hostfs/hostfsfiler,ffa
+	support_modules/modes/ArcemModes,ffa
+	support_modules/scrollwheel/scrollwheel,ffa
+	support_modules/support/support,ffa
+)
 
 if(WIN32)
 	set(DEFAULT_SYSTEM "win")
+elseif(NINTENDO_DS)
+	set(DEFAULT_SYSTEM "nds")
 elseif(UNIX AND NOT APPLE AND NOT HAIKU)
 	set(DEFAULT_SYSTEM "X")
 else()
 	set(DEFAULT_SYSTEM "SDL2")
 endif()
-set(SYSTEM ${DEFAULT_SYSTEM} CACHE STRING "System to compile for. Options: X SDL2 SDL1 win")
-set_property(CACHE SYSTEM PROPERTY STRINGS X SDL2 SDL1 win)
+set(SYSTEM ${DEFAULT_SYSTEM} CACHE STRING "System to compile for. Options: X SDL2 SDL1 nds win")
+set_property(CACHE SYSTEM PROPERTY STRINGS X SDL2 SDL1 nds win)
 
 option(EXTNROM_SUPPORT "Build with Extension ROM support" ON)
 if(EXTNROM_SUPPORT)
@@ -150,6 +167,23 @@ elseif(${SYSTEM} STREQUAL "X")
 		find_package(Threads REQUIRED)
 		target_link_libraries(Threads::Threads)
 	endif()
+elseif(${SYSTEM} STREQUAL "nds")
+	add_executable(arcem ${ARCEM_SOURCES} ${ARCEM_ARCH_SOURCES} ${ARCEM_INIH_SOURCES} ${ARCEM_NDS_SOURCES})
+	target_include_directories(arcem PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/nds)
+	target_compile_definitions(arcem PRIVATE SYSTEM_nds USE_FAKEMAIN NO_OPEN64)
+
+	target_compile_options(arcem PRIVATE -mthumb -mthumb-interwork)
+	target_link_options(arcem PRIVATE -Wl,--gc-sections -mthumb -mthumb-interwork)
+
+	grit_add_binary_target(bg nds/img/bg.png)
+	grit_add_binary_target(font nds/img/font.png NO_MAP)
+	grit_add_binary_target(keys nds/img/keys.png NO_MAP)
+	dkp_add_embedded_binary_library(grit_data bg font keys)
+	target_link_libraries(arcem PRIVATE grit_data filesystem fat)
+
+	if(CALICO_ROOT)
+		target_compile_definitions(arcem PRIVATE -D__CALICO__)
+	endif()
 elseif(${SYSTEM} STREQUAL "win")
 	option(SOUND_SUPPORT "Build with sound support" ON)
 	if(SOUND_SUPPORT)
@@ -173,6 +207,25 @@ elseif(APPLE)
 		OUTPUT_NAME "ArcEm"
 		MACOSX_BUNDLE TRUE
 	)
+elseif(NINTENDO_DS)
+	file(COPY ${ARCEM_EXTNROM_MODULES} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/nitrofs/extnrom)
+	set_target_properties(arcem PROPERTIES OUTPUT_NAME "ArcEm")
+	if(CALICO_ROOT)
+		nds_create_rom(arcem
+			ARM7 lykoi
+			SUBTITLE1 "Archimedes Emulator"
+			SUBTITLE2 "WIP using Calico"
+			ICON nds/arc.bmp
+			NITROFS ${CMAKE_CURRENT_BINARY_DIR}/nitrofs
+		)
+	else()
+		nds_create_rom(arcem
+			SUBTITLE1 "Archimedes Emulator"
+			SUBTITLE2 "WIP"
+			ICON nds/arc.bmp
+			NITROFS ${CMAKE_CURRENT_BINARY_DIR}/nitrofs
+		)
+	endif()
 endif()
 
 target_include_directories(arcem PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/arch)
@@ -198,6 +251,7 @@ source_group(src FILES ${ARCEM_SOURCES})
 source_group(src\\arch FILES ${ARCEM_ARCH_SOURCES})
 source_group(src\\X FILES ${ARCEM_X_SOURCES})
 source_group(src\\SDL FILES ${ARCEM_SDL_SOURCES})
+source_group(src\\nds FILES ${ARCEM_NDS_SOURCES})
 source_group(src\\vc FILES ${ARCEM_VC_SOURCES})
 source_group(src\\win FILES ${ARCEM_WIN_SOURCES})
 source_group(libs\\inih FILES ${ARCEM_INIH_SOURCES})
