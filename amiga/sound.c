@@ -5,6 +5,8 @@
  * that take care of any buffering.
  */
 
+#include <stdio.h>
+
 #include "platform.h"
 #include "../armdefs.h"
 #include "../arch/sound.h"

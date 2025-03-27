@@ -15,6 +15,8 @@
 
 /* For now, assume we're using a C99 compiler */
 
+#include <stddef.h>
+
 #if defined(_MSC_VER) && (_MSC_VER < 1600)
 typedef __int8 int8_t;
 typedef __int16 int16_t;

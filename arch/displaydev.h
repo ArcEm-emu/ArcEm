@@ -93,6 +93,8 @@ extern void ByteCopy(uint8_t *dest,const uint8_t *src,size_t size);
 /* src = big-endian host memory, dest = little-endian emu memory */
 extern void InvByteCopy(uint8_t *dest,const uint8_t *src,size_t size);
 #else
+#include <string.h>
+
 #define EndianSwap(X) (X)
 #define EndianWordCpy(A,B,C) memcpy(A,B,(C)<<2)
 #define ByteCopy(A,B,C) memcpy(A,B,C)

@@ -2,7 +2,6 @@
 /* (c) David Alan Gilbert 1995 - see Readme file for copying info */
 
 #include <ctype.h>
-#include <signal.h>
 
 #include "../armdefs.h"
 

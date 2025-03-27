@@ -9,7 +9,7 @@
 #include <assert.h>
 #include <string.h>
 #include <stdio.h>
-#include <errno.h>
+#include <stdlib.h>
 
 /* OS includes */
 #include "kernel.h"

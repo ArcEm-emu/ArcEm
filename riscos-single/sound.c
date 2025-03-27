@@ -8,17 +8,9 @@
 
 */
 
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-#include <sys/soundcard.h>
-#include <sys/types.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/ioctl.h>
-#include <sys/stat.h>
-#include <pthread.h>
-#include <time.h>
 
 #include "../armdefs.h"
 #include "../arch/sound.h"

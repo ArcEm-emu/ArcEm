@@ -6,6 +6,7 @@
 
 #include <workbench/startup.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include <proto/dos.h>
 #include <proto/icon.h>

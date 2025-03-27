@@ -16,7 +16,6 @@
 #define __USE_FIXED_PROTOTYPES__
 #include <errno.h>
 #include <stdio.h>
-/*#include <unistd.h>*/
 
 #include "../armdefs.h"
 

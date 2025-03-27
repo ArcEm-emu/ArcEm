@@ -18,6 +18,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #define CTRLPANEWIDTH 640
 #define CTRLPANEHEIGHT 100

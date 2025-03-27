@@ -6,6 +6,7 @@
 #define __FILECALLS_H
 
 #include "../armdefs.h"
+#include <stdio.h>
 
 #ifdef _WIN32
 #include "filewin.h"

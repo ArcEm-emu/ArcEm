@@ -1,6 +1,5 @@
 /* (c) David Alan Gilbert 1995 - see Readme file for copying info */
 /* SaveCMOS contributed by Richard York */
-#include <signal.h>
 #include <stdio.h>
 #include <time.h>
 #include "../armdefs.h"

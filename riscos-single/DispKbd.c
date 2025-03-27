@@ -3,6 +3,7 @@
 /* Display and keyboard interface for the Arc emulator */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <limits.h>
 #include <time.h>
 #include <math.h>

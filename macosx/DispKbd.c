@@ -23,7 +23,6 @@
  ****************************************************************************/
 
 
-#include <string.h>
 #include <dispatch/dispatch.h>
 
 #include "armdefs.h"

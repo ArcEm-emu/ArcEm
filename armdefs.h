@@ -19,10 +19,6 @@
 #ifndef ARMDEFS_HEADER
 #define ARMDEFS_HEADER
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <limits.h>
-
 #include "c99.h"
 
 /* Control caching of instruction handler functions */

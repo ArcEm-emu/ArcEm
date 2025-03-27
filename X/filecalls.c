@@ -6,6 +6,7 @@
 /* ansi includes */
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 /* posix includes */
 #include <sys/stat.h>

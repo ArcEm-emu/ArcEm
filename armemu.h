@@ -57,6 +57,7 @@
 #endif
 
 #include "c99.h"
+#include <stdlib.h>
 
 /***************************************************************************\
 *                           Condition code values                           *

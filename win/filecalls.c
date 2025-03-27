@@ -4,7 +4,6 @@
    details */
 
 /* ansi includes */
-#include <assert.h>
 #include <stdio.h>
 
 /* windows includes */

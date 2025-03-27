@@ -3,6 +3,8 @@
 
 #define __USE_CLASSIC_MINTERM__
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <limits.h>
 

@@ -13,6 +13,8 @@
 #include "displaydev.h"
 #include "archio.h"
 
+#include <string.h>
+
 const DisplayDev *DisplayDev_Current = NULL;
 
 bool DisplayDev_UseUpdateFlags = true;

@@ -20,12 +20,8 @@
 /* independent. Not very cleanly done - more of a hack than anything */
 /*********************************************************************/
 
-#include <sys/types.h>
 #include <signal.h>
-
-#ifdef LINUX
-#include <linux/time.h>
-#endif
+#include <stdlib.h>
 
 #include "dagstandalone.h"
 #include "armdefs.h"

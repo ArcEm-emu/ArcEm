@@ -6,9 +6,9 @@
 /*#define DEBUG_KBD */
 /*#define DEBUG_MOUSEMOVEMENT */
 
-#include <assert.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <limits.h>
 
 #include <X11/X.h>

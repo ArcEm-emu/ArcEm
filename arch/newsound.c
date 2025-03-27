@@ -20,8 +20,6 @@
   should run correctly.
 */
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 #include "../armdefs.h"
