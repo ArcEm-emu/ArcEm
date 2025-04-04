@@ -13,9 +13,9 @@ jobs:
     strategy:
       matrix:
         linux:
-        - { system: X,    apt-packages: libx11-dev libxext-dev }
-        - { system: SDL1, apt-packages: libsdl1.2-dev          }
-        - { system: SDL2, apt-packages: libsdl2-dev            }
+        - { system: X,    apt-packages: libx11-dev libxext-dev, cmake-flags: -DSOUND_SUPPORT=ON }
+        - { system: SDL1, apt-packages: libsdl1.2-dev                                           }
+        - { system: SDL2, apt-packages: libsdl2-dev                                             }
 
     steps:
     - uses: actions/checkout@v3
@@ -23,7 +23,7 @@ jobs:
       if: ${{ matrix.linux.apt-packages != '' }}
       run: sudo apt-get update && sudo apt-get install ${{ matrix.linux.apt-packages }}
     - name: Configure
-      run: cmake -B build/ -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DSYSTEM=${{ matrix.linux.system }} .
+      run: cmake -B build/ -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DSYSTEM=${{ matrix.linux.system }} ${{ matrix.linux.cmake-flags }} .
     - name: Build
       run: cmake --build build/ --config ${{env.BUILD_TYPE}} --parallel
     - uses: actions/upload-artifact@v4
