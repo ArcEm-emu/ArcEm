@@ -20,6 +20,7 @@
 
 /* application includes */
 #include "filecalls.h"
+#include "dbugsys.h"
 
 static bool File_GetInfo(const char *sPath, FileInfo *phFileInfo);
 
@@ -148,7 +149,7 @@ static bool File_GetInfo(const char *sPath, FileInfo *phFileInfo)
   assert(phFileInfo);
 
   if (stat(sPath, &hEntryInfo) != 0) {
-    fprintf(stderr, "Warning: could not stat() entry \'%s\': %s\n",
+    warn_data("Warning: could not stat() entry \'%s\': %s\n",
             sPath, strerror(errno));
     return false;
   }

@@ -214,30 +214,6 @@ static char *cache_names = NULL;
 /** Current registration state of HostFS module with backend code */
 static HostFSState hostfs_state = HOSTFS_STATE_UNREGISTERED;
 
-#ifdef NDEBUG
-static inline void dbug_hostfs(const char *format, ...) {}
-#else
-static void
-dbug_hostfs(const char *format, ...)
-{
-  va_list ap;
-
-  va_start(ap, format);
-  vfprintf(stderr, format, ap);
-  va_end(ap);
-}
-#endif
-
-static void
-warn_hostfs(const char *format, ...)
-{
-  va_list ap;
-
-  va_start(ap, format);
-  vfprintf(stderr, format, ap);
-  va_end(ap);
-}
-
 static void
 path_construct(ARMul_State *state, const char *old_path, const char *ro_path,
                char *new_path, size_t len, ARMword load, ARMword exec);

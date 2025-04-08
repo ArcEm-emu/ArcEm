@@ -23,6 +23,7 @@
 
 #include "armdefs.h"
 #include "arch/armarc.h"
+#include "arch/dbugsys.h"
 #include "arch/keyboard.h"
 #include "arch/archio.h"
 #include "arch/hdc63463.h"
@@ -311,7 +312,7 @@ static int DisplayKbd_XError(Display* disp, XErrorEvent *err)
 
     XGetErrorText(disp, err->error_code, s, sizeof s - 1);
 
-  fprintf(stderr,
+  warn(
 "arcem X error detected: '%s'\n"
 "If you didn't close arcem's windows to cause it please report it\n"
 "along with this text to arcem-devel@lists.sourceforge.net.\n"
@@ -341,12 +342,12 @@ DisplayDev_Init(ARMul_State *state)
 
   if (getenv("ARCEMXSYNC")) {
     XSynchronize(PD.disp, 1);
-    fputs("arcem: synchronous X protocol selected.\n", stderr);
+    warn("arcem: synchronous X protocol selected.\n");
   }
 
   if (getenv("ARCEMNOWARP")) {
     lastmousemode=1;
-    fputs("arcem: no-XWarpPointer mode selected.\n", stderr);
+    warn("arcem: no-XWarpPointer mode selected.\n");
   }
 
   if ((s = getenv("ARCEMXMOUSEKEY"))) {
@@ -354,9 +355,9 @@ DisplayDev_Init(ARMul_State *state)
       mouse_key.name = s;
       mouse_key.keysym = ks;
     } else {
-      fprintf(stderr, "unknown mouse_key keysym: %s\n", s);
+      warn("unknown mouse_key keysym: %s\n", s);
     }
-    fprintf(stderr, "mouse_key is %s\n", mouse_key.name);
+    warn("mouse_key is %s\n", mouse_key.name);
   }
 
   PD.xScreen    = XDefaultScreenOfDisplay(PD.disp);
@@ -364,10 +365,10 @@ DisplayDev_Init(ARMul_State *state)
   PD.RootWindow = DefaultRootWindow(PD.disp);
 
   /* Try and find a visual we can work with */
-    fputs("X visual: ", stdout);
+    warn("X visual: ");
   if (XMatchVisualInfo(PD.disp,PD.ScreenNum,8,PseudoColor,&(PD.visInfo))) {
     /* It's 8 bpp, Pseudo colour - the easiest to deal with */
-        printf("PseudoColor 8bpp found\n");
+        warn("PseudoColor 8bpp found\n");
   } else {
     /* Could probably cope with a wider range of visuals - particularly
     any other true colour probably? */
@@ -380,12 +381,12 @@ DisplayDev_Init(ARMul_State *state)
       gdk_visual_decompose_mask(PD.visInfo.visual->red_mask,&(PD.red_shift),&(PD.red_prec));
       gdk_visual_decompose_mask(PD.visInfo.visual->green_mask,&(PD.green_shift),&(PD.green_prec));
       gdk_visual_decompose_mask(PD.visInfo.visual->blue_mask,&(PD.blue_shift),&(PD.blue_prec));
-        printf("TrueColor %dbpp found, RGB shift/masks = "
+        warn("TrueColor %dbpp found, RGB shift/masks = "
             "%d/%d, %d/%d, %d/%d\n", PD.visInfo.depth, PD.red_shift,
             PD.red_prec, PD.green_shift, PD.green_prec, PD.blue_shift,
             PD.blue_prec);
     } else {
-        puts("nothing suitable");
+        warn("nothing suitable");
       ControlPane_Error(EXIT_FAILURE,"DisplayKbd_Init: Failed to find a matching visual - I'm looking for either 8 bit Pseudo colour, or 32,24,16,  or 15 bit TrueColour - sorry\n");
     }
   }
@@ -395,11 +396,11 @@ DisplayDev_Init(ARMul_State *state)
     XVisualInfo *vi;
 
     vi = &PD.visInfo;
-    fprintf(stderr, "XVisualInfo: %p, %#lx, %d, %d, %d, %#lx, "
-            "%#lx, %#lx, %d, %d)\n", vi->visual, vi->visualid,
-            vi->screen, vi->depth, vi->class, vi->red_mask,
-            vi->green_mask, vi->blue_mask, vi->colormap_size,
-            vi->bits_per_rgb);
+    dbug("XVisualInfo: %p, %#lx, %d, %d, %d, %#lx, "
+         "%#lx, %#lx, %d, %d)\n", vi->visual, vi->visualid,
+         vi->screen, vi->depth, vi->class, vi->red_mask,
+         vi->green_mask, vi->blue_mask, vi->colormap_size,
+         vi->bits_per_rgb);
   }
 #endif
 
@@ -504,8 +505,7 @@ DisplayDev_Init(ARMul_State *state)
         for (d = desired; d < END(desired); d++) {
             if (!XAllocNamedColor(PD.disp, PD.DefaultColormap, d->name,
                 d->dest, &discard)) {
-                fprintf(stderr, "arcem: failed to allocate colour %s\n",
-                    d->name);
+                warn("arcem: failed to allocate colour %s\n", d->name);
                 if (d->reserve) {
                     *d->dest = *d->reserve;
                 }
@@ -576,7 +576,7 @@ DisplayDev_Init(ARMul_State *state)
 /*----------------------------------------------------------------------------*/
 
 static void BackingWindow_Event(ARMul_State *state,XEvent *e) {
-    fprintf(stderr, "unwanted BackingWindow_Event type=%d\n", e->type);
+    warn("unwanted BackingWindow_Event type=%d\n", e->type);
 } /* BackingWindow_Event */
 
 /* ------------------------------------------------------------------ */
@@ -599,7 +599,7 @@ static void ProcessKey(ARMul_State *state, XKeyEvent *key)
         }
 
         PD.DoingMouseFollow = !PD.DoingMouseFollow;
-        fprintf(stderr, "%s pressed, turning mouse tracking %s.\n",
+        warn_kbd("%s pressed, turning mouse tracking %s.\n",
             mouse_key.name, PD.DoingMouseFollow ? "on" : "off");
 
         if (!blank_cursor) {
@@ -639,7 +639,7 @@ static void ProcessKey(ARMul_State *state, XKeyEvent *key)
     }
 
     name = XKeysymToString(sym);
-    fprintf(stderr, "ProcessKey: unknown key: keycode=%u "
+    warn_kbd("ProcessKey: unknown key: keycode=%u "
         "keysym=%lu=\"%s\"\n", key->keycode, sym, name ? name : "unknown");
 }
 
@@ -692,7 +692,7 @@ void UpdateCursorPos(ARMul_State *state,int xscale,int xoffset,int yscale,int yo
     VertPos = 0;
 
 #ifdef DEBUG_CURSOR
-  fprintf(stderr,"UpdateCursorPos: Height=%d VertPos=%d HorizPos=%d\n",Height,VertPos,HorizPos);
+  dbug_vidc("UpdateCursorPos: Height=%d VertPos=%d HorizPos=%d\n",Height,VertPos,HorizPos);
 #endif
   XMoveResizeWindow(PD.disp, PD.CursorPane, HorizPos, VertPos, 32, Height);
 } /* UpdateCursorPos */
@@ -735,8 +735,8 @@ static void MouseMoved(ARMul_State *state,XMotionEvent *xmotion)
                  ScreenWidth / 2, ScreenHeight / 2); /* Coordinates in the destination window */
 
 #ifdef DEBUG_MOUSEMOVEMENT
-    fprintf(stderr,"MouseMoved: CursorStart=%d xmotion->x=%d\n",
-            VIDC.Horiz_CursorStart,xmotion->x);
+    dbug_kbd("MouseMoved: CursorStart=%d xmotion->x=%d\n",
+             VIDC.Horiz_CursorStart,xmotion->x);
 #endif
     xdiff = xmotion->x - ScreenWidth / 2;
     ydiff = ScreenHeight / 2 - xmotion->y;
@@ -773,7 +773,7 @@ static void MouseMoved(ARMul_State *state,XMotionEvent *xmotion)
   KBD.MouseYCount = ydiff & 127;
 
 #ifdef DEBUG_MOUSEMOVEMENT
-  fprintf(stderr, "MouseMoved: generated counts %d,%d xdiff=%d ydifff=%d\n", KBD.MouseXCount, KBD.MouseYCount, xdiff, ydiff);
+  dbug_kbd("MouseMoved: generated counts %d,%d xdiff=%d ydifff=%d\n", KBD.MouseXCount, KBD.MouseYCount, xdiff, ydiff);
 #endif
 } /* MouseMoved */
 
@@ -783,14 +783,14 @@ static void MouseMoved(ARMul_State *state,XMotionEvent *xmotion)
 static void MainPane_Event(ARMul_State *state,XEvent *e) {
   switch (e->type) {
     case EnterNotify:
-      /*fprintf(stderr,"MainPane: Enter notify!\n"); */
+      /*dbug("MainPane: Enter notify!\n"); */
         hostdisplay_change_focus(true);
         lastmousex=e->xcrossing.x;
         lastmousey=e->xcrossing.y;
       break;
 
     case LeaveNotify:
-      /*fprintf(stderr,"MainPane: Leave notify!\n"); */
+      /*dbug("MainPane: Leave notify!\n"); */
         hostdisplay_change_focus(false);
       break;
 
@@ -813,7 +813,7 @@ static void MainPane_Event(ARMul_State *state,XEvent *e) {
 
     case MotionNotify:
 #ifdef DEBUG_MOUSEMOVEMENT
-      fprintf(stderr,"Motion Notify in mainpane\n");
+      dbug("Motion Notify in mainpane\n");
 #endif
       if (PD.DoingMouseFollow) {
         MouseMoved(state, &(e->xmotion));
@@ -821,7 +821,7 @@ static void MainPane_Event(ARMul_State *state,XEvent *e) {
       break;
 
     default:
-      fprintf(stderr, "unwanted MainPane_Event type=%d\n", e->type);
+      warn("unwanted MainPane_Event type=%d\n", e->type);
       break;
   };
 } /* MainPane_Event */
@@ -830,15 +830,15 @@ static void MainPane_Event(ARMul_State *state,XEvent *e) {
 /*----------------------------------------------------------------------------*/
 
 static void CursorPane_Event(ARMul_State *state,XEvent *e) {
-  /*fprintf(stderr,"CursorPane_Event type=%d\n",e->type); */
+  /*dbug("CursorPane_Event type=%d\n",e->type); */
   switch (e->type) {
     case EnterNotify:
-      fprintf(stderr,"CursorPane: Enter notify!\n");
+      warn("CursorPane: Enter notify!\n");
         hostdisplay_change_focus(true);
       break;
 
     case LeaveNotify:
-      fprintf(stderr,"CursorPane: Leave notify!\n");
+      warn("CursorPane: Leave notify!\n");
         hostdisplay_change_focus(false);
       break;
 
@@ -860,7 +860,7 @@ static void CursorPane_Event(ARMul_State *state,XEvent *e) {
       break;
 
     default:
-        fprintf(stderr, "unwanted CursorPane_Event type=%d\n", e->type);
+      warn("unwanted CursorPane_Event type=%d\n", e->type);
       break;
   };
 } /* CursorPane_Event */
@@ -887,17 +887,17 @@ Kbd_PollHostKbd(ARMul_State *state)
   if (XCheckMaskEvent(PD.disp, ULONG_MAX, &e)) {
 #ifdef DEBUG_X_PROTOCOL
     if (e.xany.window == PD.BackingWindow) {
-      printf("backingwindow ");
+      dbug("backingwindow ");
     } else if (e.xany.window == PD.MainPane) {
-      printf("mainpane ");
+      dbug("mainpane ");
     } else if (e.xany.window == PD.ControlPane) {
-      printf("controlpane ");
+      dbug("controlpane ");
     } else if (e.xany.window == PD.CursorPane) {
-      printf("cursorpane ");
+      dbug("cursorpane ");
     } else {
-      printf("unknown window ");
+      dbug("unknown window ");
     }
-    printf("= %d\n", e.type);
+    dbug("= %d\n", e.type);
 #endif
 
     if (e.xany.window == PD.BackingWindow) {

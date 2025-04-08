@@ -125,11 +125,11 @@ static int changemode(int width,int height,int log2bpp,int *xscale,int *yscale)
 {
 	ULONG id = INVALID_ID;
 
-	printf("New display mode: %d x %d x %d ",width,height,1<<log2bpp);
+	warn_vidc("New display mode: %d x %d x %d ",width,height,1<<log2bpp);
 
 	if(width == oldwidth && height == oldheight && log2bpp == oldlog2bpp)
 	{
-		printf("-> Existing mode\n");
+		warn_vidc("-> Existing mode\n");
 		return;
 	}
 
@@ -169,11 +169,11 @@ static int changemode(int width,int height,int log2bpp,int *xscale,int *yscale)
 
 	if(id == INVALID_ID)
 	{
-		printf("-> No suitable mode found\n");
+		warn_vidc("-> No suitable mode found\n");
 		return;
 	}
 
-	printf("-> ModeID: %lx\n",id);
+	warn_vidc("-> ModeID: %lx\n",id);
 
 	WaitBlit();
 

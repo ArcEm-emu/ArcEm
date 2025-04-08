@@ -256,7 +256,7 @@ static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,in
   HD.Width = ModeVarsOut[MODE_VAR_WIDTH]+1; /* Should match mode->w, mode->h, but use these just to make sure */
   HD.Height = ModeVarsOut[MODE_VAR_HEIGHT]+1;
   
-  fprintf(stderr,"Emu mode %dx%d aspect %.1f mapped to real mode %dx%d aspect %.1f, with scale factors %dx%d\n",width,height,((float)aspect)/2.0f,mode->w,mode->h,((float)mode->aspect)/2.0f,HD.XScale,HD.YScale);
+  warn_vidc("Emu mode %dx%d aspect %.1f mapped to real mode %dx%d aspect %.1f, with scale factors %dx%d\n",width,height,((float)aspect)/2.0f,mode->w,mode->h,((float)mode->aspect)/2.0f,HD.XScale,HD.YScale);
 
   /* Screen is expected to be cleared */
   _swi(OS_WriteC,_IN(0),12);
@@ -339,7 +339,7 @@ static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,in
   HD.Width = ModeVarsOut[MODE_VAR_WIDTH]+1; /* Should match mode->w, mode->h, but use these just to make sure */
   HD.Height = ModeVarsOut[MODE_VAR_HEIGHT]+1;
   
-  fprintf(stderr,"Emu mode %dx%d aspect %.1f mapped to real mode %dx%d aspect %.1f, with scale factors %dx%d\n",width,height,((float)aspect)/2.0f,mode->w,mode->h,((float)mode->aspect)/2.0f,HD.XScale,HD.YScale);
+  warn_vidc("Emu mode %dx%d aspect %.1f mapped to real mode %dx%d aspect %.1f, with scale factors %dx%d\n",width,height,((float)aspect)/2.0f,mode->w,mode->h,((float)mode->aspect)/2.0f,HD.XScale,HD.YScale);
 
   /* Screen is expected to be cleared */
   _swi(OS_WriteC,_IN(0),12);
@@ -523,7 +523,7 @@ void PDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,int depth
     GenExpandTable(HD.ExpandTable,1<<depth,HD.ExpandFactor,mul);
   }
   
-  fprintf(stderr,"Emu mode %dx%dx%d aspect %.1f mapped to real mode %dx%dx%d aspect %.1f, with scale factors %dx%d\n",width,height,depth,((float)aspect)/2.0f,mode->w,mode->h,realdepth,((float)mode->aspect)/2.0f,HD.XScale,HD.YScale);
+  warn_vidc("Emu mode %dx%dx%d aspect %.1f mapped to real mode %dx%dx%d aspect %.1f, with scale factors %dx%d\n",width,height,depth,((float)aspect)/2.0f,mode->w,mode->h,realdepth,((float)mode->aspect)/2.0f,HD.XScale,HD.YScale);
 
   /* Set correct graphics colour for border */
   _swi(ColourTrans_SetColour,_IN(0)|_INR(3,4),BorderPalEntry&255,0,0);
@@ -870,8 +870,8 @@ static void MouseMoved(ARMul_State *state, int mousex, int mousey/*,XMotionEvent
   }
 
 #ifdef DEBUG_MOUSEMOVEMENT
-  fprintf(stderr,"MouseMoved: CursorStart=%d xmotion->x=%d\n",
-          VIDC.Horiz_CursorStart,mousex);
+  dbug_kbd("MouseMoved: CursorStart=%d xmotion->x=%d\n",
+           VIDC.Horiz_CursorStart,mousex);
 #endif
   xdiff=mousex-xmid;
   if (KBD.MouseXCount!=0) {
@@ -902,7 +902,7 @@ static void MouseMoved(ARMul_State *state, int mousex, int mousey/*,XMotionEvent
   KBD.MouseYCount=ydiff & 127;
 
 #ifdef DEBUG_MOUSEMOVEMENT
-  fprintf(stderr,"MouseMoved: generated counts %d,%d xdiff=%d ydifff=%d\n",KBD.MouseXCount,KBD.MouseYCount,xdiff,ydiff);
+  dbug_kbd("MouseMoved: generated counts %d,%d xdiff=%d ydifff=%d\n",KBD.MouseXCount,KBD.MouseYCount,xdiff,ydiff);
 #endif
 } /* MouseMoved */
 
@@ -923,7 +923,7 @@ Kbd_PollHostKbd(ARMul_State *state)
       static int both_down = 0;
 #endif
 
-      /*printf("Processing key %d, transition %d\n",key, transition);*/
+      /*dbug_kbd("Processing key %d, transition %d\n",key, transition);*/
       /* Now add it to the buffer */
       keyboard_key_changed_ex(&KBD, key / 16, key % 16, transition ? 0 : 1);
 
@@ -1099,7 +1099,7 @@ static void InitModeTable(void)
       ModeList[NumModes].modeflags_32bpp = modeflags;
       ModeList[NumModes].ncolour_32bpp = ncolour;
     }
-    fprintf(stderr,"Added mode %dx%d aspect %.1f\n",ModeList[NumModes].w,ModeList[NumModes].h,((float)ModeList[NumModes].aspect)/2.0f);
+    warn_vidc("Added mode %dx%d aspect %.1f\n",ModeList[NumModes].w,ModeList[NumModes].h,((float)ModeList[NumModes].aspect)/2.0f);
     NumModes++;
 
   next:

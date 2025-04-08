@@ -14,6 +14,7 @@
 
 /* application includes */
 #include "filecalls.h"
+#include "dbugsys.h"
 
 
 /* The windows version of the directory struct */
@@ -52,7 +53,7 @@ bool Directory_Open(const char *sPath, Directory *hDir)
   hDir->sPathLen = strlen(sPath) + (bNeedsEndSlash ? 1 : 0 ) + 3; /* Path + Endslash (if needed) + *.* + terminator */
   hDir->sPath = calloc(1, hDir->sPathLen + 1);
   if(NULL == hDir->sPath) {
-    fprintf(stderr, "Failed to allocate memory for directory handle path\n");
+    warn_data("Failed to allocate memory for directory handle path\n");
     return false;
   }
 

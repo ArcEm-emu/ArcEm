@@ -25,6 +25,7 @@
 #undef DEBUG_FDC1772
 #undef DEBUG_HDC63463
 #undef DEBUG_CONFIG
+#undef DEBUG_HOSTFS
 
 #define IOC_WARN
 #define WARN
@@ -39,6 +40,7 @@
 #define WARN_FDC1772
 #define WARN_HDC63463
 #define WARN_CONFIG
+#define WARN_HOSTFS
 
 #define dbug_stdout printf
 
@@ -213,6 +215,18 @@ int dbug_null(const char *format, ...);
 # define warn_cfg dbug_stderr
 #else
 # define warn_cfg 1?(void)0:(void)dbug_null
+#endif
+
+#ifdef DEBUG_HOSTFS
+# define dbug_hostfs dbug_stdout
+#else
+# define dbug_hostfs 1?(void)0:(void)dbug_null
+#endif
+
+#ifdef WARN_HOSTFS
+# define warn_hostfs dbug_stderr
+#else
+# define warn_hostfs 1?(void)0:(void)dbug_null
 #endif
 
 #endif /* _DBUGSYS_H_ */

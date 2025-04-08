@@ -11,6 +11,7 @@
 #include "archio.h"
 #include "armarc.h"
 #include "ControlPane.h"
+#include "arch/dbugsys.h"
 #include "arch/displaydev.h"
 #include "platform.h"
 #include "arch/keyboard.h"
@@ -91,13 +92,13 @@ static void insert_or_eject_floppy(int drive)
 
     if (got_disc[drive]) {
         err = FDC_EjectFloppy(drive);
-        fprintf(stderr, "ejecting drive %d: %s\n", drive,
+        warn_fdc("ejecting drive %d: %s\n", drive,
             err ? err : "ok");
         got_disc[drive] = err ? true : false;
     } else {
         image[sizeof image - 2] = '0' + drive;
         err = FDC_InsertFloppy(drive, image);
-        fprintf(stderr, "inserting floppy image %s into drive %d: %s\n",
+        warn_fdc("inserting floppy image %s into drive %d: %s\n",
             image, drive, err ? err : "ok");
         got_disc[drive] = err ? false : true;
     }
@@ -171,7 +172,7 @@ void ControlPane_Event(ARMul_State *state, XEvent *event) {
         insert_or_eject_floppy(sym - XK_0);
 
       } else if (sym == XK_q) {
-        fputs("arcem: user requested exit\n", stderr);
+        warn("arcem: user requested exit\n");
         hostdisplay_change_focus(false);
         exit(0);
       }
@@ -182,7 +183,7 @@ void ControlPane_Event(ARMul_State *state, XEvent *event) {
       break;
 
     default:
-        fprintf(stderr, "unwanted ControlPane_Event type = %d\n", event->type);
+      warn("unwanted ControlPane_Event type = %d\n", event->type);
       break;
   }
 } /* ControlPane_Event */

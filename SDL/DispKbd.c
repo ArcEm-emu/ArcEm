@@ -12,6 +12,7 @@
 #include <SDL.h>
 
 #include "armdefs.h"
+#include "arch/dbugsys.h"
 #include "arch/keyboard.h"
 
 #include "KeyTable.h"
@@ -43,7 +44,7 @@ static void ProcessKey(ARMul_State *state, const SDL_KeyboardEvent *key) {
     }
   }
 
-  fprintf(stderr, "ProcessKey: unknown key: keysym=%u\n", key->keysym.sym);
+  warn_kbd("ProcessKey: unknown key: keysym=%u\n", key->keysym.sym);
 } /* ProcessKey */
 
 /*-----------------------------------------------------------------------------*/
@@ -96,8 +97,8 @@ static void ProcessMouseMotion(ARMul_State *state, const SDL_MouseMotionEvent *m
   ydiff = -(motion->yrel);
 
 #ifdef DEBUG_MOUSEMOVEMENT
-  fprintf(stderr,"MouseMoved: xdiff = %d  ydiff = %d\n",
-          xdiff, ydiff);
+  dbug_kbd("MouseMoved: xdiff = %d  ydiff = %d\n",
+           xdiff, ydiff);
 #endif
 
   if (xdiff > 63)

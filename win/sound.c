@@ -1,6 +1,7 @@
 #include "win.h"
 #include "../armdefs.h"
 #include "../arch/sound.h"
+#include "../arch/dbugsys.h"
 #include "../arch/displaydev.h"
 
 #include <stdio.h>
@@ -78,7 +79,7 @@ void Sound_HostBuffered(SoundData *buffer,int32_t numSamples)
 		 * wait for a block to become free
 		 */
 		while(!waveFreeBlockCount) {
-			fprintf(stderr, "Waiting for a free block");
+			warn_vidc("Waiting for a free block");
 			Sleep(10);
 		}
 		/*
@@ -100,7 +101,7 @@ Sound_InitHost(ARMul_State *state)
 
 	DWORD totalBufferSize = (BLOCK_SIZE + sizeof(WAVEHDR)) * BLOCK_COUNT;
 	if((buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, totalBufferSize)) == NULL) {
-		fprintf(stderr, "Memory allocation error\n");
+		warn_vidc("Memory allocation error\n");
 		ExitProcess(1);
 	}
 
@@ -124,7 +125,7 @@ Sound_InitHost(ARMul_State *state)
 	format.nAvgBytesPerSec =  format.nSamplesPerSec * format.nBlockAlign;
 
 	if (waveOutOpen(&hWaveOut, WAVE_MAPPER, &format, (DWORD_PTR)sound_callback, (DWORD_PTR)&waveFreeBlockCount, CALLBACK_FUNCTION) != MMSYSERR_NOERROR) {
-		fprintf(stderr, "Failed to initialise the sound system\n");
+		warn_vidc("Failed to initialise the sound system\n");
 		HeapFree(GetProcessHeap(), 0, waveBlocks);
 		return -1;
 	}

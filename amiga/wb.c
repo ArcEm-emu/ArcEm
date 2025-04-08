@@ -13,6 +13,7 @@
 
 #include "ArcemConfig.h"
 #include "platform.h"
+#include "dbugsys.h"
 #include "displaydev.h"
 
 #ifdef __amigaos4__
@@ -186,13 +187,13 @@ static void gettooltypes(struct WBArg *wbarg, ArcemConfig *pConfig)
 	      		unsigned int drivenum,numcyl,numheads,numsect,reclength;
     			if (sscanf(s,"%u %u %u %u %u\n",&drivenum,&numcyl,&numheads,&numsect,&reclength)!=5)
 				{
-        			fprintf(stderr,"Failed to read MFM disc data line\n");
+        			warn("Failed to read MFM disc data line\n");
         			return;
       			}
       
 				if (drivenum>3)
 				{
-        			fprintf(stderr,"Invalid drive number in MFM disc data line\n");
+        			warn("Invalid drive number in MFM disc data line\n");
         			return;
       			}
 

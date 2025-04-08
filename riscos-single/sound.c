@@ -15,6 +15,7 @@
 #include "../armdefs.h"
 #include "../arch/sound.h"
 #include "../arch/archio.h"
+#include "../arch/dbugsys.h"
 #include "../arch/displaydev.h"
 
 #include "kernel.h"
@@ -49,18 +50,18 @@ static void sigfunc(int sig)
 #if 0
 	/* Dump some emulator state */
 	ARMul_State *state = &statestr;
-	fprintf(stderr, "r0 = %08x  r4 = %08x  r8  = %08x  r12 = %08x\n"
-	                "r1 = %08x  r5 = %08x  r9  = %08x  sp  = %08x\n"
-	                "r2 = %08x  r6 = %08x  r10 = %08x  lr  = %08x\n"
-	                "r3 = %08x  r7 = %08x  r11 = %08x  pc  = %08x\n"
-	              "\n",
+	dbug_vidc("r0 = %08x  r4 = %08x  r8  = %08x  r12 = %08x\n"
+	          "r1 = %08x  r5 = %08x  r9  = %08x  sp  = %08x\n"
+	          "r2 = %08x  r6 = %08x  r10 = %08x  lr  = %08x\n"
+	          "r3 = %08x  r7 = %08x  r11 = %08x  pc  = %08x\n"
+	          "\n",
 	  state->Reg[0], state->Reg[4], state->Reg[8], state->Reg[12],
 	  state->Reg[1], state->Reg[5], state->Reg[9], state->Reg[13],
 	  state->Reg[2], state->Reg[6], state->Reg[10], state->Reg[14],
 	  state->Reg[3], state->Reg[7], state->Reg[11], state->Reg[15]);
 	int i;
 	for(i=0;i<4;i++)
-	  fprintf(stderr,"Timer%d Count %08x Latch %08x\n",i,ioc.TimerCount[i],ioc.TimerInputLatch[i]);
+	  dbug_vidc("Timer%d Count %08x Latch %08x\n",i,ioc.TimerCount[i],ioc.TimerInputLatch[i]);
 	FILE *f = fopen("$.dump","wb");
 	if(f)
 	{
@@ -93,7 +94,7 @@ static int init_sharedsound(void)
 	regs.r[1] = (int) "SharedSound";
 	if ((err = _kernel_swi(OS_Module,&regs,&regs)))
 	{
-		fprintf(stderr,"Warning: SharedSound module not loaded, and not in System:Modules!\n");
+		warn_vidc("Warning: SharedSound module not loaded, and not in System:Modules!\n");
 		return 0;
 	}
 	/* Now we can register our handler */
@@ -104,7 +105,7 @@ static int init_sharedsound(void)
 	regs.r[4] = 0;
 	if ((err = _kernel_swi(SharedSound_InstallHandler,&regs,&regs)))
 	{
-		fprintf(stderr,"Warning: SharedSound_InstallHandler returned error %d, %s\n",err->errnum,err->errmess);
+		warn_vidc("Warning: SharedSound_InstallHandler returned error %d, %s\n",err->errnum,err->errmess);
 		return 0;
 	}
 	sound_handler_id = regs.r[0];
@@ -152,7 +153,7 @@ static int init_sharedsound(void)
 	/* Big thresholds will cause problems too! */
 	if(buffer_threshold*4 > BUFFER_SAMPLES)
 		buffer_threshold = BUFFER_SAMPLES>>2;
-	fprintf(stderr,"Host audio rate %dHz, using buffer threshold %d\n",Sound_HostRate>>10,buffer_threshold);
+	warn_vidc("Host audio rate %dHz, using buffer threshold %d\n",Sound_HostRate>>10,buffer_threshold);
 	return 0;
 }                           
 
@@ -187,7 +188,7 @@ int Sound_InitHost(ARMul_State *state)
 #ifndef PROFILE_ENABLED
   if (init_sharedsound())
   {
-    fprintf(stderr,"Error: Couldn't register sound handler\n");
+    warn_vidc("Error: Couldn't register sound handler\n");
     return -1;
   }
 #endif
@@ -227,7 +228,7 @@ void Sound_HostBuffered(SoundData *buffer,int32_t numSamples)
 
   if(buffree == numSamples)
   {
-    fprintf(stderr,"*** sound overflow! ***\n");
+    warn_vidc("*** sound overflow! ***\n");
     if(Sound_FudgeRate < -10)
       Sound_FudgeRate = Sound_FudgeRate/2;
     else
@@ -235,7 +236,7 @@ void Sound_HostBuffered(SoundData *buffer,int32_t numSamples)
   }
   else if(!used)
   {
-    fprintf(stderr,"*** sound underflow! ***\n");
+    warn_vidc("*** sound underflow! ***\n");
     if(Sound_FudgeRate > 10)
       Sound_FudgeRate = Sound_FudgeRate/2;
     else

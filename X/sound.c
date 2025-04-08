@@ -11,6 +11,7 @@
 
 #include "../armdefs.h"
 #include "../arch/sound.h"
+#include "../arch/dbugsys.h"
 #include "../arch/displaydev.h"
 
 static uint32_t format = AFMT_S16_LE;
@@ -70,7 +71,7 @@ void Sound_HostBuffered(SoundData *buffer,int32_t numSamples)
   
   if(buffree == numSamples)
   {
-    fprintf(stderr,"*** sound overflow! ***\n");
+    warn_vidc("*** sound overflow! ***\n");
     if(Sound_FudgeRate < -10)
       Sound_FudgeRate = Sound_FudgeRate/2;
     else
@@ -78,7 +79,7 @@ void Sound_HostBuffered(SoundData *buffer,int32_t numSamples)
   }
   else if(!used)
   {
-    fprintf(stderr,"*** sound underflow! ***\n");
+    warn_vidc("*** sound underflow! ***\n");
     if(Sound_FudgeRate > 10)
       Sound_FudgeRate = Sound_FudgeRate/2;
     else
@@ -118,7 +119,7 @@ void Sound_HostBuffered(SoundData *buffer,int32_t numSamples)
     bufsize /= sizeof(SoundData);
     if(numSamples > buffree)
     {
-      fprintf(stderr,"*** sound overflow! %d %d %d %d ***\n",numSamples-buffree,ARMul_EmuRate,Sound_FudgeRate,Sound_DMARate);
+      warn_vidc("*** sound overflow! %d %d %d %d ***\n",numSamples-buffree,ARMul_EmuRate,Sound_FudgeRate,Sound_DMARate);
       numSamples = buffree; /* We could block until space is available, but I'm woried we'd get stuck blocking forever because the FudgeRate increase wouldn't compensate for the ARMul cycles lost due to blocking */
       if(Sound_FudgeRate < -stepsize)
         Sound_FudgeRate = Sound_FudgeRate/2;
@@ -127,7 +128,7 @@ void Sound_HostBuffered(SoundData *buffer,int32_t numSamples)
     }
     else if(!used)
     {
-      fprintf(stderr,"*** sound underflow! %d %d %d ***\n",ARMul_EmuRate,Sound_FudgeRate,Sound_DMARate);
+      warn_vidc("*** sound underflow! %d %d %d ***\n",ARMul_EmuRate,Sound_FudgeRate,Sound_DMARate);
       if(Sound_FudgeRate > stepsize)
         Sound_FudgeRate = Sound_FudgeRate/2;
       else
@@ -165,7 +166,7 @@ sound_writeThread(void *arg)
     avail = sound_buffer_in-local_buffer_out;
     pthread_mutex_unlock(&mut);
 
-    printf("%d\n",avail);
+    dbug_vidc("%d\n",avail);
     if (avail) {
       int32_t ofs = local_buffer_out & sound_buff_mask;
 
@@ -193,47 +194,47 @@ int
 Sound_InitHost(ARMul_State *state)
 {
   if ((soundDevice = open("/dev/dsp", O_WRONLY )) < 0) {
-    fprintf(stderr, "Could not open audio device /dev/dsp\n");
+    warn_vidc("Could not open audio device /dev/dsp\n");
     return -1;
   }
 
   if (ioctl(soundDevice, SOUND_PCM_RESET, 0) == -1) {
-    fprintf(stderr, "Could not reset PCM\n");
+    warn_vidc("Could not reset PCM\n");
     return -1;
   }
 
   if (ioctl(soundDevice, SOUND_PCM_SYNC, 0) == -1) {
-    fprintf(stderr, "Could not sync PCM\n");
+    warn_vidc("Could not sync PCM\n");
     return -1;
   }
 
   if (ioctl(soundDevice, SOUND_PCM_SETFMT, &format) == -1) {
-    fprintf(stderr, "Could not set PCM format\n");
+    warn_vidc("Could not set PCM format\n");
     return -1;
   }
 
   if (ioctl(soundDevice, SOUND_PCM_WRITE_CHANNELS, &channels) == -1) {
-    fprintf(stderr,"Could not set to 2 channel stereo\n");
+    warn_vidc("Could not set to 2 channel stereo\n");
     return -1;
   }
 
   if (ioctl(soundDevice, SOUND_PCM_WRITE_RATE, &sampleRate) == -1) {
-    fprintf(stderr, "Could not set sample rate\n");
+    warn_vidc("Could not set sample rate\n");
     return -1;
   }
 
   if (ioctl(soundDevice, SOUND_PCM_READ_RATE, &sampleRate) == -1) {
-    fprintf(stderr, "Could not read sample rate\n");
+    warn_vidc("Could not read sample rate\n");
     return -1;
   }
 
   /* Check that GETOSPACE is supported */
   audio_buf_info buf;
   if (ioctl(soundDevice, SOUND_PCM_GETOSPACE, &buf) == -1) {
-    fprintf(stderr,"Could not read output space\n");
+    warn_vidc("Could not read output space\n");
     return -1;
   }
-  fprintf(stderr,"Sound buffer params: frags %d total %d size %d bytes %d\n",buf.fragments,buf.fragstotal,buf.fragsize,buf.bytes);
+  warn_vidc("Sound buffer params: frags %d total %d size %d bytes %d\n",buf.fragments,buf.fragstotal,buf.fragsize,buf.bytes);
 
   eSound_StereoSense = Stereo_LeftRight;
 

@@ -10,6 +10,7 @@
 #include "platform.h"
 #include "../armdefs.h"
 #include "../arch/sound.h"
+#include "../arch/dbugsys.h"
 #include "../arch/displaydev.h"
 
 BPTR audioh = 0;
@@ -26,7 +27,7 @@ static int openaudio(void)
 
 	if(!(audioh = Open(audiof,MODE_NEWFILE)))
 	{
-		fprintf(stderr, "Could not open audio: device\n");
+		warn_vidc("Could not open audio: device\n");
 		return -1;
 	}
 

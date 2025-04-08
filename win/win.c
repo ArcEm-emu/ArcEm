@@ -5,6 +5,7 @@
 #include "gui.h"
 #include "armdefs.h"
 #include "arch/ArcemConfig.h"
+#include "arch/dbugsys.h"
 #include "arch/keyboard.h"
 
 #define NR_THREADS (0x1000)
@@ -128,13 +129,13 @@ static void insert_floppy(HWND hWnd, int drive, char *image)
 
 	if (FDC_IsFloppyInserted(drive)) {
 		err = FDC_EjectFloppy(drive);
-		fprintf(stderr, "ejecting drive %d: %s\n", drive,
-		        err ? err : "ok");
+		warn_fdc("ejecting drive %d: %s\n", drive,
+		         err ? err : "ok");
 	}
 
 	err = FDC_InsertFloppy(drive, image);
-	fprintf(stderr, "inserting floppy image %s into drive %d: %s\n",
-	        image, drive, err ? err : "ok");
+	warn_fdc("inserting floppy image %s into drive %d: %s\n",
+	         image, drive, err ? err : "ok");
 
 	if (err == NULL)
 		EnableMenuItem(GetMenu(hWnd), IDM_EJECT0 + drive, MF_ENABLED);
@@ -170,8 +171,8 @@ static void OpenFloppyImageDialog(HWND hWnd, int drive) {
 
 static void EjectFloppyImage(HWND hWnd, int drive) {
 	const char *err = FDC_EjectFloppy(drive);
-	fprintf(stderr, "ejecting drive %d: %s\n",
-	        drive, err ? err : "ok");
+	warn_fdc("ejecting drive %d: %s\n",
+	         drive, err ? err : "ok");
 
 	EnableMenuItem(GetMenu(hWnd), IDM_EJECT0 + drive, MF_GRAYED);
 }

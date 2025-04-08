@@ -452,8 +452,8 @@ void MouseMoved(ARMul_State *state, int nMouseX, int nMouseY) {
   ydiff = oldMouseY - nMouseY;
 
 #ifdef DEBUG_MOUSEMOVEMENT
-  fprintf(stderr,"MouseMoved: xdiff = %d  ydiff = %d\n",
-          xdiff, ydiff);
+  dbug_kbd("MouseMoved: xdiff = %d  ydiff = %d\n",
+           xdiff, ydiff);
 #endif
 
   if (xdiff > 63)
@@ -473,7 +473,7 @@ void MouseMoved(ARMul_State *state, int nMouseX, int nMouseY) {
   KBD.MouseYCount = ydiff & 127;
 
 #ifdef DEBUG_MOUSEMOVEMENT
-  fprintf(stderr,"MouseMoved: generated counts %d,%d xdiff=%d ydifff=%d\n",KBD.MouseXCount,KBD.MouseYCount,xdiff,ydiff);
+  dbug_kbd("MouseMoved: generated counts %d,%d xdiff=%d ydifff=%d\n",KBD.MouseXCount,KBD.MouseYCount,xdiff,ydiff);
 #endif
 } /* MouseMoved */
 
@@ -488,7 +488,7 @@ void ProcessKey(ARMul_State *state, int nVirtKey, int lKeyData, int nKeyStat) {
     }
   }
 
-  fprintf(stderr, "ProcessKey: unknown key: keysym=%u\n", nVirtKey);
+  warn_kbd("ProcessKey: unknown key: keysym=%u\n", nVirtKey);
 } /* ProcessKey */
 
 
