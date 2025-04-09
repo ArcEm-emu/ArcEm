@@ -38,9 +38,10 @@ jobs:
     strategy:
       matrix:
         macosx:
-        - { system: X,    brew-packages: xquartz      }
-        - { system: SDL1, brew-packages: sdl12-compat }
-        - { system: SDL2, brew-packages: sdl2         }
+        - { system: macosx, cmake-flags: -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" }
+        - { system: X,      brew-packages: xquartz      }
+        - { system: SDL1,   brew-packages: sdl12-compat }
+        - { system: SDL2,   brew-packages: sdl2         }
 
     steps:
     - uses: actions/checkout@v3
@@ -48,13 +49,13 @@ jobs:
       if: ${{ matrix.macosx.brew-packages != '' }}
       run: brew install ${{ matrix.macosx.brew-packages }}
     - name: Configure
-      run: cmake -B build/ -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DSYSTEM=${{ matrix.macosx.system }} .
+      run: cmake -B build/ -GXcode -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DSYSTEM=${{ matrix.macosx.system }} ${{ matrix.macosx.cmake-flags }} .
     - name: Build
       run: cmake --build build/ --config ${{env.BUILD_TYPE}} --parallel
     - uses: actions/upload-artifact@v4
       with:
         name: arcem-macosx-${{ matrix.macosx.system }}
-        path: ./build/ArcEm.app
+        path: ./build/${{env.BUILD_TYPE}}/ArcEm.app
 
   build-msvc:
     name: Windows (MSVC ${{ matrix.msvc.platform }})

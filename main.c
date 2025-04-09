@@ -63,7 +63,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
   return EXIT_SUCCESS;
 }
 
-#else
+#elif !defined(SYSTEM_macosx)
 
 /* Main function for X, RISC OS and MacOS X versions */
 

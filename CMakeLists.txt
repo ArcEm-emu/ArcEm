@@ -74,6 +74,27 @@ set(ARCEM_X_SOURCES
 	X/pseudo.c
 	X/true.c
 )
+set(ARCEM_MACOSX_SOURCES
+	macosx/ArcemController.h
+	macosx/ArcemController.m
+	macosx/ArcemEmulator.h
+	macosx/ArcemEmulator.m
+	macosx/ArcemView.h
+	macosx/ArcemView.m
+	macosx/ControlPane.c
+	macosx/DispKbd.c
+	macosx/KeyTable.h
+	macosx/PreferenceController.h
+	macosx/PreferenceController.m
+	macosx/filecalls.m
+	macosx/main.m
+	macosx/win.h
+)
+set(ARCEM_MACOSX_RESOURCES
+	macosx/Credits.rtf
+	macosx/en.lproj/MainMenu.xib
+	macosx/en.lproj/Preferences.xib
+)
 set(ARCEM_VC_SOURCES
 	vc/dirent.h
 )
@@ -90,7 +111,9 @@ set(ARCEM_WIN_SOURCES
 
 if(WIN32)
 	set(DEFAULT_SYSTEM "win")
-elseif(UNIX AND NOT APPLE AND NOT HAIKU)
+elseif(APPLE)
+	set(DEFAULT_SYSTEM "macosx")
+elseif(UNIX AND NOT HAIKU)
 	set(DEFAULT_SYSTEM "X")
 else()
 	set(DEFAULT_SYSTEM "SDL2")
@@ -150,6 +173,22 @@ elseif(${SYSTEM} STREQUAL "X")
 		find_package(Threads REQUIRED)
 		target_link_libraries(Threads::Threads)
 	endif()
+elseif(${SYSTEM} STREQUAL "macosx")
+	enable_language(OBJC)
+
+	add_executable(arcem ${ARCEM_SOURCES} ${ARCEM_ARCH_SOURCES} ${ARCEM_INIH_SOURCES} ${ARCEM_MACOSX_SOURCES} ${ARCEM_MACOSX_RESOURCES})
+	target_include_directories(arcem PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/macosx)
+	target_compile_definitions(arcem PRIVATE SYSTEM_macosx)
+
+	set_target_properties(arcem PROPERTIES
+		LINKER_LANGUAGE OBJC
+		RESOURCE "${ARCEM_MACOSX_RESOURCES}"
+	)
+	find_library(FRAMEWORKS Cocoa Foundation AppKit REQUIRED)
+	target_link_libraries(arcem PRIVATE ${FRAMEWORKS})
+
+	set_property(TARGET arcem APPEND_STRING PROPERTY COMPILE_FLAGS "-fobjc-arc")
+	set_property(SOURCE "macosx/ArcemEmulator.m" APPEND_STRING PROPERTY COMPILE_FLAGS "-fno-objc-arc")
 elseif(${SYSTEM} STREQUAL "win")
 	option(SOUND_SUPPORT "Build with sound support" ON)
 	if(SOUND_SUPPORT)
@@ -200,6 +239,8 @@ source_group(src FILES ${ARCEM_SOURCES})
 source_group(src\\arch FILES ${ARCEM_ARCH_SOURCES})
 source_group(src\\X FILES ${ARCEM_X_SOURCES})
 source_group(src\\SDL FILES ${ARCEM_SDL_SOURCES})
+source_group(src\\macosx FILES ${ARCEM_MACOSX_SOURCES})
+source_group(src\\macosx FILES ${ARCEM_MACOSX_RESOURCES})
 source_group(src\\vc FILES ${ARCEM_VC_SOURCES})
 source_group(src\\win FILES ${ARCEM_WIN_SOURCES})
 source_group(libs\\inih FILES ${ARCEM_INIH_SOURCES})

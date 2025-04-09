@@ -8,10 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		551316392CDED7910084DEE0 /* ini.c in Sources */ = {isa = PBXBuildFile; fileRef = 551316362CDED7910084DEE0 /* ini.c */; };
-		557C2AD320CB2B300084CBDB /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 557C2AD220CB2B300084CBDB /* Images.xcassets */; };
 		557C2AD820CC681E0084CBDB /* hostfs.c in Sources */ = {isa = PBXBuildFile; fileRef = 557C2ACE20CAE8D00084CBDB /* hostfs.c */; };
 		5582DD7420C8C14900931D55 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 29B97318FDCFA39411CA2CEA /* MainMenu.xib */; };
-		5582DD7520C8C14900931D55 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C165CFE840E0CC02AAC07 /* InfoPlist.strings */; };
 		5582DD7620C8C14900931D55 /* Credits.rtf in Resources */ = {isa = PBXBuildFile; fileRef = D1CA0AAF029C4D9401D1F43F /* Credits.rtf */; };
 		5582DD7820C8C14900931D55 /* Preferences.xib in Resources */ = {isa = PBXBuildFile; fileRef = D19819E202CA867701D1F43F /* Preferences.xib */; };
 		5582DD7A20C8C14900931D55 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 29B97316FDCFA39411CA2CEA /* main.m */; settings = {ATTRIBUTES = (); }; };
@@ -47,7 +45,6 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		089C165DFE840E0CC02AAC07 /* English */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.strings; name = English; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		29B97316FDCFA39411CA2CEA /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = main.m; sourceTree = SOURCE_ROOT; };
 		29B97319FDCFA39411CA2CEA /* English */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = English; path = en.lproj/MainMenu.xib; sourceTree = "<group>"; };
@@ -62,8 +59,6 @@
 		557C2ACC20CAE8810084CBDB /* c99.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = c99.h; sourceTree = "<group>"; };
 		557C2ACE20CAE8D00084CBDB /* hostfs.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; path = hostfs.c; sourceTree = "<group>"; };
 		557C2ACF20CAE8D00084CBDB /* hostfs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = hostfs.h; sourceTree = "<group>"; };
-		557C2AD220CB2B300084CBDB /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
-		5582DD9520C8C14900931D55 /* Info-ArcEm__Upgraded_.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Info-ArcEm__Upgraded_.plist"; sourceTree = "<group>"; };
 		5582DD9620C8C14900931D55 /* ArcEm.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ArcEm.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		55F89C2220C8C79700374D5B /* cp15.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; path = cp15.c; sourceTree = "<group>"; };
 		55F89C2320C8C79700374D5B /* cp15.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = cp15.h; sourceTree = "<group>"; };
@@ -200,12 +195,9 @@
 		29B97317FDCFA39411CA2CEA /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				557C2AD220CB2B300084CBDB /* Images.xcassets */,
 				29B97318FDCFA39411CA2CEA /* MainMenu.xib */,
 				D19819E202CA867701D1F43F /* Preferences.xib */,
-				089C165CFE840E0CC02AAC07 /* InfoPlist.strings */,
 				D1CA0AAF029C4D9401D1F43F /* Credits.rtf */,
-				5582DD9520C8C14900931D55 /* Info-ArcEm__Upgraded_.plist */,
 			);
 			name = Resources;
 			sourceTree = "<group>";
@@ -345,9 +337,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				5582DD7420C8C14900931D55 /* MainMenu.xib in Resources */,
-				5582DD7520C8C14900931D55 /* InfoPlist.strings in Resources */,
 				5582DD7620C8C14900931D55 /* Credits.rtf in Resources */,
-				557C2AD320CB2B300084CBDB /* Images.xcassets in Resources */,
 				5582DD7820C8C14900931D55 /* Preferences.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -396,14 +386,6 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXVariantGroup section */
-		089C165CFE840E0CC02AAC07 /* InfoPlist.strings */ = {
-			isa = PBXVariantGroup;
-			children = (
-				089C165DFE840E0CC02AAC07 /* English */,
-			);
-			name = InfoPlist.strings;
-			sourceTree = "<group>";
-		};
 		29B97318FDCFA39411CA2CEA /* MainMenu.xib */ = {
 			isa = PBXVariantGroup;
 			children = (
@@ -523,7 +505,6 @@
 				);
 				GENERATE_INFOPLIST_FILE = YES;
 				HEADER_SEARCH_PATHS = ..;
-				INFOPLIST_FILE = "Info-ArcEm__Upgraded_.plist";
 				INFOPLIST_KEY_NSMainNibFile = MainMenu;
 				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
 				MARKETING_VERSION = 1.50.2;
@@ -552,7 +533,6 @@
 				);
 				GENERATE_INFOPLIST_FILE = YES;
 				HEADER_SEARCH_PATHS = ..;
-				INFOPLIST_FILE = "Info-ArcEm__Upgraded_.plist";
 				INFOPLIST_KEY_NSMainNibFile = MainMenu;
 				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
 				MARKETING_VERSION = 1.50.2;
