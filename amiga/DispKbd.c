@@ -16,7 +16,6 @@
 #include "displaydev.h"
 #include "KeyTable.h"
 #include "platform.h"
-#include "../arch/Version.h"
 #include "arexx.h"
 #include "arch/displaydev.h"
 

@@ -1,5 +1,6 @@
 #include "windows.h"
 #include "gui.h"
+#include "../arch/Version.h"
 
 GuiIcon ICON DISCARDABLE "arc.ico"
 
@@ -44,17 +45,17 @@ BEGIN
 END
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,5,0,0
- PRODUCTVERSION 1,5,0,0
- FILEFLAGSMASK 0x3fL
+ FILEVERSION     VER_MAJOR,VER_MINOR,VER_MICRO,VER_PATCH
+ PRODUCTVERSION  VER_MAJOR,VER_MINOR,VER_MICRO,VER_PATCH
+ FILEFLAGSMASK   VS_FFI_FILEFLAGSMASK
 #ifdef _DEBUG
- FILEFLAGS 0x1L
+ FILEFLAGS       VS_FF_DEBUG
 #else
- FILEFLAGS 0x0L
+ FILEFLAGS       0x0L
 #endif
- FILEOS 0x40004L
- FILETYPE 0x1L
- FILESUBTYPE 0x0L
+ FILEOS          VOS_NT_WINDOWS32
+ FILETYPE        VFT_APP
+ FILESUBTYPE     VFT2_UNKNOWN
 BEGIN
     BLOCK "StringFileInfo"
     BEGIN
@@ -63,14 +64,14 @@ BEGIN
             VALUE "Comments", "Built by Jeffrey Lee\0"
             VALUE "CompanyName", "\0"
             VALUE "FileDescription", "Archimedes Emulator\0"
-            VALUE "FileVersion", "1, 5, 0, 0\0"
+            VALUE "FileVersion", VER_STRING "\0"
             VALUE "InternalName", "arcem\0"
-            VALUE "LegalCopyright", "Copyright © 2012\0"
+            VALUE "LegalCopyright", "Copyright \xa9 1995-" RELEASE_YEAR "\0"
             VALUE "LegalTrademarks", "\0"
             VALUE "OriginalFilename", "arcem.exe\0"
             VALUE "PrivateBuild", "\0"
             VALUE "ProductName", "Arcem\0"
-            VALUE "ProductVersion", "1, 5, 0, 0\0"
+            VALUE "ProductVersion", VER_STRING "\0"
             VALUE "SpecialBuild", "\0"
         END
     END

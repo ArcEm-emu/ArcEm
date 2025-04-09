@@ -1,1 +1,16 @@
-static const char Version[] = "Version 1.50 (16/12/2012)";
+#define VER_MAJOR 1
+#define VER_MINOR 5
+#define VER_MICRO 0
+#define VER_PATCH 2
+
+#define XSTR(s) STR(s)
+#define STR(s) #s
+
+#if VER_PATCH > 0
+#define VER_STRING XSTR(VER_MAJOR) "." XSTR(VER_MINOR) XSTR(VER_MICRO) "." XSTR(VER_PATCH)
+#else
+#define VER_STRING XSTR(VER_MAJOR) "." XSTR(VER_MINOR) XSTR(VER_MICRO)
+#endif
+
+#define RELEASE_DATE "16/12/2012"
+#define RELEASE_YEAR "2012"

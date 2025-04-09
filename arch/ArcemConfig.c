@@ -241,7 +241,9 @@ void ArcemConfig_ParseCommandLine(ArcemConfig *pConfig, int argc, char *argv[])
 {
   unsigned int uValue;
   int iArgument = 0;
-  char sHelpString[] =
+  static const char sVersionString[] =
+    "Arcem Version " VER_STRING " (" RELEASE_DATE ")\n";
+  static const char sHelpString[] =
     "Arcem <Options>\n"
     " Where options are one or more of the following\n"
     "  --help - Display this message and exit\n"
@@ -293,7 +295,7 @@ void ArcemConfig_ParseCommandLine(ArcemConfig *pConfig, int argc, char *argv[])
 
   while(iArgument < argc) {
     if(0 == strcmp("--version", argv[iArgument])) {
-      printf("Arcem %s\n", Version);
+      printf("%s", sVersionString);
       
       exit(EXIT_SUCCESS);
     }

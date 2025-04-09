@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.0.2...3.10)
 if(POLICY CMP0074)
 	cmake_policy(SET CMP0074 NEW)
 endif()
-project(ArcEm LANGUAGES C)
+project(ArcEm LANGUAGES C VERSION "1.50.2")
 
 set(ARCEM_SOURCES
 	armcopro.c
@@ -172,6 +172,8 @@ elseif(APPLE)
 	set_target_properties(arcem PROPERTIES
 		OUTPUT_NAME "ArcEm"
 		MACOSX_BUNDLE TRUE
+		MACOSX_BUNDLE_BUNDLE_NAME ${CMAKE_PROJECT_NAME}
+		MACOSX_BUNDLE_BUNDLE_VERSION ${CMAKE_PROJECT_VERSION}
 	)
 endif()
 
