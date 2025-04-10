@@ -38,7 +38,7 @@ jobs:
     strategy:
       matrix:
         macosx:
-        - { system: macosx, cmake-flags: -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" }
+        - { system: macosx, cmake-flags: -GXcode -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" }
         - { system: X,      brew-packages: xquartz      }
         - { system: SDL1,   brew-packages: sdl12-compat }
         - { system: SDL2,   brew-packages: sdl2         }
@@ -49,13 +49,15 @@ jobs:
       if: ${{ matrix.macosx.brew-packages != '' }}
       run: brew install ${{ matrix.macosx.brew-packages }}
     - name: Configure
-      run: cmake -B build/ -GXcode -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DSYSTEM=${{ matrix.macosx.system }} ${{ matrix.macosx.cmake-flags }} .
+      run: cmake -B build/ -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DSYSTEM=${{ matrix.macosx.system }} ${{ matrix.macosx.cmake-flags }} .
     - name: Build
       run: cmake --build build/ --config ${{env.BUILD_TYPE}} --parallel
+    - name: Package
+      run: cmake --build build/ --config ${{env.BUILD_TYPE}} --target package
     - uses: actions/upload-artifact@v4
       with:
         name: arcem-macosx-${{ matrix.macosx.system }}
-        path: ./build/${{env.BUILD_TYPE}}/ArcEm.app
+        path: ./build/ArcEm-*.dmg
 
   build-msvc:
     name: Windows (MSVC ${{ matrix.msvc.platform }})
@@ -73,10 +75,12 @@ jobs:
       run: cmake -B build/ -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -A ${{ matrix.msvc.platform }} .
     - name: Build
       run: cmake --build build/ --config ${{env.BUILD_TYPE}} --parallel
+    - name: Package
+      run: cmake --build build/ --config ${{env.BUILD_TYPE}} --target package
     - uses: actions/upload-artifact@v4
       with:
         name: arcem-msvc-${{ matrix.msvc.platform }}
-        path: build/Release/ArcEm.exe
+        path: build/ArcEm-*.zip
 
   build-mingw:
     name: Windows (${{ matrix.mingw.msystem }})
@@ -103,10 +107,12 @@ jobs:
       run: cmake -B build/ -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} .
     - name: Build
       run: cmake --build build/ --config ${{env.BUILD_TYPE}} --parallel
+    - name: Package
+      run: cmake --build build/ --config ${{env.BUILD_TYPE}} --target package
     - uses: actions/upload-artifact@v4
       with:
         name: arcem-${{ matrix.mingw.msystem }}
-        path: ./build/ArcEm.exe
+        path: ./build/ArcEm-*.zip
 
   build-watcom:
     name: Windows (OpenWatcom)

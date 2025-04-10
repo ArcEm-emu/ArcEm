@@ -214,6 +214,10 @@ endif()
 
 if(WIN32)
 	set_target_properties(arcem PROPERTIES OUTPUT_NAME "ArcEm")
+	install(TARGETS arcem DESTINATION .)
+	install(FILES ${ARCEM_EXTNROM_MODULES} DESTINATION extnrom)
+	set(CPACK_GENERATOR "ZIP")
+	include(CPack)
 elseif(APPLE)
 	set_source_files_properties(${ARCEM_EXTNROM_MODULES} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources/extnrom")
 	set_target_properties(arcem PROPERTIES
@@ -223,6 +227,18 @@ elseif(APPLE)
 		MACOSX_BUNDLE_BUNDLE_NAME ${CMAKE_PROJECT_NAME}
 		MACOSX_BUNDLE_BUNDLE_VERSION ${CMAKE_PROJECT_VERSION}
 	)
+
+	install(TARGETS arcem
+		BUNDLE DESTINATION . COMPONENT Runtime
+		RUNTIME DESTINATION bin COMPONENT Runtime
+	)
+	if(${SYSTEM} MATCHES "^(SDL[12])$")
+		install(CODE "include(BundleUtilities)
+		fixup_bundle(\"\${CMAKE_INSTALL_PREFIX}/ArcEm.app\" \"\" \"\")")
+	endif()
+
+	set(CPACK_GENERATOR "DragNDrop")
+	include(CPack)
 endif()
 
 target_include_directories(arcem PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/arch)
