@@ -90,6 +90,17 @@ bool Disk_GetInfo(const char *path, DiskInfo *d);
  */
 FILE *File_OpenAppData(const char *sName, const char *sMode);
 
+/**
+ * Directory_OpenAppDir
+ *
+ * Open the specified directory in the application directory
+ *
+ * @param sName of directory to scan
+ * @param hDir Pointer to a Directory struct to fill in
+ * @returns true on success false on failure
+ */
+bool Directory_OpenAppDir(const char *sName, Directory *hDirectory);
+
 /* These next few are implemented in arch/filecommon.c */
 
 /**

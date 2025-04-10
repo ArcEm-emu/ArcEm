@@ -72,3 +72,17 @@ FILE *File_OpenAppData(const char *sName, const char *sMode)
     free(sPath);
     return f;
 }
+
+/**
+ * Directory_OpenAppDir
+ *
+ * Open the specified directory in the application directory
+ *
+ * @param sName of directory to scan
+ * @param hDir Pointer to a Directory struct to fill in
+ * @returns true on success false on failure
+ */
+bool Directory_OpenAppDir(const char *sName, Directory *hDirectory)
+{
+    return false;
+}

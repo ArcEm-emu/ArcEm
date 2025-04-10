@@ -107,9 +107,11 @@ extnrom_calculate_size(const char *dir, uint32_t *entry_count)
 
   /* Read list of files and calculate total size */
   if(!Directory_Open(dir, &hDir)) {
-    warn_data("Could not open Extension Rom directory \'%s\': %s\n",
-              dir, strerror(errno));
-    return 0;
+    if (!Directory_OpenAppDir(dir, &hDir)) {
+      warn_data("Could not open Extension Rom directory \'%s\': %s\n",
+                dir, strerror(errno));
+      return 0;
+    }
   }
 
   while ((sFilename = Directory_GetNextEntry(&hDir, &hFileInfo)) != NULL) {
@@ -224,9 +226,11 @@ extnrom_load(const char *dir, uint32_t size, uint32_t entry_count, void *address
 
   /* Read list of files, create Chunk Directory and load them in */
   if(!Directory_Open(dir, &hDir)) {
-    warn_data("Could not open Extension Rom directory \'%s\'\n",
-              dir);
-    return;
+    if (!Directory_OpenAppDir(dir, &hDir)) {
+      warn_data("Could not open Extension Rom directory \'%s\'\n",
+                dir);
+      return;
+    }
   }
 
   chunk = start_addr + 4; /* points to where the Chunk Directory will be made */

@@ -108,6 +108,13 @@ set(ARCEM_WIN_SOURCES
 	win/win.c
 	win/win.h
 )
+set(ARCEM_EXTNROM_MODULES
+	support_modules/hostfs/hostfs,ffa
+	support_modules/hostfs/hostfsfiler,ffa
+	support_modules/modes/ArcemModes,ffa
+	support_modules/scrollwheel/scrollwheel,ffa
+	support_modules/support/support,ffa
+)
 
 if(WIN32)
 	set(DEFAULT_SYSTEM "win")
@@ -140,7 +147,7 @@ if(HOST_BIGENDIAN)
 endif(HOST_BIGENDIAN)
 
 if(${SYSTEM} MATCHES "^(SDL[12])$")
-	add_executable(arcem WIN32 ${ARCEM_SOURCES} ${ARCEM_ARCH_SOURCES} ${ARCEM_INIH_SOURCES} ${ARCEM_SDL_SOURCES})
+	add_executable(arcem WIN32 ${ARCEM_SOURCES} ${ARCEM_ARCH_SOURCES} ${ARCEM_INIH_SOURCES} ${ARCEM_SDL_SOURCES} ${ARCEM_EXTNROM_MODULES})
 	target_include_directories(arcem PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/SDL)
 	target_compile_definitions(arcem PRIVATE SYSTEM_SDL USE_FAKEMAIN)
 
@@ -161,7 +168,7 @@ elseif(${SYSTEM} STREQUAL "X")
 		list(APPEND ARCEM_X_SOURCES X/sound.c)
 	endif()
 
-	add_executable(arcem ${ARCEM_SOURCES} ${ARCEM_ARCH_SOURCES} ${ARCEM_INIH_SOURCES} ${ARCEM_X_SOURCES})
+	add_executable(arcem ${ARCEM_SOURCES} ${ARCEM_ARCH_SOURCES} ${ARCEM_INIH_SOURCES} ${ARCEM_X_SOURCES} ${ARCEM_EXTNROM_MODULES})
 	target_include_directories(arcem PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/X)
 	target_compile_definitions(arcem PRIVATE SYSTEM_X)
 
@@ -176,7 +183,7 @@ elseif(${SYSTEM} STREQUAL "X")
 elseif(${SYSTEM} STREQUAL "macosx")
 	enable_language(OBJC)
 
-	add_executable(arcem ${ARCEM_SOURCES} ${ARCEM_ARCH_SOURCES} ${ARCEM_INIH_SOURCES} ${ARCEM_MACOSX_SOURCES} ${ARCEM_MACOSX_RESOURCES})
+	add_executable(arcem ${ARCEM_SOURCES} ${ARCEM_ARCH_SOURCES} ${ARCEM_INIH_SOURCES} ${ARCEM_MACOSX_SOURCES} ${ARCEM_MACOSX_RESOURCES} ${ARCEM_EXTNROM_MODULES})
 	target_include_directories(arcem PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/macosx)
 	target_compile_definitions(arcem PRIVATE SYSTEM_macosx)
 
@@ -196,7 +203,7 @@ elseif(${SYSTEM} STREQUAL "win")
 		list(APPEND ARCEM_WIN_SOURCES win/sound.c)
 	endif()
 
-	add_executable(arcem WIN32 ${ARCEM_SOURCES} ${ARCEM_ARCH_SOURCES} ${ARCEM_INIH_SOURCES} ${ARCEM_WIN_SOURCES})
+	add_executable(arcem WIN32 ${ARCEM_SOURCES} ${ARCEM_ARCH_SOURCES} ${ARCEM_INIH_SOURCES} ${ARCEM_WIN_SOURCES} ${ARCEM_EXTNROM_MODULES})
 	target_include_directories(arcem PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/win)
 	target_compile_definitions(arcem PRIVATE SYSTEM_win)
 
@@ -208,8 +215,10 @@ endif()
 if(WIN32)
 	set_target_properties(arcem PROPERTIES OUTPUT_NAME "ArcEm")
 elseif(APPLE)
+	set_source_files_properties(${ARCEM_EXTNROM_MODULES} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources/extnrom")
 	set_target_properties(arcem PROPERTIES
 		OUTPUT_NAME "ArcEm"
+		RESOURCES "${ARCEM_EXTNROM_MODULES}"
 		MACOSX_BUNDLE TRUE
 		MACOSX_BUNDLE_BUNDLE_NAME ${CMAKE_PROJECT_NAME}
 		MACOSX_BUNDLE_BUNDLE_VERSION ${CMAKE_PROJECT_VERSION}
@@ -244,3 +253,4 @@ source_group(src\\macosx FILES ${ARCEM_MACOSX_RESOURCES})
 source_group(src\\vc FILES ${ARCEM_VC_SOURCES})
 source_group(src\\win FILES ${ARCEM_WIN_SOURCES})
 source_group(libs\\inih FILES ${ARCEM_INIH_SOURCES})
+source_group(extnrom FILES ${ARCEM_EXTNROM_MODULES})

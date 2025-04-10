@@ -51,3 +51,43 @@ FILE *File_OpenAppData(const char *sName, const char *sMode)
     return NULL;
 #endif
 }
+
+/**
+ * Directory_OpenAppDir
+ *
+ * Open the specified directory in the application directory
+ *
+ * @param sName of directory to scan
+ * @param hDir Pointer to a Directory struct to fill in
+ * @returns true on success false on failure
+ */
+bool Directory_OpenAppDir(const char *sName, Directory *hDirectory)
+{
+#if SDL_VERSION_ATLEAST(2, 0, 1)
+    char *sBasePath, *sPath;
+    size_t sLen;
+    bool ret;
+
+    sBasePath = SDL_GetBasePath();
+    if (!sBasePath) {
+        return NULL;
+    }
+
+    sLen = SDL_strlen(sBasePath) + SDL_strlen(sName) + 1;
+    sPath = SDL_malloc(sLen);
+    if (!sPath) {
+        SDL_free(sBasePath);
+        return NULL;
+    }
+
+    SDL_strlcpy(sPath, sBasePath, sLen);
+    SDL_strlcat(sPath, sName, sLen);
+    ret = Directory_Open(sPath, hDirectory);
+
+    SDL_free(sPath);
+    SDL_free(sBasePath);
+    return ret;
+#else
+    return false;
+#endif
+}
