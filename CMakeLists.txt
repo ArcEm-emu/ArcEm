@@ -254,8 +254,7 @@ else()
 		   -Wshadow -Wpointer-arith -Wcast-align -Wstrict-prototypes
 		   -Wmissing-prototypes -Wmissing-declarations -Wnested-externs
 		   -Wcast-qual -Wwrite-strings)
-	# TODO: Only add these for release builds
-	target_compile_options(arcem PRIVATE -funroll-loops -ffast-math -fomit-frame-pointer)
+	target_compile_options(arcem PRIVATE $<$<CONFIG:Release>:-funroll-loops -ffast-math -fomit-frame-pointer>)
 	# These don't exist in Clang, and are enabled with -O2 when using GCC.
 	# -fexpensive-optimizations -frerun-cse-after-loop)
 endif()
