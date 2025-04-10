@@ -70,9 +70,8 @@ CFLAGS = -O3 -funroll-loops -ffast-math -fomit-frame-pointer
 endif
 endif
 
-CFLAGS += \
-    $(CFL) $(WARN) \
-    -I$(SYSTEM) -Iarch -I.
+CFLAGS += $(WARN)
+CPPFLAGS += -I$(SYSTEM) -Iarch -I.
 
 PKG_CONFIG = pkg-config
 
@@ -118,7 +117,8 @@ SOUND_SUPPORT=yes
 SOUND_PTHREAD=no
 SRCS += amiga/wb.c amiga/arexx.c
 OBJS += amiga/wb.o amiga/arexx.o
-CFLAGS += -mcrt=newlib -D__LARGE64_FILES -D__USE_INLINE__
+CPPFLAGS += -D__LARGE64_FILES -D__USE_INLINE__
+CFLAGS += -mcrt=newlib
 LDFLAGS += -mcrt=newlib
 # The following two lines are for Altivec support via libfreevec
 # Uncomment them if you are using a G4 or other PPC with Altivec
@@ -126,7 +126,7 @@ LDFLAGS += -mcrt=newlib
 #LDFLAGS += -maltivec -mabi=altivec -lfreevec
 # The following line is for onchipmem support, which should speed
 # the emulator up but slows it down, so it is disabled by default
-#CFLAGS += -DONCHIPMEM_SUPPORT
+#CPPFLAGS += -DONCHIPMEM_SUPPORT
 endif
 
 ifeq (${SYSTEM},amigaos3)
@@ -138,7 +138,8 @@ SOUND_SUPPORT=yes
 SOUND_PTHREAD=no
 SRCS += amiga/wb.c
 OBJS += amiga/wb.o
-CFLAGS += -D__amigaos3__ -noixemul
+CPPFLAGS += -D__amigaos3__
+CFLAGS += -noixemul
 LDFLAGS += -noixemul
 endif
 
@@ -151,17 +152,20 @@ SOUND_PTHREAD=no
 OBJS += riscos-single/soundbuf.o
 # General
 EXTNROM_SUPPORT=yes
-CFLAGS += -I@ -DSYSTEM_riscos_single -Iriscos-single -mtune=cortex-a8 -march=armv5te -mthrowback -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -mfpu=fpa
+CPPFLAGS += -I@ -DSYSTEM_riscos_single -Iriscos-single -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
+CFLAGS += -mtune=cortex-a8 -march=armv5te -mthrowback -mfpu=fpa
 LDFLAGS += -static
 # Disable stack limit checks. -ffixed-sl required to prevent sl being used as temp storage, breaking unixlib and any other code that does do stack checks
-CFLAGS += -mno-apcs-stack-check -ffixed-sl -DUSE_FAKEMAIN
+CPPFLAGS += -DUSE_FAKEMAIN
+CFLAGS += -mno-apcs-stack-check -ffixed-sl
 OBJS += riscos-single/realmain.o
 # No function name poking for a bit extra speed
 CFLAGS += -mno-poke-function-name
 # Debug options
 #CFLAGS += -save-temps -mpoke-function-name
 # Profiling
-#CFLAGS += -mpoke-function-name -DPROFILE_ENABLED
+#CPPFLAGS += -DPROFILE_ENABLED
+#CFLAGS += -mpoke-function-name
 #OBJS += riscos-single/prof.o
 TARGET=!ArcEm/arcem
 # Create RiscPkg archive directory structure
@@ -184,18 +188,19 @@ endif
 
 ifeq (${SYSTEM},SDL)
 SDL_CONFIG=sdl2-config
-CFLAGS += -DSYSTEM_SDL -DUSE_FAKEMAIN $(shell $(SDL_CONFIG) --cflags)
+CPPFLAGS += -DSYSTEM_SDL -DUSE_FAKEMAIN
 ifneq ($(shell uname),Darwin)
-CFLAGS += -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
+CPPFLAGS += -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
 endif
+CFLAGS += $(shell $(SDL_CONFIG) --cflags)
 LIBS += $(shell $(SDL_CONFIG) --libs)
 OBJS += SDL/fb.o SDL/render.o
 endif
 
 ifeq (${SYSTEM},X)
-CFLAGS += -DSYSTEM_X
+CPPFLAGS += -DSYSTEM_X
 ifneq ($(shell uname),Darwin)
-CFLAGS += -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
+CPPFLAGS += -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
 endif
 ifneq ($(shell $(PKG_CONFIG) --exists x11 xext && echo x11 xext),)
 CFLAGS += $(shell $(PKG_CONFIG) --cflags x11 xext)
@@ -210,7 +215,7 @@ endif
 
 ifeq (${SYSTEM},win)
 TARGET = ArcEm.exe
-CFLAGS += -DSYSTEM_win
+CPPFLAGS += -DSYSTEM_win
 OBJS += win/gui.o win/win.o
 LIBS += -luser32 -lgdi32 -lcomdlg32 -lwinmm
 # Comment the following line to have a console window
@@ -220,7 +225,7 @@ SOUND_PTHREAD = no
 endif
 
 ifeq (${SOUND_SUPPORT},yes)
-CFLAGS += -DSOUND_SUPPORT
+CPPFLAGS += -DSOUND_SUPPORT
 OBJS += $(SYSTEM)/sound.o
 INCS += arch/sound.h
 ifeq (${SOUND_PTHREAD},yes)
@@ -229,18 +234,18 @@ endif
 endif
 
 ifeq (${HOSTFS_SUPPORT},yes)
-CFLAGS += -DHOSTFS_SUPPORT
+CPPFLAGS += -DHOSTFS_SUPPORT
 HOSTFS_OBJS ?= hostfs.o
 OBJS += ${HOSTFS_OBJS}
 endif
 
 ifeq (${EXTNROM_SUPPORT},yes)
-CFLAGS += -DEXTNROM_SUPPORT
+CPPFLAGS += -DEXTNROM_SUPPORT
 OBJS += arch/extnrom.o
 endif
 
 ifeq (${HOST_BIGENDIAN},yes)
-CFLAGS += -DHOST_BIGENDIAN
+CPPFLAGS += -DHOST_BIGENDIAN
 endif
 
 
@@ -288,80 +293,80 @@ arcem.tar.gz:
 
 arch/armarc.o: armdefs.h arch/armarc.c arch/armarc.h \
                arch/fdc1772.h
-	$(CC) $(CFLAGS) -c $*.c -o arch/armarc.o
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $*.c -o arch/armarc.o
 
 # other objects
 
 armcopro.o: armcopro.c armdefs.h
-	$(CC) $(CFLAGS) -c $*.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $*.c
 
 armemu.o: armemu.c armdefs.h armemu.h armemuinstr.c armemudec.c
-	$(CC) $(CFLAGS) -o armemu.o -c armemu.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) -o armemu.o -c armemu.c
 
 riscos-single/prof.o: riscos-single/prof.s
-	$(CC) -x assembler-with-cpp riscos-single/prof.s -c -o $@
+	$(CC) $(CPPFLAGS) -x assembler-with-cpp riscos-single/prof.s -c -o $@
 
 riscos-single/soundbuf.o: riscos-single/soundbuf.s
-	$(CC) -x assembler-with-cpp riscos-single/soundbuf.s -c -o $@
+	$(CC) $(CPPFLAGS) -x assembler-with-cpp riscos-single/soundbuf.s -c -o $@
 
 riscos-single/realmain.o: riscos-single/realmain.s
-	$(CC) -x assembler-with-cpp riscos-single/realmain.s -c -o $@
+	$(CC) $(CPPFLAGS) -x assembler-with-cpp riscos-single/realmain.s -c -o $@
 
 arminit.o: arminit.c armdefs.h armemu.h
-	$(CC) $(CFLAGS) -c $*.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $*.c
 
 armsupp.o: armsupp.c armdefs.h armemu.h
-	$(CC) $(CFLAGS) -c $*.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $*.c
 
 dagstandalone.o: dagstandalone.c armdefs.h
-	$(CC) $(CFLAGS) -c $*.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $*.c
 
 main.o: main.c armdefs.h
-	$(CC) $(CFLAGS) -c $*.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $*.c
 
 eventq.o: eventq.c eventq.h
-	$(CC) $(CFLAGS) -c $*.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $*.c
 
 $(SYSTEM)/DispKbd.o: $(SYSTEM)/DispKbd.c $(SYSTEM)/KeyTable.h \
                      arch/armarc.h arch/fdc1772.h arch/hdc63463.h \
                      arch/keyboard.h
-	$(CC) $(CFLAGS) -c $*.c -o $(SYSTEM)/DispKbd.o
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $*.c -o $(SYSTEM)/DispKbd.o
 
 arch/i2c.o: arch/i2c.c arch/i2c.h arch/armarc.h arch/archio.h \
             arch/fdc1772.h arch/hdc63463.h
-	$(CC) $(CFLAGS) -c $*.c -o arch/i2c.o
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $*.c -o arch/i2c.o
 
 arch/archio.o: arch/archio.c arch/archio.h arch/armarc.h arch/i2c.h \
         arch/fdc1772.h arch/hdc63463.h
-	$(CC) $(CFLAGS) -c $*.c -o arch/archio.o
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $*.c -o arch/archio.o
 
 arch/fdc1772.o: arch/fdc1772.c arch/fdc1772.h arch/armarc.h
-	$(CC) $(CFLAGS) -c $*.c -o arch/fdc1772.o
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $*.c -o arch/fdc1772.o
 
 arch/hdc63463.o: arch/hdc63463.c arch/hdc63463.h arch/armarc.h
-	$(CC) $(CFLAGS) -c $*.c -o arch/hdc63463.o
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $*.c -o arch/hdc63463.o
 
 $(SYSTEM)/ControlPane.o: $(SYSTEM)/ControlPane.c arch/ControlPane.h \
         arch/armarc.h
-	$(CC) $(CFLAGS) -c $*.c -o $(SYSTEM)/ControlPane.o
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $*.c -o $(SYSTEM)/ControlPane.o
 
 arch/keyboard.o: arch/keyboard.c arch/keyboard.h
-	$(CC) $(CFLAGS) -c $*.c -o arch/keyboard.o
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $*.c -o arch/keyboard.o
 
 arch/newsound.o: arch/newsound.c arch/sound.h
-	$(CC) $(CFLAGS) -c $*.c -o arch/newsound.o
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $*.c -o arch/newsound.o
 
 arch/displaydev.o: arch/displaydev.c arch/displaydev.h
-	$(CC) $(CFLAGS) -c $*.c -o arch/displaydev.o
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $*.c -o arch/displaydev.o
 
 win/gui.o: win/gui.rc win/gui.h win/arc.ico
-	$(WINDRES) $*.rc -o win/gui.o
+	$(WINDRES) $(CPPFLAGS) $*.rc -o win/gui.o
 
 X/true.o: X/true.c
-	$(CC) $(CFLAGS) -c $*.c -o X/true.o
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $*.c -o X/true.o
 
 X/pseudo.o: X/pseudo.c
-	$(CC) $(CFLAGS) -c $*.c -o X/pseudo.o
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $*.c -o X/pseudo.o
 
 
 # DO NOT DELETE
