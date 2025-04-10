@@ -118,6 +118,10 @@ SOUND_SUPPORT=yes
 SOUND_PTHREAD=no
 SRCS += amiga/wb.c amiga/arexx.c
 OBJS += amiga/wb.o amiga/arexx.o
+ifneq (,$(findstring m68k,$(CROSS)))
+CFLAGS += -noixemul
+LDFLAGS += -noixemul
+else
 CFLAGS += -mcrt=newlib -D__LARGE64_FILES -D__USE_INLINE__
 LDFLAGS += -mcrt=newlib
 # The following two lines are for Altivec support via libfreevec
@@ -128,18 +132,6 @@ LDFLAGS += -mcrt=newlib
 # the emulator up but slows it down, so it is disabled by default
 #CFLAGS += -DONCHIPMEM_SUPPORT
 endif
-
-ifeq (${SYSTEM},amigaos3)
-CROSS=m68k-amigaos-
-HOST_BIGENDIAN=yes
-HOSTFS_SUPPORT=yes
-EXTNROM_SUPPORT=yes
-SOUND_SUPPORT=yes
-SOUND_PTHREAD=no
-SRCS += amiga/wb.c
-OBJS += amiga/wb.o
-CFLAGS += -D__amigaos3__ -noixemul
-LDFLAGS += -noixemul
 endif
 
 ifeq (${SYSTEM},riscos-single)
