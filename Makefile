@@ -195,6 +195,8 @@ endif
 CFLAGS += $(shell $(SDL_CONFIG) --cflags)
 LIBS += $(shell $(SDL_CONFIG) --libs)
 OBJS += SDL/fb.o SDL/render.o
+SOUND_SUPPORT=yes
+SOUND_PTHREAD=no
 endif
 
 ifeq (${SYSTEM},X)
