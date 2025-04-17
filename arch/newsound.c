@@ -33,7 +33,11 @@
 int Sound_BatchSize = 1; /* How many 16*2 sample batches to try to do at once */
 CycleCount Sound_DMARate; /* How many cycles between DMA fetches */
 Sound_StereoSense eSound_StereoSense = Stereo_LeftRight;
+#ifdef SOUND_FUDGERATE_FRAC
+uint32_t Sound_FudgeRate = 1<<24;
+#else
 CycleDiff Sound_FudgeRate = 0;
+#endif
 
 #ifdef SOUND_SUPPORT
 uint32_t Sound_HostRate; /* Rate of host sound system, in 1/1024 Hz */
@@ -42,11 +46,12 @@ uint32_t Sound_HostRate; /* Rate of host sound system, in 1/1024 Hz */
 static SoundData soundTable[256];
 static ARMword channelAmount[8][2];
 
-static SoundData soundBuffer[16*2*MAX_BATCH_SIZE];
+#define SOUNDBUFFER_SIZE (16*MAX_BATCH_SIZE) /* Size in stereo pairs. 16x factor is arbitrary, to cope with most of the sensible downsampling factors? */
+static SoundData soundBuffer[2*SOUNDBUFFER_SIZE];
 static uint32_t soundBufferAmt=0; /* Number of stereo pairs buffered */
 #define TIMESHIFT 9 /* Bigger values make the mixing more accurate. But 9 is the biggest value possible to avoid overflows in the 32bit accumulators. */
 static uint32_t soundTime=0; /* Offset into 1st sample pair of buffer */
-static uint32_t soundTimeStep; /* How many source samples per dest sample, fixed point with TIMESHIFT fraction bits */
+static uint32_t soundTimeStep; /* How many source samples (1 byte) per dest sample (2x16 bit), fixed point with TIMESHIFT fraction bits */
 static uint32_t soundScale; /* Output scale factor, 16.16 fixed point */
 #endif
 
@@ -484,8 +489,8 @@ static void Sound_DMAEvent(ARMul_State *state,CycleCount nowtime)
   CycleCount next;
   Sound_UpdateDMARate(state);
 #ifdef SOUND_SUPPORT
-  /* Work out how many source samples are required to generate Sound_BatchSize dest samples */
-  srcbatchsize = (Sound_BatchSize*soundTimeStep)>>TIMESHIFT;
+  /* Work out how many source DMA fetches are required to generate Sound_BatchSize dest samples, rounded to nearest (ish) */
+  srcbatchsize = (Sound_BatchSize*soundTimeStep + (8<<TIMESHIFT))>>(TIMESHIFT+4);
   if(!srcbatchsize)
     srcbatchsize = 1;
 #else
@@ -523,7 +528,7 @@ static void Sound_DMAEvent(ARMul_State *state,CycleCount nowtime)
     if(avail > srcbatchsize)
       avail = srcbatchsize;
 #ifdef SOUND_SUPPORT
-    bufspace = (16*MAX_BATCH_SIZE-soundBufferAmt)>>4;
+    bufspace = (SOUNDBUFFER_SIZE-soundBufferAmt)>>4;
     if(avail > bufspace)
       avail = bufspace;
 #endif 
@@ -534,7 +539,11 @@ static void Sound_DMAEvent(ARMul_State *state,CycleCount nowtime)
 #endif
   /* Work out when to reschedule the event
      TODO - This is wrong; there's no guarantee the host accepted all the data we wanted to give him */
+#ifdef SOUND_FUDGERATE_FRAC
+  next = (CycleCount) ((((uint64_t) Sound_DMARate)*Sound_FudgeRate*((uint32_t)(avail?avail:srcbatchsize))) >> 24);
+#else
   next = Sound_DMARate*(avail?avail:srcbatchsize)+Sound_FudgeRate;
+#endif
   /* Clamp to a safe minimum value */
   if(next < 100)
     next = 100;
