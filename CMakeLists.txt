@@ -17,6 +17,8 @@ set(ARCEM_SOURCES
 	dagstandalone.h
 	eventq.c
 	eventq.h
+	hostfs.c
+	hostfs.h
 	main.c
 	prof.h
 )
@@ -33,6 +35,8 @@ set(ARCEM_ARCH_SOURCES
 	arch/dbugsys.h
 	arch/displaydev.c
 	arch/displaydev.h
+	arch/extnrom.c
+	arch/extnrom.h
 	arch/fdc1772.c
 	arch/fdc1772.h
 	arch/filecalls.h
@@ -72,6 +76,7 @@ set(ARCEM_X_SOURCES
 	X/KeyTable.h
 	X/platform.h
 	X/pseudo.c
+	X/sound.c
 	X/true.c
 )
 set(ARCEM_MACOSX_SOURCES
@@ -105,6 +110,7 @@ set(ARCEM_WIN_SOURCES
 	win/gui.h
 	win/gui.rc
 	win/KeyTable.h
+	win/sound.c
 	win/win.c
 	win/win.h
 )
@@ -128,24 +134,6 @@ endif()
 set(SYSTEM ${DEFAULT_SYSTEM} CACHE STRING "System to compile for. Options: X SDL2 SDL1 macosx win")
 set_property(CACHE SYSTEM PROPERTY STRINGS X SDL2 SDL1 macosx win)
 
-option(EXTNROM_SUPPORT "Build with Extension ROM support" ON)
-if(EXTNROM_SUPPORT)
-	add_definitions(-DEXTNROM_SUPPORT)
-	list(APPEND ARCEM_ARCH_SOURCES arch/extnrom.c arch/extnrom.h)
-endif()
-
-option(HOSTFS_SUPPORT "Build with HostFS support" ON)
-if(HOSTFS_SUPPORT)
-	add_definitions(-DHOSTFS_SUPPORT)
-	list(APPEND ARCEM_SOURCES hostfs.c hostfs.h)
-endif()
-
-include(TestBigEndian)
-test_big_endian(HOST_BIGENDIAN)
-if(HOST_BIGENDIAN)
-	add_definitions(-DHOST_BIGENDIAN)
-endif(HOST_BIGENDIAN)
-
 if(${SYSTEM} MATCHES "^(SDL[12])$")
 	add_executable(arcem WIN32 ${ARCEM_SOURCES} ${ARCEM_ARCH_SOURCES} ${ARCEM_INIH_SOURCES} ${ARCEM_SDL_SOURCES} ${ARCEM_EXTNROM_MODULES})
 	target_include_directories(arcem PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/SDL)
@@ -161,13 +149,6 @@ if(${SYSTEM} MATCHES "^(SDL[12])$")
 		target_link_libraries(arcem PRIVATE ${SDL_LIBRARY})
 	endif()
 elseif(${SYSTEM} STREQUAL "X")
-	option(SOUND_SUPPORT "Build with sound support" OFF)
-	option(SOUND_PTHREAD "Build with pthreads for sound support" ON)
-	if(SOUND_SUPPORT)
-		add_definitions(-DSOUND_SUPPORT)
-		list(APPEND ARCEM_X_SOURCES X/sound.c)
-	endif()
-
 	add_executable(arcem ${ARCEM_SOURCES} ${ARCEM_ARCH_SOURCES} ${ARCEM_INIH_SOURCES} ${ARCEM_X_SOURCES} ${ARCEM_EXTNROM_MODULES})
 	target_include_directories(arcem PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/X)
 	target_compile_definitions(arcem PRIVATE SYSTEM_X)
@@ -176,9 +157,15 @@ elseif(${SYSTEM} STREQUAL "X")
 	target_include_directories(arcem PRIVATE ${X11_INCLUDE_DIR})
 	target_link_libraries(arcem PRIVATE ${X11_LIBRARIES})
 
-	if(SOUND_SUPPORT AND SOUND_PTHREAD)
-		find_package(Threads REQUIRED)
-		target_link_libraries(Threads::Threads)
+	option(SOUND_SUPPORT "Build with sound support" OFF)
+	option(SOUND_PTHREAD "Build with pthreads for sound support" ON)
+	if(SOUND_SUPPORT)
+		target_compile_definitions(arcem PRIVATE SOUND_SUPPORT)
+
+		if(SOUND_PTHREAD)
+			find_package(Threads REQUIRED)
+			target_link_libraries(Threads::Threads)
+		endif()
 	endif()
 elseif(${SYSTEM} STREQUAL "macosx")
 	enable_language(OBJC)
@@ -197,17 +184,16 @@ elseif(${SYSTEM} STREQUAL "macosx")
 	set_property(TARGET arcem APPEND_STRING PROPERTY COMPILE_FLAGS "-fobjc-arc")
 	set_property(SOURCE "macosx/ArcemEmulator.m" APPEND_STRING PROPERTY COMPILE_FLAGS "-fno-objc-arc")
 elseif(${SYSTEM} STREQUAL "win")
-	option(SOUND_SUPPORT "Build with sound support" ON)
-	if(SOUND_SUPPORT)
-		add_definitions(-DSOUND_SUPPORT)
-		list(APPEND ARCEM_WIN_SOURCES win/sound.c)
-	endif()
-
 	add_executable(arcem WIN32 ${ARCEM_SOURCES} ${ARCEM_ARCH_SOURCES} ${ARCEM_INIH_SOURCES} ${ARCEM_WIN_SOURCES} ${ARCEM_EXTNROM_MODULES})
 	target_include_directories(arcem PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/win)
 	target_compile_definitions(arcem PRIVATE SYSTEM_win)
 
 	target_link_libraries(arcem PRIVATE comdlg32 gdi32 winmm)
+
+	option(SOUND_SUPPORT "Build with sound support" ON)
+	if(SOUND_SUPPORT)
+		target_compile_definitions(arcem PRIVATE SOUND_SUPPORT)
+	endif()
 else()
 	message(FATAL_ERROR "Invalid system specified: ${SYSTEM}")
 endif()
@@ -240,6 +226,22 @@ elseif(APPLE)
 	set(CPACK_GENERATOR "DragNDrop")
 	include(CPack)
 endif()
+
+option(EXTNROM_SUPPORT "Build with Extension ROM support" ON)
+if(EXTNROM_SUPPORT)
+	target_compile_definitions(arcem PRIVATE EXTNROM_SUPPORT)
+endif()
+
+option(HOSTFS_SUPPORT "Build with HostFS support" ON)
+if(HOSTFS_SUPPORT)
+	target_compile_definitions(arcem PRIVATE HOSTFS_SUPPORT)
+endif()
+
+include(TestBigEndian)
+test_big_endian(HOST_BIGENDIAN)
+if(HOST_BIGENDIAN)
+	target_compile_definitions(arcem PRIVATE HOST_BIGENDIAN)
+endif(HOST_BIGENDIAN)
 
 target_include_directories(arcem PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/arch)
 if(MSVC)

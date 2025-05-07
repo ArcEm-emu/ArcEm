@@ -8,6 +8,8 @@
 
 */
 
+#if defined(SOUND_SUPPORT)
+
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -256,3 +258,5 @@ void Sound_HostBuffered(SoundData *buffer,int32_t numSamples)
     Sound_FudgeRate += (Sound_FudgeRate>0?-1:1);
   }
 }
+
+#endif

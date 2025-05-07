@@ -84,22 +84,22 @@ INSTALL=cp
 # Everything else should be ok as it is.
 
 OBJS = armcopro.o armemu.o arminit.o \
-	armsupp.o main.o dagstandalone.o eventq.o \
+	armsupp.o main.o dagstandalone.o eventq.o hostfs.o \
 		$(SYSTEM)/DispKbd.o arch/i2c.o arch/archio.o \
     arch/fdc1772.o $(SYSTEM)/ControlPane.o arch/hdc63463.o \
     arch/keyboard.o $(SYSTEM)/filecalls.o arch/filecommon.o \
     arch/ArcemConfig.o arch/cp15.o arch/newsound.o arch/displaydev.o \
-    arch/filero.o arch/fileunix.o arch/filewin.o \
+    arch/filero.o arch/fileunix.o arch/filewin.o arch/extnrom.o \
     libs/inih/ini.o
 
 SRCS = armcopro.c armemu.c arminit.c arch/armarc.c \
-	armsupp.c main.c dagstandalone.c eventq.c \
+	armsupp.c main.c dagstandalone.c eventq.c hostfs.c \
 	$(SYSTEM)/DispKbd.c arch/i2c.c arch/archio.c \
 	arch/fdc1772.c $(SYSTEM)/ControlPane.c arch/hdc63463.c \
 	arch/keyboard.c $(SYSTEM)/filecalls.c \
 	arch/ArcemConfig.c arch/cp15.c arch/newsound.c \
 	arch/displaydev.c arch/filecommon.c \
-	arch/filero.c arch/fileunix.c arch/filewin.c \
+	arch/filero.c arch/fileunix.c arch/filewin.c arch/extnrom.c \
 	libs/inih/ini.c
 
 INCS = armcopro.h armdefs.h armemu.h $(SYSTEM)/KeyTable.h \
@@ -115,8 +115,8 @@ HOSTFS_SUPPORT=yes
 EXTNROM_SUPPORT=yes
 SOUND_SUPPORT=yes
 SOUND_PTHREAD=no
-SRCS += amiga/wb.c amiga/arexx.c
-OBJS += amiga/wb.o amiga/arexx.o
+SRCS += amiga/wb.c amiga/arexx.c amiga/sound.c
+OBJS += amiga/wb.o amiga/arexx.o amiga/sound.o
 CPPFLAGS += -D__LARGE64_FILES -D__USE_INLINE__
 CFLAGS += -mcrt=newlib
 LDFLAGS += -mcrt=newlib
@@ -136,8 +136,8 @@ HOSTFS_SUPPORT=yes
 EXTNROM_SUPPORT=yes
 SOUND_SUPPORT=yes
 SOUND_PTHREAD=no
-SRCS += amiga/wb.c
-OBJS += amiga/wb.o
+SRCS += amiga/wb.c amiga/sound.c
+OBJS += amiga/wb.o amiga/sound.o
 CPPFLAGS += -D__amigaos3__
 CFLAGS += -noixemul
 LDFLAGS += -noixemul
@@ -149,7 +149,7 @@ HOSTFS_SUPPORT=yes
 # Sound
 SOUND_SUPPORT=yes
 SOUND_PTHREAD=no
-OBJS += riscos-single/soundbuf.o
+OBJS += riscos-single/sound.o riscos-single/soundbuf.o
 # General
 EXTNROM_SUPPORT=yes
 CPPFLAGS += -I@ -DSYSTEM_riscos_single -Iriscos-single -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
@@ -209,14 +209,14 @@ else
 CFLAGS += -I/usr/X11R6/include
 LIBS += -L/usr/X11R6/lib -lXext -lX11
 endif
-OBJS += X/true.o X/pseudo.o
+OBJS += X/true.o X/pseudo.o X/sound.o
 #SOUND_SUPPORT = yes
 endif
 
 ifeq (${SYSTEM},win)
 TARGET = ArcEm.exe
 CPPFLAGS += -DSYSTEM_win
-OBJS += win/gui.o win/win.o
+OBJS += win/gui.o win/win.o win/sound.o
 LIBS += -luser32 -lgdi32 -lcomdlg32 -lwinmm
 # Comment the following line to have a console window
 LIBS += -mwindows
@@ -226,7 +226,6 @@ endif
 
 ifeq (${SOUND_SUPPORT},yes)
 CPPFLAGS += -DSOUND_SUPPORT
-OBJS += $(SYSTEM)/sound.o
 INCS += arch/sound.h
 ifeq (${SOUND_PTHREAD},yes)
 LIBS += -lpthread
@@ -235,13 +234,10 @@ endif
 
 ifeq (${HOSTFS_SUPPORT},yes)
 CPPFLAGS += -DHOSTFS_SUPPORT
-HOSTFS_OBJS ?= hostfs.o
-OBJS += ${HOSTFS_OBJS}
 endif
 
 ifeq (${EXTNROM_SUPPORT},yes)
 CPPFLAGS += -DEXTNROM_SUPPORT
-OBJS += arch/extnrom.o
 endif
 
 ifeq (${HOST_BIGENDIAN},yes)

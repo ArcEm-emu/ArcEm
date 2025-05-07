@@ -21,6 +21,8 @@
 @   riscos-single/DispKbd.c
 @
 
+#if defined(PROFILE_ENABLED)
+
 .text
 
 prof_buffer_ptr:
@@ -166,3 +168,5 @@ Prof_Dump:
 	cmp	v1, v2
 	blo	.loop
 	ldmea	fp, {v1-v3,fp,sp,pc}
+
+#endif

@@ -10,6 +10,8 @@
 @ This allows us to skip performing stack extension checks in the main code.
 @
 
+#if defined(USE_FAKEMAIN)
+
 @ 256K should be far more than enough
 #define STACK_SIZE (256*1024)
 
@@ -25,4 +27,6 @@ main:
 	bl	__rt_stkovf_split_big
 	bl	fakemain
 	ldmea	fp, {fp, sp, pc}
+
+#endif
 

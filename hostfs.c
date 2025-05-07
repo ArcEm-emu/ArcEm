@@ -17,6 +17,8 @@
 
  */
 
+#if defined(HOSTFS_SUPPORT)
+
 #include <assert.h>
 #include <ctype.h>
 #include <errno.h>
@@ -2455,3 +2457,5 @@ hostfs(ARMul_State *state)
   __riscosify_control = old_riscosify;
 #endif
 }
+
+#endif

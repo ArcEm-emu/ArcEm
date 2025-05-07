@@ -13,6 +13,8 @@
 @ interpolation or anything like that.
 @
 
+#if defined(SOUND_SUPPORT)
+
 .set X_Bit, 0x20000
 .set XSharedSound_RemoveHandler, 0x04B441 + X_Bit
 
@@ -169,3 +171,5 @@ error_handler:
 	STR R0,[R1]
 	MSR CPSR_f,R2
 	LDMFD R13!,{R0-R2,PC}
+
+#endif

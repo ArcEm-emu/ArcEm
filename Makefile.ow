@@ -8,8 +8,8 @@ HOSTFS_SUPPORT=yes
 SOUND_SUPPORT=yes
 
 SRCS = armcopro.c armemu.c arminit.c armarc.c &
-	armsupp.c main.c dagstandalone.c eventq.c &
-	arch/i2c.c arch/archio.c &
+	armsupp.c main.c dagstandalone.c eventq.c hostfs.c &
+	arch/i2c.c arch/archio.c arch/extnrom.c &
 	arch/fdc1772.c arch/hdc63463.c &
 	arch/keyboard.c arch/filecommon.c &
 	arch/filero.c arch/fileunix.c arch/filewin.c &
@@ -17,7 +17,7 @@ SRCS = armcopro.c armemu.c arminit.c armarc.c &
 	libs/inih/ini.c
 
 CFLAGS += -DSYSTEM_win -Iwin
-SRCS += win/ControlPane.c win/DispKbd.c win/filecalls.c win/win.c
+SRCS += win/ControlPane.c win/DispKbd.c win/filecalls.c win/sound.c win/win.c
 RCSRCS += win/gui.rc
 resources = win/arc.ico win/gui.ico
 
@@ -26,18 +26,15 @@ RCFLAGS += -bt=nt -I"$(%WATCOM)/h/nt" -Iwin
 
 !ifeq SOUND_SUPPORT yes
 CFLAGS += -DSOUND_SUPPORT
-SRCS += win/sound.c
 LIBS += winmm.lib
 !endif
 
 !ifeq HOSTFS_SUPPORT yes
 CFLAGS += -DHOSTFS_SUPPORT
-SRCS += hostfs.c
 !endif
 
 !ifeq EXTNROM_SUPPORT yes
 CFLAGS += -DEXTNROM_SUPPORT
-SRCS += arch/extnrom.c
 !endif
 
 CFLAGS += -zq -otanxh -d0 -wx -I. -Iarch

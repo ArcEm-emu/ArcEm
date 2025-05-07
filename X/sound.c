@@ -1,3 +1,5 @@
+#if defined(SOUND_SUPPORT)
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -249,3 +251,5 @@ Sound_InitHost(ARMul_State *state)
 
   return 0;
 }
+
+#endif

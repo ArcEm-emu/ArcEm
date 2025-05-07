@@ -1,3 +1,5 @@
+#if defined(SOUND_SUPPORT)
+
 #include "win.h"
 #include "../armdefs.h"
 #include "../arch/sound.h"
@@ -155,3 +157,5 @@ void sound_exit(void)
 	HeapFree(GetProcessHeap(), 0, waveBlocks);
 	waveOutClose(hWaveOut);
 }
+
+#endif

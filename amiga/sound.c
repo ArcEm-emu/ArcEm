@@ -5,6 +5,8 @@
  * that take care of any buffering.
  */
 
+#if defined(SOUND_SUPPORT)
+
 #include <stdio.h>
 
 #include "platform.h"
@@ -71,3 +73,5 @@ void sound_exit(void)
 	/* IExec->FreeVec(buffer); */
 	Close(audioh);
 }
+
+#endif
