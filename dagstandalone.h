@@ -15,6 +15,6 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. */
 
-typedef struct ArcemConfig_s ArcemConfig;
+#include "armdefs.h"
 
 void dagstandalone(ArcemConfig *pConfig);

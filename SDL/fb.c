@@ -12,6 +12,8 @@
 /* TODO: Allow selecting the display device at runtime? */
 #if !SDL_VERSION_ATLEAST(2, 0, 0)
 
+#include <stdlib.h>
+
 #include "../armdefs.h"
 #include "armarc.h"
 #include "archio.h"

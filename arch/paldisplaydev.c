@@ -147,7 +147,7 @@ struct PDD_Name(DisplayInfo) {
     bool DMAEn; /* Whether video DMA is enabled for this frame */
     int LastHostWidth,LastHostHeight,LastHostDepth,LastHostHz; /* Values we used to request host mode */
     unsigned int BitWidth; /* Width of display area, in bits */
-    uint_least16_t VIDC_CR; /* Control register value in use for this frame */
+    uint_fast16_t VIDC_CR; /* Control register value in use for this frame */
     uint32_t Vptr; /* DMA pointer, in bits, as offset from start of phys RAM */
     int FrameSkip; /* Current frame skip counter */
 

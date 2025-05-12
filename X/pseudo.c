@@ -55,7 +55,7 @@ static inline void SDD_Name(Host_EndRow)(ARMul_State *state,SDD_Row *row) { /* n
 static inline void SDD_Name(Host_BeginUpdate)(ARMul_State *state,SDD_Row *row,unsigned int count)
 {
   UpdateStart = MIN(UpdateStart,*row-PD.ImageData);
-  UpdateEnd = MAX(UpdateEnd,*row-PD.ImageData+count-1);
+  UpdateEnd = MAX(UpdateEnd,(*row-PD.ImageData)+(int)count-1);
 }
 
 static inline void SDD_Name(Host_EndUpdate)(ARMul_State *state,SDD_Row *row) { /* nothing */ }

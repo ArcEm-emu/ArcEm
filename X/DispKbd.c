@@ -228,7 +228,7 @@ static const keysym_to_arch_key keysym_to_arch_key_map[] = {
     SUNX(F37, f12)  /* Labelled "F12" */
 #endif
 
-    { NoSymbol },
+    { NoSymbol, ARCH_KEY_count },
 };
 #undef X
 #undef SUNX

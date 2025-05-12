@@ -202,7 +202,7 @@ struct SDD_Name(DisplayInfo) {
     int LastRow; /* Row last event was scheduled to run up to */
     int NextRow; /* Row next event is scheduled to run up to */
     int MaxRow; /* Row to stop at for this frame */
-    uint_least16_t VIDC_CR; /* Control register value in use for this frame */
+    uint_fast16_t VIDC_CR; /* Control register value in use for this frame */
     uint32_t LineRate; /* Line rate, measured in EmuRate clock cycles */
     uint32_t Vptr; /* DMA pointer, in bits, as offset from start of phys RAM */
     uint32_t LastVinit; /* Last Vinit, so we can sync changes with the frame start */

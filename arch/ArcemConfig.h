@@ -37,6 +37,7 @@
 #define ARCEMCONFIG_HEADER
 
 #include "arch/hdc63463.h"
+#include "../armdefs.h"
 #include "../c99.h"
 
 typedef enum ArcemConfig_MemSize_e {
@@ -68,7 +69,7 @@ typedef struct ArcemConfig_Label_s {
 
 /* THIS IS THE MAIN CONFIGURATION STRUCTURE */
 
-typedef struct ArcemConfig_s {
+struct ArcemConfig_s {
   ArcemConfig_MemSize   eMemSize;
   ArcemConfig_Processor eProcessor; 
 
@@ -104,7 +105,7 @@ typedef struct ArcemConfig_s {
   int iTweakMenuKey1,iTweakMenuKey2;
 #endif
 
-} ArcemConfig;
+};
 
 #define CONFIG (*(state->Config))
 
