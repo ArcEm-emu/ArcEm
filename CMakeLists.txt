@@ -79,6 +79,16 @@ set(ARCEM_X_SOURCES
 	X/sound.c
 	X/true.c
 )
+set(ARCEM_AMIGA_SOURCES
+	amiga/arexx.c
+	amiga/arexx.h
+	amiga/ControlPane.c
+	amiga/DispKbd.c
+	amiga/filecalls.c
+	amiga/KeyTable.h
+	amiga/platform.h
+	amiga/wb.c
+)
 set(ARCEM_MACOSX_SOURCES
 	macosx/ArcemController.h
 	macosx/ArcemController.m
@@ -126,6 +136,8 @@ if(WIN32)
 	set(DEFAULT_SYSTEM "win")
 elseif(APPLE)
 	set(DEFAULT_SYSTEM "macosx")
+elseif(AMIGA)
+	set(DEFAULT_SYSTEM "amiga")
 elseif(UNIX AND NOT HAIKU)
 	set(DEFAULT_SYSTEM "X")
 else()
@@ -167,6 +179,29 @@ elseif(${SYSTEM} STREQUAL "X")
 			target_link_libraries(Threads::Threads)
 		endif()
 	endif()
+elseif(${SYSTEM} STREQUAL "amiga")
+	option(SOUND_SUPPORT "Build with sound support" ON)
+	if(SOUND_SUPPORT)
+		add_definitions(-DSOUND_SUPPORT)
+		list(APPEND ARCEM_AMIGA_SOURCES amiga/sound.c)
+	endif()
+
+	add_executable(arcem ${ARCEM_SOURCES} ${ARCEM_ARCH_SOURCES} ${ARCEM_INIH_SOURCES} ${ARCEM_AMIGA_SOURCES})
+	target_include_directories(arcem PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/amiga)
+	target_compile_definitions(arcem PRIVATE SYSTEM_amiga)
+
+	if(AMIGAOS4)
+		target_compile_definitions(arcem PRIVATE __USE_INLINE__)
+
+		option(ONCHIPMEM_SUPPORT "Build with on-chip memory support" OFF)
+		if(ONCHIPMEM_SUPPORT)
+			# The following line is for onchipmem support, which should speed
+			# the emulator up but slows it down, so it is disabled by default
+			target_compile_definitions(arcem PRIVATE ONCHIPMEM_SUPPORT)
+		endif()
+	endif()
+
+	# TODO: Build arcempanel
 elseif(${SYSTEM} STREQUAL "macosx")
 	enable_language(OBJC)
 
@@ -265,6 +300,7 @@ source_group(src FILES ${ARCEM_SOURCES})
 source_group(src\\arch FILES ${ARCEM_ARCH_SOURCES})
 source_group(src\\X FILES ${ARCEM_X_SOURCES})
 source_group(src\\SDL FILES ${ARCEM_SDL_SOURCES})
+source_group(src\\amiga FILES ${ARCEM_AMIGA_SOURCES})
 source_group(src\\macosx FILES ${ARCEM_MACOSX_SOURCES})
 source_group(src\\macosx FILES ${ARCEM_MACOSX_RESOURCES})
 source_group(src\\vc FILES ${ARCEM_VC_SOURCES})
