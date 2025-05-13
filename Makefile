@@ -71,7 +71,7 @@ endif
 endif
 
 CFLAGS += $(WARN)
-CPPFLAGS += -I$(SYSTEM) -Iarch -I.
+CPPFLAGS += -I$(SYSTEM) -Iarch -I. -Ilibs/inih
 
 PKG_CONFIG = pkg-config
 

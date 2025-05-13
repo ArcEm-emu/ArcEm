@@ -22,7 +22,7 @@
 #include "dbugsys.h"
 #include "filecalls.h"
 
-#include "libs/inih/ini.h"
+#include <ini.h>
 
 #ifdef AMIGA
 #include <workbench/startup.h>

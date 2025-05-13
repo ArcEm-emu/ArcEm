@@ -37,7 +37,7 @@ CFLAGS += -DHOSTFS_SUPPORT
 CFLAGS += -DEXTNROM_SUPPORT
 !endif
 
-CFLAGS += -zq -otanxh -d0 -wx -I. -Iarch
+CFLAGS += -zq -otanxh -d0 -wx -I. -Iarch -Ilibs/inih
 # newer OpenWatcom versions enable W303 by default
 CFLAGS+= -wcd=303
 OBJS = $(SRCS:.c=.obj)
