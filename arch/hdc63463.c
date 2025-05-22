@@ -485,7 +485,7 @@ static int SetFilePtr(ARMul_State *state, unsigned int drive, uint32_t head,
     }
 
     if (fseek(HDC.HardFile[drive], ptr, SEEK_SET)) {
-        dbug("SetFilePtr: fseek failed: errno=%d\n", errno);
+        dbug("SetFilePtr: file seek failed: %s\n", strerror(errno));
         Cause_Error(state, ERR_NRY);
         return 0;
     }

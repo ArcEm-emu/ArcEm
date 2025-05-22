@@ -820,8 +820,7 @@ ARMword FDC_Write(ARMul_State *state, ARMword offset, ARMword data, bool bNw) {
             err = fputc(FDC.Data, FDC.drive[FDC.CurrentDisc].fp);
             
             if (err!=FDC.Data) {
-              perror(NULL);
-              warn_fdc("FDC_Write: fputc failed!! Data=%d err=%d errno=%d ferror=%d\n",FDC.Data,err,errno,ferror(FDC.drive[FDC.CurrentDisc].fp));
+              warn_fdc("FDC_Write: fputc failed!! Data=%d err=%d ferror=%d: %s\n",FDC.Data,err,ferror(FDC.drive[FDC.CurrentDisc].fp),strerror(errno));
               abort();
             }
 

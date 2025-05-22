@@ -253,14 +253,14 @@ errno_to_hostfs_error(const char *filename,const char *function,const char *op)
     }
     else
     {
-      warn_hostfs("%s() could not %s '%s': %s %d\n",function,op,filename,strerror(errno),errno);
+      warn_hostfs("%s() could not %s '%s': %s\n",function,op,filename,strerror(errno));
       return HOSTFS_ERROR_UNKNOWN;
     }
   }
 #endif
 
   default:
-    warn_hostfs("%s() could not %s '%s': %s %d\n",function,op,filename,strerror(errno),errno);
+    warn_hostfs("%s() could not %s '%s': %s\n",function,op,filename,strerror(errno));
     return HOSTFS_ERROR_UNKNOWN;
   }
 }
@@ -657,8 +657,8 @@ hostfs_read_object_info(const char *host_pathname,
     default:
       /* Other error */
       warn_hostfs(
-              "hostfs_read_object_info() could not stat() \'%s\': %s %d\n",
-              host_pathname, strerror(errno), errno);
+              "hostfs_read_object_info() could not stat() \'%s\': %s\n",
+              host_pathname, strerror(errno));
       object_info->type = OBJECT_TYPE_NOT_FOUND;
       break;
     }
@@ -803,8 +803,8 @@ hostfs_path_scan(const char *host_dir_path,
       break;
 
     default:
-     warn_hostfs("hostfs_path_scan() could not opendir() \'%s\': %s %d\n",
-                 host_dir_path, strerror(errno), errno);
+     warn_hostfs("hostfs_path_scan() could not opendir() \'%s\': %s\n",
+                 host_dir_path, strerror(errno));
       object_info->type = OBJECT_TYPE_NOT_FOUND;
     }
 
@@ -1153,8 +1153,8 @@ hostfs_args_3_write_file_extent(ARMul_State *state)
 
   /* Flush any pending I/O before moving to low-level I/O functions */
   if (fflush(f)) {
-    warn_hostfs("hostfs_args_3_write_file_extent() bad fflush(): %s %d\n",
-                strerror(errno), errno);
+    warn_hostfs("hostfs_args_3_write_file_extent() bad fflush(): %s\n",
+                strerror(errno));
     return;
   }
 
@@ -1775,8 +1775,8 @@ hostfs_func_8_rename(ARMul_State *state)
   if (rename(host_pathname1, new_pathname)) {
     /* An error occurred */
 
-    warn_hostfs("HostFS could not rename \'%s\' to \'%s\': %s %d\n",
-                host_pathname1, new_pathname, strerror(errno), errno);
+    warn_hostfs("HostFS could not rename \'%s\' to \'%s\': %s\n",
+                host_pathname1, new_pathname, strerror(errno));
     state->Reg[1] = 1; /* non-zero indicates could not rename */
     return;
   }
