@@ -40,7 +40,7 @@ static int do_screenshot = 0;
 static int enable_profile = 0;
 #endif
 
-static void GoMenu(void);
+static void GoMenu(ARMul_State *state);
 #endif
 
 static void InitModeTable(void);
@@ -791,7 +791,7 @@ static void Host_PollDisplay_Common(ARMul_State *state,const DisplayParams *para
       rbswap();
     }
     /* Reset EmuRate since the above may have taken a looong time */
-    EmuRate_Reset(&statestr);
+    EmuRate_Reset(state);
   }
 #endif 
 }
@@ -937,7 +937,7 @@ Kbd_PollHostKbd(ARMul_State *state)
       if(both_down && !key1_down && !key2_down)
       {
         both_down = 0;
-        GoMenu();
+        GoMenu(state);
       }
       else if(enable_screenshots && (key == 13) && transition)
       {
@@ -1259,7 +1259,7 @@ static void DrawMenu(void)
   }
 }
 
-static void GoMenu(void)
+static void GoMenu(ARMul_State *state)
 {
 #ifdef PROFILE_ENABLED
   /* Stop here */
@@ -1307,7 +1307,7 @@ static void GoMenu(void)
     }
   } while(1);
   /* (re)start display device. Even if we haven't changed anything, this is needed to force the screen to be redrawn (and the mode to be reset) */
-  if(DisplayDev_Set(&statestr,displays[hArcemConfig.eDisplayDriver]))
+  if(DisplayDev_Set(state,displays[hArcemConfig.eDisplayDriver]))
   {
     ControlPane_Error(EXIT_FAILURE,"Failed to reinitialise display\n");
   }
@@ -1315,11 +1315,11 @@ static void GoMenu(void)
   if(hArcemConfig.eDisplayDriver == DisplayDriver_Standard)
     DisplayDev_UseUpdateFlags = 1;
   /* Rebuild fastmap for DisplayDev_UseUpdateFlags changes */
-  ARMul_RebuildFastMap(&statestr);
+  ARMul_RebuildFastMap(state);
   /* Gobble any keyboard input */
   while(_swi (ArcEmKey_GetKey, _RETURN(0))) {};
   /* Reset EmuRate */
-  EmuRate_Reset(&statestr);
+  EmuRate_Reset(state);
 #ifdef PROFILE_ENABLED
   if(enable_profile)
   {
