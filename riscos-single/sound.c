@@ -45,6 +45,7 @@ extern void error_handler(void); /* Assembler function attached to ErrorV */
 
 static void shutdown_sharedsound(void);
 
+#ifdef __TARGET_UNIXLIB__
 extern void __write_backtrace(int signo);
 static void sigfunc(int sig)
 {
@@ -82,6 +83,7 @@ static void sigfunc(int sig)
 	__write_backtrace(sig);
 	exit(0);
 }
+#endif
 
 static int init_sharedsound(void)
 {

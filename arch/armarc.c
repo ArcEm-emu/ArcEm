@@ -12,7 +12,7 @@
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-#ifdef __riscos__
+#if defined(__riscos__) && defined(__TARGET_UNIXLIB__)
 #include <unixlib/local.h>
 #endif
 
@@ -169,7 +169,7 @@ static void DumpHandler(int sig) {
 
   fclose(res);
 
-#ifdef __riscos__
+#if defined(__riscos__) && defined(__TARGET_UNIXLIB__)
   __write_backtrace(sig);
 #endif
 
