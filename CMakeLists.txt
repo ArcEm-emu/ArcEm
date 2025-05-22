@@ -42,11 +42,8 @@ set(ARCEM_ARCH_SOURCES
 	arch/filecalls.h
 	arch/filecommon.c
 	arch/filero.c
-	arch/filero.h
 	arch/fileunix.c
-	arch/fileunix.h
 	arch/filewin.c
-	arch/filewin.h
 	arch/hdc63463.c
 	arch/hdc63463.h
 	arch/i2c.c

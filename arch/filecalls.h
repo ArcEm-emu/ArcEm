@@ -8,14 +8,6 @@
 #include "../armdefs.h"
 #include <stdio.h>
 
-#ifdef _WIN32
-#include "filewin.h"
-#elif defined(__riscos__)
-#include "filero.h"
-#else
-#include "fileunix.h"
-#endif
-
 typedef struct Directory_s Directory;
 
 typedef struct FileInfo
@@ -36,10 +28,9 @@ typedef struct DiskInfo
  * Open a directory so that it's contents can be scanned
  *
  * @param sPath Location of directory to scan
- * @param hDir Pointer to a Directory struct to fill in
- * @returns 1 on success 0 on failure
+ * @returns Directory handle or NULL on failure
  */
-bool Directory_Open(const char *sPath, Directory *hDir);
+Directory *Directory_Open(const char *sPath);
 
 /**
  * Directory_Close
@@ -48,7 +39,7 @@ bool Directory_Open(const char *sPath, Directory *hDir);
  *
  * @param hDirectory Directory to close
  */
-void Directory_Close(Directory hDirectory);
+void Directory_Close(Directory *hDirectory);
 
 /**
  * Directory_GetNextEntry
@@ -96,10 +87,9 @@ FILE *File_OpenAppData(const char *sName, const char *sMode);
  * Open the specified directory in the application directory
  *
  * @param sName of directory to scan
- * @param hDir Pointer to a Directory struct to fill in
- * @returns true on success false on failure
+ * @returns Directory handle or NULL on failure
  */
-bool Directory_OpenAppDir(const char *sName, Directory *hDirectory);
+Directory *Directory_OpenAppDir(const char *sName);
 
 /* These next few are implemented in arch/filecommon.c */
 

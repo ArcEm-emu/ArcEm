@@ -122,15 +122,6 @@
     <ClInclude Include="..\arch\filecalls.h">
       <Filter>arch</Filter>
     </ClInclude>
-    <ClInclude Include="..\arch\filero.h">
-      <Filter>arch</Filter>
-    </ClInclude>
-    <ClInclude Include="..\arch\fileunix.h">
-      <Filter>arch</Filter>
-    </ClInclude>
-    <ClInclude Include="..\arch\filewin.h">
-      <Filter>arch</Filter>
-    </ClInclude>
     <ClInclude Include="..\arch\hdc63463.h">
       <Filter>arch</Filter>
     </ClInclude>

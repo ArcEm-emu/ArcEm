@@ -61,7 +61,7 @@ extnrom_calculate_checksum(const ARMword *start_addr, uint32_t size)
 uint32_t
 extnrom_calculate_size(const char *dir, uint32_t *entry_count)
 {
-  Directory hDir;
+  Directory *hDir;
   FileInfo hFileInfo;
   char *sFilename;
   uint32_t required_size = 0;
@@ -71,15 +71,17 @@ extnrom_calculate_size(const char *dir, uint32_t *entry_count)
   *entry_count = 0;
 
   /* Read list of files and calculate total size */
-  if(!Directory_Open(dir, &hDir)) {
-    if (!Directory_OpenAppDir(dir, &hDir)) {
+  hDir = Directory_Open(dir);
+  if(!hDir) {
+    hDir = Directory_OpenAppDir(dir);
+    if (!hDir) {
       warn_data("Could not open Extension Rom directory \'%s\': %s\n",
                 dir, strerror(errno));
       return 0;
     }
   }
 
-  while ((sFilename = Directory_GetNextEntry(&hDir, &hFileInfo)) != NULL) {
+  while ((sFilename = Directory_GetNextEntry(hDir, &hFileInfo)) != NULL) {
     char *path;
     long ulFilesize;
     FILE *f;
@@ -95,7 +97,7 @@ extnrom_calculate_size(const char *dir, uint32_t *entry_count)
     }
 
     /* Construct relative path to the entry */
-    path = Directory_GetFullPath(&hDir, sFilename);
+    path = Directory_GetFullPath(hDir, sFilename);
 
     f = fopen(path, "rb");
     if (!f) {
@@ -149,7 +151,7 @@ extnrom_load(const char *dir, uint32_t size, uint32_t entry_count, void *address
 {
   ARMword *start_addr = address;
   ARMword *chunk, *modules;
-  Directory hDir;
+  Directory *hDir;
   FileInfo hFileInfo;
   char *sFilename;
   uint32_t size_in_words = size / 4;
@@ -190,8 +192,10 @@ extnrom_load(const char *dir, uint32_t size, uint32_t entry_count, void *address
   start_addr[3] = 0;
 
   /* Read list of files, create Chunk Directory and load them in */
-  if(!Directory_Open(dir, &hDir)) {
-    if (!Directory_OpenAppDir(dir, &hDir)) {
+  hDir = Directory_Open(dir);
+  if(!hDir) {
+    hDir = Directory_OpenAppDir(dir);
+    if (!hDir) {
       warn_data("Could not open Extension Rom directory \'%s\'\n",
                 dir);
       return;
@@ -219,7 +223,7 @@ extnrom_load(const char *dir, uint32_t size, uint32_t entry_count, void *address
   modules += ROUND_UP_TO_4(strlen(DESCRIPTION_STRING) + 1) / 4;
 
   /* Process the modules */
-  while ((sFilename = Directory_GetNextEntry(&hDir, &hFileInfo)) != NULL) {
+  while ((sFilename = Directory_GetNextEntry(hDir, &hFileInfo)) != NULL) {
     char *path;
     ARMword offset;
     ARMword ulFilesize;
@@ -236,7 +240,7 @@ extnrom_load(const char *dir, uint32_t size, uint32_t entry_count, void *address
     }
 
     /* Construct relative path to the entry */
-    path = Directory_GetFullPath(&hDir, sFilename);
+    path = Directory_GetFullPath(hDir, sFilename);
 
     f = fopen(path, "rb");
     if (!f) {

@@ -22,6 +22,13 @@
 #include "filecalls.h"
 #include "dbugsys.h"
 
+/* The POSIX version of the directory struct */
+struct Directory_s {
+  DIR *hDir;
+  char *sPath;
+  size_t sPathLen;
+};
+
 static bool File_GetInfo(const char *sPath, FileInfo *phFileInfo);
 
 /**
@@ -30,30 +37,34 @@ static bool File_GetInfo(const char *sPath, FileInfo *phFileInfo);
  * Open a directory so that it's contents can be scanned
  *
  * @param sPath Location of directory to scan
- * @param hDir Pointer to a Directory struct to fill in
- * @returns true on success false on failure
+ * @returns Directory handle or NULL on failure
  */
-bool Directory_Open(const char *sPath, Directory *hDirectory)
+Directory *Directory_Open(const char *sPath)
 {
+  Directory *hDirectory;
+  size_t sPathLen;
+
   assert(sPath);
   assert(*sPath);
-  assert(hDirectory);
 
-  hDirectory->sPathLen = strlen(sPath);
-  hDirectory->sPath = malloc(hDirectory->sPathLen + 1);
+  sPathLen = strlen(sPath);
+  hDirectory = malloc(sizeof(Directory) + sPathLen + 1);
 
-  if(NULL == hDirectory->sPath) {
-    return false;
+  if(NULL == hDirectory) {
+    return NULL;
   } else {
+    hDirectory->sPathLen = sPathLen;
+    hDirectory->sPath = (char *)(hDirectory + 1);
     strcpy(hDirectory->sPath, sPath);
   }
 
   hDirectory->hDir = opendir(sPath);
 
   if(NULL == hDirectory->hDir) {
-    return false;
+    free(hDirectory);
+    return NULL;
   } else {
-    return true;
+    return hDirectory;
   }
 }
 
@@ -64,10 +75,10 @@ bool Directory_Open(const char *sPath, Directory *hDirectory)
  *
  * @param hDirectory Directory to close
  */
-void Directory_Close(Directory hDirectory)
+void Directory_Close(Directory *hDirectory)
 {
-  closedir(hDirectory.hDir);
-  free(hDirectory.sPath);
+  closedir(hDirectory->hDir);
+  free(hDirectory);
 }
 
 /**

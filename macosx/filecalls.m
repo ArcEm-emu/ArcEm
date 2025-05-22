@@ -53,16 +53,15 @@ FILE *File_OpenAppData(const char *sName, const char *sMode)
  * Open the specified directory in the application directory
  *
  * @param sName of directory to scan
- * @param hDir Pointer to a Directory struct to fill in
- * @returns true on success false on failure
+ * @returns Directory handle or NULL on failure
  */
-bool Directory_OpenAppDir(const char *sName, Directory *hDirectory)
+Directory *Directory_OpenAppDir(const char *sName)
 {
     @autoreleasepool {
         NSString *dirName = [NSString stringWithUTF8String:sName];
         NSString *resourcePath = [[NSBundle mainBundle] resourcePath];
         NSString *dirPath = [resourcePath stringByAppendingPathComponent:dirName];
 
-        return Directory_Open([dirPath fileSystemRepresentation], hDirectory);
+        return Directory_Open([dirPath fileSystemRepresentation]);
     }
 }

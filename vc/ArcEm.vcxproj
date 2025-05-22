@@ -327,9 +327,6 @@
     <ClInclude Include="..\arch\extnrom.h" />
     <ClInclude Include="..\arch\fdc1772.h" />
     <ClInclude Include="..\arch\filecalls.h" />
-    <ClInclude Include="..\arch\filero.h" />
-    <ClInclude Include="..\arch\fileunix.h" />
-    <ClInclude Include="..\arch\filewin.h" />
     <ClInclude Include="..\arch\hdc63463.h" />
     <ClInclude Include="..\arch\i2c.h" />
     <ClInclude Include="..\arch\keyboard.h" />

@@ -207,23 +207,11 @@ SOURCE=..\arch\filero.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\arch\filero.h
-# End Source File
-# Begin Source File
-
 SOURCE=..\arch\fileunix.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\arch\fileunix.h
-# End Source File
-# Begin Source File
-
 SOURCE=..\arch\filewin.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\arch\filewin.h
 # End Source File
 # Begin Source File
 

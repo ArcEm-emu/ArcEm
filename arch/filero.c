@@ -18,33 +18,50 @@
 /* application includes */
 #include "filecalls.h"
 
+/* The RISC OS version of the directory struct */
+struct Directory_s {
+  char *sPath;
+  size_t sPathLen;
+  int gbpb_entry;
+
+  struct {
+    ARMword load;
+    ARMword exec;
+    ARMword length;
+    ARMword attribs;
+    ARMword type;
+    char name[80];
+  } gbpb_buffer;
+};
+
 /**
  * Directory_Open
  *
  * Open a directory so that it's contents can be scanned
  *
  * @param sPath Location of directory to scan
- * @param hDir Pointer to a Directory struct to fill in
- * @returns true on success false on failure
+ * @returns Directory handle or NULL on failure
  */
-bool Directory_Open(const char *sPath, Directory *hDirectory)
+Directory *Directory_Open(const char *sPath)
 {
+  Directory *hDirectory;
+  size_t sPathLen;
+
   assert(sPath);
   assert(*sPath);
-  assert(hDirectory);
+
+  sPathLen = strlen(sPath);
+
+  hDirectory = malloc(sizeof(Directory) + sPathLen + 1);
+  if (!hDirectory)
+    return NULL;
 
   memset(hDirectory, 0, sizeof(*hDirectory));
+  hDirectory->sPathLen = sPathLen;
+  hDirectory->sPath = (char *)(hDirectory + 1);
+  strcpy(hDirectory->sPath, sPath);
 
-  hDirectory->sPathLen = strlen(sPath);
-  hDirectory->sPath = malloc(hDirectory->sPathLen + 1);
-
-  if(NULL == hDirectory->sPath) {
-    return false;
-  } else {
-    strcpy(hDirectory->sPath, sPath);
-  }
-
-  return true;
+  return hDirectory;
 }
 
 /**
@@ -54,9 +71,9 @@ bool Directory_Open(const char *sPath, Directory *hDirectory)
  *
  * @param hDirectory Directory to close
  */
-void Directory_Close(Directory hDirectory)
+void Directory_Close(Directory *hDirectory)
 {
-  free(hDirectory.sPath);
+  free(hDirectory);
 }
 
 /**

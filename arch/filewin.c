@@ -18,14 +18,13 @@
 
 
 /* The windows version of the directory struct */
-#if 0
 struct Directory_s {
   char *sPath;
-  WIN32_FIND_DATA w32fd;
+  size_t sPathLen;
+  WIN32_FIND_DATAA w32fd;
   HANDLE hFile;
   bool bFirstEntry;
 };
-#endif
 
 /**
  * Directory_Open
@@ -33,12 +32,13 @@ struct Directory_s {
  * Open a directory so that it's contents can be scanned
  *
  * @param sPath Location of directory to scan
- * @param hDir Pointer to a Directory struct to fill in
- * @returns true on success false on failure
+ * @returns Directory handle or NULL on failure
  */
-bool Directory_Open(const char *sPath, Directory *hDir)
+Directory *Directory_Open(const char *sPath)
 {
   bool bNeedsEndSlash = 0;
+  Directory *hDir;
+  size_t sPathLen;
 
   assert(sPath);
   assert(*sPath);
@@ -46,16 +46,18 @@ bool Directory_Open(const char *sPath, Directory *hDir)
   if(sPath[strlen(sPath)] != '/') {
     bNeedsEndSlash = true;
   }
+  sPathLen = strlen(sPath) + (bNeedsEndSlash ? 1 : 0 ) + 3; /* Path + Endslash (if needed) + *.* + terminator */
+
+  hDir = malloc(sizeof(Directory) + sPathLen + 1);
+  if(NULL == hDir) {
+    warn_data("Failed to allocate memory for directory handle\n");
+    return NULL;
+  }
 
   hDir->bFirstEntry = true;
   hDir->hFile       = NULL;
-
-  hDir->sPathLen = strlen(sPath) + (bNeedsEndSlash ? 1 : 0 ) + 3; /* Path + Endslash (if needed) + *.* + terminator */
-  hDir->sPath = calloc(1, hDir->sPathLen + 1);
-  if(NULL == hDir->sPath) {
-    warn_data("Failed to allocate memory for directory handle path\n");
-    return false;
-  }
+  hDir->sPathLen    = sPathLen;
+  hDir->sPath       = (char *)(hDir + 1);
 
   strcpy(hDir->sPath, sPath);
   if(bNeedsEndSlash) {
@@ -63,7 +65,7 @@ bool Directory_Open(const char *sPath, Directory *hDir)
   }
   strcat(hDir->sPath, "*.*");
 
-  return true;
+  return hDir;
 }
 
 /**
@@ -73,11 +75,11 @@ bool Directory_Open(const char *sPath, Directory *hDir)
  *
  * @param hDirectory Directory to close
  */
-void Directory_Close(Directory hDirectory)
+void Directory_Close(Directory *hDirectory)
 {
-  free(hDirectory.sPath);
+  FindClose(hDirectory->hFile);
+  free(hDirectory);
 
-  FindClose(hDirectory.hFile);
 }
 
 /**
