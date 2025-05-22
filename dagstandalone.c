@@ -20,7 +20,6 @@
 /* independent. Not very cleanly done - more of a hack than anything */
 /*********************************************************************/
 
-#include <signal.h>
 #include <stdlib.h>
 
 #include "dagstandalone.h"
@@ -30,26 +29,6 @@
 
 #include "ArcemConfig.h"
 #include "ControlPane.h"
-
-/**************************************************************/
-/* Signal handler that terminates excecution in the ARMulator */
-/**************************************************************/
-#ifndef _WIN32
-#ifndef AMIGA
-static void dagstandalone_handlesignal(int sig) {
-  dbug("Terminate ARMulator - excecution\n");
-#ifdef BENCHMARKEXIT
-  warn("Emulated cycles = %ld\n", ARMul_Time);
-  exit(0);
-#endif
-  if (sig != SIGUSR1) {
-    warn("Unsupported signal.\n");
-    return;
-  }
-  exit(0); /* ??? */
-}
-#endif
-#endif
 
 static void InitFail(int exitcode, char const *which) {
   ControlPane_Error(exitcode,"%s interface failed to initialise. Exiting\n",
@@ -65,23 +44,7 @@ static void InitFail(int exitcode, char const *which) {
  *
  */
  void dagstandalone(ArcemConfig *pConfig) {
-#ifndef _WIN32
-#ifndef AMIGA
-  struct sigaction action;
-#endif
-#endif
   ARMul_State *emu_state = NULL;
-
-#ifndef _WIN32
-#ifndef AMIGA
-  /* Setup a signal handler for SIGUSR1 */
-  action.sa_handler = dagstandalone_handlesignal;
-  sigemptyset (&action.sa_mask);
-  action.sa_flags = 0;
-  
-  sigaction(SIGUSR1, &action, (struct sigaction *) 0);
-#endif
-#endif
 
   ARMul_EmulateInit();
   emu_state = ARMul_NewState(pConfig);
