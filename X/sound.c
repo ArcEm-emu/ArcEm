@@ -252,4 +252,10 @@ Sound_InitHost(ARMul_State *state)
   return 0;
 }
 
+void
+Sound_ShutdownHost(ARMul_State *state)
+{
+  /* TODO */
+}
+
 #endif

@@ -280,7 +280,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             break;
         case IDM_EXIT:
           DestroyWindow(hWnd);
-          exit(0);
+          ARMul_Exit(state, 0);
           break;
         case IDM_STDDISPLAY:
           SelectMenuItem(hWnd, DisplayDriver_Standard);
@@ -368,11 +368,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 
     case WM_DESTROY:
-#ifdef SOUND_SUPPORT
-      sound_exit();
-#endif
       PostQuitMessage(0);
-      exit(0);
+      ARMul_Exit(state, 0);
       break;
 
 

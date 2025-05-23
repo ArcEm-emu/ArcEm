@@ -379,11 +379,12 @@ ARMul_MemoryInit(ARMul_State *state)
  */
 void ARMul_MemoryExit(ARMul_State *state)
 {
+  Sound_Shutdown(state);
+  DisplayDev_Shutdown(state);
   free(MEMC.ROMRAMChunk);
 #ifdef ARMUL_INSTR_FUNC_CACHE
   free(MEMC.EmuFuncChunk);
 #endif
-  free(state->Display);
 }
 
 static ARMword ARMul_ManglePhysAddr(ARMword phy)

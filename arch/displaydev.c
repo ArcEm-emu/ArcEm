@@ -44,6 +44,15 @@ int DisplayDev_Set(ARMul_State *state,const DisplayDev *dev)
   return 0;
 }
 
+void DisplayDev_Shutdown(ARMul_State *state)
+{
+  if(DisplayDev_Current)
+  {
+    (DisplayDev_Current->Shutdown)(state);
+    DisplayDev_Current = NULL;
+  }
+}
+
 void DisplayDev_GetCursorPos(ARMul_State *state,int *x,int *y)
 {
   static const int_fast8_t offsets[4] = {19-6,11-6,7-6,5-6};

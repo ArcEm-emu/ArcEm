@@ -200,6 +200,11 @@ int Sound_InitHost(ARMul_State *state)
   return 0;
 }
 
+void Sound_ShutdownHost(ARMul_State *state)
+{
+  shutdown_sharedsound();
+}
+
 SoundData *Sound_GetHostBuffer(int32_t *destavail)
 {
   int used, ofs, buffree;

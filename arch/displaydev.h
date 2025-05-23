@@ -63,6 +63,8 @@ extern int DisplayDev_Set(ARMul_State *state,const DisplayDev *dev); /* Switch t
 /* Host must provide this function to initialize the default display device */
 extern int DisplayDev_Init(ARMul_State *state);
 
+extern void DisplayDev_Shutdown(ARMul_State *state);
+
 /* Calculate cursor position relative to the first display pixel */
 extern void DisplayDev_GetCursorPos(ARMul_State *state,int *x,int *y);
 

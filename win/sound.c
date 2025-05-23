@@ -142,7 +142,8 @@ Sound_InitHost(ARMul_State *state)
 	return 0;
 }
 
-void sound_exit(void)
+void
+Sound_ShutdownHost(ARMul_State *state)
 {
 	int i;
 

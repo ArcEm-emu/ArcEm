@@ -20,10 +20,12 @@
   should run correctly.
 */
 
+#include <stdlib.h>
 #include <string.h>
 
 #include "../armdefs.h"
 #include "arch/armarc.h"
+#include "arch/ControlPane.h"
 #include "arch/dbugsys.h"
 #include "arch/sound.h"
 #include "displaydev.h"
@@ -554,5 +556,16 @@ int Sound_Init(ARMul_State *state)
   Sound_UpdateDMARate(state);
   EventQ_Insert(state,ARMul_Time+Sound_DMARate,Sound_DMAEvent);
   return 0;
+#endif
+}
+
+void Sound_Shutdown(ARMul_State *state)
+{
+  int idx = EventQ_Find(state,Sound_DMAEvent);
+  if(idx >= 0)
+    EventQ_Remove(state,idx);
+
+#ifdef SOUND_SUPPORT
+  Sound_ShutdownHost(state);
 #endif
 }

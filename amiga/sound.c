@@ -74,4 +74,10 @@ void sound_exit(void)
 	Close(audioh);
 }
 
+void
+Sound_ShutdownHost(ARMul_State *state)
+{
+	sound_exit();
+}
+
 #endif
