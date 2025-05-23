@@ -124,7 +124,7 @@ Kbd_PollHostKbd(ARMul_State *state)
   while (SDL_PollEvent(&event)) {
     switch (event.type) {
     case SDL_QUIT:
-      exit(0);
+      ARMul_Exit(state, 0);
       break;
     case SDL_KEYDOWN:
     case SDL_KEYUP:

@@ -58,9 +58,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
   ArcemConfig_ParseCommandLine(&hArcemConfig, __argc, __argv);
 #endif
 
-  dagstandalone(&hArcemConfig);
-
-  return EXIT_SUCCESS;
+  return dagstandalone(&hArcemConfig);
 }
 
 #elif !defined(SYSTEM_macosx)
@@ -88,9 +86,7 @@ int main(int argc, char *argv[])
      to overrule the defaults */
   ArcemConfig_ParseCommandLine(&hArcemConfig, argc, argv);
 
-  dagstandalone(&hArcemConfig);
-
-  return EXIT_SUCCESS;
+  return dagstandalone(&hArcemConfig);
 }
 
 #endif

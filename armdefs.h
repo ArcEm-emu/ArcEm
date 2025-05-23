@@ -227,6 +227,7 @@ struct ARMul_State {
    ARMword Bank;              /* the current register bank */
    bool NtransSig;            /* MEMC USR/SVC flag, somewhat redundant with FastMapMode */
    bool KillEmulator;         /* global used to terminate the emulator */
+   uint_least8_t ExitCode;    /* return code used when terminating the emulator */
    ARMword Base;              /* extra hand for base writeback */
    ArcemConfig *Config;
 
@@ -277,7 +278,9 @@ static inline void state_free(void *p)
 
 void ARMul_EmulateInit(void);
 ARMul_State *ARMul_NewState(ArcemConfig *pConfig);
+void ARMul_FreeState(ARMul_State *state);
 void ARMul_Reset(ARMul_State *state);
+void ARMul_Exit(ARMul_State *state, uint_least8_t exit_code);
 ARMword ARMul_DoProg(ARMul_State *state);
 
 /***************************************************************************\

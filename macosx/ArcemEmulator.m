@@ -111,6 +111,7 @@ void arcem_exit(char* msg)
     NSArray *params = anObject;
     NSMutableData *screen, *cursor;
     NSURL *dir;
+    int exit_code;
     
     pool = [[NSAutoreleasePool alloc] init];
 
@@ -127,7 +128,9 @@ void arcem_exit(char* msg)
 	strlcpy(arcemDir, dir.fileSystemRepresentation, sizeof(arcemDir));
 	
     // Start ArcEm
-    dagstandalone(&hArcemConfig);
+    exit_code = dagstandalone(&hArcemConfig);
+    // TODO: Handle this better
+    exit(exit_code);
 
     [disp release];
     disp = nil;

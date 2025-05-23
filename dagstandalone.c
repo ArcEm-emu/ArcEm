@@ -43,8 +43,9 @@ static void InitFail(int exitcode, char const *which) {
  *
  *
  */
- void dagstandalone(ArcemConfig *pConfig) {
+int dagstandalone(ArcemConfig *pConfig) {
   ARMul_State *emu_state = NULL;
+  int exit_code;
 
   ARMul_EmulateInit();
   emu_state = ARMul_NewState(pConfig);
@@ -64,9 +65,14 @@ static void InitFail(int exitcode, char const *which) {
   ARMul_DoProg(emu_state);
   emu_state->Reg[15] -= 8; /* undo the pipeline (bogus?) */
 
+  exit_code = emu_state->ExitCode;
+
   /* Close and Finalise */
 #ifdef ARMUL_COPRO_SUPPORT
   ARMul_CoProExit(emu_state);
 #endif
   ARMul_MemoryExit(emu_state);
+  ARMul_FreeState(emu_state);
+
+  return exit_code;
 }

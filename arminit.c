@@ -135,6 +135,15 @@ ARMul_State *ARMul_NewState(ArcemConfig *pConfig)
  }
 
 /***************************************************************************\
+*     Frees a previously created instantiation of the ARMulator's state     *
+\***************************************************************************/
+
+void ARMul_FreeState(ARMul_State *state)
+{
+ state_free(state);
+}
+
+/***************************************************************************\
 * Call this routine to set up the initial machine state (or perform a RESET *
 \***************************************************************************/
 
@@ -153,6 +162,10 @@ void ARMul_Reset(ARMul_State *state)
  state->NumCycles = 0;
 }
 
+void ARMul_Exit(ARMul_State *state, uint_least8_t exit_code) {
+  state->ExitCode = exit_code;
+  state->KillEmulator = true;
+}
 
 ARMword ARMul_DoProg(ARMul_State *state) {
   ARMword pc = 0;
@@ -169,7 +182,6 @@ ARMword ARMul_DoProg(ARMul_State *state) {
 
 void ARMul_Abort(ARMul_State *state, ARMword vector) {
   ARMword temp;
-  int exit_code;
   state->Aborted = ARMul_ResetV;
 
   dbug("ARMul_Abort: vector=0x%x\n",vector);
@@ -210,9 +222,7 @@ void ARMul_Abort(ARMul_State *state, ARMword vector) {
          if ((instr & 0xfdffc0) == ARCEM_SWI_CHUNK) {
            switch (instr & 0x3f) {
            case ARCEM_SWI_SHUTDOWN-ARCEM_SWI_CHUNK:
-             exit_code = state->Reg[0] & 0xff;
-			 state_free(state);
-             exit(exit_code);
+             ARMul_Exit(state,state->Reg[0] & 0xff);
              break;
 #ifdef HOSTFS_SUPPORT
            case ARCEM_SWI_HOSTFS-ARCEM_SWI_CHUNK:

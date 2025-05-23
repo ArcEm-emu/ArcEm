@@ -17,4 +17,4 @@
 
 #include "armdefs.h"
 
-void dagstandalone(ArcemConfig *pConfig);
+int dagstandalone(ArcemConfig *pConfig);
