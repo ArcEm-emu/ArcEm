@@ -6,6 +6,7 @@
 #include "archio.h"
 #include "armarc.h"
 #include "ControlPane.h"
+#include "arch/dbugsys.h"
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -21,11 +22,22 @@ void ControlPane_Error(int code,const char *fmt,...)
 {
   char err[100];
   va_list args;
-  va_start(args,fmt);
+
   /* Log it */
-  vfprintf(stderr,fmt,args);
+  va_start(args,fmt);
+  log_msgv(LOG_ERROR,fmt,args);
   vsnprintf(err, sizeof(err), fmt, args);
   MessageBoxA(NULL, err, "ArcEm", MB_ICONERROR);
+  va_end(args);
+
   /* Quit */
   exit(code);
+}
+
+void log_msgv(int type, const char *format, va_list ap)
+{
+  if (type >= LOG_WARN)
+    vfprintf(stderr, format, ap);
+  else
+    vfprintf(stdout, format, ap);
 }

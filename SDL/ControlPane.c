@@ -6,6 +6,7 @@
 #include "archio.h"
 #include "armarc.h"
 #include "ControlPane.h"
+#include "arch/dbugsys.h"
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -25,17 +26,43 @@ void ControlPane_Error(int code,const char *fmt,...)
   char err[100];
 
   va_start(args,fmt);
-  vsnprintf(err, sizeof(err), fmt, args);
+  SDL_vsnprintf(err, sizeof(err), fmt, args);
   va_end(args);
 
   SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "ArcEm", err, NULL);
-  fputs(err, stderr);
+  log_msg(LOG_ERROR, "%s", err);
 #else
   va_list args;
+
   va_start(args,fmt);
-  /* Log it */
-  vfprintf(stderr,fmt,args);
+  log_msgv(LOG_ERROR,fmt,args);
+  va_end(args);
 #endif
   /* Quit */
   exit(code);
+}
+
+void log_msgv(int type, const char *format, va_list ap)
+{
+#if SDL_VERSION_ATLEAST(2, 0, 0)
+  switch (type) {
+  case LOG_DBUG:
+    SDL_LogMessageV(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_DEBUG, format, ap);
+    break;
+  case LOG_WARN:
+    SDL_LogMessageV(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_WARN, format, ap);
+    break;
+  case LOG_ERROR:
+    SDL_LogMessageV(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_ERROR, format, ap);
+    break;
+  default:
+    SDL_LogMessageV(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO, format, ap);
+    break;
+  }
+#else
+  if (type >= LOG_WARN)
+    vfprintf(stderr, format, ap);
+  else
+    vfprintf(stdout, format, ap);
+#endif
 }

@@ -6,6 +6,7 @@
 #include "archio.h"
 #include "armarc.h"
 #include "ControlPane.h"
+#include "arch/dbugsys.h"
 #include "platform.h"
 
 #include <stdarg.h>
@@ -29,7 +30,7 @@ static void ami_easyrequest(const char *err)
 	if(IntuitionBase != NULL) {
 		EasyRequestArgs(NULL, &es, NULL, NULL);
 	} else {
-		printf("%s\n", err);
+		log_msg(LOG_INFO, "%s\n", err);
 	}
 }
 
@@ -40,8 +41,17 @@ void ControlPane_Error(int code,const char *fmt,...)
   va_start(args,fmt);
   /* Log it */
   vsnprintf(err, sizeof(err), fmt, args);
+  va_end(args);
   ami_easyrequest(err);
   
   /* Quit */
   exit(code);
+}
+
+void log_msgv(int type, const char *format, va_list ap)
+{
+  if (type >= LOG_WARN)
+    vfprintf(stderr, format, ap);
+  else
+    vfprintf(stdout, format, ap);
 }
