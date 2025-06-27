@@ -80,7 +80,7 @@ static inline ARMword EndianSwap(const ARMword a)
   return (a>>24) | (a<<24) | ((a>>8) & 0xff00) | ((a<<8) & 0xff0000);
 }
 
-static inline void EndianWordCpy(ARMword *dest,const ARMword *src,size_t count)
+static inline void EndianWordCpy(ARMword *restrict dest,const ARMword *restrict src,size_t count)
 {
   while(count)
   {
@@ -90,10 +90,10 @@ static inline void EndianWordCpy(ARMword *dest,const ARMword *src,size_t count)
 }
 
 /* src = little-endian emu memory, dest = big-endian host memory */
-extern void ByteCopy(void *dest,const void *src,size_t size);
+extern void ByteCopy(void *restrict dest,const void *restrict src,size_t size);
 
 /* src = big-endian host memory, dest = little-endian emu memory */
-extern void InvByteCopy(void *dest,const void *src,size_t size);
+extern void InvByteCopy(void *restrict dest,const void *restrict src,size_t size);
 #else
 #include <string.h>
 
@@ -105,13 +105,13 @@ extern void InvByteCopy(void *dest,const void *src,size_t size);
 
 /* Helper functions for display devices */
 
-extern void BitCopy(ARMword *dest,int destalign,const ARMword *src,int srcalign,int count);
+extern void BitCopy(ARMword *restrict dest,int destalign,const ARMword *restrict src,int srcalign,int count);
 
 extern int GetExpandTableSize(unsigned int srcbpp,unsigned int factor);
 
-extern void GenExpandTable(ARMword *dest,unsigned int srcbpp,unsigned int factor,ARMword mul);
+extern void GenExpandTable(ARMword *restrict dest,unsigned int srcbpp,unsigned int factor,ARMword mul);
 
-extern void BitCopyExpand(ARMword *dest,int destalign,const ARMword *src,int srcalign,int count,const ARMword *expandtable,unsigned int srcbpp,unsigned int factor);
+extern void BitCopyExpand(ARMword *restrict dest,int destalign,const ARMword *restrict src,int srcalign,int count,const ARMword *restrict expandtable,unsigned int srcbpp,unsigned int factor);
 
 #endif
 

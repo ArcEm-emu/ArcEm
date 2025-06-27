@@ -17,6 +17,15 @@
 
 #include <stddef.h>
 
+#ifdef __GNUC__
+#define GCC_VERSION (__GNUC__ * 10000 \
+                   + __GNUC_MINOR__ * 100 \
+                   + __GNUC_PATCHLEVEL__)
+#else
+#define GCC_VERSION 0
+#endif
+
+
 #if defined(_MSC_VER) && (_MSC_VER < 1600)
 typedef __int8 int8_t;
 typedef __int16 int16_t;
@@ -64,6 +73,16 @@ typedef unsigned char bool;
 
 #ifdef _MSC_VER
 #define inline __inline
+#endif
+
+#if __STDC_VERSION__ >= 199901L
+/* restrict is available */
+#elif GCC_VERSION >= 30100
+#define restrict __restrict__
+#elif (defined(_MSC_VER) && _MSC_VER >= 1400) || defined(__WATCOMC__)
+#define restrict __restrict
+#else
+#define restrict
 #endif
 
 #endif
