@@ -24,7 +24,7 @@
 
 /* Note: Musn't be used as a parameter to ReadEmu/WriteEmu! */
 static ARMword temp_buf_word[32768/4];
-static uint8_t *temp_buf = (uint8_t *) temp_buf_word;
+static uint8_t *const temp_buf = (uint8_t *) temp_buf_word;
 
 #ifdef USE_FILEBUFFER
 /* File buffering */

@@ -123,7 +123,7 @@ static void DumpHandler(int sig) {
     {
       ARMword logadr,phys,mangle;
       /* Assume MEMC isn't in OS mode */
-      static const char *prot[4] = {"USR R/W","USR R","SVC only","SVC only"};
+      static const char *const prot[4] = {"USR R/W","USR R","SVC only","SVC only"};
       switch(MEMC.PageSizeFlags) {
         default:
         case MEMC_PAGESIZE_O_4K:

@@ -22,7 +22,7 @@ volatile int32_t sound_buffer_hostout=0; /* Number of samples requested by the s
 static const int32_t sound_buff_mask=BUFFER_SAMPLES-1;
 static float sound_inv_hostrate; /* 1/Sound_HostRate */
 static int32_t buffer_threshold; /* Desired buffer level; chosen based around the output sample rate & buffer_seconds */
-static float buffer_seconds = 0.1f; /* How much audio we want to try and keep buffered */
+static const float buffer_seconds = 0.1f; /* How much audio we want to try and keep buffered */
 
 #ifdef SOUND_LOGGING
 

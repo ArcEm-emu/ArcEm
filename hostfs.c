@@ -202,7 +202,7 @@ typedef struct {
 #define MINIMUM_BUFFER_SIZE 32768
 
 /** Disc name of default disc or if no disc name is present */
-static const char *disc_name_default = "HostFS";
+static const char *const disc_name_default = "HostFS";
 
 static FILE *open_file[MAX_OPEN_FILES + 1]; /* array subscript 0 is never used */
 
