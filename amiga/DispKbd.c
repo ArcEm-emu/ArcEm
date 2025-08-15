@@ -13,6 +13,7 @@
 #include "../arch/dbugsys.h"
 #include "../arch/keyboard.h"
 #include "../arch/ControlPane.h"
+#include "dagstandalone.h"
 #include "displaydev.h"
 #include "KeyTable.h"
 #include "platform.h"
@@ -998,4 +999,11 @@ DisplayDev_Init(ARMul_State *state)
 #else
 	return DisplayDev_Set(state,&PDD_DisplayDev);
 #endif
+}
+
+/*-----------------------------------------------------------------------------*/
+
+int main(int argc, char *argv[])
+{
+  return dagstandalone(argc, argv);
 }

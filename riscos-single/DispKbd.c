@@ -19,6 +19,7 @@
 #include "arch/dbugsys.h"
 #include "arch/keyboard.h"
 #include "archio.h"
+#include "dagstandalone.h"
 #include "hdc63463.h"
 #include "arch/displaydev.h"
 #include "arch/ArcemConfig.h"
@@ -1330,3 +1331,18 @@ static void GoMenu(ARMul_State *state)
 #endif
 }
 #endif
+
+/*-----------------------------------------------------------------------------*/
+
+#ifdef USE_FAKEMAIN
+int fakemain(int argc,char *argv[]);
+
+int fakemain(int argc,char *argv[])
+#else
+int main(int argc, char *argv[])
+#endif
+{
+  Prof_Init();
+
+  return dagstandalone(argc, argv);
+}

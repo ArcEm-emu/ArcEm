@@ -22,6 +22,7 @@
 #endif
 
 #include "armdefs.h"
+#include "dagstandalone.h"
 #include "arch/armarc.h"
 #include "arch/dbugsys.h"
 #include "arch/keyboard.h"
@@ -991,4 +992,9 @@ static void insist(int expr, const char *diag)
     }
 
     ControlPane_Error(1,"arcem: insisting on %s.\n", diag);
+}
+
+int main(int argc, char *argv[])
+{
+  return dagstandalone(argc, argv);
 }

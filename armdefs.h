@@ -281,7 +281,7 @@ ARMul_State *ARMul_NewState(ArcemConfig *pConfig);
 void ARMul_FreeState(ARMul_State *state);
 void ARMul_Reset(ARMul_State *state);
 void ARMul_Exit(ARMul_State *state, uint_least8_t exit_code);
-ARMword ARMul_DoProg(ARMul_State *state);
+int ARMul_DoProg(ARMul_State *state);
 
 /***************************************************************************\
 *                Definitons of things for event handling                    *

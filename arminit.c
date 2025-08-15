@@ -18,8 +18,10 @@
 #include <stdlib.h>
 #include "armdefs.h"
 #include "armemu.h"
+#include "armcopro.h"
 #include "armarc.h"
 #include "arch/ArcemConfig.h"
+#include "arch/ControlPane.h"
 #include "arch/dbugsys.h"
 #include "hostfs.h"
 
@@ -100,6 +102,8 @@ ARMul_State *ARMul_NewState(ArcemConfig *pConfig)
 {ARMul_State *state;
  unsigned i, j;
 
+ ARMul_EmulateInit();
+
  state = state_alloc(sizeof(ARMul_State));
 
  for (i = 0; i < 16; i++) {
@@ -131,6 +135,18 @@ ARMul_State *ARMul_NewState(ArcemConfig *pConfig)
  
  ARMul_Reset(state);
  EventQ_Init(state);
+ ARMul_Reset(state);
+ if (!ARMul_MemoryInit(state))
+    ControlPane_Error(1, "Memory interface failed to initialise. Exiting\n");
+#ifdef ARMUL_COPRO_SUPPORT
+ if (!ARMul_CoProInit(state))
+    ControlPane_Error(2, "Co-Processor interface failed to initialise. Exiting\n");
+#else
+ if (emu_state->HasCP15)
+    ControlPane_Error(2, "ARM3 support is not available in this build of ArcEm. Exiting\n");
+#endif
+ ARMul_Reset(state);
+
  return(state);
  }
 
@@ -140,6 +156,10 @@ ARMul_State *ARMul_NewState(ArcemConfig *pConfig)
 
 void ARMul_FreeState(ARMul_State *state)
 {
+#ifdef ARMUL_COPRO_SUPPORT
+ ARMul_CoProExit(state);
+#endif
+ ARMul_MemoryExit(state);
  state_free(state);
 }
 
@@ -167,11 +187,11 @@ void ARMul_Exit(ARMul_State *state, uint_least8_t exit_code) {
   state->KillEmulator = true;
 }
 
-ARMword ARMul_DoProg(ARMul_State *state) {
-  ARMword pc = 0;
-
+int ARMul_DoProg(ARMul_State *state) {
   ARMul_Emulate26(state);
-  return(pc);
+  state->Reg[15] -= 8; /* undo the pipeline (bogus?) */
+
+  return(state->ExitCode);
 }
 
 /***************************************************************************\

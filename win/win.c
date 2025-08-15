@@ -4,6 +4,7 @@
 #include "win.h"
 #include "gui.h"
 #include "armdefs.h"
+#include "dagstandalone.h"
 #include "arch/ArcemConfig.h"
 #include "arch/dbugsys.h"
 #include "arch/keyboard.h"
@@ -677,4 +678,21 @@ int resizeWindow(int hWidth, int hHeight)
                SWP_NOMOVE | SWP_NOZORDER | SWP_NOCOPYBITS);
 
   return 0;
+}
+
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
+{
+#ifdef DEBUG
+  AllocConsole( );
+
+  freopen("CONIN$","rb",stdin);
+  freopen("CONOUT$","wb",stdout);
+  freopen("CONOUT$","wb",stderr);
+#endif
+
+#if defined(__GNUC__) && defined(__MINGW32__) && !defined(__MINGW64_VERSION_MAJOR)
+  return dagstandalone(_argc, _argv);
+#else
+  return dagstandalone(__argc, __argv);
+#endif
 }

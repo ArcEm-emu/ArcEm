@@ -12,6 +12,7 @@
 #include "platform.h"
 
 #include "armdefs.h"
+#include "dagstandalone.h"
 #include "arch/dbugsys.h"
 #include "arch/keyboard.h"
 
@@ -175,11 +176,9 @@ Kbd_PollHostKbd(ARMul_State *state)
 }
 
 /*-----------------------------------------------------------------------------*/
-int fakemain(int argc,char *argv[]);
-
 int main(int argc, char *argv[])
 {
   SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
 
-  return fakemain(argc, argv);
+  return dagstandalone(argc, argv);
 }

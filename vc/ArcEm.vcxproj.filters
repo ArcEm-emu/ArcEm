@@ -20,7 +20,6 @@
     <ClCompile Include="..\arminit.c" />
     <ClCompile Include="..\armsupp.c" />
     <ClCompile Include="..\eventq.c" />
-    <ClCompile Include="..\main.c" />
     <ClCompile Include="..\arch\ArcemConfig.c">
       <Filter>arch</Filter>
     </ClCompile>

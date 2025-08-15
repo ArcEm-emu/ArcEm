@@ -20,20 +20,17 @@
 /* independent. Not very cleanly done - more of a hack than anything */
 /*********************************************************************/
 
-#include <stdlib.h>
-
 #include "dagstandalone.h"
 #include "armdefs.h"
-#include "armcopro.h"
-#include "dbugsys.h"
-
 #include "ArcemConfig.h"
-#include "ControlPane.h"
 
-static void InitFail(int exitcode, char const *which) {
-  ControlPane_Error(exitcode,"%s interface failed to initialise. Exiting\n",
-                            which);
-}
+#if defined(SYSTEM_riscos_single)
+/* TODO: Replace direct use of hArcemConfig in RISC OS code */
+extern ArcemConfig hArcemConfig;
+ArcemConfig hArcemConfig;
+#else
+static ArcemConfig hArcemConfig;
+#endif
 
 /**
  * dagstandalone
@@ -43,36 +40,28 @@ static void InitFail(int exitcode, char const *which) {
  *
  *
  */
-int dagstandalone(ArcemConfig *pConfig) {
-  ARMul_State *emu_state = NULL;
+int dagstandalone(int argc, char *argv[]) {
+  ARMul_State *state = NULL;
   int exit_code;
 
-  ARMul_EmulateInit();
-  emu_state = ARMul_NewState(pConfig);
-  ARMul_Reset(emu_state);
-  if (!ARMul_MemoryInit(emu_state))
-    InitFail(1, "Memory");
-#ifdef ARMUL_COPRO_SUPPORT
-  if (!ARMul_CoProInit(emu_state))
-    InitFail(2, "Co-Processor");
-#else
-  if (emu_state->HasCP15)
-    ControlPane_Error(2, "ARM3 support is not available in this build of ArcEm. Exiting\n");
-#endif
-  ARMul_Reset(emu_state);
+  /* Setup the default values for the config system */
+  ArcemConfig_SetupDefaults(&hArcemConfig);
 
-  /* Excecute */
-  ARMul_DoProg(emu_state);
-  emu_state->Reg[15] -= 8; /* undo the pipeline (bogus?) */
+  /* Parse the config file to overrule the defaults */
+  ArcemConfig_ParseConfigFile(&hArcemConfig);
 
-  exit_code = emu_state->ExitCode;
+  /* Parse any commandline arguments given to the program
+     to overrule the defaults */
+  ArcemConfig_ParseCommandLine(&hArcemConfig, argc, argv);
 
-  /* Close and Finalise */
-#ifdef ARMUL_COPRO_SUPPORT
-  ARMul_CoProExit(emu_state);
-#endif
-  ARMul_MemoryExit(emu_state);
-  ARMul_FreeState(emu_state);
+  /* Initialise */
+  state = ARMul_NewState(&hArcemConfig);
+
+  /* Execute */
+  exit_code = ARMul_DoProg(state);
+
+  /* Finalise */
+  ARMul_FreeState(state);
 
   return exit_code;
 }

@@ -19,7 +19,6 @@ set(ARCEM_SOURCES
 	eventq.h
 	hostfs.c
 	hostfs.h
-	main.c
 	prof.h
 )
 set(ARCEM_ARCH_SOURCES
@@ -135,7 +134,7 @@ set_property(CACHE SYSTEM PROPERTY STRINGS X SDL3 SDL2 SDL1 macosx win)
 if(${SYSTEM} MATCHES "^(SDL[123])$")
 	add_executable(arcem WIN32 ${ARCEM_SOURCES} ${ARCEM_ARCH_SOURCES} ${ARCEM_SDL_SOURCES} ${ARCEM_EXTNROM_MODULES})
 	target_include_directories(arcem PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/SDL)
-	target_compile_definitions(arcem PRIVATE SYSTEM_SDL USE_FAKEMAIN)
+	target_compile_definitions(arcem PRIVATE SYSTEM_SDL)
 
 	if(${SYSTEM} STREQUAL "SDL3")
 		find_package(SDL3 REQUIRED)

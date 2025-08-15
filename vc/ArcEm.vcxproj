@@ -309,7 +309,6 @@
     <ClCompile Include="..\eventq.c" />
     <ClCompile Include="..\hostfs.c" />
     <ClCompile Include="..\libs\inih\ini.c" />
-    <ClCompile Include="..\main.c" />
     <ClCompile Include="..\win\ControlPane.c" />
     <ClCompile Include="..\win\DispKbd.c" />
     <ClCompile Include="..\win\filecalls.c" />

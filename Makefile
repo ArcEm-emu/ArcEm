@@ -84,7 +84,7 @@ INSTALL=cp
 # Everything else should be ok as it is.
 
 OBJS = armcopro.o armemu.o arminit.o \
-	armsupp.o main.o dagstandalone.o eventq.o hostfs.o \
+	armsupp.o dagstandalone.o eventq.o hostfs.o \
 		$(SYSTEM)/DispKbd.o arch/i2c.o arch/archio.o \
     arch/fdc1772.o $(SYSTEM)/ControlPane.o arch/hdc63463.o \
     arch/keyboard.o $(SYSTEM)/filecalls.o arch/filecommon.o \
@@ -93,7 +93,7 @@ OBJS = armcopro.o armemu.o arminit.o \
     libs/inih/ini.o
 
 SRCS = armcopro.c armemu.c arminit.c arch/armarc.c \
-	armsupp.c main.c dagstandalone.c eventq.c hostfs.c \
+	armsupp.c dagstandalone.c eventq.c hostfs.c \
 	$(SYSTEM)/DispKbd.c arch/i2c.c arch/archio.c \
 	arch/fdc1772.c $(SYSTEM)/ControlPane.c arch/hdc63463.c \
 	arch/keyboard.c $(SYSTEM)/filecalls.c \
@@ -188,7 +188,7 @@ endif
 
 ifeq (${SYSTEM},SDL)
 SDL_CONFIG=sdl2-config
-CPPFLAGS += -DSYSTEM_SDL -DUSE_FAKEMAIN
+CPPFLAGS += -DSYSTEM_SDL
 ifneq ($(shell uname),Darwin)
 CPPFLAGS += -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
 endif
@@ -317,9 +317,6 @@ armsupp.o: armsupp.c armdefs.h armemu.h
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $*.c
 
 dagstandalone.o: dagstandalone.c armdefs.h
-	$(CC) $(CPPFLAGS) $(CFLAGS) -c $*.c
-
-main.o: main.c armdefs.h
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $*.c
 
 eventq.o: eventq.c eventq.h

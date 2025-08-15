@@ -322,10 +322,6 @@ SOURCE=..\dbg_hif.h
 
 SOURCE=..\dbg_rdi.h
 # End Source File
-# Begin Source File
-
-SOURCE=..\main.c
-# End Source File
 # End Group
 # Begin Group "Header Files"
 

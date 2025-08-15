@@ -30,7 +30,7 @@
 //
 
 #import "ArcemEmulator.h"
-#import "dagstandalone.h"
+#import "armdefs.h"
 #import "ArcemView.h"
 #import "ArcemController.h"
 #import "PreferenceController.h"
@@ -111,6 +111,7 @@ void arcem_exit(char* msg)
     NSArray *params = anObject;
     NSMutableData *screen, *cursor;
     NSURL *dir;
+    ARMul_State *state;
     int exit_code;
     
     pool = [[NSAutoreleasePool alloc] init];
@@ -127,8 +128,15 @@ void arcem_exit(char* msg)
     dir = [[NSUserDefaults standardUserDefaults] URLForKey:AEDirectoryKey];
 	strlcpy(arcemDir, dir.fileSystemRepresentation, sizeof(arcemDir));
 	
-    // Start ArcEm
-    exit_code = dagstandalone(&hArcemConfig);
+    /* Initialise */
+    state = ARMul_NewState(&hArcemConfig);
+
+    /* Execute */
+    exit_code = ARMul_DoProg(state);
+
+    /* Finalise */
+    ARMul_FreeState(state);
+
     // TODO: Handle this better
     exit(exit_code);
 

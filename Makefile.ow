@@ -8,7 +8,7 @@ HOSTFS_SUPPORT=yes
 SOUND_SUPPORT=yes
 
 SRCS = armcopro.c armemu.c arminit.c armarc.c &
-	armsupp.c main.c dagstandalone.c eventq.c hostfs.c &
+	armsupp.c dagstandalone.c eventq.c hostfs.c &
 	arch/i2c.c arch/archio.c arch/extnrom.c &
 	arch/fdc1772.c arch/hdc63463.c &
 	arch/keyboard.c arch/filecommon.c &
