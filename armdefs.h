@@ -54,38 +54,33 @@ extern ARMul_State statestr;
 *                      The hardware vector addresses                        *
 \***************************************************************************/
 
-#define ARMResetV 0L
-#define ARMUndefinedInstrV 4L
-#define ARMSWIV 8L
-#define ARMPrefetchAbortV 12L
-#define ARMDataAbortV 16L
-#define ARMAddrExceptnV 20L
-#define ARMIRQV 24L
-#define ARMFIQV 28L
-#define ARMErrorV 32L /* This is an offset, not an address ! */
-
-#define ARMul_ResetV ARMResetV
-#define ARMul_UndefinedInstrV ARMUndefinedInstrV
-#define ARMul_SWIV ARMSWIV
-#define ARMul_PrefetchAbortV ARMPrefetchAbortV
-#define ARMul_DataAbortV ARMDataAbortV
-#define ARMul_AddrExceptnV ARMAddrExceptnV
-#define ARMul_IRQV ARMIRQV
-#define ARMul_FIQV ARMFIQV
+typedef enum ARMAbort {
+  ARMul_ResetV = 0,
+  ARMul_UndefinedInstrV = 4,
+  ARMul_SWIV = 8,
+  ARMul_PrefetchAbortV = 12,
+  ARMul_DataAbortV = 16,
+  ARMul_AddrExceptnV = 20,
+  ARMul_IRQV = 24,
+  ARMul_FIQV = 28,
+  ARMul_ErrorV = 32 /* This is an offset, not an address ! */
+} ARMAbort;
 
 /***************************************************************************\
 *                          Mode and Bank Constants                          *
 \***************************************************************************/
 
-#define USER26MODE 0L
-#define FIQ26MODE 1L
-#define IRQ26MODE 2L
-#define SVC26MODE 3L
+typedef enum ARMBank {
+  USER26MODE = 0,
+  FIQ26MODE = 1,
+  IRQ26MODE = 2,
+  SVC26MODE = 3,
 
-#define USERBANK USER26MODE
-#define FIQBANK FIQ26MODE
-#define IRQBANK IRQ26MODE
-#define SVCBANK SVC26MODE
+  USERBANK = USER26MODE,
+  FIQBANK = FIQ26MODE,
+  IRQBANK = IRQ26MODE,
+  SVCBANK = SVC26MODE
+} ARMBank;
 
 /***************************************************************************\
 *                          Fastmap definitions                              *
@@ -217,23 +212,19 @@ struct ARMul_State {
    /* Most common stuff, current register file first to ease indexing */
    ARMword Reg[16];           /* the current register file */
    CycleCount NumCycles;      /* Number of cycles */
-   enum ARMStartIns NextInstr;/* Pipeline state */
+   ARMStartIns NextInstr;     /* Pipeline state */
+   ARMBank Bank;              /* the current register bank */
+   uint_least8_t ExitCode;    /* return code used when terminating the emulator */
+   bool KillEmulator;         /* global used to terminate the emulator */
+   bool NtransSig;            /* MEMC USR/SVC flag, somewhat redundant with FastMapMode */
    bool abortSig;             /* Abort state */
-   ARMword Aborted;           /* sticky flag for aborts */
+   ARMAbort Aborted;          /* sticky flag for aborts */
    ARMword AbortAddr;         /* to keep track of Prefetch aborts */
    ARMword Exception;         /* IRQ & FIQ pins */
+   ARMword Base;              /* extra hand for base writeback */
    Vidc_Regs *Display;        /* VIDC regs/host display struct */
    arch_keyboard *Kbd;        /* Keyboard struct */
-   ARMword Bank;              /* the current register bank */
-   bool NtransSig;            /* MEMC USR/SVC flag, somewhat redundant with FastMapMode */
-   bool KillEmulator;         /* global used to terminate the emulator */
-   uint_least8_t ExitCode;    /* return code used when terminating the emulator */
-   ARMword Base;              /* extra hand for base writeback */
    ArcemConfig *Config;
-
-   /* Event queue */
-   EventQ_Entry EventQ[EVENTQ_SIZE];
-   uint_fast8_t NumEvents;
 
    /* Fastmap stuff */
    FastMapUInt FastMapMode;   /* Current access mode flags */
@@ -242,11 +233,17 @@ struct ARMul_State {
 #endif
    FastMapEntry *FastMap;
 
+   /* Event queue */
+   EventQ_Entry EventQ[EVENTQ_SIZE];
+   uint_least8_t NumEvents;
+
+   /* Enabled CPU features */
+   bool HasSWP, HasCP15;
+
    /* Less common stuff */   
-   ARMword RegBank[4][16];    /* all the registers */
-   ARMword instr, pc, temp;   /* saved register state */
+   ARMword instr, pc;         /* saved register state */
    ARMword loaded, decoded;   /* saved pipeline state */
-   bool HasSWP, HasCP15;      /* enabled CPU features */
+   ARMword RegBank[4][16];    /* all the registers */
 
 #ifdef ARMUL_COPRO_SUPPORT
    /* Rare stuff */
