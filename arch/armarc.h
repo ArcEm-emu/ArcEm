@@ -79,7 +79,9 @@ static inline FastMapEntry *FastMap_GetEntryNoWrap(ARMul_State *state,ARMword ad
 static inline FastMapRes FastMap_DecodeRead(const FastMapEntry *entry,FastMapUInt mode);
 static inline FastMapRes FastMap_DecodeWrite(const FastMapEntry *entry,FastMapUInt mode);
 static inline ARMword *FastMap_Log2Phy(const FastMapEntry *entry,ARMword addr);
+#ifdef ARMUL_INSTR_FUNC_CACHE
 static inline ARMEmuFunc *FastMap_Phy2Func(ARMul_State *state,ARMword *addr);
+#endif
 static inline void FastMap_PhyClobberFunc(ARMul_State *state,ARMword *addr);
 static inline void FastMap_PhyClobberFuncRange(ARMul_State *state,ARMword *addr,size_t len);
 static inline ARMword FastMap_LoadFunc(const FastMapEntry *entry,ARMul_State *state,ARMword addr);

@@ -55,7 +55,7 @@ ARMul_LoadInstr(ARMul_State *state,ARMword addr, PipelineEntry *p)
   if(FASTMAP_RESULT_DIRECT(res))
   {
     ARMword *data = FastMap_Log2Phy(entry,addr);
-    ARMword instr = p->instr = *data;
+    ARMword instr = *data;
 #ifdef ARMUL_INSTR_FUNC_CACHE
     ARMEmuFunc *pfunc = FastMap_Phy2Func(state,data);
     ARMEmuFunc temp = *pfunc;
@@ -75,11 +75,13 @@ ARMul_LoadInstr(ARMul_State *state,ARMword addr, PipelineEntry *p)
 #endif
     p->func = temp;
 #endif
+    p->instr = instr;
   }
   else if(FASTMAP_RESULT_FUNC(res))
   {
     /* Use function, means we can't write back the decode result */
-    ARMword instr = p->instr = FastMap_LoadFunc(entry,state,addr);
+    ARMword instr = FastMap_LoadFunc(entry,state,addr);
+    p->instr = instr;
 #ifdef ARMUL_INSTR_FUNC_CACHE
     p->func = ARMul_Emulate_DecodeInstr(instr);
 #endif
@@ -122,7 +124,7 @@ ARMul_LoadInstrTriplet(ARMul_State *state,ARMword addr,PipelineEntry *p)
     int i;
     for(i=0;i<3;i++)
     {
-      ARMword instr = p->instr = *data;
+      ARMword instr = *data;
 #ifdef ARMUL_INSTR_FUNC_CACHE
       ARMEmuFunc temp = *pfunc;
       if(temp == FASTMAP_CLOBBEREDFUNC)
@@ -133,6 +135,7 @@ ARMul_LoadInstrTriplet(ARMul_State *state,ARMword addr,PipelineEntry *p)
       p->func = temp;
       pfunc++;
 #endif
+      p->instr = instr;
       data++;
       p++;
     }
@@ -853,7 +856,9 @@ static void StoreMult(ARMul_State *state, ARMword instr,
         if(FASTMAP_RESULT_DIRECT(res))
         {
             ARMword *data, count;
+#ifdef ARMUL_INSTR_FUNC_CACHE
             ARMEmuFunc *pfunc;
+#endif
             /* Do it fast
                This assumes we don't differentiate between N & S cycles */
             ARMul_CLEARABORT;
@@ -950,7 +955,9 @@ static void StoreSMult(ARMul_State *state, ARMword instr,
         if(FASTMAP_RESULT_DIRECT(res))
         {
             ARMword *data, count;
+#ifdef ARMUL_INSTR_FUNC_CACHE
             ARMEmuFunc *pfunc;
+#endif
             /* Do it fast
                This assumes we don't differentiate between N & S cycles */
             ARMul_CLEARABORT;
