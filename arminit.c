@@ -142,7 +142,7 @@ ARMul_State *ARMul_NewState(ArcemConfig *pConfig)
  if (!ARMul_CoProInit(state))
     ControlPane_Error(2, "Co-Processor interface failed to initialise. Exiting\n");
 #else
- if (emu_state->HasCP15)
+ if (state->HasCP15)
     ControlPane_Error(2, "ARM3 support is not available in this build of ArcEm. Exiting\n");
 #endif
  ARMul_Reset(state);
