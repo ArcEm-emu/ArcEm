@@ -179,55 +179,57 @@ ARMul_Align(ARMul_State *state, ARMword address, ARMword data)
 static inline void
 ARMul_NegZero(ARMul_State *state, ARMword result)
 {
-  ASSIGNN(NEG(result));
-  ASSIGNZ(result == 0);
+  ARMword flags = state->Reg[15] & ~(NBIT|ZBIT);
+  if (NEG(result))
+      flags |= NBIT;
+  if (result == 0)
+      flags |= ZBIT;
+  state->Reg[15] = flags;
 }
 
 
 /***************************************************************************\
-* Assigns the C flag after an addition of a and b to give result            *
+* Assigns the flags after an addition of a and b to give result             *
 \***************************************************************************/
 
 static inline void
-ARMul_AddCarry(ARMul_State *state, ARMword a, ARMword b, ARMword result)
+ARMul_AddFlags(ARMul_State *state, ARMword a, ARMword b, ARMword result)
 {
-  ASSIGNC( (NEG(a) && (NEG(b) || POS(result))) ||
-           (NEG(b) && POS(result)) );
+  ARMword flags = state->Reg[15] & ~(NBIT|ZBIT|CBIT|VBIT);
+  if (result == 0)
+    flags |= ZBIT;
+  if ((a | b) >> 30) { /* possible C,V,N to set */
+    if (NEG(result))
+      flags |= NBIT;
+    if ((NEG(a) && (NEG(b) || POS(result))) ||
+        (NEG(b) && POS(result)))
+      flags |= CBIT;
+    if ((NEG(a) && NEG(b) && POS(result)) ||
+        (POS(a) && POS(b) && NEG(result)))
+      flags |= VBIT;
+  }
+  state->Reg[15] = flags;
 }
 
+
 /***************************************************************************\
-* Assigns the V flag after an addition of a and b to give result            *
+* Assigns the flags after an subtraction of a and b to give result          *
 \***************************************************************************/
 
 static inline void
-ARMul_AddOverflow(ARMul_State *state, ARMword a, ARMword b, ARMword result)
+ARMul_SubFlags(ARMul_State *state, ARMword a, ARMword b, ARMword result)
 {
-  ASSIGNV( (NEG(a) && NEG(b) && POS(result)) ||
-           (POS(a) && POS(b) && NEG(result)) );
-}
-
-
-/***************************************************************************\
-* Assigns the C flag after an subtraction of a and b to give result         *
-\***************************************************************************/
-
-static inline void
-ARMul_SubCarry(ARMul_State *state, ARMword a, ARMword b, ARMword result)
-{
-  ASSIGNC( (NEG(a) && POS(b)) ||
-           (NEG(a) && POS(result)) ||
-           (POS(b) && POS(result)) );
-}
-
-/***************************************************************************\
-* Assigns the V flag after an subtraction of a and b to give result         *
-\***************************************************************************/
-
-static inline void
-ARMul_SubOverflow(ARMul_State *state, ARMword a, ARMword b, ARMword result)
-{
-  ASSIGNV( (NEG(a) && POS(b) && POS(result)) ||
-           (POS(a) && NEG(b) && NEG(result)) );
+  ARMword flags = state->Reg[15] & ~(CBIT|VBIT);
+  if ((a >= b) || ((b | a) >> 31)) {
+    if ((NEG(a) && POS(b)) ||
+        (NEG(a) && POS(result)) ||
+        (POS(b) && POS(result)))
+      flags |= CBIT;
+    if ((NEG(a) && POS(b) && POS(result)) ||
+        (POS(a) && NEG(b) && NEG(result)))
+      flags |= VBIT;
+  }
+  state->Reg[15] = flags;
 }
 
 /***************************************************************************\

@@ -175,13 +175,7 @@ static void EMFUNCDECL26(SubsReg) (ARMul_State *state, ARMword instr) {
           lhs = LHS;
              rhs = DPRegRHS;
              dest = lhs - rhs;
-             if ((lhs >= rhs) || ((rhs | lhs) >> 31)) {
-                ARMul_SubCarry(state,lhs,rhs,dest);
-                ARMul_SubOverflow(state,lhs,rhs,dest);
-                }
-             else {
-                CLEARCV;
-                }
+             ARMul_SubFlags(state,lhs,rhs,dest);
              WRITESDEST(dest);
 
 } /* EMFUNCDECL26(SubsReg */
@@ -204,13 +198,7 @@ static void EMFUNCDECL26(RsbsReg) (ARMul_State *state, ARMword instr) {
           lhs = LHS;
              rhs = DPRegRHS;
              dest = rhs - lhs;
-             if ((rhs >= lhs) || ((rhs | lhs) >> 31)) {
-                ARMul_SubCarry(state,rhs,lhs,dest);
-                ARMul_SubOverflow(state,rhs,lhs,dest);
-                }
-             else {
-                CLEARCV;
-                }
+             ARMul_SubFlags(state,rhs,lhs,dest);
              WRITESDEST(dest);
 
 } /* EMFUNCDECL26(RsbsReg */
@@ -234,15 +222,7 @@ static void EMFUNCDECL26(AddsReg) (ARMul_State *state, ARMword instr) {
          lhs = LHS;
              rhs = DPRegRHS;
              dest = lhs + rhs;
-             ASSIGNZ(dest==0);
-             if ((lhs | rhs) >> 30) { /* possible C,V,N to set */
-                ASSIGNN(NEG(dest));
-                ARMul_AddCarry(state,lhs,rhs,dest);
-                ARMul_AddOverflow(state,lhs,rhs,dest);
-                }
-             else {
-                CLEARNCV;
-                }
+             ARMul_AddFlags(state,lhs,rhs,dest);
              WRITESDEST(dest);
 
 } /* EMFUNCDECL26(AddsReg */
@@ -267,15 +247,7 @@ static void EMFUNCDECL26(AdcsReg) (ARMul_State *state, ARMword instr) {
   lhs = LHS;
              rhs = DPRegRHS;
              dest = lhs + rhs + CFLAG;
-             ASSIGNZ(dest==0);
-             if ((lhs | rhs) >> 30) { /* possible C,V,N to set */
-                ASSIGNN(NEG(dest));
-                ARMul_AddCarry(state,lhs,rhs,dest);
-                ARMul_AddOverflow(state,lhs,rhs,dest);
-                }
-             else {
-                CLEARNCV;
-                }
+             ARMul_AddFlags(state,lhs,rhs,dest);
              WRITESDEST(dest);
 
 } /* EMFUNCDECL26(AdcsReg */
@@ -299,13 +271,7 @@ static void EMFUNCDECL26(SbcsReg) (ARMul_State *state, ARMword instr) {
  lhs = LHS;
              rhs = DPRegRHS;
              dest = lhs - rhs - !CFLAG;
-             if ((lhs >= rhs) || ((rhs | lhs) >> 31)) {
-                ARMul_SubCarry(state,lhs,rhs,dest);
-                ARMul_SubOverflow(state,lhs,rhs,dest);
-                }
-             else {
-                CLEARCV;
-                }
+             ARMul_SubFlags(state,lhs,rhs,dest);
              WRITESDEST(dest);
 
 } /* EMFUNCDECL26(SbcsReg */
@@ -328,13 +294,7 @@ static void EMFUNCDECL26(RscsReg) (ARMul_State *state, ARMword instr) {
     lhs = LHS;
              rhs = DPRegRHS;
              dest = rhs - lhs - !CFLAG;
-             if ((rhs >= lhs) || ((rhs | lhs) >> 31)) {
-                ARMul_SubCarry(state,rhs,lhs,dest);
-                ARMul_SubOverflow(state,rhs,lhs,dest);
-                }
-             else {
-                CLEARCV;
-                }
+             ARMul_SubFlags(state,rhs,lhs,dest);
              WRITESDEST(dest);
 
 } /* EMFUNCDECL26(RscsReg */
@@ -430,13 +390,7 @@ static void EMFUNCDECL26(CmppRegNorm) (ARMul_State *state, ARMword instr) {
   rhs = DPRegRHS;
   dest = lhs - rhs;
   ARMul_NegZero(state,dest);
-  if ((lhs >= rhs) || ((rhs | lhs) >> 31)) {
-     ARMul_SubCarry(state,lhs,rhs,dest);
-     ARMul_SubOverflow(state,lhs,rhs,dest);
-     }
-  else {
-     CLEARCV;
-                   }
+  ARMul_SubFlags(state,lhs,rhs,dest);
 } /* EMFUNCDECL26( */
 
 static void EMFUNCDECL26(CmnpRegNorm) (ARMul_State *state, ARMword instr) {
@@ -447,14 +401,7 @@ static void EMFUNCDECL26(CmnpRegNorm) (ARMul_State *state, ARMword instr) {
   lhs = LHS;
   rhs = DPRegRHS;
   dest = lhs + rhs;
-  ASSIGNZ(dest==0);
-  if ((lhs | rhs) >> 30) { /* possible C,V,N to set */
-     ASSIGNN(NEG(dest));
-     ARMul_AddCarry(state,lhs,rhs,dest);
-     ARMul_AddOverflow(state,lhs,rhs,dest);
-  } else {
-    CLEARNCV;
-  }
+  ARMul_AddFlags(state,lhs,rhs,dest);
 } /* EMFUNCDECL26( */
 
 static void EMFUNCDECL26(OrrRegNorm) (ARMul_State *state, ARMword instr) {
@@ -748,13 +695,7 @@ static void EMFUNCDECL26(SubsImmNorm) (ARMul_State *state, ARMword instr) {
              lhs = LHS;
              rhs = DPImmRHS;
              dest = lhs - rhs;
-             if ((lhs >= rhs) || ((rhs | lhs) >> 31)) {
-                ARMul_SubCarry(state,lhs,rhs,dest);
-                ARMul_SubOverflow(state,lhs,rhs,dest);
-                }  
-             else {
-                CLEARCV;
-                }
+             ARMul_SubFlags(state,lhs,rhs,dest);
 
              if (DESTReg == 15)
                 WRITESDESTPC(dest);
@@ -770,14 +711,7 @@ static void EMFUNCDECL26(SubsImmNorm) (ARMul_State *state, ARMword instr) {
              lhs = LHS;
              rhs = DPImmRHS;
              dest = lhs - rhs;
-             if ((lhs >= rhs) || ((rhs | lhs) >> 31)) {
-                ARMul_SubCarry(state,lhs,rhs,dest);
-                ARMul_SubOverflow(state,lhs,rhs,dest);
-                }  
-             else {
-                CLEARC;
-                CLEARV;
-                }
+             ARMul_SubFlags(state,lhs,rhs,dest);
              WRITESDESTPC(dest);
 
 }*/ /* EMFUNCDECL26( */
@@ -797,13 +731,7 @@ static void EMFUNCDECL26(RsbsImm) (ARMul_State *state, ARMword instr) {
             lhs = LHS;
              rhs = DPImmRHS;
              dest = rhs - lhs;
-             if ((rhs >= lhs) || ((rhs | lhs) >> 31)) {
-                ARMul_SubCarry(state,rhs,lhs,dest);
-                ARMul_SubOverflow(state,rhs,lhs,dest);
-                }
-             else {
-                CLEARCV;
-                }
+             ARMul_SubFlags(state,rhs,lhs,dest);
              WRITESDEST(dest);
 
 } /* EMFUNCDECL26( */
@@ -823,15 +751,7 @@ static void EMFUNCDECL26(AddsImm) (ARMul_State *state, ARMword instr) {
             lhs = LHS;
              rhs = DPImmRHS;
              dest = lhs + rhs;
-             ASSIGNZ(dest==0);
-             if ((lhs | rhs) >> 30) { /* possible C,V,N to set */
-                ASSIGNN(NEG(dest));
-                ARMul_AddCarry(state,lhs,rhs,dest);
-                ARMul_AddOverflow(state,lhs,rhs,dest);
-                }
-             else {
-                CLEARNCV;
-                }
+             ARMul_AddFlags(state,lhs,rhs,dest);
              WRITESDEST(dest);
 
 } /* EMFUNCDECL26( */
@@ -851,15 +771,7 @@ static void EMFUNCDECL26(AdcsImm) (ARMul_State *state, ARMword instr) {
            lhs = LHS;
              rhs = DPImmRHS;
              dest = lhs + rhs + CFLAG;
-             ASSIGNZ(dest==0);
-             if ((lhs | rhs) >> 30) { /* possible C,V,N to set */
-                ASSIGNN(NEG(dest));
-                ARMul_AddCarry(state,lhs,rhs,dest);
-                ARMul_AddOverflow(state,lhs,rhs,dest);
-                }
-             else {
-                CLEARNCV;
-                }
+             ARMul_AddFlags(state,lhs,rhs,dest);
              WRITESDEST(dest);
 
 } /* EMFUNCDECL26( */
@@ -878,13 +790,7 @@ static void EMFUNCDECL26(SbcsImm) (ARMul_State *state, ARMword instr) {
              lhs = LHS;
              rhs = DPImmRHS;
              dest = lhs - rhs - !CFLAG;
-             if ((lhs >= rhs) || ((rhs | lhs) >> 31)) {
-                ARMul_SubCarry(state,lhs,rhs,dest);
-                ARMul_SubOverflow(state,lhs,rhs,dest);
-                }
-             else {
-                CLEARCV;
-                }
+             ARMul_SubFlags(state,lhs,rhs,dest);
              WRITESDEST(dest);
 } /* EMFUNCDECL26( */
 
@@ -903,13 +809,7 @@ static void EMFUNCDECL26(RscsImm) (ARMul_State *state, ARMword instr) {
             lhs = LHS;
              rhs = DPImmRHS;
              dest = rhs - lhs - !CFLAG;
-             if ((rhs >= lhs) || ((rhs | lhs) >> 31)) {
-                ARMul_SubCarry(state,rhs,lhs,dest);
-                ARMul_SubOverflow(state,rhs,lhs,dest);
-                }
-             else {
-                CLEARCV;
-                }
+             ARMul_SubFlags(state,rhs,lhs,dest);
              WRITESDEST(dest);
 
 } /* EMFUNCDECL26( */
@@ -959,13 +859,7 @@ static void EMFUNCDECL26(CmppImm) (ARMul_State *state, ARMword instr) {
                 rhs = DPImmRHS;
                 dest = lhs - rhs;
                 ARMul_NegZero(state,dest);
-                if ((lhs >= rhs) || ((rhs | lhs) >> 31)) {
-                   ARMul_SubCarry(state,lhs,rhs,dest);
-                   ARMul_SubOverflow(state,lhs,rhs,dest);
-                   }
-                else {
-                   CLEARCV;
-                   }
+                ARMul_SubFlags(state,lhs,rhs,dest);
                 }
 
 } /* EMFUNCDECL26( */
@@ -983,15 +877,7 @@ static void EMFUNCDECL26(CmnpImm) (ARMul_State *state, ARMword instr) {
                 lhs = LHS; /* CMN immed */
                 rhs = DPImmRHS;
                 dest = lhs + rhs;
-                ASSIGNZ(dest==0);
-                if ((lhs | rhs) >> 30) { /* possible C,V,N to set */
-                   ASSIGNN(NEG(dest));
-                   ARMul_AddCarry(state,lhs,rhs,dest);
-                   ARMul_AddOverflow(state,lhs,rhs,dest);
-                   }
-                else {
-                   CLEARNCV;
-                   }
+                ARMul_AddFlags(state,lhs,rhs,dest);
                 }
 
 } /* EMFUNCDECL26( */

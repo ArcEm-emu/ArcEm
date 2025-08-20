@@ -107,10 +107,23 @@
 #define NFLAG ((state->Reg[15]>>31)&1)
 #define SETN state->Reg[15] |= NBIT
 #define CLEARN state->Reg[15] &= ~NBIT
+
+#define ZFLAG ((state->Reg[15]>>30)&1)
+#define SETZ state->Reg[15] |= ZBIT
+#define CLEARZ state->Reg[15] &= ~ZBIT
+
+#define CFLAG ((state->Reg[15]>>29)&1)
+#define SETC state->Reg[15] |= CBIT
+#define CLEARC state->Reg[15] &= ~CBIT
+
+#define VFLAG ((state->Reg[15]>>28)&1)
+#define SETV state->Reg[15] |= VBIT
+#define CLEARV state->Reg[15] &= ~VBIT
+
 #ifndef ARMUL_ARCH_ARM
-#define ASSIGNN(res) state->Reg[15] = (res?state->Reg[15]|NBIT:state->Reg[15]&~NBIT)
+#define ASSIGNC(res) state->Reg[15] = (res?state->Reg[15]|CBIT:state->Reg[15]&~CBIT)
 #else
-#define ASSIGNN(res) inlASSIGN(state,res,NBIT)
+#define ASSIGNC(res) inlASSIGN(state,res,CBIT)
 static inline void inlASSIGN(ARMul_State *state,ARMword res,ARMword bit)
 {
 	ARMword temp = state->Reg[15];
@@ -121,36 +134,6 @@ static inline void inlASSIGN(ARMul_State *state,ARMword res,ARMword bit)
 	state->Reg[15] = temp;
 }
 #endif
-
-#define ZFLAG ((state->Reg[15]>>30)&1)
-#define SETZ state->Reg[15] |= ZBIT
-#define CLEARZ state->Reg[15] &= ~ZBIT
-#ifndef ARMUL_ARCH_ARM
-#define ASSIGNZ(res) state->Reg[15] = (res?state->Reg[15]|ZBIT:state->Reg[15]&~ZBIT)
-#else
-#define ASSIGNZ(res) inlASSIGN(state,res,ZBIT)
-#endif
-
-#define CFLAG ((state->Reg[15]>>29)&1)
-#define SETC state->Reg[15] |= CBIT
-#define CLEARC state->Reg[15] &= ~CBIT
-#ifndef ARMUL_ARCH_ARM
-#define ASSIGNC(res) state->Reg[15] = (res?state->Reg[15]|CBIT:state->Reg[15]&~CBIT)
-#else
-#define ASSIGNC(res) inlASSIGN(state,res,CBIT)
-#endif
-
-#define VFLAG ((state->Reg[15]>>28)&1)
-#define SETV state->Reg[15] |= VBIT
-#define CLEARV state->Reg[15] &= ~VBIT
-#ifndef ARMUL_ARCH_ARM
-#define ASSIGNV(res) state->Reg[15] = (res?state->Reg[15]|VBIT:state->Reg[15]&~VBIT)
-#else
-#define ASSIGNV(res) inlASSIGN(state,res,VBIT)
-#endif
-
-#define CLEARNCV state->Reg[15] &= ~(NBIT|CBIT|VBIT)
-#define CLEARCV state->Reg[15] &= ~(CBIT|VBIT)
 
 #define IFLAG ((state->Reg[15]>>27)&1)
 #define FFLAG ((state->Reg[15]>>26)&1)
