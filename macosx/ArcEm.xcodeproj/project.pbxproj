@@ -79,6 +79,8 @@
 		7E9CB4F62D60026C00DBB7B9 /* filero.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = filero.c; sourceTree = "<group>"; };
 		7E9CB4F82D60026C00DBB7B9 /* fileunix.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = fileunix.c; sourceTree = "<group>"; };
 		7E9CB4FA2D60026C00DBB7B9 /* filewin.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = filewin.c; sourceTree = "<group>"; };
+		7EC9977E2E575B3000E1AE51 /* armcopro.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = armcopro.h; sourceTree = "<group>"; };
+		7EC9977F2E575B4E00E1AE51 /* prof.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = prof.h; sourceTree = "<group>"; };
 		D157A5F10291D6F801123251 /* ArcemView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = ArcemView.h; sourceTree = "<group>"; };
 		D157A5F20291D6F801123251 /* ArcemView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = ArcemView.m; sourceTree = "<group>"; };
 		D157A5F50291D94401123251 /* ArcemController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = ArcemController.m; sourceTree = "<group>"; };
@@ -168,22 +170,24 @@
 		29B97315FDCFA39411CA2CEA /* Other Sources */ = {
 			isa = PBXGroup;
 			children = (
-				551316382CDED7910084DEE0 /* libs */,
-				D1F01DD50293336E01CDBB35 /* mac */,
 				D1E0F9CF02B41B0301D1F43F /* arch */,
+				D1F01DD50293336E01CDBB35 /* mac */,
+				551316382CDED7910084DEE0 /* libs */,
 				D1E0F9E202B41B0301D1F43F /* armcopro.c */,
+				7EC9977E2E575B3000E1AE51 /* armcopro.h */,
 				D1E0F9E302B41B0301D1F43F /* armdefs.h */,
 				D1E0F9E802B41B0301D1F43F /* armemu.c */,
 				D1E0F9E902B41B0301D1F43F /* armemu.h */,
 				D1E0F9EB02B41B0301D1F43F /* arminit.c */,
 				D1E0F9F102B41B0301D1F43F /* armsupp.c */,
 				557C2ACC20CAE8810084CBDB /* c99.h */,
-				55F89C2720C8C7F800374D5B /* eventq.c */,
-				55F89C2820C8C7F800374D5B /* eventq.h */,
 				D1E0F9F402B41B0301D1F43F /* dagstandalone.c */,
 				D1E0F9F502B41B0301D1F43F /* dagstandalone.h */,
+				55F89C2720C8C7F800374D5B /* eventq.c */,
+				55F89C2820C8C7F800374D5B /* eventq.h */,
 				557C2ACE20CAE8D00084CBDB /* hostfs.c */,
 				557C2ACF20CAE8D00084CBDB /* hostfs.h */,
+				7EC9977F2E575B4E00E1AE51 /* prof.h */,
 			);
 			name = "Other Sources";
 			path = ..;
@@ -212,8 +216,8 @@
 		551316372CDED7910084DEE0 /* inih */ = {
 			isa = PBXGroup;
 			children = (
-				551316352CDED7910084DEE0 /* ini.h */,
 				551316362CDED7910084DEE0 /* ini.c */,
+				551316352CDED7910084DEE0 /* ini.h */,
 			);
 			path = inih;
 			sourceTree = "<group>";
@@ -229,33 +233,33 @@
 		D1E0F9CF02B41B0301D1F43F /* arch */ = {
 			isa = PBXGroup;
 			children = (
-				55F89C3620C8C96C00374D5B /* ArcemConfig.h */,
 				55F89C3720C8C96C00374D5B /* ArcemConfig.c */,
-				D1E0F9D102B41B0301D1F43F /* archio.h */,
+				55F89C3620C8C96C00374D5B /* ArcemConfig.h */,
 				D1E0F9D002B41B0301D1F43F /* archio.c */,
-				D1E0F9D302B41B0301D1F43F /* armarc.h */,
+				D1E0F9D102B41B0301D1F43F /* archio.h */,
 				D1E0F9D202B41B0301D1F43F /* armarc.c */,
+				D1E0F9D302B41B0301D1F43F /* armarc.h */,
 				D1E0F9D402B41B0301D1F43F /* ControlPane.h */,
-				55F89C2320C8C79700374D5B /* cp15.h */,
 				55F89C2220C8C79700374D5B /* cp15.c */,
+				55F89C2320C8C79700374D5B /* cp15.h */,
 				551316342CDED5FF0084DEE0 /* dbugsys.h */,
-				55F89C3220C8C94700374D5B /* displaydev.h */,
 				55F89C3120C8C94700374D5B /* displaydev.c */,
-				55F89C2E20C8C92F00374D5B /* extnrom.h */,
+				55F89C3220C8C94700374D5B /* displaydev.h */,
 				55F89C2D20C8C92E00374D5B /* extnrom.c */,
-				D1E0F9D702B41B0301D1F43F /* fdc1772.h */,
+				55F89C2E20C8C92F00374D5B /* extnrom.h */,
 				D1E0F9D602B41B0301D1F43F /* fdc1772.c */,
+				D1E0F9D702B41B0301D1F43F /* fdc1772.h */,
 				55F89C3A20C8C9AE00374D5B /* filecalls.h */,
 				55F89C3B20C8C9AE00374D5B /* filecommon.c */,
 				7E9CB4F62D60026C00DBB7B9 /* filero.c */,
 				7E9CB4F82D60026C00DBB7B9 /* fileunix.c */,
 				7E9CB4FA2D60026C00DBB7B9 /* filewin.c */,
-				D1E0F9D902B41B0301D1F43F /* hdc63463.h */,
 				D1E0F9D802B41B0301D1F43F /* hdc63463.c */,
-				D1E0F9DB02B41B0301D1F43F /* i2c.h */,
+				D1E0F9D902B41B0301D1F43F /* hdc63463.h */,
 				D1E0F9DA02B41B0301D1F43F /* i2c.c */,
-				4CA3F3EF046BE8B800E6600F /* keyboard.h */,
+				D1E0F9DB02B41B0301D1F43F /* i2c.h */,
 				4CA3F3EE046BE8B800E6600F /* keyboard.c */,
+				4CA3F3EF046BE8B800E6600F /* keyboard.h */,
 				55F89C4120C8CBAA00374D5B /* newsound.c */,
 				55202D8020C8C4A700E2DA03 /* paldisplaydev.c */,
 				55F89C2B20C8C8F900374D5B /* sound.h */,
@@ -498,7 +502,10 @@
 					_DIRENT_HAVE_D_TYPE,
 				);
 				GENERATE_INFOPLIST_FILE = YES;
-				HEADER_SEARCH_PATHS = ..;
+				HEADER_SEARCH_PATHS = (
+					../libs/inih,
+					..,
+				);
 				INFOPLIST_KEY_NSMainNibFile = MainMenu;
 				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
 				MARKETING_VERSION = 1.50.2;
@@ -526,7 +533,10 @@
 					_DIRENT_HAVE_D_TYPE,
 				);
 				GENERATE_INFOPLIST_FILE = YES;
-				HEADER_SEARCH_PATHS = ..;
+				HEADER_SEARCH_PATHS = (
+					../libs/inih,
+					..,
+				);
 				INFOPLIST_KEY_NSMainNibFile = MainMenu;
 				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
 				MARKETING_VERSION = 1.50.2;
