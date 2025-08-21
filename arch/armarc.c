@@ -38,12 +38,6 @@
 extern char arcemDir[256];
 #endif
 
-/* Page size flags */
-#define MEMC_PAGESIZE_O_4K     0
-#define MEMC_PAGESIZE_1_8K     1
-#define MEMC_PAGESIZE_2_16K    2
-#define MEMC_PAGESIZE_3_32K    3
-
 
 struct MEMCStruct memc;
 
@@ -189,7 +183,7 @@ static void DumpHandler(int sig) {
 bool
 ARMul_MemoryInit(ARMul_State *state)
 {
-  ARMword RAMChunkSize;
+  ARMword RAMChunkSize, ROMRAMChunkSize;
   FILE *ROMFile;
   int PresPage;
   unsigned int i;
@@ -254,7 +248,7 @@ ARMul_MemoryInit(ARMul_State *state)
   for (PresPage = 0; PresPage < 512; PresPage++)
     MEMC.PageTable[PresPage] = 0xffffffff;
 
-  MEMC.ROMMapFlag    = 1; /* Map ROM to address 0 */
+  MEMC.ROMMapFlag    = MapFlag_UnaccessedLow; /* Map ROM to address 0 */
   MEMC.ControlReg    = 0; /* Defaults */
   MEMC.PageSizeFlags = MEMC_PAGESIZE_O_4K;
   MEMC.NextSoundBufferValid = false; /* Not set till Sstart and SendN have been written */
@@ -294,13 +288,13 @@ ARMul_MemoryInit(ARMul_State *state)
 
   /* Now allocate ROMs & RAM in one chunk */
   RAMChunkSize = MAX(MEMC.RAMSize,512*1024); /* Ensure at least 512K RAM allocated to avoid any issues caused by DMA pointers going out of range */
-  MEMC.ROMRAMChunkSize = RAMChunkSize+MEMC.ROMHighSize+extnrom_size;
-  MEMC.ROMRAMChunk = calloc(1,MEMC.ROMRAMChunkSize+256);
+  ROMRAMChunkSize = RAMChunkSize+MEMC.ROMHighSize+extnrom_size;
+  MEMC.ROMRAMChunk = calloc(1,ROMRAMChunkSize+256);
   if(MEMC.ROMRAMChunk == NULL) {
     ControlPane_Error(3,"Couldn't allocate ROMRAMChunk\n");
   }
 #ifdef ARMUL_INSTR_FUNC_CACHE
-  MEMC.EmuFuncChunk = calloc(sizeof(FastMapUInt)/4,MEMC.ROMRAMChunkSize+256);
+  MEMC.EmuFuncChunk = calloc(sizeof(FastMapUInt)/4,ROMRAMChunkSize+256);
   if(MEMC.EmuFuncChunk == NULL) {
     ControlPane_Error(3,"Couldn't allocate EmuFuncChunk\n");
   }
@@ -522,7 +516,7 @@ static void ARMul_PurgeFastMapPTIdx(ARMul_State *state,ARMword idx)
   FastMapUInt addr;
   ARMword size;
   int32_t pt;
-  if(MEMC.ROMMapFlag)
+  if(MEMC.ROMMapFlag != MapFlag_Normal)
     return; /* Still in ROM mode, abort */
     
   pt = MEMC.PageTable[idx];
@@ -636,7 +630,7 @@ static void ARMul_RebuildFastMapPTIdx(ARMul_State *state, ARMword idx)
   FASTMAP_R_OS|FASTMAP_R_SVC|FASTMAP_W_SVC,  /* PPL 11 */
   };
 
-  if(MEMC.ROMMapFlag)
+  if(MEMC.ROMMapFlag != MapFlag_Normal)
     return; /* Still in ROM mode, abort */
 
   pt = MEMC.PageTable[idx];
@@ -686,7 +680,8 @@ static void ARMul_RebuildFastMapPTIdx(ARMul_State *state, ARMword idx)
 static void DMA_PutVal(ARMul_State *state,ARMword address)
 {
     /* DMA address generation - MEMC Control reg */
-    ARMword RegNum,RegVal;
+    uint_fast8_t RegNum;
+    uint_fast16_t RegVal;
 
     RegNum = (address >> 17) & 7;
     RegVal = (address >> 2) & 0x7fff;
@@ -727,17 +722,15 @@ static void DMA_PutVal(ARMul_State *state,ARMword address)
         break;
 
       case 4: /* Sstart */
-        RegVal *= 16;
         MEMC.Sstart = RegVal;
         /* The data sheet does not define what happens if you write start before end. */
-        MEMC.NextSoundBufferValid = 1;
+        MEMC.NextSoundBufferValid = true;
         ioc.IRQStatus &= ~IRQB_SIRQ; /* Take sound interrupt off */
         IO_UpdateNirq(state);
         dbug_memc("Write to MEMC Sstart register\n");
         break;
 
       case 5: /* SendN */
-        RegVal *= 16;
         MEMC.SendN = RegVal;
         dbug_memc("Write to MEMC SendN register\n");
         break;
@@ -747,13 +740,13 @@ static void DMA_PutVal(ARMul_State *state,ARMword address)
         /* Note this never actually sets Sptr directly, instead
          * it causes a first buffer to be swapped in. */
         {
-          ARMword swap;
+          uint_fast16_t swap;
           MEMC.Sptr = MEMC.Sstart;
           swap = MEMC.SendC;
           MEMC.SendC = MEMC.SendN;
           MEMC.SendN = swap;
           MEMC.SstartC = MEMC.Sptr;
-          MEMC.NextSoundBufferValid = 0;
+          MEMC.NextSoundBufferValid = false;
           ioc.IRQStatus |= IRQB_SIRQ; /* Take sound interrupt on */
           IO_UpdateNirq(state);
         }
@@ -762,8 +755,8 @@ static void DMA_PutVal(ARMul_State *state,ARMword address)
       case 7: /* MEMC Control register */
         dbug_memc("MEMC Control register set to 0x%x by PC=0x%x R[15]=0x%x\n",
                   address, (unsigned int)state->pc, (unsigned int)state->Reg[15]);
-        MEMC.ControlReg = address;
-        MEMC.PageSizeFlags = (MEMC.ControlReg & 12) >> 2;
+        MEMC.ControlReg = RegVal;
+        MEMC.PageSizeFlags = (MEMC.ControlReg & 3);
         FastMap_RebuildMapMode(state);
         ARMul_RebuildFastMap(state);
         break;
@@ -787,7 +780,7 @@ static void MEMC_PutVal(ARMul_State *state, ARMword address)
 static ARMword FastMap_ROMMap1Func(ARMul_State *state, ARMword addr,ARMword data,ARMword flags)
 {
   /* Does nothing more than set ROMMapFlag to 2 and read a word of ROM */
-  MEMC.ROMMapFlag = 2;
+  MEMC.ROMMapFlag = MapFlag_UnaccessedROM;
   ARMul_RebuildFastMap(state);
   return MEMC.ROMHigh[(addr & MEMC.ROMHighMask)>>2];
 }
@@ -796,9 +789,9 @@ static ARMword FastMap_PhysRamFuncROMMap2(ARMul_State *state, ARMword addr,ARMwo
 {
   ARMword *phy;
   /* Read/write from phys RAM, switching to ROMMapFlag 0 if necessary */
-  if(MEMC.ROMMapFlag == 2)
+  if(MEMC.ROMMapFlag == MapFlag_UnaccessedROM)
   {
-    MEMC.ROMMapFlag = 0;
+    MEMC.ROMMapFlag = MapFlag_Normal;
     ARMul_RebuildFastMap(state);
   }
   phy = FastMap_Log2Phy(FastMap_GetEntry(state,addr),addr&~3);
@@ -846,9 +839,9 @@ static ARMword FastMap_ConIOFunc(ARMul_State *state, ARMword addr,ARMword data,A
   /* Read/write IO space */
   if((flags & (FASTMAP_ACCESSFUNC_WRITE|FASTMAP_ACCESSFUNC_STATECHANGE)) == FASTMAP_ACCESSFUNC_WRITE)
     return 0; /* Write without state change is bad! */
-  if(MEMC.ROMMapFlag == 2)
+  if(MEMC.ROMMapFlag == MapFlag_UnaccessedROM)
   {
-    MEMC.ROMMapFlag = 0;
+    MEMC.ROMMapFlag = MapFlag_Normal;
     ARMul_RebuildFastMap(state);
   }
   if(flags & FASTMAP_ACCESSFUNC_WRITE)
@@ -864,9 +857,9 @@ static ARMword FastMap_VIDCFunc(ARMul_State *state, ARMword addr,ARMword data,AR
   /* May be a ROMMapFlag read */
   if((flags & (FASTMAP_ACCESSFUNC_WRITE|FASTMAP_ACCESSFUNC_STATECHANGE)) == FASTMAP_ACCESSFUNC_WRITE)
     return 0; /* Write without state change is bad! */
-  if(MEMC.ROMMapFlag == 2)
+  if(MEMC.ROMMapFlag == MapFlag_UnaccessedROM)
   {
-    MEMC.ROMMapFlag = 0;
+    MEMC.ROMMapFlag = MapFlag_Normal;
     ARMul_RebuildFastMap(state);
   }
   if(flags & FASTMAP_ACCESSFUNC_WRITE)
@@ -888,9 +881,9 @@ static ARMword FastMap_DMAFunc(ARMul_State *state, ARMword addr,ARMword data,ARM
   /* May be a ROMMapFlag read */
   if((flags & (FASTMAP_ACCESSFUNC_WRITE|FASTMAP_ACCESSFUNC_STATECHANGE)) == FASTMAP_ACCESSFUNC_WRITE)
     return 0; /* Write without state change is bad! */
-  if(MEMC.ROMMapFlag == 2)
+  if(MEMC.ROMMapFlag == MapFlag_UnaccessedROM)
   {
-    MEMC.ROMMapFlag = 0;
+    MEMC.ROMMapFlag = MapFlag_Normal;
     ARMul_RebuildFastMap(state);
   }
   if(flags & FASTMAP_ACCESSFUNC_WRITE)
@@ -912,9 +905,9 @@ static ARMword FastMap_MEMCFunc(ARMul_State *state, ARMword addr,ARMword data,AR
   /* May be a ROMMapFlag read */
   if((flags & (FASTMAP_ACCESSFUNC_WRITE|FASTMAP_ACCESSFUNC_STATECHANGE)) == FASTMAP_ACCESSFUNC_WRITE)
     return 0; /* Write without state change is bad! */
-  if(MEMC.ROMMapFlag == 2)
+  if(MEMC.ROMMapFlag == MapFlag_UnaccessedROM)
   {
-    MEMC.ROMMapFlag = 0;
+    MEMC.ROMMapFlag = MapFlag_Normal;
     ARMul_RebuildFastMap(state);
   }
   if(flags & FASTMAP_ACCESSFUNC_WRITE)
@@ -939,7 +932,7 @@ void ARMul_RebuildFastMap(ARMul_State *state)
   /* completely rebuild the fast map */
   switch(MEMC.ROMMapFlag)
   {
-  case 0:
+  case MapFlag_Normal:
     {
       /* Map in logical RAM using the page tables */
       FastMap_SetEntries(state,0,0,0,0,0x2000000);
@@ -948,12 +941,12 @@ void ARMul_RebuildFastMap(ARMul_State *state)
         ARMul_RebuildFastMapPTIdx(state, i);
     }
     break;
-  case 1:
+  case MapFlag_UnaccessedLow:
     /* Map ROM to 0x0, using access func, even though we know the very first thing the processor will do is fetch from 0x0 and transition us away... */
     FastMap_SetEntries_Repeat(state,0,0,FastMap_ROMMap1Func,FASTMAP_R_USR|FASTMAP_R_OS|FASTMAP_R_SVC|FASTMAP_R_FUNC,MEMC.ROMHighSize,0x800000);
     FastMap_SetEntries(state,0x800000,0,0,0,0x1800000);
     break;
-  case 2:
+  case MapFlag_UnaccessedROM:
     /* Map ROM to 0x0 */
     FastMap_SetEntries_Repeat(state,0,MEMC.ROMHigh,0,FASTMAP_R_USR|FASTMAP_R_OS|FASTMAP_R_SVC,MEMC.ROMHighSize,0x800000);
     FastMap_SetEntries(state,0x800000,0,0,0,0x1800000);
@@ -961,7 +954,7 @@ void ARMul_RebuildFastMap(ARMul_State *state)
   }
 
   /* Map physical RAM */
-  if(MEMC.ROMMapFlag == 2)
+  if(MEMC.ROMMapFlag == MapFlag_UnaccessedROM)
   {
     /* Use access func for all of it */
     FastMap_SetEntries(state,MEMORY_0x2000000_RAM_PHYS,0,FastMap_PhysRamFuncROMMap2,FASTMAP_R_SVC|FASTMAP_W_SVC|FASTMAP_R_FUNC|FASTMAP_W_FUNC,16*1024*1024);
@@ -999,7 +992,7 @@ void ARMul_RebuildFastMap(ARMul_State *state)
 
   /* ROM Low/VIDC/DMA */
   /* Make life easier for ourselves by mapping in everything as DMA then overwriting with VIDC */
-  if(MEMC.ROMLow && (MEMC.ROMMapFlag != 2))
+  if(MEMC.ROMLow && (MEMC.ROMMapFlag != MapFlag_UnaccessedROM))
     FastMap_SetEntries_Repeat(state,MEMORY_0x3400000_R_ROM_LOW,MEMC.ROMLow,FastMap_DMAFunc,FASTMAP_R_USR|FASTMAP_R_SVC|FASTMAP_R_OS|FASTMAP_W_SVC|FASTMAP_W_FUNC,MEMC.ROMLowSize,0x400000);
   else
     FastMap_SetEntries(state,MEMORY_0x3400000_R_ROM_LOW,0,FastMap_DMAFunc,FASTMAP_R_USR|FASTMAP_R_SVC|FASTMAP_R_OS|FASTMAP_W_SVC|FASTMAP_W_FUNC|FASTMAP_R_FUNC,0x400000);
@@ -1013,7 +1006,7 @@ void ARMul_RebuildFastMap(ARMul_State *state)
   }
 
   /* ROM High/MEMC */
-  if(MEMC.ROMHigh && (MEMC.ROMMapFlag != 2))
+  if(MEMC.ROMHigh && (MEMC.ROMMapFlag != MapFlag_UnaccessedROM))
     FastMap_SetEntries_Repeat(state,MEMORY_0x3800000_R_ROM_HIGH,MEMC.ROMHigh,FastMap_MEMCFunc,FASTMAP_R_USR|FASTMAP_R_SVC|FASTMAP_R_OS|FASTMAP_W_SVC|FASTMAP_W_FUNC,MEMC.ROMHighSize,0x800000);
   else
     FastMap_SetEntries(state,MEMORY_0x3800000_R_ROM_HIGH,0,FastMap_MEMCFunc,FASTMAP_R_USR|FASTMAP_R_SVC|FASTMAP_R_OS|FASTMAP_W_SVC|FASTMAP_W_FUNC|FASTMAP_R_FUNC,0x800000);

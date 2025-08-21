@@ -477,7 +477,7 @@ static void Sound_Process(ARMul_State *state,int32_t avail)
   if(avail)
   {
     /* Log -> lin conversion */
-    Sound_Log2Lin(((uint8_t *) MEMC.PhysRam) + MEMC.Sptr,soundBuffer+(soundBufferAmt<<1),avail);
+    Sound_Log2Lin(((uint8_t *) MEMC.PhysRam) + (MEMC.Sptr<<4),soundBuffer+(soundBufferAmt<<1),avail);
     soundBufferAmt += avail<<4;
   }
   /* Process this new data */
@@ -503,15 +503,15 @@ static void Sound_DMAEvent(ARMul_State *state,CycleCount nowtime)
 #endif
   /* How many DMA fetches are possible? */
   avail = 0;
-  if(MEMC.ControlReg & (1 << 11))
+  if(MEMC.ControlReg & (1 << 9))
   {
     /* Trigger any pending buffer swap */
     if(MEMC.Sptr > MEMC.SendC)
     {
       /* Have the next buffer addresses been written? */
-      if (MEMC.NextSoundBufferValid == 1) {
+      if (MEMC.NextSoundBufferValid) {
         /* Yes, so change to the next buffer */
-        ARMword swap;
+        uint_fast16_t swap;
   
         MEMC.Sptr = MEMC.Sstart;
         MEMC.SstartC = MEMC.Sstart;
@@ -523,13 +523,13 @@ static void Sound_DMAEvent(ARMul_State *state,CycleCount nowtime)
         ioc.IRQStatus |= IRQB_SIRQ; /* Take sound interrupt on */
         IO_UpdateNirq(state);
   
-        MEMC.NextSoundBufferValid = 0;
+        MEMC.NextSoundBufferValid = false;
       } else {
         /* Otherwise wrap to the beginning of the buffer */
         MEMC.Sptr = MEMC.SstartC;
       }
     }
-    avail = ((MEMC.SendC+16)-MEMC.Sptr)>>4;
+    avail = ((MEMC.SendC+1)-(MEMC.Sptr));
     if(avail > srcbatchsize)
       avail = srcbatchsize;
 #ifdef SOUND_SUPPORT
@@ -554,7 +554,7 @@ static void Sound_DMAEvent(ARMul_State *state,CycleCount nowtime)
     next = 100;
   EventQ_RescheduleHead(state,nowtime+next,Sound_DMAEvent);
   /* Update DMA stuff */
-  MEMC.Sptr += avail<<4;
+  MEMC.Sptr += avail;
 }
 
 int Sound_Init(ARMul_State *state)

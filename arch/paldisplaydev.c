@@ -525,7 +525,7 @@ static void PDD_Name(EventFunc)(ARMul_State *state,CycleCount nowtime)
   DC.ModeChanged |= (DC.VIDC_CR & 3) != (NewCR & 3);
 
   /* Force full refresh if DMA just toggled on/off */
-  newDMAEn = (MEMC.ControlReg>>10)&1;
+  newDMAEn = (MEMC.ControlReg>>8)&1;
   DMAToggle = (newDMAEn ^ DC.DMAEn);
   DC.ForceRefresh |= DMAToggle;
   DC.DMAEn = newDMAEn;
@@ -752,8 +752,8 @@ static void PDD_Name(EventFunc)(ARMul_State *state,CycleCount nowtime)
       if(flags & ROWFUNC_UPDATED)
       {
         /* Only need to update between MIN(Vinit,Vstart) and Vend */
-        int start = MIN(MEMC.Vinit,MEMC.Vstart)/(UPDATEBLOCKSIZE/16);
-        int end = (MEMC.Vend/(UPDATEBLOCKSIZE/16))+1;
+        uint_fast16_t start = MIN(MEMC.Vinit,MEMC.Vstart)/(UPDATEBLOCKSIZE/16);
+        uint_fast16_t end = (MEMC.Vend/(UPDATEBLOCKSIZE/16))+1;
         memcpy(HD.UpdateFlags+start,MEMC.UpdateFlags+start,(end-start)*sizeof(uint32_t));
       }
     }
@@ -1037,7 +1037,7 @@ static void PDD_Name(Shutdown)(ARMul_State *state)
   state->Display = NULL;
 }
 
-static void PDD_Name(DAGWrite)(ARMul_State *state,int reg,ARMword val)
+static void PDD_Name(DAGWrite)(ARMul_State *state,uint_fast8_t reg,uint_fast16_t val)
 {
   /* Vinit, Vstart & Vend changes require a full screen refresh */
   DC.ForceRefresh = true;

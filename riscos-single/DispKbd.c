@@ -746,7 +746,7 @@ static void Host_PollDisplay_Common(ARMul_State *state,const DisplayParams *para
     clock_t nowtime2 = clock();
 
     /* Simple game FPS counter - count the number of frames where Vinit has changed */
-    static ARMword oldvinit;
+    static uint_least16_t oldvinit;
     if(MEMC.Vinit != oldvinit)
     {
       fps++;

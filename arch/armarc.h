@@ -25,6 +25,26 @@ typedef void (*ARMEmuFunc)(ARMul_State *state, ARMword instr);
 
 ARMEmuFunc ARMul_Emulate_DecodeInstr(ARMword instr);
 
+/**
+ * 0 means ROM is mapped as normal, 1 means
+ * processor hasn't done access to low memory, 2 means it
+ * hasn't done an access to ROM space, so in 1 & 2 accesses
+ * to low mem access ROM
+ */
+typedef enum MapFlag {
+  MapFlag_Normal        = 0,
+  MapFlag_UnaccessedLow = 1,
+  MapFlag_UnaccessedROM = 2
+} MapFlag;
+
+/* Page size flags */
+typedef enum PageSize {
+  MEMC_PAGESIZE_O_4K  = 0,
+  MEMC_PAGESIZE_1_8K  = 1,
+  MEMC_PAGESIZE_2_16K = 2,
+  MEMC_PAGESIZE_3_32K = 3
+} PageSize;
+
 struct MEMCStruct {
   ARMword *ROMHigh;           /* ROM high and low are to seperate rom areas */
   ARMword ROMHighMask;
@@ -35,37 +55,34 @@ struct MEMCStruct {
   ARMword *PhysRam;
   ARMword RAMSize;
   ARMword RAMMask;
-  ARMword ROMRAMChunkSize;    /* Size of the combined ROM+RAM memory chunk, guaranteed to be 4KB multiple */
 
-  int32_t PageTable[512]; /* Good old fashioned MEMC1 page table */
-  ARMword ControlReg;
-  ARMword PageSizeFlags;
-  ARMword Vinit,Vstart,Vend,Cinit;
+  uint_least16_t ControlReg;
+  uint_least16_t Vinit,Vstart,Vend,Cinit;
 
   /* Sound buffer addresses */
-  ARMword Sstart; /* The start and end of the next buffer */
-  ARMword SendN;
-  ARMword Sptr; /* Current position in current buffer */
-  ARMword SendC; /* End of current buffer */
-  ARMword SstartC; /* The start of the current buffer */
+  uint_least16_t Sstart; /* The start and end of the next buffer */
+  uint_least16_t SendN;
+  uint_least16_t Sptr; /* Current position in current buffer */
+  uint_least16_t SendC; /* End of current buffer */
+  uint_least16_t SstartC; /* The start of the current buffer */
   bool NextSoundBufferValid; /* This indicates whether the next buffer has been set yet */
 
-  uint_fast8_t ROMMapFlag; /* 0 means ROM is mapped as normal,1 means
-                     processor hasn't done access to low memory, 2 means it
-                     hasn't done an access to ROM space, so in 1 & 2 accesses
-                     to  low mem access ROM */
+  MapFlag ROMMapFlag;
 
-  ARMword DRAMPageSize; /* Page size we pretend our DRAM is */ 
-
-  uint32_t UpdateFlags[(512*1024)/UPDATEBLOCKSIZE]; /* One flag for
-                                                       each block of DMAble RAM
-                                                       incremented on a write */
+  PageSize DRAMPageSize; /* Page size we pretend our DRAM is */
+  PageSize PageSizeFlags;
 
   /* Fastmap memory block pointers */
   void *ROMRAMChunk;
 #ifdef ARMUL_INSTR_FUNC_CACHE
   void *EmuFuncChunk;
 #endif
+
+  int32_t PageTable[512]; /* Good old fashioned MEMC1 page table */
+
+  uint32_t UpdateFlags[(512*1024)/UPDATEBLOCKSIZE]; /* One flag for
+                                                       each block of DMAble RAM
+                                                       incremented on a write */
 };
 
 
@@ -163,7 +180,7 @@ static inline void FastMap_StoreFunc(const FastMapEntry *entry,ARMul_State *stat
 
 static inline void FastMap_RebuildMapMode(ARMul_State *state)
 {
-	state->FastMapMode = (state->NtransSig?FASTMAP_MODE_MBO|FASTMAP_MODE_SVC:(MEMC.ControlReg&(1<<12))?FASTMAP_MODE_MBO|FASTMAP_MODE_OS:FASTMAP_MODE_MBO|FASTMAP_MODE_USR);
+	state->FastMapMode = (state->NtransSig?FASTMAP_MODE_MBO|FASTMAP_MODE_SVC:(MEMC.ControlReg&(1<<10))?FASTMAP_MODE_MBO|FASTMAP_MODE_OS:FASTMAP_MODE_MBO|FASTMAP_MODE_USR);
 }
 
 /* Macros to evaluate DecodeRead/DecodeWrite results

@@ -205,7 +205,7 @@ struct SDD_Name(DisplayInfo) {
     uint_fast16_t VIDC_CR; /* Control register value in use for this frame */
     uint32_t LineRate; /* Line rate, measured in EmuRate clock cycles */
     uint32_t Vptr; /* DMA pointer, in bits, as offset from start of phys RAM */
-    uint32_t LastVinit; /* Last Vinit, so we can sync changes with the frame start */
+    uint_least16_t LastVinit; /* Last Vinit, so we can sync changes with the frame start */
     int FrameSkip; /* Current frame skip counter */
 
     /* DisplayDev_AutoUpdateFlags logic */
@@ -1955,7 +1955,7 @@ static void SDD_Name(FrameStart)(ARMul_State *state,CycleCount nowtime)
   DC.ModeChanged |= (DC.VIDC_CR & 3) != (NewCR & 3);
 
   /* Force full refresh if DMA just toggled on/off */
-  newDMAEn = (MEMC.ControlReg>>10)&1;
+  newDMAEn = (MEMC.ControlReg>>8)&1;
   DC.ForceRefresh = (newDMAEn ^ DC.DMAEn);
   DC.DMAEn = newDMAEn;
   VIDEO_STAT(ForceRefreshDMA,DC.ForceRefresh,1);
@@ -2428,7 +2428,7 @@ static void SDD_Name(Shutdown)(ARMul_State *state)
   state->Display = NULL;
 }
 
-static void SDD_Name(DAGWrite)(ARMul_State *state,int reg,ARMword val)
+static void SDD_Name(DAGWrite)(ARMul_State *state,uint_fast8_t reg,uint_fast16_t val)
 {
   /* We only care about Vstart & Vend updates. Vinit updates are picked up on at the start of the frame. */
   switch(reg)
