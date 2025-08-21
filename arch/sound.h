@@ -3,6 +3,12 @@
 
 #include "../c99.h"
 
+extern int Sound_Init(ARMul_State *state);
+
+extern void Sound_Shutdown(ARMul_State *state);
+
+#ifdef SOUND_SUPPORT
+
 #ifdef SYSTEM_SDL
 #define SOUND_FUDGERATE_FRAC
 #endif
@@ -24,13 +30,6 @@ typedef enum {
 
 extern Sound_StereoSense eSound_StereoSense;
 
-extern int Sound_Init(ARMul_State *state);
-
-extern void Sound_Shutdown(ARMul_State *state);
-
-extern void Sound_UpdateDMARate(ARMul_State *state);
-
-#ifdef SOUND_SUPPORT
 extern uint32_t Sound_HostRate; /* Rate of host sound system, in 1/1024 Hz. Must be set by host on init. */
 
 /* These calls are made by DispKbdShared when the corresponding registers are updated */

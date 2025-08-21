@@ -30,6 +30,7 @@
 #include "arch/sound.h"
 #include "displaydev.h"
 
+#ifdef SOUND_SUPPORT
 #define MAX_BATCH_SIZE 1024
 
 int Sound_BatchSize = 1; /* How many 16*2 sample batches to try to do at once */
@@ -41,7 +42,6 @@ uint32_t Sound_FudgeRate = 1<<24;
 CycleDiff Sound_FudgeRate = 0;
 #endif
 
-#ifdef SOUND_SUPPORT
 uint32_t Sound_HostRate; /* Rate of host sound system, in 1/1024 Hz */
 
 
@@ -55,9 +55,12 @@ static uint32_t soundBufferAmt=0; /* Number of stereo pairs buffered */
 static uint32_t soundTime=0; /* Offset into 1st sample pair of buffer */
 static uint32_t soundTimeStep; /* How many source samples (1 byte) per dest sample (2x16 bit), fixed point with TIMESHIFT fraction bits */
 static uint32_t soundScale; /* Output scale factor, 16.16 fixed point */
+#else
+static CycleCount Sound_DMARate; /* How many cycles between DMA fetches */
+static const CycleDiff Sound_FudgeRate = 0;
 #endif
 
-void Sound_UpdateDMARate(ARMul_State *state)
+static void Sound_UpdateDMARate(ARMul_State *state)
 {
   /* Calculate a new value for how often we should trigger a sound DMA fetch
      Relies on:
