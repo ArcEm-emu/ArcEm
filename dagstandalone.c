@@ -24,13 +24,7 @@
 #include "armdefs.h"
 #include "ArcemConfig.h"
 
-#if defined(SYSTEM_riscos_single)
-/* TODO: Replace direct use of hArcemConfig in RISC OS code */
-extern ArcemConfig hArcemConfig;
-ArcemConfig hArcemConfig;
-#else
 static ArcemConfig hArcemConfig;
-#endif
 
 /**
  * dagstandalone

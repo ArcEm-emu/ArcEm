@@ -27,9 +27,6 @@
 
 #include "ControlPane.h"
 
-/* TODO: Replace direct use of hArcemConfig in RISC OS code */
-extern ArcemConfig hArcemConfig;
-
 #define ENABLE_MENU
 
 
@@ -38,13 +35,16 @@ static int enable_screenshots = 0;
 static int enable_stats = 0;
 static int do_screenshot = 0;
 #ifdef PROFILE_ENABLED
-static int enable_profile = 0;
+static const bool profile_supported = true;
+#else
+static const bool profile_supported = false;
 #endif
+static int enable_profile = 0;
 
 static void GoMenu(ARMul_State *state);
 #endif
 
-static void InitModeTable(void);
+static void InitModeTable(ARMul_State *state);
 
 typedef struct {
   int Width;
@@ -77,7 +77,7 @@ static int current_hz;
 static const HostMode *current_mode=NULL;
 static unsigned int current_depth=UINT_MAX;
 
-static HostMode *SelectROScreenMode(int x, int y, int aspect, int depths, int *outxscale, int *outyscale);
+static HostMode *SelectROScreenMode(ARMul_State *state,int x, int y, int aspect, int depths, int *outxscale, int *outyscale);
 
 #ifndef PROFILE_ENABLED /* Profiling code uses a nasty hack to estimate program size, which will only work if we're using the wimpslot for our heap */
 const char * const __dynamic_da_name = "ArcEm Heap";
@@ -110,7 +110,7 @@ static int CursorYOffset=0; /* How many rows were skipped from the top of the cu
 /* Lookup table for 16/32bpp display drivers - populated on mode change to avoid any SWI overheads in Host_GetColour */
 static uint32_t sdd_palette[4096];
 
-static int ChangeMode(const HostMode *mode,unsigned int depth)
+static int ChangeMode(ARMul_State *state,const HostMode *mode,unsigned int depth)
 {
   _kernel_oserror *err;
 
@@ -178,7 +178,7 @@ static int ChangeMode(const HostMode *mode,unsigned int depth)
         int g = (i & 0xf0) >> 4;
         int b = (i & 0xf00) >> 4;
         uint32_t col;
-        if(hArcemConfig.bRedBlueSwap && (depth == 4))
+        if(CONFIG.bRedBlueSwap && (depth == 4))
         {
           col = (r<<24) | (g<<16) | (b<<8);
         }
@@ -252,8 +252,8 @@ static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,in
   else
     aspect = 2;
 
-  mode = SelectROScreenMode(width,height,aspect,1<<4,&HD.XScale,&HD.YScale);
-  ChangeMode(mode,4);
+  mode = SelectROScreenMode(state,width,height,aspect,1<<4,&HD.XScale,&HD.YScale);
+  ChangeMode(state,mode,4);
   HD.Width = ModeVarsOut[MODE_VAR_WIDTH]+1; /* Should match mode->w, mode->h, but use these just to make sure */
   HD.Height = ModeVarsOut[MODE_VAR_HEIGHT]+1;
   
@@ -335,8 +335,8 @@ static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,in
   else
     aspect = 2;
 
-  mode = SelectROScreenMode(width,height,aspect,1<<5,&HD.XScale,&HD.YScale);
-  ChangeMode(mode,5);
+  mode = SelectROScreenMode(state,width,height,aspect,1<<5,&HD.XScale,&HD.YScale);
+  ChangeMode(state,mode,5);
   HD.Width = ModeVarsOut[MODE_VAR_WIDTH]+1; /* Should match mode->w, mode->h, but use these just to make sure */
   HD.Height = ModeVarsOut[MODE_VAR_HEIGHT]+1;
   
@@ -483,8 +483,8 @@ void PDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,int depth
   else
     aspect = 2;
 
-  mode = SelectROScreenMode(width,height,aspect,(0xf<<depth)&0xf,&HD.XScale,&HD.YScale);
-  realdepth = ChangeMode(mode,depth);
+  mode = SelectROScreenMode(state,width,height,aspect,(0xf<<depth)&0xf,&HD.XScale,&HD.YScale);
+  realdepth = ChangeMode(state,mode,depth);
   
   HD.Width = ModeVarsOut[MODE_VAR_WIDTH]+1; /* Should match mode->w, mode->h, but use these just to make sure */
   HD.Height = ModeVarsOut[MODE_VAR_HEIGHT]+1;
@@ -780,13 +780,13 @@ static void Host_PollDisplay_Common(ARMul_State *state,const DisplayParams *para
     static int count = 0;
     do_screenshot = 0;
     sprintf(name,"<ArcEm$Dir>.^.screen%04d",count++);
-    if(hArcemConfig.bRedBlueSwap && (ModeVarsOut[MODE_VAR_LOG2BPP] == 4))
+    if(CONFIG.bRedBlueSwap && (ModeVarsOut[MODE_VAR_LOG2BPP] == 4))
     {
       /* Unswap red/blue so the sprite is correct */
       rbswap();
     }
     _swi(OS_SpriteOp,_IN(0)|_INR(2,3),2,name,1);
-    if(hArcemConfig.bRedBlueSwap && (ModeVarsOut[MODE_VAR_LOG2BPP] == 4))
+    if(CONFIG.bRedBlueSwap && (ModeVarsOut[MODE_VAR_LOG2BPP] == 4))
     {
       /* Reswap red/blue :( */
       rbswap();
@@ -833,7 +833,7 @@ DisplayDev_Init(ARMul_State *state)
   KBD.leds_changed = leds_changed;
   leds_changed(KBD.Leds);
 
-  InitModeTable();
+  InitModeTable(state);
   if(!(colourdepths_available & (1<<4)))
     displays[DisplayDriver_Standard] = &SDD32_DisplayDev;
 
@@ -842,7 +842,7 @@ DisplayDev_Init(ARMul_State *state)
   _swi(OS_Byte,_INR(0,2)|_OUT(1),247,0xaa,0,&old_break);
   atexit(restorebreak);
 
-  return DisplayDev_Set(state,displays[hArcemConfig.eDisplayDriver]);
+  return DisplayDev_Set(state,displays[CONFIG.eDisplayDriver]);
 } /* DisplayDev_Init */
 
 
@@ -929,9 +929,9 @@ Kbd_PollHostKbd(ARMul_State *state)
       keyboard_key_changed_ex(&KBD, key / 16, key % 16, transition ? 0 : 1);
 
 #ifdef ENABLE_MENU
-      if(key == hArcemConfig.iTweakMenuKey1)
+      if(key == CONFIG.iTweakMenuKey1)
         key1_down = transition;
-      else if(key == hArcemConfig.iTweakMenuKey2)
+      else if(key == CONFIG.iTweakMenuKey2)
         key2_down = transition;
       if(key1_down & key2_down)
         both_down = 1;
@@ -962,7 +962,7 @@ Kbd_PollHostKbd(ARMul_State *state)
 
 /*-----------------------------------------------------------------------------*/
 
-static void InitModeTable(void)
+static void InitModeTable(ARMul_State *state)
 {
   int *mode_list, *mode;
   int count;
@@ -993,7 +993,7 @@ static void InitModeTable(void)
     if (((mode[1] & 0xff) != 1) && ((mode[1] & 0xff) != 3))
       goto next;
     /* Too small? */
-    if((mode[2] < hArcemConfig.iMinResX) || (mode[3] < hArcemConfig.iMinResY))
+    if((mode[2] < CONFIG.iMinResX) || (mode[3] < CONFIG.iMinResY))
       goto next;
     /* Determine pixel format */
     if ((mode[1] & 0xff) == 1)
@@ -1012,19 +1012,19 @@ static void InitModeTable(void)
     if ((ncolour == 63) || (log2bpp > 5) || (modeflags & (3<<12)))
       goto next;
     /* Low colour not allowed? */
-    if(hArcemConfig.bNoLowColour && (log2bpp < 3))
+    if(CONFIG.bNoLowColour && (log2bpp < 3))
       goto next;
     /* Not exact scale for an LCD? */
-    if(hArcemConfig.iLCDResX)
+    if(CONFIG.iLCDResX)
     {
       float xscale, yscale;
       /* Simply too big? */
-      if((hArcemConfig.iLCDResX < mode[2]) || (hArcemConfig.iLCDResY < mode[3]))
+      if((CONFIG.iLCDResX < mode[2]) || (CONFIG.iLCDResY < mode[3]))
         goto next;
       /* Assume the monitor will scale it up while maintaining the aspect ratio
          Therefore, work out how much it can scale it before it reaches an edge, and check that value */
-      xscale = ((float)hArcemConfig.iLCDResX)/mode[2];
-      yscale = ((float)hArcemConfig.iLCDResY)/mode[3];
+      xscale = ((float)CONFIG.iLCDResX)/mode[2];
+      yscale = ((float)CONFIG.iLCDResY)/mode[3];
       xscale = MIN(xscale,yscale);
       if(floor(xscale) != xscale)
         goto next;
@@ -1109,13 +1109,13 @@ static void InitModeTable(void)
   free(mode_list);
 }
 
-static float ComputeFit(HostMode *mode,int x,int y,int aspect,int *outxscale,int *outyscale)
+static float ComputeFit(ARMul_State *state,HostMode *mode,int x,int y,int aspect,int *outxscale,int *outyscale)
 {
   /* Work out how best to fit the given screen into the given mode */
   int xscale=1;
   int yscale=1;
 
-  if(hArcemConfig.bAspectRatioCorrection)
+  if(CONFIG.bAspectRatioCorrection)
   {
     /* Use aspect ratios to work out right scale factors */
     if(aspect > mode->aspect)
@@ -1138,7 +1138,7 @@ static float ComputeFit(HostMode *mode,int x,int y,int aspect,int *outxscale,int
     return -1.0f; /* Mode not big enough */
 
   /* Apply global 2* scaling if possible */
-  if((x*xscale*2 <= mode->w) && (y*yscale*2 <= mode->h) && (xscale < 2) && (hArcemConfig.bUpscale))
+  if((x*xscale*2 <= mode->w) && (y*yscale*2 <= mode->h) && (xscale < 2) && (CONFIG.bUpscale))
   {
     xscale*=2;
     yscale*=2;
@@ -1157,7 +1157,7 @@ static float ScaleCost(int xscale,int yscale)
   return (((((float)yscale)-1.0f)*1.5f)+1.0f)*xscale; /* Y scaling (probably) has a higher cost than X scaling */
 }
 
-static HostMode *SelectROScreenMode(int x, int y, int aspect, int depths, int *outxscale,int *outyscale)
+static HostMode *SelectROScreenMode(ARMul_State *state,int x, int y, int aspect, int depths, int *outxscale,int *outyscale)
 {
   HostMode *bestmode=NULL;
   int bestxscale=1,bestyscale=1;
@@ -1169,7 +1169,7 @@ static HostMode *SelectROScreenMode(int x, int y, int aspect, int depths, int *o
     float score;
     if(!(ModeList[i].depths & depths))
       continue;
-    score = ComputeFit(&ModeList[i],x,y,aspect,&xscale,&yscale);
+    score = ComputeFit(state,&ModeList[i],x,y,aspect,&xscale,&yscale);
     if((score > bestscore) || ((score == bestscore) && (ScaleCost(xscale,yscale) < ScaleCost(bestxscale,bestyscale))))
     {
       bestmode = &ModeList[i];
@@ -1188,77 +1188,23 @@ static HostMode *SelectROScreenMode(int x, int y, int aspect, int depths, int *o
 }
 
 #ifdef ENABLE_MENU
-typedef struct {
-  const char label;
-  const char *name;
-  const char *const *values;
-  void *val;
-  size_t valsz;
-} menu_item;
-
 static const char *const values_bool[] = {"Off","On",NULL};
 static const char *const values_display[] = {"Palettised","Standard",NULL};
 static const char *const values_skip[] = {"0","1","2","3","4","5","6","7","8","9","10",NULL};
 
-#define XX(X) &X,sizeof(X)
-
-static const menu_item items[] =
-{
-  {'1',"Display driver",values_display,XX(hArcemConfig.eDisplayDriver)},
-  {'2',"Red/blue swap 16bpp output",values_bool,XX(hArcemConfig.bRedBlueSwap)},
-  {'3',"Display auto UpdateFlags",values_bool,XX(DisplayDev_AutoUpdateFlags)},
-  {'4',"Display uses UpdateFlags",values_bool,XX(DisplayDev_UseUpdateFlags)},
-  {'5',"Display frameskip",values_skip,XX(DisplayDev_FrameSkip)},
-  {'6',"Aspect ratio correction",values_bool,XX(hArcemConfig.bAspectRatioCorrection)},
-  {'7',"2X upscaling",values_bool,XX(hArcemConfig.bUpscale)},
-  {'8',"Take screenshots on Print Screen",values_bool,XX(enable_screenshots)},
-  {'9',"Show stats",values_bool,XX(enable_stats)},
-#ifdef PROFILE_ENABLED
-  {'P',"Profiling",values_bool,XX(enable_profile)},
-#endif
-  {'R',"Resume",NULL,NULL,0},
-  {'Q',"Quit",NULL,NULL,0},
-};
-
-#define ITEM_MAX (sizeof(items)/sizeof(items[0]))
-#define ITEM_QUIT (ITEM_MAX-1)
-#define ITEM_RESUME (ITEM_MAX-2)
-
-static uint32_t readval(int i)
-{
-  uint8_t *val = (uint8_t *) items[i].val;
-  size_t j;
-  uint32_t temp=0;
-  for(j=0;j<items[i].valsz;j++)
-  {
-    temp |= (val[j])<<(j<<3);
-  }
-  return temp;
-}
-
-static void writeval(int i,uint32_t temp)
-{
-  uint8_t *val = (uint8_t *) items[i].val;
-  size_t j;
-  for(j=0;j<items[i].valsz;j++)
-  {
-    val[j] = temp>>(j<<3);
-  }
-}
-
-static void DrawMenu(void)
-{
-  unsigned int i;
-  _swi(OS_WriteC,_IN(0),12);
-  printf("ArcEm tweak menu\n\n");
-  for(i=0;i<ITEM_MAX;i++)
-  {
-    if(items[i].values)
-      printf("%c. [%s] %s\n",items[i].label,items[i].values[readval(i)],items[i].name);
-    else
-      printf("%c. %s\n",items[i].label,items[i].name);
-  }
-}
+#define ITEMS \
+  X('1',"Display driver",values_display,CONFIG.eDisplayDriver,true) \
+  X('2',"Red/blue swap 16bpp output",values_bool,CONFIG.bRedBlueSwap,true) \
+  X('3',"Display auto UpdateFlags",values_bool,DisplayDev_AutoUpdateFlags,true) \
+  X('4',"Display uses UpdateFlags",values_bool,DisplayDev_UseUpdateFlags,true) \
+  X('5',"Display frameskip",values_skip,DisplayDev_FrameSkip,true) \
+  X('6',"Aspect ratio correction",values_bool,CONFIG.bAspectRatioCorrection,true) \
+  X('7',"2X upscaling",values_bool,CONFIG.bUpscale,true) \
+  X('8',"Take screenshots on Print Screen",values_bool,enable_screenshots,true) \
+  X('9',"Show stats",values_bool,enable_stats,true) \
+  X('P',"Profiling",values_bool,enable_profile,profile_supported) \
+  Y('R',"Resume",true) \
+  Y('Q',"Quit",true)
 
 static void GoMenu(ARMul_State *state)
 {
@@ -1279,41 +1225,56 @@ static void GoMenu(ARMul_State *state)
   _swi(OS_Byte,_INR(0,1),15,1);
   do {
     unsigned int c, i;
-    DrawMenu();
+    _swi(OS_WriteC,_IN(0),12);
+    printf("ArcEm tweak menu\n\n");
+#define X(label,name,values,val,supported) \
+      if (supported) printf("%c. [%s] %s\n",label,values[val],name);
+#define Y(label,name,supported) \
+      if (supported) printf("%c. %s\n",label,name);
+    ITEMS
+#undef X
+#undef Y
     c = toupper(_swi(OS_ReadC,_RETURN(0)));
-    for(i=0;i<ITEM_MAX;i++)
-      if(c == items[i].label)
-        break;
-    if(i==ITEM_QUIT)
+    if(c=='Q')
     {
       exit(0);
     }
-    else if(i==ITEM_RESUME)
+    else if(c=='R')
     {
       break;
     }
-    else if(i<ITEM_MAX)
+    else
     {
-      uint32_t val = readval(i);
-      val++;
-      if(!items[i].values[val])
-        val = 0;
-      writeval(i,val);
-      if(items[i].val == &DisplayDev_AutoUpdateFlags)
+      switch (c) {
+#define X(label,name,values,val,supported) \
+      case label:        \
+        if (supported) { \
+          i = val + 1;   \
+          if(!values[i]) \
+            i = 0;       \
+          val = i;       \
+        }                \
+        break;
+#define Y(label,name,supported)
+      ITEMS
+#undef X
+#undef Y
+      }
+      if(c == '3')
       {
-        /* Make sure these are sane */
+        /* Make sure these are sane when changing AutoUpdateFlags */
         DisplayDev_UseUpdateFlags = 1;
         DisplayDev_FrameSkip = 0;
       }
     }
   } while(1);
   /* (re)start display device. Even if we haven't changed anything, this is needed to force the screen to be redrawn (and the mode to be reset) */
-  if(DisplayDev_Set(state,displays[hArcemConfig.eDisplayDriver]))
+  if(DisplayDev_Set(state,displays[CONFIG.eDisplayDriver]))
   {
     ControlPane_Error(EXIT_FAILURE,"Failed to reinitialise display\n");
   }
   /* Ensure DisplayDev_UseUpdateFlags is on for SDD */
-  if(hArcemConfig.eDisplayDriver == DisplayDriver_Standard)
+  if(CONFIG.eDisplayDriver == DisplayDriver_Standard)
     DisplayDev_UseUpdateFlags = 1;
   /* Rebuild fastmap for DisplayDev_UseUpdateFlags changes */
   ARMul_RebuildFastMap(state);
