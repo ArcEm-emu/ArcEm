@@ -61,8 +61,6 @@ extern int rMouseHeight;
         nXScale = nYScale = 1;
         bAspect = bUpscale = YES;
 
-        strErrorMsg = nil;
-
         // Note: we can't geet prefs yet as the controller init hasn't finished yet
     }
 
@@ -148,20 +146,6 @@ extern int rMouseHeight;
     }
 
     CGContextFlush (cgc);
-
-    if (strErrorMsg != NULL)
-    {
-        // Welcome to stupid race condition central. For some reason drawRect will
-        // get called a second time whilst blocked on the alert panel, so I need to
-        // set my test condition to handle this.
-        const char* temp = strErrorMsg;
-        strErrorMsg = NULL;
-        NSAlert *alert = [[NSAlert alloc] init];
-        alert.alertStyle = NSAlertStyleCritical;
-        alert.messageText = @"ArcEm Critical Error";
-        alert.informativeText = @(temp);
-        [alert runModal];
-    }
 }
 
 
@@ -653,19 +637,6 @@ extern int rMouseHeight;
     mouseEmulation = [defaults boolForKey: AEUseMouseEmulationKey];
     adjustModifier = (int)[defaults integerForKey: AEAdjustModifierKey];
     menuModifier = (int)[defaults integerForKey: AEMenuModifierKey];
-}
-
-
-/*------------------------------------------------------------------------------
- *
- */
-- (void)emulatorError: (const char*) message
-{
-    // No queue here - one critical error is enough :)
-    if (strErrorMsg == NULL)
-    {
-        strErrorMsg = message;
-    }
 }
 
 @end

@@ -83,21 +83,6 @@ void updateDisplay(int x, int y, int width, int height, int yield)
 }
 
 
-/*------------------------------------------------------------------------------
- *
- */
-void arcem_exit(char* msg)
-{
-    [disp emulatorError: msg];
-    
-    //[pool release];
-    //[NSThread exit];
-    [controller destroyEmulatorThread];
-
-    return;
-}
-
-
 @implementation ArcemEmulator {
     NSAutoreleasePool *pool;
 }

@@ -83,7 +83,7 @@ set(ARCEM_MACOSX_SOURCES
 	macosx/ArcemEmulator.m
 	macosx/ArcemView.h
 	macosx/ArcemView.m
-	macosx/ControlPane.c
+	macosx/ControlPane.m
 	macosx/DispKbd.c
 	macosx/KeyTable.h
 	macosx/PreferenceController.h

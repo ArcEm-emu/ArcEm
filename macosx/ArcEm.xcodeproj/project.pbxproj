@@ -30,7 +30,7 @@
 		5582DD8E20C8C14900931D55 /* keyboard.c in Sources */ = {isa = PBXBuildFile; fileRef = 4CA3F3EE046BE8B800E6600F /* keyboard.c */; };
 		5582DD9020C8C14900931D55 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
 		55F89C2420C8C79700374D5B /* cp15.c in Sources */ = {isa = PBXBuildFile; fileRef = 55F89C2220C8C79700374D5B /* cp15.c */; };
-		55F89C2620C8C7B400374D5B /* ControlPane.c in Sources */ = {isa = PBXBuildFile; fileRef = D1F01DDC0293E0E601CDBB35 /* ControlPane.c */; };
+		55F89C2620C8C7B400374D5B /* ControlPane.m in Sources */ = {isa = PBXBuildFile; fileRef = D1F01DDC0293E0E601CDBB35 /* ControlPane.m */; };
 		55F89C2920C8C7F800374D5B /* eventq.c in Sources */ = {isa = PBXBuildFile; fileRef = 55F89C2720C8C7F800374D5B /* eventq.c */; };
 		55F89C2F20C8C92F00374D5B /* extnrom.c in Sources */ = {isa = PBXBuildFile; fileRef = 55F89C2D20C8C92E00374D5B /* extnrom.c */; };
 		55F89C3320C8C94700374D5B /* displaydev.c in Sources */ = {isa = PBXBuildFile; fileRef = 55F89C3120C8C94700374D5B /* displaydev.c */; };
@@ -114,7 +114,7 @@
 		D1F01DD60293339001CDBB35 /* DispKbd.c */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.c; lineEnding = 0; path = DispKbd.c; sourceTree = "<group>"; usesTabs = 0; };
 		D1F01DD8029333DB01CDBB35 /* win.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = win.h; sourceTree = "<group>"; };
 		D1F01DDA0293D79C01CDBB35 /* KeyTable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = KeyTable.h; sourceTree = "<group>"; };
-		D1F01DDC0293E0E601CDBB35 /* ControlPane.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; path = ControlPane.c; sourceTree = "<group>"; };
+		D1F01DDC0293E0E601CDBB35 /* ControlPane.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = ControlPane.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -272,7 +272,7 @@
 		D1F01DD50293336E01CDBB35 /* mac */ = {
 			isa = PBXGroup;
 			children = (
-				D1F01DDC0293E0E601CDBB35 /* ControlPane.c */,
+				D1F01DDC0293E0E601CDBB35 /* ControlPane.m */,
 				D1F01DD60293339001CDBB35 /* DispKbd.c */,
 				7E89E4E12D6200CC0079EC01 /* filecalls.m */,
 				D1F01DDA0293D79C01CDBB35 /* KeyTable.h */,
@@ -368,7 +368,7 @@
 				55F89C3D20C8C9AE00374D5B /* filecommon.c in Sources */,
 				55F89C4220C8CBAA00374D5B /* newsound.c in Sources */,
 				7E89E4E22D6200CC0079EC01 /* filecalls.m in Sources */,
-				55F89C2620C8C7B400374D5B /* ControlPane.c in Sources */,
+				55F89C2620C8C7B400374D5B /* ControlPane.m in Sources */,
 				5582DD8720C8C14900931D55 /* armcopro.c in Sources */,
 				5582DD8820C8C14900931D55 /* armemu.c in Sources */,
 				5582DD8920C8C14900931D55 /* arminit.c in Sources */,
