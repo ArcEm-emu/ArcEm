@@ -13,12 +13,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void ControlPane_Init(ARMul_State *state)
+bool ControlPane_Init(ARMul_State *state)
 {
-
+  return true;
 }
 
-void ControlPane_Error(int code,const char *fmt,...)
+void ControlPane_Error(bool fatal,const char *fmt,...)
 {
 #if SDL_VERSION_ATLEAST(2, 0, 0)
   va_list args;
@@ -29,16 +29,18 @@ void ControlPane_Error(int code,const char *fmt,...)
   va_end(args);
 
   SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "ArcEm", err, NULL);
-  log_msg(LOG_ERROR, "%s", err);
+  log_msg(LOG_ERROR, "%s\n", err);
 #else
   va_list args;
 
   va_start(args,fmt);
   log_msgv(LOG_ERROR,fmt,args);
   va_end(args);
+  log_msg(LOG_ERROR,"\n");
 #endif
   /* Quit */
-  exit(code);
+  if (fatal)
+    exit(EXIT_FAILURE);
 }
 
 void log_msgv(int type, const char *format, va_list ap)

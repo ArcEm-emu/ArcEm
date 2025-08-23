@@ -123,7 +123,7 @@ static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,in
 {
   if((width > MonitorWidth) || (height > MonitorHeight))
   {
-    ControlPane_Error(EXIT_FAILURE,"Mode %dx%d too big\n",width,height);
+    ControlPane_Error(true,"Mode %dx%d too big",width,height);
   }
   HD.Width = width;
   HD.Height = height;
@@ -317,7 +317,7 @@ void PDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,int depth
 {
   if((width > MonitorWidth) || (height > MonitorHeight))
   {
-    ControlPane_Error(EXIT_FAILURE,"Mode %dx%d too big\n",width,height);
+    ControlPane_Error(true,"Mode %dx%d too big",width,height);
   }
   HD.Width = width;
   HD.Height = height;
@@ -493,7 +493,7 @@ void ProcessKey(ARMul_State *state, int nVirtKey, int lKeyData, int nKeyStat) {
 
 
 /*-----------------------------------------------------------------------------*/
-static int
+static bool
 DisplayDev_Select(ARMul_State *state, ArcemConfig_DisplayDriver driver)
 {
   if (driver == DisplayDriver_Palettised)
@@ -503,7 +503,7 @@ DisplayDev_Select(ARMul_State *state, ArcemConfig_DisplayDriver driver)
 }
 
 /*-----------------------------------------------------------------------------*/
-int
+bool
 DisplayDev_Init(ARMul_State *state)
 {
   /* Setup display and cursor bitmaps */

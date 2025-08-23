@@ -14,13 +14,14 @@
 #include "kernel.h"
 #include "swis.h"
 
-void ControlPane_Init(ARMul_State *state)
+bool ControlPane_Init(ARMul_State *state)
 {
-
+  return true;
 }
 
-void ControlPane_Error(int code,const char *fmt,...)
+void ControlPane_Error(bool fatal,const char *fmt,...)
 {
+  /* TODO: Allow continuing emulation when !fatal */
   char buf[1024];
   va_list args;
   /* Assume mode 28 is available */
@@ -29,11 +30,11 @@ void ControlPane_Error(int code,const char *fmt,...)
   vsnprintf(buf,sizeof(buf),fmt,args);
   va_end(args);
   /* Log it */
-  log_msgv(LOG_ERROR,"%s",buf);
+  log_msg(LOG_ERROR,"%s\n",buf);
   /* Report error */
   puts(buf);
   /* Quit */
-  exit(code);
+  exit(EXIT_FAILURE);
 }
 
 void log_msgv(int type, const char *format, va_list ap)

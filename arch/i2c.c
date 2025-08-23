@@ -177,14 +177,14 @@ static void SaveCMOS(ARMul_State *state) {
   if (CONFIG.sCMOSFileName) {
     OutFile = fopen(CONFIG.sCMOSFileName, "w");
     if (OutFile == NULL) {
-      ControlPane_Error(1, "SaveCMOS: Could not open CMOS settings file (%s)\n", CONFIG.sCMOSFileName);
+      ControlPane_Error(true,"SaveCMOS: Could not open CMOS settings file (%s)", CONFIG.sCMOSFileName);
     }
   } else {
     OutFile = File_OpenAppData(defaultFile, "w");
     if (OutFile == NULL) {
       OutFile = fopen(defaultFile, "w");
       if (OutFile == NULL) {
-        ControlPane_Error(1, "SaveCMOS: Could not open CMOS settings file (%s)\n", defaultFile);
+        ControlPane_Error(true,"SaveCMOS: Could not open CMOS settings file (%s)", defaultFile);
       }
     }
   }
@@ -455,7 +455,7 @@ static void SetUpCMOS(ARMul_State *state)
     for (byte = 0; byte < 240; byte++) {
         if (fp) {
             if (fscanf(fp, "%x\n", &val) != 1) {
-                ControlPane_Error(1,"arcem: failed to read CMOS value %d of %s\n",
+                ControlPane_Error(true,"arcem: failed to read CMOS value %d of %s",
                     byte, filename);
             }
         } else {

@@ -78,7 +78,7 @@ static inline SDD_Row SDD_Name(Host_BeginRow)(ARMul_State *state,int row,int off
 static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,int hz)
 {
   if (width > MaxVideoWidth || height > MaxVideoHeight) {
-      ControlPane_Error(EXIT_FAILURE,"Resize_Window: new size (%d, %d) exceeds maximum (%d, %d)\n",
+      ControlPane_Error(true,"Resize_Window: new size (%d, %d) exceeds maximum (%d, %d)",
           width, height, MaxVideoWidth, MaxVideoHeight);
   }
 

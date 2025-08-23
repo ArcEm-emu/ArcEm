@@ -84,11 +84,11 @@ bool ARMul_CoProInit(ARMul_State *state) {
 void ARMul_CoProExit(ARMul_State *state) {
   unsigned int i;
 
-  for (i = 0; i < 16; i++)
-    if (state->CoPro[i]->CPExit)
+  for (i = 0; i < 16; i++) {
+    if (state->CoPro[i] && state->CoPro[i]->CPExit)
       (state->CoPro[i]->CPExit)(state);
-  for (i = 0; i < 16; i++) /* Detach all handlers */
-     ARMul_CoProDetach(state, i);
+    state->CoPro[i] = NULL;
+  }
 }
 
 /***************************************************************************\

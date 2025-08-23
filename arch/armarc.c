@@ -237,7 +237,8 @@ ARMul_MemoryInit(ARMul_State *state)
       break;
 
     default:
-      ControlPane_Error(EXIT_FAILURE,"Unsupported memory size\n");
+      ControlPane_Error(false,"Unsupported memory size");
+      return false;
   }
 
 #ifndef _WIN32
@@ -262,7 +263,8 @@ ARMul_MemoryInit(ARMul_State *state)
   }
 #endif
   if (ROMFile = fopen(CONFIG.sRomImageName, "rb"), ROMFile == NULL) {
-    ControlPane_Error(2,"Couldn't open ROM file '%s'\n", CONFIG.sRomImageName);
+    ControlPane_Error(false,"Couldn't open ROM file '%s'", CONFIG.sRomImageName);
+    return false;
   }
 
   /* Find the rom file size */
@@ -272,7 +274,9 @@ ARMul_MemoryInit(ARMul_State *state)
   MEMC.ROMHighMask = MEMC.ROMHighSize-1;
 
   if(MEMC.ROMHighSize & MEMC.ROMHighMask) {
-    ControlPane_Error(3,"ROM High isn't power of 2 in size\n");
+    ControlPane_Error(false,"ROM High isn't power of 2 in size");
+    fclose(ROMFile);
+    return false;
   }
 
   fseek(ROMFile, 0l, SEEK_SET);
@@ -291,20 +295,11 @@ ARMul_MemoryInit(ARMul_State *state)
   ROMRAMChunkSize = RAMChunkSize+MEMC.ROMHighSize+extnrom_size;
   MEMC.ROMRAMChunk = calloc(1,ROMRAMChunkSize+256);
   if(MEMC.ROMRAMChunk == NULL) {
-    ControlPane_Error(3,"Couldn't allocate ROMRAMChunk\n");
+    ControlPane_Error(false,"Couldn't allocate ROMRAMChunk");
+    fclose(ROMFile);
+    return false;
   }
-#ifdef ARMUL_INSTR_FUNC_CACHE
-  MEMC.EmuFuncChunk = calloc(sizeof(FastMapUInt)/4,ROMRAMChunkSize+256);
-  if(MEMC.EmuFuncChunk == NULL) {
-    ControlPane_Error(3,"Couldn't allocate EmuFuncChunk\n");
-  }
-#ifdef FASTMAP_64
-  /* On 64bit systems, ROMRAMChunk needs shifting to account for the shift that occurs in FastMap_Phy2Func */
-  state->FastMapInstrFuncOfs = ((FastMapUInt)MEMC.EmuFuncChunk)-(((FastMapUInt)MEMC.ROMRAMChunk)<<1);
-#else
-  state->FastMapInstrFuncOfs = ((FastMapUInt)MEMC.EmuFuncChunk)-((FastMapUInt)MEMC.ROMRAMChunk);
-#endif
-#endif
+
   /* Get everything 256 byte aligned for FastMap to work */
   MEMC.PhysRam = (ARMword*) ((((FastMapUInt)MEMC.ROMRAMChunk)+255)&~255); /* RAM must come first for FastMap_LogRamFunc to work! */
   MEMC.ROMHigh = MEMC.PhysRam + (RAMChunkSize>>2);
@@ -316,13 +311,30 @@ ARMul_MemoryInit(ARMul_State *state)
   /* Close System ROM Image File */
   fclose(ROMFile);
 
+#ifdef ARMUL_INSTR_FUNC_CACHE
+  MEMC.EmuFuncChunk = calloc(sizeof(FastMapUInt)/4,ROMRAMChunkSize+256);
+  if(MEMC.EmuFuncChunk == NULL) {
+    ControlPane_Error(false,"Couldn't allocate EmuFuncChunk");
+    ARMul_MemoryExit(state);
+    return false;
+  }
+#ifdef FASTMAP_64
+  /* On 64bit systems, ROMRAMChunk needs shifting to account for the shift that occurs in FastMap_Phy2Func */
+  state->FastMapInstrFuncOfs = ((FastMapUInt)MEMC.EmuFuncChunk)-(((FastMapUInt)MEMC.ROMRAMChunk)<<1);
+#else
+  state->FastMapInstrFuncOfs = ((FastMapUInt)MEMC.EmuFuncChunk)-((FastMapUInt)MEMC.ROMRAMChunk);
+#endif
+#endif
+
   /* Create Space for extension ROM in ROMLow */
   if (extnrom_size) {
     MEMC.ROMLowSize = extnrom_size;
     MEMC.ROMLowMask = MEMC.ROMLowSize-1;
   
     if(MEMC.ROMLowSize & MEMC.ROMLowMask) {
-      ControlPane_Error(3,"ROM Low isn't power of 2 in size\n");
+      ControlPane_Error(false,"ROM Low isn't power of 2 in size");
+      ARMul_MemoryExit(state);
+      return false;
     }
 
     /* calloc() now used to ensure that Extension ROM space is zero'ed */
@@ -340,14 +352,16 @@ ARMul_MemoryInit(ARMul_State *state)
 
   IO_Init(state);
 
-  if (DisplayDev_Init(state)) {
+  if (!DisplayDev_Init(state)) {
     /* There was an error of some sort - it will already have been reported */
-    ControlPane_Error(EXIT_FAILURE,"Could not initialise display - exiting\n");
+    ARMul_MemoryExit(state);
+    return false;
   }
 
-  if (Sound_Init(state)) {
+  if (!Sound_Init(state)) {
     /* There was an error of some sort - it will already have been reported */
-    ControlPane_Error(EXIT_FAILURE,"Could not initialise sound output - exiting\n");
+    ARMul_MemoryExit(state);
+    return false;
   }
 
   for (i = 0; i < 512 * 1024 / UPDATEBLOCKSIZE; i++) {
@@ -376,8 +390,10 @@ void ARMul_MemoryExit(ARMul_State *state)
   Sound_Shutdown(state);
   DisplayDev_Shutdown(state);
   free(MEMC.ROMRAMChunk);
+  MEMC.ROMRAMChunk = NULL;
 #ifdef ARMUL_INSTR_FUNC_CACHE
   free(MEMC.EmuFuncChunk);
+  MEMC.EmuFuncChunk = NULL;
 #endif
 }
 

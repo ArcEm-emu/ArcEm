@@ -13,9 +13,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void ControlPane_Init(ARMul_State *state)
+bool ControlPane_Init(ARMul_State *state)
 {
-
+  return true;
 }
 
 static void ami_easyrequest(const char *err)
@@ -34,7 +34,7 @@ static void ami_easyrequest(const char *err)
 	}
 }
 
-void ControlPane_Error(int code,const char *fmt,...)
+void ControlPane_Error(bool fatal,const char *fmt,...)
 {
   char err[100];
   va_list args;
@@ -45,7 +45,8 @@ void ControlPane_Error(int code,const char *fmt,...)
   ami_easyrequest(err);
   
   /* Quit */
-  exit(code);
+  if (fatal)
+    exit(EXIT_FAILURE);
 }
 
 void log_msgv(int type, const char *format, va_list ap)

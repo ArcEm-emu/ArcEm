@@ -70,7 +70,7 @@ ARMul_LoadInstr(ARMul_State *state,ARMword addr, PipelineEntry *p)
       warn("LoadInstr: %08x maps to entry %08x res %08x (mode %08x pc %08x)\n",addr,entry,res,MEMC.FastMapMode,state->Reg[15]);
       warn("-> data %08x pfunc %08x instr %08x func %08x using ofs %08x\n",data,pfunc,instr,temp,MEMC.FastMapInstrFuncOfs);
       warn("But should be %08x!\n",ARMul_Emulate_DecodeInstr(instr));
-      ControlPane_Error(5,"AMul_LoadInstr failure\n");
+      ControlPane_Error(true,"AMul_LoadInstr failure");
     }
 #endif
     p->func = temp;
@@ -1244,7 +1244,7 @@ ARMul_Emulate26(ARMul_State *state)
       }
       if(!loops)
       {
-        ControlPane_Error(1,"Runaway loop in EventQ. Head event func %08x time %08x (local_time %08x)\n",state->EventQ[0].Func,state->EventQ[0].Time,loops);
+        ControlPane_Error(true,"Runaway loop in EventQ. Head event func %08x time %08x (local_time %08x)",state->EventQ[0].Func,state->EventQ[0].Time,loops);
       }
 #endif
 

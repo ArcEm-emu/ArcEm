@@ -225,7 +225,7 @@ errno_to_hostfs_error(const char *filename,const char *function,const char *op)
 {
   switch(errno) {
   case ENOMEM: /* Out of memory */
-    hostfs_error(EXIT_FAILURE,"HostFS out of memory in %s: \'%s\'\n",function,strerror(errno));
+    hostfs_error(true,"HostFS out of memory in %s: \'%s\'",function,strerror(errno));
     return HOSTFS_ERROR_UNKNOWN;
 
   case ENOENT: /* Object not found */
@@ -290,7 +290,7 @@ hostfs_ensure_buffer_size(size_t buffer_size_needed)
   if (buffer_size_needed > buffer_size) {
     buffer = realloc(buffer, buffer_size_needed);
     if (!buffer) {
-      hostfs_error(EXIT_FAILURE,"HostFS could not increase buffer size to %lu bytes\n",
+      hostfs_error(true,"HostFS could not increase buffer size to %lu bytes",
               (unsigned long) buffer_size_needed);
     }
     buffer_size = buffer_size_needed;
@@ -1055,7 +1055,7 @@ hostfs_open(ARMul_State *state)
     /* No more space in the open_file[] array.
        This should never occur, because RISC OS is constraining the max
        number of open files */
-    abort();
+    hostfs_error(true,"No more available file handles");
   }
 
 
@@ -1448,7 +1448,7 @@ hostfs_file_1_write_cat_info(ARMul_State *state)
     break;
 
   default:
-    abort();
+    hostfs_error(true,"Unknown type for object '%s'",host_pathname);
   }
 }
 
@@ -1528,7 +1528,7 @@ hostfs_file_6_delete(ARMul_State *state)
     break;
 
   default:
-    abort();
+    hostfs_error(true,"Unknown type for object '%s'",host_pathname);
   }
 }
 
@@ -1846,7 +1846,7 @@ hostfs_cache_dir(const char *directory_name)
     cache_names = malloc(cache_names_capacity);
   }
   if ((!cache_entries) || (!cache_names)) {
-    hostfs_error(1,"hostfs_cache_dir(): Out of memory\n");
+    hostfs_error(true,"hostfs_cache_dir(): Out of memory");
   }
 
   /* Read each of the directory entries one at a time.
@@ -1884,7 +1884,7 @@ hostfs_cache_dir(const char *directory_name)
         cache_names_capacity *= 2;
         cache_names = realloc(cache_names, cache_names_capacity);
         if (!cache_names) {
-          hostfs_error(1,"hostfs_cache_dir(): Out of memory\n");
+          hostfs_error(true,"hostfs_cache_dir(): Out of memory");
         }
       }
 
@@ -1901,7 +1901,7 @@ hostfs_cache_dir(const char *directory_name)
         cache_entries_capacity *= 2;
         cache_entries = realloc(cache_entries, cache_entries_capacity * sizeof(cache_directory_entry));
         if (!cache_entries) {
-          hostfs_error(1,"hostfs_cache_dir(): Out of memory\n");
+          hostfs_error(true,"hostfs_cache_dir(): Out of memory");
         }
       }
     }
@@ -1942,7 +1942,7 @@ hostfs_cache_dir(const char *directory_name)
       cache_names_capacity *= 2;
       cache_names = realloc(cache_names, cache_names_capacity);
       if (!cache_names) {
-        hostfs_error(1,"hostfs_cache_dir(): Out of memory\n");
+        hostfs_error(true,"hostfs_cache_dir(): Out of memory");
       }
     }
 
@@ -1959,7 +1959,7 @@ hostfs_cache_dir(const char *directory_name)
       cache_entries_capacity *= 2;
       cache_entries = realloc(cache_entries, cache_entries_capacity * sizeof(cache_directory_entry));
       if (!cache_entries) {
-        hostfs_error(1,"hostfs_cache_dir(): Out of memory\n");
+        hostfs_error(true,"hostfs_cache_dir(): Out of memory");
       }
     }
   }

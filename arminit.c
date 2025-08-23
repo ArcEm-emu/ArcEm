@@ -105,6 +105,10 @@ ARMul_State *ARMul_NewState(ArcemConfig *pConfig)
  ARMul_EmulateInit();
 
  state = state_alloc(sizeof(ARMul_State));
+ if (!state) {
+    ControlPane_Error(false,"Could not allocate emulation state");
+    return NULL;
+ }
 
  for (i = 0; i < 16; i++) {
     state->Reg[i] = 0;
@@ -136,14 +140,21 @@ ARMul_State *ARMul_NewState(ArcemConfig *pConfig)
  ARMul_Reset(state);
  EventQ_Init(state);
  ARMul_Reset(state);
- if (!ARMul_MemoryInit(state))
-    ControlPane_Error(1, "Memory interface failed to initialise. Exiting\n");
+ if (!ARMul_MemoryInit(state)) {
+    ARMul_FreeState(state);
+    return false;
+ }
 #ifdef ARMUL_COPRO_SUPPORT
- if (!ARMul_CoProInit(state))
-    ControlPane_Error(2, "Co-Processor interface failed to initialise. Exiting\n");
+ if (!ARMul_CoProInit(state)) {
+    ARMul_FreeState(state);
+    return NULL;
+ }
 #else
- if (state->HasCP15)
-    ControlPane_Error(2, "ARM3 support is not available in this build of ArcEm. Exiting\n");
+ if (state->HasCP15) {
+    ControlPane_Error(false,"ARM3 support is not available in this build of ArcEm. Exiting");
+    ARMul_FreeState(state);
+    return NULL;
+ }
 #endif
  ARMul_Reset(state);
 

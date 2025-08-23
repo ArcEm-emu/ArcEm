@@ -820,8 +820,7 @@ ARMword FDC_Write(ARMul_State *state, ARMword offset, ARMword data, bool bNw) {
             err = fputc(FDC.Data, FDC.drive[FDC.CurrentDisc].fp);
             
             if (err!=FDC.Data) {
-              warn_fdc("FDC_Write: fputc failed!! Data=%d err=%d ferror=%d: %s\n",FDC.Data,err,ferror(FDC.drive[FDC.CurrentDisc].fp),strerror(errno));
-              abort();
+              ControlPane_Error(true,"FDC_Write: fputc failed!! Data=%d err=%d ferror=%d: %s",FDC.Data,err,ferror(FDC.drive[FDC.CurrentDisc].fp),strerror(errno));
             }
 
             if (fflush(FDC.drive[FDC.CurrentDisc].fp)) {
@@ -1012,7 +1011,7 @@ FDC_IsFloppyInserted(unsigned int drive)
 static void efseek(FILE *fp, int32_t offset, int whence)
 {
   if (fseek(fp, offset, whence)) {
-    ControlPane_Error(1,"efseek(%p, %ld, %d) failed.\n", fp, (long int) offset,
+    ControlPane_Error(true,"efseek(%p, %ld, %d) failed.", fp, (long int) offset,
             whence);
   }
 

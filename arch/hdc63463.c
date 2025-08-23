@@ -16,6 +16,7 @@
  * aST506DiskShapes[0] is never accessed and the "[mfm#]" section
  * should specify the geometry of drive 1 for ADFS::4. */
 
+#include <assert.h>
 #include <ctype.h>
 #include <errno.h>
 #include <stdarg.h>
@@ -373,10 +374,7 @@ static void ReturnParams(ARMul_State *state,const int NParams, ...) {
   va_list args;
   int param;
 
-  if (NParams>16) {
-    warn_hdc("HDC:ReturnParams - invalid number of parameters\n");
-    abort();
-  }
+  assert(NParams <= 16);
 
   va_start(args,NParams);
 
@@ -397,10 +395,7 @@ static int GetParams(ARMul_State *state, const int NParams, ...) {
   int param;
   uint8_t *resptr;
 
-  if (NParams > 16) {
-    warn_hdc("HDC:GetParams - invalid number of parameters requested\n");
-    abort();
-  }
+  assert(NParams <= 16);
 
   if ((int)HDC.PBPtr < (NParams - 1)) {
     warn_hdc("HDC:GetParams - not enough parameters passed to HDC (required=%d got=%d)\n",
@@ -445,7 +440,7 @@ static int SetFilePtr(ARMul_State *state, unsigned int drive, uint32_t head,
     dbug("SetFilePtr: drive=%d head=%u cyl=%u sec=%u\n", drive, head, cyl, sect);
 
     if (drive > DIM(CONFIG.aST506DiskShapes)) {
-        ControlPane_Error(1,"SetFilePtr: drive %d out of range 0..%d\n",
+        ControlPane_Error(true,"SetFilePtr: drive %d out of range 0..%d",
             drive, (int) DIM(CONFIG.aST506DiskShapes));
     }
 
@@ -1300,7 +1295,7 @@ static void WriteFormat_DoNextBufferFull(ARMul_State *state) {
   uint8_t *fillbuffer; /* A buffer which holds a block of data to write */
 
   if (fillbuffer=malloc(8192),fillbuffer==NULL) {
-    ControlPane_Error(1,"HDC:WriteFormat_DoNextBufferFull: Couldn't allocate memory for fillbuffer\n");
+    ControlPane_Error(true,"HDC:WriteFormat_DoNextBufferFull: Couldn't allocate memory for fillbuffer");
   }
 
   memset(fillbuffer,0x4e,8192);
@@ -1428,10 +1423,10 @@ static void HDC_StartNewCommand(ARMul_State *state, int data) {
       break;
 
     default:
-      warn_hdc("-------------- HDC New command: Data=0x%x - unknown/unimplemented PC=0x%x\n",data,(uint32_t)(PCVAL));
+      warn_hdc("--------------\n");
       HDC.StatusReg&=~BIT_COMPARAMREJECT;
       PrintParams(state);
-      abort();
+      ControlPane_Error(true,"HDC New command: Data=0x%x - unknown/unimplemented PC=0x%x",data,(uint32_t)(PCVAL));
       break;
   } /* Command switch */
 } /* HDC_StartNewCommand */

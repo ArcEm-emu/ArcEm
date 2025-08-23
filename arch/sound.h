@@ -3,7 +3,7 @@
 
 #include "../c99.h"
 
-extern int Sound_Init(ARMul_State *state);
+extern bool Sound_Init(ARMul_State *state);
 
 extern void Sound_Shutdown(ARMul_State *state);
 
@@ -37,7 +37,7 @@ extern void Sound_SoundFreqUpdated(ARMul_State *state);
 extern void Sound_StereoUpdated(ARMul_State *state);
 
 /* This call is made to the platform code upon initialisation */
-extern int Sound_InitHost(ARMul_State *state);
+extern bool Sound_InitHost(ARMul_State *state);
 
 /* This call is made to the platform code upon exit */
 extern void Sound_ShutdownHost(ARMul_State *state);

@@ -2377,12 +2377,12 @@ static void SDD_Name(IOEBCRWrite)(ARMul_State *state,ARMword data) {
 
 */
 
-static int SDD_Name(Init)(ARMul_State *state,const struct Vidc_Regs *Vidc)
+static bool SDD_Name(Init)(ARMul_State *state,const struct Vidc_Regs *Vidc)
 {
   state->Display = calloc(1,sizeof(struct SDD_Name(DisplayInfo)));
   if(!state->Display) {
-    warn_vidc("Failed to allocate DisplayInfo\n");
-    return -1;
+    ControlPane_Error(false,"Failed to allocate DisplayInfo");
+    return false;
   }
 
   VIDC = *Vidc;
@@ -2406,7 +2406,7 @@ static int SDD_Name(Init)(ARMul_State *state,const struct Vidc_Regs *Vidc)
   /* Schedule first update event */
   EventQ_Insert(state,ARMul_Time+100,SDD_Name(FrameStart));
 
-  return 0;
+  return true;
 }
 
 static void SDD_Name(Shutdown)(ARMul_State *state)
@@ -2422,7 +2422,7 @@ static void SDD_Name(Shutdown)(ARMul_State *state)
     EventQ_Remove(state,idx);
   else
   {
-    ControlPane_Error(EXIT_FAILURE,"Couldn't find SDD event func!\n");
+    ControlPane_Error(true,"Couldn't find SDD event func!");
   }
   free(state->Display);
   state->Display = NULL;

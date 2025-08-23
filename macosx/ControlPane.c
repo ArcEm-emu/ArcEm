@@ -12,12 +12,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void ControlPane_Init(ARMul_State *state)
+bool ControlPane_Init(ARMul_State *state)
 {
-
+  return true;
 }
 
-void ControlPane_Error(int code,const char *fmt,...)
+void ControlPane_Error(bool fatal,const char *fmt,...)
 {
   va_list args;
 
@@ -25,9 +25,11 @@ void ControlPane_Error(int code,const char *fmt,...)
   va_start(args,fmt);
   log_msgv(LOG_ERROR,fmt,args);
   va_end(args);
+  log_msg(LOG_ERROR,"\n");
 
   /* Quit */
-  exit(code);
+  if (fatal)
+    exit(EXIT_FAILURE);
 }
 
 void log_msgv(int type, const char *format, va_list ap)

@@ -85,7 +85,7 @@ static void sigfunc(int sig)
 }
 #endif
 
-static int init_sharedsound(void)
+static bool init_sharedsound(void)
 {
 	/* Try to register sharedsound handler, return nonzero on failure */
 	_kernel_swi_regs regs;
@@ -98,8 +98,8 @@ static int init_sharedsound(void)
 	regs.r[1] = (int) "SharedSound";
 	if ((err = _kernel_swi(OS_Module,&regs,&regs)))
 	{
-		warn_vidc("Warning: SharedSound module not loaded, and not in System:Modules!\n");
-		return 0;
+		ControlPane_Error(false,"Warning: SharedSound module not loaded, and not in System:Modules!");
+		return false;
 	}
 	/* Now we can register our handler */
 	regs.r[0] = (int) buffer_fill;
@@ -109,8 +109,8 @@ static int init_sharedsound(void)
 	regs.r[4] = 0;
 	if ((err = _kernel_swi(SharedSound_InstallHandler,&regs,&regs)))
 	{
-		warn_vidc("Warning: SharedSound_InstallHandler returned error %d, %s\n",err->errnum,err->errmess);
-		return 0;
+		ControlPane_Error(false,"Warning: SharedSound_InstallHandler returned error %d, %s",err->errnum,err->errmess);
+		return false;
 	}
 	sound_handler_id = regs.r[0];
 	/* Install error handlers so we don't crash on exit */
@@ -158,7 +158,7 @@ static int init_sharedsound(void)
 	if(buffer_threshold*4 > BUFFER_SAMPLES)
 		buffer_threshold = BUFFER_SAMPLES>>2;
 	warn_vidc("Host audio rate %dHz, using buffer threshold %d\n",Sound_HostRate>>10,buffer_threshold);
-	return 0;
+	return true;
 }                           
 
 static void shutdown_sharedsound(void)
@@ -178,7 +178,7 @@ static void shutdown_sharedsound(void)
 	_kernel_swi(OS_Release,&regs,&regs); 
 }
 
-int Sound_InitHost(ARMul_State *state)
+bool Sound_InitHost(ARMul_State *state)
 {
   /* We want the right channel first */
   eSound_StereoSense = Stereo_RightLeft;
@@ -190,14 +190,13 @@ int Sound_InitHost(ARMul_State *state)
   Sound_HostRate = (1000000<<10)/48;
 
 #ifndef PROFILE_ENABLED
-  if (init_sharedsound())
+  if (!init_sharedsound())
   {
-    warn_vidc("Error: Couldn't register sound handler\n");
-    return -1;
+    return false;
   }
 #endif
 
-  return 0;
+  return true;
 }
 
 void Sound_ShutdownHost(ARMul_State *state)

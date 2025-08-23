@@ -44,7 +44,7 @@ static int enable_profile = 0;
 static void GoMenu(ARMul_State *state);
 #endif
 
-static void InitModeTable(ARMul_State *state);
+static bool InitModeTable(ARMul_State *state);
 
 typedef struct {
   int Width;
@@ -159,7 +159,7 @@ static int ChangeMode(ARMul_State *state,const HostMode *mode,unsigned int depth
     err = _swix(OS_ScreenMode, _INR(0,1), 0, &block);
     if(err)
     {
-      ControlPane_Error(EXIT_FAILURE,"Failed to change screen mode: Error %d %s\n",err->errnum,err->errmess);
+      ControlPane_Error(true,"Failed to change screen mode: Error %d %s",err->errnum,err->errmess);
     }
   
     /* Remove text cursor from real RO */
@@ -827,13 +827,15 @@ static void restorebreak(void)
 
 static const DisplayDev *displays[2] = {&PDD_DisplayDev,&SDD16_DisplayDev};
 
-int
+bool
 DisplayDev_Init(ARMul_State *state)
 {
   KBD.leds_changed = leds_changed;
   leds_changed(KBD.Leds);
 
-  InitModeTable(state);
+  if (!InitModeTable(state))
+    return false;
+
   if(!(colourdepths_available & (1<<4)))
     displays[DisplayDriver_Standard] = &SDD32_DisplayDev;
 
@@ -962,7 +964,7 @@ Kbd_PollHostKbd(ARMul_State *state)
 
 /*-----------------------------------------------------------------------------*/
 
-static void InitModeTable(ARMul_State *state)
+static bool InitModeTable(ARMul_State *state)
 {
   int *mode_list, *mode;
   int count;
@@ -972,14 +974,17 @@ static void InitModeTable(ARMul_State *state)
   mode_list = (int *) malloc(size);
   if(!mode_list)
   {
-    ControlPane_Error(EXIT_FAILURE,"Failed to get memory for mode list\n");
+    ControlPane_Error(false,"Failed to get memory for mode list");
+    return false;
   }
   _swi(OS_ScreenMode,_IN(0)|_IN(2)|_INR(6,7)|_OUT(2),2,0,mode_list,size,&count);
   count = -count;
   ModeList = (HostMode *) malloc(sizeof(HostMode)*count);
   if(!ModeList)
   {
-    ControlPane_Error(EXIT_FAILURE,"Failed to get memory for mode list\n");
+    ControlPane_Error(false,"Failed to get memory for mode list");
+    free(mode_list);
+    return false;
   }
   memset(ModeList,0,sizeof(HostMode)*count);
   NumModes = 0;
@@ -1107,6 +1112,7 @@ static void InitModeTable(ARMul_State *state)
     mode += mode[0]/4;
   }
   free(mode_list);
+  return true;
 }
 
 static float ComputeFit(ARMul_State *state,HostMode *mode,int x,int y,int aspect,int *outxscale,int *outyscale)
@@ -1180,7 +1186,7 @@ static HostMode *SelectROScreenMode(ARMul_State *state,int x, int y, int aspect,
   }
   if(!bestmode)
   {
-    ControlPane_Error(EXIT_FAILURE,"Failed to find suitable screen mode for %dx%d, aspect %.1f, depths %x\n",x,y,((float)aspect)/2.0f,depths);
+    ControlPane_Error(true,"Failed to find suitable screen mode for %dx%d, aspect %.1f, depths %x",x,y,((float)aspect)/2.0f,depths);
   }
   *outxscale = bestxscale;
   *outyscale = bestyscale;
@@ -1269,9 +1275,9 @@ static void GoMenu(ARMul_State *state)
     }
   } while(1);
   /* (re)start display device. Even if we haven't changed anything, this is needed to force the screen to be redrawn (and the mode to be reset) */
-  if(DisplayDev_Set(state,displays[CONFIG.eDisplayDriver]))
+  if(!DisplayDev_Set(state,displays[CONFIG.eDisplayDriver]))
   {
-    ControlPane_Error(EXIT_FAILURE,"Failed to reinitialise display\n");
+    exit(EXIT_FAILURE);
   }
   /* Ensure DisplayDev_UseUpdateFlags is on for SDD */
   if(CONFIG.eDisplayDriver == DisplayDriver_Standard)

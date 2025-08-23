@@ -4,6 +4,7 @@
 
 #include "../armdefs.h"
 #include "../arch/sound.h"
+#include "../arch/ControlPane.h"
 #include "../arch/dbugsys.h"
 #include "../arch/displaydev.h"
 #include "../armemu.h"
@@ -106,9 +107,9 @@ static PIDController sound_pid;
 static void Sound_CallbackImpl(void *userdata, Uint8 *stream, int len);
 
 #if SDL_VERSION_ATLEAST(3, 0, 0)
-static SDL_AudioDeviceID device_id;
-static SDL_AudioStream *device_stream;
-static Uint8 *callback_buffer;
+static SDL_AudioDeviceID device_id = 0;
+static SDL_AudioStream *device_stream = NULL;
+static Uint8 *callback_buffer = NULL;
 static int callback_buffer_size;
 
 static void Sound_Callback(void *userdata, SDL_AudioStream *stream, int approx_amount, int total_amount) {
@@ -117,6 +118,16 @@ static void Sound_Callback(void *userdata, SDL_AudioStream *stream, int approx_a
       SDL_PutAudioStreamData(stream, callback_buffer, callback_buffer_size);
       approx_amount -= callback_buffer_size;
     }
+}
+
+static void Sound_Close(void)
+{
+    SDL_CloseAudioDevice(device_id);
+    device_id = 0;
+    SDL_DestroyAudioStream(device_stream);
+    device_stream = NULL;
+    SDL_free(callback_buffer);
+    callback_buffer = NULL;
 }
 
 static bool Sound_Open(int *freq, int *format, int *channels, int *samples) {
@@ -138,7 +149,7 @@ static bool Sound_Open(int *freq, int *format, int *channels, int *samples) {
 
   device_stream = SDL_CreateAudioStream(&obtained, &desired);
   if (!device_stream) {
-     SDL_CloseAudioDevice(device_id);
+     Sound_Close();
      return false;
   }
 
@@ -147,28 +158,18 @@ static bool Sound_Open(int *freq, int *format, int *channels, int *samples) {
   callback_buffer_size *= *samples;
   callback_buffer = SDL_malloc(callback_buffer_size);
   if (!callback_buffer) {
-      SDL_DestroyAudioStream(device_stream);
-      SDL_CloseAudioDevice(device_id);
+      Sound_Close();
       return false;
   }
 
   SDL_SetAudioStreamGetCallback(device_stream, Sound_Callback, NULL);
 
   if (!SDL_BindAudioStream(device_id, device_stream)) {
-    SDL_DestroyAudioStream(device_stream);
-    SDL_CloseAudioDevice(device_id);
-    SDL_free(callback_buffer);
+    Sound_Close();
     return false;
   }
 
   return true;
-}
-
-static void Sound_Close(void)
-{
-  SDL_CloseAudioDevice(device_id);
-  SDL_DestroyAudioStream(device_stream);
-  SDL_free(callback_buffer);
 }
 
 static void Sound_Lock(void)
@@ -190,6 +191,12 @@ static SDL_AudioDeviceID device_id;
 
 static void Sound_Callback(void *userdata, Uint8 *stream, int len) {
   Sound_CallbackImpl(userdata, stream, len);
+}
+
+static void Sound_Close(void)
+{
+    SDL_CloseAudioDevice(device_id);
+    device_id = 0;
 }
 
 static bool Sound_Open(int *freq, int *format, int *channels, int *samples) {
@@ -214,11 +221,6 @@ static bool Sound_Open(int *freq, int *format, int *channels, int *samples) {
   return true;
 }
 
-static void Sound_Close(void)
-{
-  SDL_CloseAudioDevice(device_id);
-}
-
 static void Sound_Lock(void)
 {
   SDL_LockAudioDevice(device_id);
@@ -236,6 +238,11 @@ static void Sound_Resume(void)
 #else
 static void Sound_Callback(void *userdata, Uint8 *stream, int len) {
   Sound_CallbackImpl(userdata, stream, len);
+}
+
+static void Sound_Close(void)
+{
+    SDL_CloseAudio();
 }
 
 static bool Sound_Open(int *freq, int *format, int *channels, int *samples) {
@@ -256,11 +263,6 @@ static bool Sound_Open(int *freq, int *format, int *channels, int *samples) {
   *channels = obtained.channels;
   *samples = obtained.samples;
   return true;
-}
-
-static void Sound_Close(void)
-{
-  SDL_CloseAudio();
 }
 
 static void Sound_Lock(void)
@@ -407,15 +409,15 @@ static void Sound_CallbackImpl(void *userdata, Uint8 *stream, int len)
   }
 }
 
-int
+bool
 Sound_InitHost(ARMul_State *state)
 {
   int freq = 44100, format = SDL_AUDIO_S16, channels = 2, samples = 512;
 
   if (!Sound_Open(&freq, &format, &channels, &samples))
   {
-    warn_vidc("Could not open audio device: %s\n", SDL_GetError());
-    return -1;
+    ControlPane_Error(false,"Could not open audio device: %s", SDL_GetError());
+    return false;
   }
 
 #ifdef SOUND_LOGGING
@@ -457,7 +459,7 @@ Sound_InitHost(ARMul_State *state)
 
   Sound_Resume();
 
-  return 0;
+  return true;
 }
 
 void

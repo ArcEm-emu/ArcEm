@@ -44,10 +44,19 @@ ArcemConfig hArcemConfig;
 {
     if (self = [super init])
     {
-        ArcemConfig_SetupDefaults(&hArcemConfig);
+        ArcemConfig_Result result = Result_Continue;
+
+        if (result == Result_Continue)
+            result = ArcemConfig_SetupDefaults(&hArcemConfig);
 
         /* Parse the config file to overrule the defaults */
-        ArcemConfig_ParseConfigFile(&hArcemConfig);
+        if (result == Result_Continue)
+            result = ArcemConfig_ParseConfigFile(&hArcemConfig);
+
+        if (result != Result_Continue) {
+            ArcemConfig_Free(&hArcemConfig);
+            exit(result == Result_Success ? EXIT_SUCCESS : EXIT_FAILURE);
+        }
 
         NSMutableDictionary *defaultValues;
         NSString *path = [NSHomeDirectory() stringByAppendingPathComponent:@"arcem"];

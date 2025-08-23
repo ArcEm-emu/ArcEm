@@ -20,6 +20,8 @@
 /* independent. Not very cleanly done - more of a hack than anything */
 /*********************************************************************/
 
+#include <stdlib.h>
+
 #include "dagstandalone.h"
 #include "armdefs.h"
 #include "ArcemConfig.h"
@@ -35,27 +37,41 @@ static ArcemConfig hArcemConfig;
  *
  */
 int dagstandalone(int argc, char *argv[]) {
+  ArcemConfig_Result result = Result_Continue;
   ARMul_State *state = NULL;
   int exit_code;
 
   /* Setup the default values for the config system */
-  ArcemConfig_SetupDefaults(&hArcemConfig);
+  if (result == Result_Continue)
+    result = ArcemConfig_SetupDefaults(&hArcemConfig);
 
   /* Parse the config file to overrule the defaults */
-  ArcemConfig_ParseConfigFile(&hArcemConfig);
+  if (result == Result_Continue)
+    result = ArcemConfig_ParseConfigFile(&hArcemConfig);
 
   /* Parse any commandline arguments given to the program
      to overrule the defaults */
-  ArcemConfig_ParseCommandLine(&hArcemConfig, argc, argv);
+  if (result == Result_Continue)
+    result = ArcemConfig_ParseCommandLine(&hArcemConfig, argc, argv);
+
+  if (result != Result_Continue) {
+    ArcemConfig_Free(&hArcemConfig);
+    return (result == Result_Success ? EXIT_SUCCESS : EXIT_FAILURE);
+  }
 
   /* Initialise */
   state = ARMul_NewState(&hArcemConfig);
+  if (!state) {
+    ArcemConfig_Free(&hArcemConfig);
+    return EXIT_FAILURE;
+  }
 
   /* Execute */
   exit_code = ARMul_DoProg(state);
 
   /* Finalise */
   ARMul_FreeState(state);
+  ArcemConfig_Free(&hArcemConfig);
 
   return exit_code;
 }

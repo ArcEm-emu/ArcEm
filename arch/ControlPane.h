@@ -7,13 +7,13 @@
 #include "X11/Xutil.h"
 #endif
 
-void ControlPane_Init(ARMul_State *state);
+bool ControlPane_Init(ARMul_State *state);
 
 #ifdef SYSTEM_X 
 void ControlPane_Event(ARMul_State *state, XEvent *e);
 #endif
 
-/* Report an error and exit */
-void ControlPane_Error(int code,const char *fmt,...);
+/* Report an error and exit when fatal */
+void ControlPane_Error(bool fatal,const char *fmt,...);
 
 #endif

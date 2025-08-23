@@ -77,7 +77,7 @@ static void SDD_Name(Host_PollDisplay)(ARMul_State *state);
 static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,int hz)
 {
   if (width > MaxVideoWidth || height > MaxVideoHeight) {
-      ControlPane_Error(EXIT_FAILURE,"Resize_Window: new size (%d, %d) exceeds maximum (%d, %d)\n",
+      ControlPane_Error(true,"Resize_Window: new size (%d, %d) exceeds maximum (%d, %d)",
           width, height, MaxVideoWidth, MaxVideoHeight);
   }
 
@@ -159,7 +159,7 @@ static void SDD_Name(Host_PollDisplay)(ARMul_State *state);
 static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,int hz)
 {
   if (width > MaxVideoWidth || height > MaxVideoHeight) {
-      ControlPane_Error(EXIT_FAILURE,"Resize_Window: new size (%d, %d) exceeds maximum (%d, %d)\n",
+      ControlPane_Error(true,"Resize_Window: new size (%d, %d) exceeds maximum (%d, %d)",
           width, height, MaxVideoWidth, MaxVideoHeight);
   }
 
@@ -280,7 +280,7 @@ static void PDD_Name(Host_DrawBorderRect)(ARMul_State *state,int x,int y,int wid
 void PDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,int depth,int hz)
 {
   if (width > MaxVideoWidth || height > MaxVideoHeight) {
-      ControlPane_Error(EXIT_FAILURE,"Resize_Window: new size (%d, %d) exceeds maximum (%d, %d)\n",
+      ControlPane_Error(true,"Resize_Window: new size (%d, %d) exceeds maximum (%d, %d)",
           width, height, MaxVideoWidth, MaxVideoHeight);
   }
 
@@ -482,7 +482,7 @@ static void PollDisplay(ARMul_State *state,int XScale,int YScale)
 }
 
 /*-----------------------------------------------------------------------------*/
-int DisplayDev_Init(ARMul_State *state)
+bool DisplayDev_Init(ARMul_State *state)
 {
   int bpp;
 
@@ -503,8 +503,8 @@ int DisplayDev_Init(ARMul_State *state)
 #endif
 
   if (!screen) {
-      ControlPane_Error(0, "Failed to create initial window: %s\n", SDL_GetError());
-      return -1;
+      ControlPane_Error(false,"Failed to create initial window: %s", SDL_GetError());
+      return false;
   } else if (bpp == 4) {
       return DisplayDev_Set(state,&SDD32_DisplayDev);
   } else if (bpp == 2) {
@@ -514,8 +514,8 @@ int DisplayDev_Init(ARMul_State *state)
       return DisplayDev_Set(state,&PDD_DisplayDev);
 #endif
   } else {
-      ControlPane_Error(0, "Unsupported bytes per pixel: %d\n", bpp);
-      return -1;
+      ControlPane_Error(false,"Unsupported bytes per pixel: %d", bpp);
+      return false;
   }
 }
 

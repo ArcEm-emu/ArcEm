@@ -130,6 +130,8 @@ void arcem_exit(char* msg)
 	
     /* Initialise */
     state = ARMul_NewState(&hArcemConfig);
+    if (!state)
+        exit(EXIT_FAILURE);
 
     /* Execute */
     exit_code = ARMul_DoProg(state);

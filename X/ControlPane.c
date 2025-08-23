@@ -191,7 +191,7 @@ void ControlPane_Event(ARMul_State *state, XEvent *event) {
 
 /*----------------------------------------------------------------------------*/
 
-void ControlPane_Init(ARMul_State *state) {
+bool ControlPane_Init(ARMul_State *state) {
   XTextProperty name;
   char *tmpptr;
     int drive;
@@ -209,7 +209,8 @@ void ControlPane_Init(ARMul_State *state) {
   tmpptr = strdup("Arc emulator - Control panel");
 
   if (XStringListToTextProperty(&tmpptr, 1, &name) == 0) {
-    ControlPane_Error(1,"Could not allocate window name\n");
+    ControlPane_Error(false,"Could not allocate window name");
+    return false;
   }
 
   XSetWMName(PD.disp, PD.ControlPane, &name);
@@ -222,7 +223,8 @@ void ControlPane_Init(ARMul_State *state) {
   PD.ButtonFont = XLoadQueryFont(PD.disp, "fixed");
 
   if (PD.ButtonFont == NULL) {
-    ControlPane_Error(1,"Couldn't get font for buttons\n");
+    ControlPane_Error(false,"Couldn't get font for buttons");
+    return false;
   }
 
   XSetFont(PD.disp, PD.ControlPaneGC, PD.ButtonFont->fid);
@@ -240,12 +242,13 @@ void ControlPane_Init(ARMul_State *state) {
   for (drive = 0; drive < 4; drive++) {
     insert_or_eject_floppy(drive);
   }
+  return true;
 } /* ControlPane_Init */
 
 
 /*----------------------------------------------------------------------------*/
 
-void ControlPane_Error(int code,const char *fmt,...)
+void ControlPane_Error(bool fatal,const char *fmt,...)
 {
   va_list args;
 
@@ -253,9 +256,11 @@ void ControlPane_Error(int code,const char *fmt,...)
   va_start(args,fmt);
   log_msgv(LOG_ERROR,fmt,args);
   va_end(args);
+  log_msg(LOG_ERROR,"\n");
 
   /* Quit */
-  exit(code);
+  if (fatal)
+    exit(EXIT_FAILURE);
 }
 
 

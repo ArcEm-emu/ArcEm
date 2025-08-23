@@ -13,7 +13,7 @@
 #define DISPLAYDEV_H
 
 typedef struct {
-  int (*Init)(ARMul_State *state,const struct Vidc_Regs *Vidc); /* Initialise display device, return nonzero on failure */
+  bool (*Init)(ARMul_State *state,const struct Vidc_Regs *Vidc); /* Initialise display device, return nonzero on failure */
   void (*Shutdown)(ARMul_State *state); /* Shutdown display device */
   void (*VIDCPutVal)(ARMul_State *state,ARMword address, ARMword data,bool bNw); /* Call made by core to handle writing to VIDC registers */
   void (*DAGWrite)(ARMul_State *state,uint_fast8_t reg,uint_fast16_t val); /* Call made by core when video DAG registers are updated. reg 0=Vinit, 1=Vstart, 2=Vend, 3=Cinit */
@@ -58,10 +58,10 @@ extern bool DisplayDev_AutoUpdateFlags; /* Automatically select whether to use U
 
 extern int DisplayDev_FrameSkip; /* If DisplayDev_UseUpdateFlags is true, this provides a frameskip value used by the standard & palettised drivers. If DisplayDev_UseUpdateFlags is false, it acts as failsafe counter that forces an update when a certain number of frames have passed */
 
-extern int DisplayDev_Set(ARMul_State *state,const DisplayDev *dev); /* Switch to indicated display device, returns nonzero on failure */
+extern bool DisplayDev_Set(ARMul_State *state,const DisplayDev *dev); /* Switch to indicated display device, returns nonzero on failure */
 
 /* Host must provide this function to initialize the default display device */
-extern int DisplayDev_Init(ARMul_State *state);
+extern bool DisplayDev_Init(ARMul_State *state);
 
 extern void DisplayDev_Shutdown(ARMul_State *state);
 

@@ -82,7 +82,7 @@ static void SDD_Name(Host_PollDisplay)(ARMul_State *state) { PollDisplay(state);
 static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,int hz)
 {
   if (width > MaxVideoWidth || height > MaxVideoHeight) {
-    ControlPane_Error(EXIT_FAILURE,"Resize_Window: new size (%d, %d) exceeds maximum (%d, %d)\n",
+    ControlPane_Error(true,"Resize_Window: new size (%d, %d) exceeds maximum (%d, %d)",
         width, height, MaxVideoWidth, MaxVideoHeight);
   }
 
@@ -136,7 +136,7 @@ static void SDD_Name(Host_PollDisplay)(ARMul_State *state) { PollDisplay(state);
 static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,int hz)
 {
   if (width > MaxVideoWidth || height > MaxVideoHeight) {
-    ControlPane_Error(EXIT_FAILURE,"Resize_Window: new size (%d, %d) exceeds maximum (%d, %d)\n",
+    ControlPane_Error(true,"Resize_Window: new size (%d, %d) exceeds maximum (%d, %d)",
         width, height, MaxVideoWidth, MaxVideoHeight);
   }
 
@@ -325,7 +325,7 @@ static Uint32 ExaminePixelFormat(Uint32 fmt, Uint32 last)
 }
 
 /*-----------------------------------------------------------------------------*/
-int DisplayDev_Init(ARMul_State *state)
+bool DisplayDev_Init(ARMul_State *state)
 {
   Uint32 i, pf = SDL_PIXELFORMAT_UNKNOWN;
 #if SDL_VERSION_ATLEAST(3, 0, 0)
@@ -342,7 +342,8 @@ int DisplayDev_Init(ARMul_State *state)
                             640, 512, SDL_WINDOW_RESIZABLE);
 #endif
   if (!window) {
-    ControlPane_Error(0, "Failed to create initial window: %s\n", SDL_GetError());
+    ControlPane_Error(false,"Failed to create initial window: %s", SDL_GetError());
+    return false;
   }
 
 #if SDL_VERSION_ATLEAST(3, 0, 0)
@@ -351,7 +352,8 @@ int DisplayDev_Init(ARMul_State *state)
   renderer = SDL_CreateRenderer(window, -1, 0);
 #endif
   if (!renderer) {
-    ControlPane_Error(0, "Failed to create renderer: %s\n", SDL_GetError());
+    ControlPane_Error(false,"Failed to create renderer: %s", SDL_GetError());
+    return false;
   }
 
 #if SDL_VERSION_ATLEAST(3, 0, 0)
@@ -377,15 +379,15 @@ int DisplayDev_Init(ARMul_State *state)
   format = SDL_AllocFormat(pf);
 #endif
   if (!format) {
-    ControlPane_Error(0, "Failed to create pixel format: %s\n", SDL_GetError());
-    return -1;
+    ControlPane_Error(false,"Failed to create pixel format: %s", SDL_GetError());
+    return false;
   } else if (SDL_BYTESPERPIXEL(pf) == 4) {
     return DisplayDev_Set(state,&SDD32R_DisplayDev);
   } else if (SDL_BYTESPERPIXEL(pf) == 2) {
     return DisplayDev_Set(state,&SDD16R_DisplayDev);
   } else {
-    ControlPane_Error(0, "Unsupported bytes per pixel: %d\n", SDL_BYTESPERPIXEL(pf));
-    return -1;
+    ControlPane_Error(false,"Unsupported bytes per pixel: %d", SDL_BYTESPERPIXEL(pf));
+    return false;
   }
 }
 

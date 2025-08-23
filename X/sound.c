@@ -192,49 +192,49 @@ sound_writeThread(void *arg)
 }
 #endif
 
-int
+bool
 Sound_InitHost(ARMul_State *state)
 {
   if ((soundDevice = open("/dev/dsp", O_WRONLY )) < 0) {
-    warn_vidc("Could not open audio device /dev/dsp\n");
-    return -1;
+    ControlPane_Error(false,"Could not open audio device /dev/dsp");
+    return false;
   }
 
   if (ioctl(soundDevice, SOUND_PCM_RESET, 0) == -1) {
-    warn_vidc("Could not reset PCM\n");
-    return -1;
+    ControlPane_Error(false,"Could not reset PCM");
+    return false;
   }
 
   if (ioctl(soundDevice, SOUND_PCM_SYNC, 0) == -1) {
-    warn_vidc("Could not sync PCM\n");
-    return -1;
+    ControlPane_Error(false,"Could not sync PCM");
+    return false;
   }
 
   if (ioctl(soundDevice, SOUND_PCM_SETFMT, &format) == -1) {
-    warn_vidc("Could not set PCM format\n");
-    return -1;
+    ControlPane_Error(false,"Could not set PCM format");
+    return false;
   }
 
   if (ioctl(soundDevice, SOUND_PCM_WRITE_CHANNELS, &channels) == -1) {
-    warn_vidc("Could not set to 2 channel stereo\n");
-    return -1;
+    ControlPane_Error(false,"Could not set to 2 channel stereo");
+    return false;
   }
 
   if (ioctl(soundDevice, SOUND_PCM_WRITE_RATE, &sampleRate) == -1) {
-    warn_vidc("Could not set sample rate\n");
-    return -1;
+    ControlPane_Error(false,"Could not set sample rate");
+    return false;
   }
 
   if (ioctl(soundDevice, SOUND_PCM_READ_RATE, &sampleRate) == -1) {
-    warn_vidc("Could not read sample rate\n");
-    return -1;
+    ControlPane_Error(false,"Could not read sample rate");
+    return false;
   }
 
   /* Check that GETOSPACE is supported */
   audio_buf_info buf;
   if (ioctl(soundDevice, SOUND_PCM_GETOSPACE, &buf) == -1) {
-    warn_vidc("Could not read output space\n");
-    return -1;
+    ControlPane_Error(false,"Could not read output space");
+    return false;
   }
   warn_vidc("Sound buffer params: frags %d total %d size %d bytes %d\n",buf.fragments,buf.fragstotal,buf.fragsize,buf.bytes);
 
@@ -249,7 +249,7 @@ Sound_InitHost(ARMul_State *state)
   pthread_create(&thread, NULL, sound_writeThread, 0);
 #endif
 
-  return 0;
+  return true;
 }
 
 void

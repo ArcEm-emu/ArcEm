@@ -40,6 +40,12 @@
 #include "../armdefs.h"
 #include "../c99.h"
 
+typedef enum ArcemConfig_Result_e {
+  Result_Continue,
+  Result_Success,
+  Result_Failure
+} ArcemConfig_Result;
+
 typedef enum ArcemConfig_MemSize_e {
   MemSize_256K,
   MemSize_512K,
@@ -117,7 +123,7 @@ struct ArcemConfig_s {
  *
  * @param pConfig The structure to fill in
  */
-extern void ArcemConfig_SetupDefaults(ArcemConfig *pConfig);
+extern ArcemConfig_Result ArcemConfig_SetupDefaults(ArcemConfig *pConfig);
 
 /**
  * ArcemConfig_ParseConfigFile
@@ -127,7 +133,7 @@ extern void ArcemConfig_SetupDefaults(ArcemConfig *pConfig);
  *
  * @param pConfig The structure to fill in
  */
-extern void ArcemConfig_ParseConfigFile(ArcemConfig* pConfig);
+extern ArcemConfig_Result ArcemConfig_ParseConfigFile(ArcemConfig* pConfig);
 
 /**
  * ArcemConfig_ParseCommandLine
@@ -141,6 +147,15 @@ extern void ArcemConfig_ParseConfigFile(ArcemConfig* pConfig);
  * @param argc Number of entries in argv
  * @param argv Array of char*'s represented space seperated commandline arguments
  */
-extern void ArcemConfig_ParseCommandLine(ArcemConfig* pConfig, int argc, char* argv[]);
+extern ArcemConfig_Result ArcemConfig_ParseCommandLine(ArcemConfig* pConfig, int argc, char* argv[]);
+
+/**
+ * ArcemConfig_Free
+ *
+ * Free all allocated memory used by the configuration values.
+ *
+ * @param pConfig The structure to free
+ */
+extern void ArcemConfig_Free(ArcemConfig* pConfig);
 
 #endif

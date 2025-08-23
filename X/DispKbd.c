@@ -325,7 +325,7 @@ static int DisplayKbd_XError(Display* disp, XErrorEvent *err)
 }
 
 /*----------------------------------------------------------------------------*/
-int
+bool
 DisplayDev_Init(ARMul_State *state)
 {
   const char *s;
@@ -388,7 +388,8 @@ DisplayDev_Init(ARMul_State *state)
             PD.blue_prec);
     } else {
         warn("nothing suitable");
-      ControlPane_Error(EXIT_FAILURE,"DisplayKbd_Init: Failed to find a matching visual - I'm looking for either 8 bit Pseudo colour, or 32,24,16,  or 15 bit TrueColour - sorry\n");
+      ControlPane_Error(false,"DisplayKbd_Init: Failed to find a matching visual - I'm looking for either 8 bit Pseudo colour, or 32,24,16,  or 15 bit TrueColour - sorry");
+      return false;
     }
   }
 
@@ -565,7 +566,8 @@ DisplayDev_Init(ARMul_State *state)
   XMapSubwindows(PD.disp,PD.BackingWindow);
   XMapSubwindows(PD.disp,PD.MainPane);
 
-  ControlPane_Init(state);
+  if (!ControlPane_Init(state))
+    return false;
 
   if(PD.visInfo.class==PseudoColor)
     return DisplayDev_Set(state,&pseudo_DisplayDev);
@@ -910,7 +912,7 @@ Kbd_PollHostKbd(ARMul_State *state)
     } else if (e.xany.window == PD.CursorPane) {
       CursorPane_Event(state, &e);
     } else {
-      ControlPane_Error(EXIT_FAILURE,"event on unknown window: %#lx %d\n",
+      ControlPane_Error(true,"event on unknown window: %#lx %d",
               e.xany.window, e.type);
     }
   }
@@ -968,7 +970,7 @@ static void *emalloc(size_t n, const char *use)
     void *p;
 
     if ((p = malloc(n)) == NULL) {
-        ControlPane_Error(1,"arcem: malloc of %zu bytes for %s failed.\n",
+        ControlPane_Error(true,"arcem: malloc of %zu bytes for %s failed.",
             n, use);
     }
 
@@ -991,7 +993,7 @@ static void insist(int expr, const char *diag)
         return;
     }
 
-    ControlPane_Error(1,"arcem: insisting on %s.\n", diag);
+    ControlPane_Error(true,"arcem: insisting on %s.", diag);
 }
 
 int main(int argc, char *argv[])

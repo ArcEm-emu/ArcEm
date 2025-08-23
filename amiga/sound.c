@@ -21,7 +21,7 @@ static unsigned long sampleRate = 44100;
 
 SoundData sound_buffer[256*2]; /* Must be >= 2*Sound_BatchSize! */
 
-static int openaudio(void)
+static bool openaudio(void)
 {
 	char audiof[256];
 
@@ -29,11 +29,11 @@ static int openaudio(void)
 
 	if(!(audioh = Open(audiof,MODE_NEWFILE)))
 	{
-		warn_vidc("Could not open audio: device\n");
-		return -1;
+		ControlPane_Error(false,"Could not open audio: device");
+		return false;
 	}
 
-	return 0;
+	return true;
 }
 
 SoundData *Sound_GetHostBuffer(int32_t *destavail)
@@ -52,11 +52,11 @@ void Sound_HostBuffered(SoundData *buffer,int32_t numSamples)
 	Write(audioh,buffer,numSamples*sizeof(SoundData));
 }
 
-int
+bool
 Sound_InitHost(ARMul_State *state)
 {
-	if(openaudio() == -1)
-		return -1;
+	if(!openaudio())
+		return false;
 
 	/* TODO - Tweak these as necessary */
 	eSound_StereoSense = Stereo_LeftRight;
@@ -65,13 +65,14 @@ Sound_InitHost(ARMul_State *state)
 
 	Sound_HostRate = sampleRate<<10;
 
-	return 0;
+	return true;
 }
 
 void sound_exit(void)
 {
 	/* IExec->FreeVec(buffer); */
 	Close(audioh);
+	audioh = 0;
 }
 
 void

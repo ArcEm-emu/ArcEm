@@ -134,7 +134,7 @@ static int changemode(int width,int height,int log2bpp,int *xscale,int *yscale)
 	}
 
 	if((width<=0) || (height <= 0) || (log2bpp < 0))
-		ControlPane_Error(EXIT_FAILURE,"Invalid mode\n");
+		ControlPane_Error(true,"Invalid mode");
 
 	*xscale = 1;
 	*yscale = 1;
@@ -220,10 +220,10 @@ static int changemode(int width,int height,int log2bpp,int *xscale,int *yscale)
 	}
 	else
 	{
-		ControlPane_Error(EXIT_FAILURE,"Failed to create screen\n");
+		ControlPane_Error(true,"Failed to create screen");
 	}
 
-	if(!window) ControlPane_Error(EXIT_FAILURE,"Failed to create window\n");
+	if(!window) ControlPane_Error(true,"Failed to create window");
 
 	PubScreenStatus(screen,0);
 
@@ -920,7 +920,7 @@ Kbd_PollHostKbd(ARMul_State *state)
 
 /*-----------------------------------------------------------------------------*/
 
-int
+bool
 DisplayDev_Init(ARMul_State *state)
 {
   /* Setup display and cursor bitmaps */

@@ -204,7 +204,7 @@ Kbd_PollHostKbd(ARMul_State *state)
   return 0;
 }
 
-int
+bool
 DisplayDev_Init(ARMul_State *state)
 {
   return DisplayDev_Set(state,&SDD_DisplayDev);

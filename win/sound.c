@@ -3,6 +3,7 @@
 #include "win.h"
 #include "../armdefs.h"
 #include "../arch/sound.h"
+#include "../arch/ControlPane.h"
 #include "../arch/dbugsys.h"
 #include "../arch/displaydev.h"
 
@@ -11,7 +12,7 @@
 #include <windows.h>
 #include <mmsystem.h>
 
-HWAVEOUT hWaveOut;
+HWAVEOUT hWaveOut = INVALID_HANDLE_VALUE;
 
 SoundData sound_buffer[256*2]; /* Must be >= 2*Sound_BatchSize! */
 
@@ -94,7 +95,7 @@ void Sound_HostBuffered(SoundData *buffer,int32_t numSamples)
 	}
 }
 
-int
+bool
 Sound_InitHost(ARMul_State *state)
 {
 	WAVEFORMATEX format;
@@ -103,8 +104,8 @@ Sound_InitHost(ARMul_State *state)
 
 	DWORD totalBufferSize = (BLOCK_SIZE + sizeof(WAVEHDR)) * BLOCK_COUNT;
 	if((buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, totalBufferSize)) == NULL) {
-		warn_vidc("Memory allocation error\n");
-		ExitProcess(1);
+		ControlPane_Error(false,"Memory allocation error");
+		return false;
 	}
 
 	waveBlocks = (WAVEHDR*)buffer;
@@ -127,9 +128,9 @@ Sound_InitHost(ARMul_State *state)
 	format.nAvgBytesPerSec =  format.nSamplesPerSec * format.nBlockAlign;
 
 	if (waveOutOpen(&hWaveOut, WAVE_MAPPER, &format, (DWORD_PTR)sound_callback, (DWORD_PTR)&waveFreeBlockCount, CALLBACK_FUNCTION) != MMSYSERR_NOERROR) {
-		warn_vidc("Failed to initialise the sound system\n");
-		HeapFree(GetProcessHeap(), 0, waveBlocks);
-		return -1;
+		ControlPane_Error(false,"Failed to initialise the sound system");
+		Sound_ShutdownHost(state);
+		return false;
 	}
 
 	/* TODO - Tweak these as necessary */
@@ -139,13 +140,16 @@ Sound_InitHost(ARMul_State *state)
 
 	Sound_HostRate = format.nSamplesPerSec<<10;
 
-	return 0;
+	return true;
 }
 
 void
 Sound_ShutdownHost(ARMul_State *state)
 {
 	int i;
+
+	if (hWaveOut == INVALID_HANDLE_VALUE)
+		return;
 
 	waveOutReset(hWaveOut);
 	assert(waveFreeBlockCount >= BLOCK_COUNT);
@@ -156,7 +160,9 @@ Sound_ShutdownHost(ARMul_State *state)
 
 	DeleteCriticalSection(&waveCriticalSection);
 	HeapFree(GetProcessHeap(), 0, waveBlocks);
+	waveBlocks = NULL;
 	waveOutClose(hWaveOut);
+	hWaveOut = INVALID_HANDLE_VALUE;
 }
 
 #endif
