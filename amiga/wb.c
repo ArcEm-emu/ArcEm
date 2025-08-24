@@ -25,8 +25,8 @@ int swapmousebuttons;
 BOOL anymonitor;
 BOOL use_ocm;
 
-struct Library *IconBase;
 #ifdef __amigaos4__
+struct Library *IconBase;
 struct IconIFace *IIcon;
 #endif
 
