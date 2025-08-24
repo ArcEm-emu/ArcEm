@@ -27,6 +27,22 @@
 #undef DEBUG_CONFIG
 #undef DEBUG_HOSTFS
 
+#if defined(SYSTEM_nds) && defined(NDEBUG)
+#undef IOC_WARN
+#undef WARN
+#undef WARN_MEMC
+#undef WARN_I2C
+#undef WARN_DATA
+#undef WARN_DMAWRITE
+#undef WARN_DMAREAD
+#undef WARN_INTS
+#undef WARN_VIDC
+#undef WARN_KEYBOARD
+#undef WARN_FDC1772
+#undef WARN_HDC63463
+#undef WARN_CONFIG
+#undef WARN_HOSTFS
+#else
 #define IOC_WARN
 #define WARN
 #define WARN_MEMC
@@ -41,6 +57,7 @@
 #define WARN_HDC63463
 #define WARN_CONFIG
 #define WARN_HOSTFS
+#endif
 
 #define LOG_DBUG 1
 #define LOG_INFO 2

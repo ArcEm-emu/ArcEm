@@ -80,7 +80,11 @@ ArcemConfig_Result ArcemConfig_SetupDefaults(ArcemConfig *pConfig)
 
 #if defined(EXTNROM_SUPPORT)
   /* The default directory is extnrom in the current working directory */
+#ifdef SYSTEM_nds
+  pConfig->sEXTNDirectory = arcemconfig_StringDuplicate("nitro:/extnrom");
+#else
   pConfig->sEXTNDirectory = arcemconfig_StringDuplicate("extnrom");
+#endif
   /* If we've run out of memory this early, something is very wrong */
   if(NULL == pConfig->sEXTNDirectory) {
     ControlPane_Error(false,"Failed to allocate memory for initial configuration. Please free up more memory.");
@@ -275,6 +279,7 @@ ArcemConfig_Result ArcemConfig_ParseCommandLine(ArcemConfig *pConfig, int argc, 
 {
   unsigned int uValue;
   int iArgument = 0;
+#ifndef SYSTEM_nds
   static const char sVersionString[] =
     "Arcem Version " VER_STRING " (" RELEASE_DATE ")\n";
   static const char sHelpString[] =
@@ -308,6 +313,7 @@ ArcemConfig_Result ArcemConfig_ParseCommandLine(ArcemConfig *pConfig, int argc, 
     "  --menukeys <a> <b> - Specify which key numbers open the tweak menu\n"
 #endif /* SYSTEM_riscos_single */
     ;
+#endif
 
   /* No commandline arguments? */
   if(0 == argc) {
@@ -328,6 +334,7 @@ ArcemConfig_Result ArcemConfig_ParseCommandLine(ArcemConfig *pConfig, int argc, 
   iArgument = 1;
 
   while(iArgument < argc) {
+#ifndef SYSTEM_nds
     if(0 == strcmp("--version", argv[iArgument])) {
       printf("%s", sVersionString);
       return Result_Success;
@@ -336,7 +343,9 @@ ArcemConfig_Result ArcemConfig_ParseCommandLine(ArcemConfig *pConfig, int argc, 
       printf("%s", sHelpString);
       return Result_Success;
     }
-    else if(0 == strcmp("--config", argv[iArgument])) {
+    else
+#endif
+    if(0 == strcmp("--config", argv[iArgument])) {
       if(iArgument+1 < argc) { /* Is there a following argument? */
         ini_parse(argv[iArgument + 1], ArcemConfig_Handler, pConfig);
         iArgument += 2;
