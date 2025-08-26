@@ -80,11 +80,7 @@ ArcemConfig_Result ArcemConfig_SetupDefaults(ArcemConfig *pConfig)
 
 #if defined(EXTNROM_SUPPORT)
   /* The default directory is extnrom in the current working directory */
-#ifdef SYSTEM_nds
-  pConfig->sEXTNDirectory = arcemconfig_StringDuplicate("nitro:/extnrom");
-#else
   pConfig->sEXTNDirectory = arcemconfig_StringDuplicate("extnrom");
-#endif
   /* If we've run out of memory this early, something is very wrong */
   if(NULL == pConfig->sEXTNDirectory) {
     ControlPane_Error(false,"Failed to allocate memory for initial configuration. Please free up more memory.");

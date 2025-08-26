@@ -3,6 +3,9 @@
    Copyright (c) 2005 Peter Howkins, covered under the GNU GPL see file COPYING for more
    details */
 
+#include <stdlib.h>
+#include <string.h>
+
 /* application includes */
 #include "../arch/filecalls.h"
 
@@ -30,5 +33,21 @@ FILE *File_OpenAppData(const char *sName, const char *sMode)
  */
 Directory *Directory_OpenAppDir(const char *sName)
 {
-    return NULL;
+    static const char sPrefix[] = "nitro:/";
+    Directory *dir;
+    size_t sLen;
+    char *sPath;
+
+    sLen = strlen(sPrefix) + strlen(sName) + 1;
+    sPath = malloc(sLen);
+    if (!sPath) {
+        return NULL;
+    }
+
+    strcpy(sPath, sPrefix);
+    strcat(sPath, sName);
+    dir = Directory_Open(sPath);
+
+    free(sPath);
+    return dir;
 }
