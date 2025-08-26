@@ -54,7 +54,7 @@ void DisplayDev_Shutdown(ARMul_State *state)
 
 void DisplayDev_GetCursorPos(ARMul_State *state,int *x,int *y)
 {
-  static const int_fast8_t offsets[4] = {19-6,11-6,7-6,5-6};
+  static const int_least8_t offsets[4] = {19-6,11-6,7-6,5-6};
   *x = VIDC.Horiz_CursorStart-(VIDC.Horiz_DisplayStart*2+offsets[(VIDC.ControlReg & 0xc)>>2]);
   *y = VIDC.Vert_CursorStart-VIDC.Vert_DisplayStart;
 }

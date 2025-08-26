@@ -31,15 +31,15 @@ FastMapEntry FastMap[FASTMAP_SIZE];
 *                 Definitions for the emulator architecture                 *
 \***************************************************************************/
 
-const uint_fast8_t ARMul_MultTable[32] = { 1,  2,  2,  3,  3,  4,  4,  5,
-                                           5,  6,  6,  7,  7,  8,  8,  9,
-                                           9, 10, 10, 11, 11, 12, 12, 13,
-                                          13, 14, 14, 15, 15, 16, 16, 16};
+const uint_least8_t ARMul_MultTable[32] = { 1,  2,  2,  3,  3,  4,  4,  5,
+                                            5,  6,  6,  7,  7,  8,  8,  9,
+                                            9, 10, 10, 11, 11, 12, 12, 13,
+                                           13, 14, 14, 15, 15, 16, 16, 16};
 
 #ifdef ARMUL_USE_IMMEDTABLE
 ARMword ARMul_ImmedTable[4096]; /* immediate DP LHS values */
 #endif
-uint_fast8_t ARMul_BitList[256]; /* number of bits in a byte table */
+uint_least8_t ARMul_BitList[256]; /* number of bits in a byte table */
 
 uint_least16_t ARMul_CCTable[16];
 

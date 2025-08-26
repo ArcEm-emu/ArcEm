@@ -1860,7 +1860,7 @@ static void SDD_Name(Flyback)(ARMul_State *state)
   /* If EmuRate has just changed, recalculate the line rate now to try and keep things in sync */
   if(oldrate != ARMul_EmuRate)
   {
-    static const uint_fast8_t ClockDividers[4] = {
+    static const uint_least8_t ClockDividers[4] = {
     /* Source rates:     24.0MHz     25.0MHz      36.0MHz */
       6, /* 1/3      ->   8.0MHz      8.3MHz      12.0MHz */
       4, /* 1/2      ->  12.0MHz     12.5MHz      18.0MHz */
@@ -1921,7 +1921,7 @@ static void SDD_Name(FrameStart)(ARMul_State *state,CycleCount nowtime)
   bool newDMAEn;
   /* Assuming a multiplier of 2, these are the required clock dividers
      (selected via bottom two bits of VIDC.ControlReg): */
-  static const uint_fast8_t ClockDividers[4] = {
+  static const uint_least8_t ClockDividers[4] = {
   /* Source rates:     24.0MHz     25.0MHz      36.0MHz */
     6, /* 1/3      ->   8.0MHz      8.3MHz      12.0MHz */
     4, /* 1/2      ->  12.0MHz     12.5MHz      18.0MHz */

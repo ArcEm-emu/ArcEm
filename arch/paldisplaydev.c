@@ -484,7 +484,7 @@ static void PDD_Name(EventFunc)(ARMul_State *state,CycleCount nowtime)
 {
   /* Assuming a multiplier of 2, these are the required clock dividers
      (selected via bottom two bits of VIDC.ControlReg): */
-  static const uint_fast8_t ClockDividers[4] = {
+  static const uint_least8_t ClockDividers[4] = {
   /* Source rates:     24.0MHz     25.0MHz      36.0MHz */
     6, /* 1/3      ->   8.0MHz      8.3MHz      12.0MHz */
     4, /* 1/2      ->  12.0MHz     12.5MHz      18.0MHz */
@@ -494,7 +494,7 @@ static void PDD_Name(EventFunc)(ARMul_State *state,CycleCount nowtime)
   uint32_t ClockIn, FramePeriod;
   uint_fast16_t NewCR;
   CycleCount framelength;
-  uint8_t ClockDivider;
+  uint_fast8_t ClockDivider;
   bool newDMAEn, DMAToggle;
   int Depth, Width, Height, BPP;
 

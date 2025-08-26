@@ -352,11 +352,11 @@ static inline void ARMul_Icycles(ARMul_State *state,unsigned number)
   ARMul_CLEARABORT;
 }
 
-extern const uint_fast8_t ARMul_MultTable[]; /* Number of I cycles for a mult */
+extern const uint_least8_t ARMul_MultTable[]; /* Number of I cycles for a mult */
 #ifdef ARMUL_USE_IMMEDTABLE
 extern ARMword ARMul_ImmedTable[]; /* Immediate DP LHS values */
 #endif
-extern uint_fast8_t ARMul_BitList[];       /* Number of bits in a byte table */
+extern uint_least8_t ARMul_BitList[];       /* Number of bits in a byte table */
 extern uint_least16_t ARMul_CCTable[16];
 #define ARMul_CCCheck(instr,psr) (ARMul_CCTable[instr>>28] & (1<<(psr>>28)))
 
