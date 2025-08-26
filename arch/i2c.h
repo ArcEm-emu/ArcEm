@@ -7,6 +7,6 @@
 void I2C_Update(ARMul_State *state);
 
 /* ------------------------------------------------------------------------- */
-void I2C_Init(ARMul_State *state);
+bool I2C_Init(ARMul_State *state);
 
 #endif

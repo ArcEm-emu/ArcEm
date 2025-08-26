@@ -427,7 +427,7 @@ void I2C_Update(ARMul_State *state) {
 
 /* ------------------------------------------------------------------ */
 
-static void SetUpCMOS(ARMul_State *state)
+static bool SetUpCMOS(ARMul_State *state)
 {
 #ifdef __riscos__
     const char *filename = "<ArcEm$Dir>.hexcmos";
@@ -455,8 +455,10 @@ static void SetUpCMOS(ARMul_State *state)
     for (byte = 0; byte < 240; byte++) {
         if (fp) {
             if (fscanf(fp, "%x\n", &val) != 1) {
-                ControlPane_Error(true,"arcem: failed to read CMOS value %d of %s",
+                ControlPane_Error(false,"arcem: failed to read CMOS value %d of %s",
                     byte, filename);
+                fclose(fp);
+                return false;
             }
         } else {
             val = CMOSDefaults[byte];
@@ -469,11 +471,12 @@ static void SetUpCMOS(ARMul_State *state)
     }
 
     if (fp) fclose(fp);
+    return true;
 }
 
 /* ------------------------------------------------------------------ */
 
-void
+bool
 I2C_Init(ARMul_State *state)
 {
   I2C.OldDataState = 0;
@@ -485,5 +488,5 @@ I2C_Init(ARMul_State *state)
   I2C.LastrNw = false;
   I2C.WordAddress = 0;
 
-  SetUpCMOS(state);
+  return SetUpCMOS(state);
 } /* I2C_Init */

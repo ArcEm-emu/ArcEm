@@ -34,7 +34,7 @@ static void FDCHDC_Poll(ARMul_State *state,CycleCount nowtime)
 }
 
 /*-----------------------------------------------------------------------------*/
-void
+bool
 IO_Init(ARMul_State *state)
 {
   ioc.ControlReg = 0xff;
@@ -60,11 +60,13 @@ IO_Init(ARMul_State *state)
   IO_UpdateNirq(state);
   IO_UpdateNfiq(state);
 
-  I2C_Init(state);
+  if (!I2C_Init(state))
+    return false;
   FDC_Init(state);
   HDC_Init(state);
   Kbd_Init(state);
   EventQ_Insert(state,ARMul_Time+250,FDCHDC_Poll);
+  return true;
 } /* IO_Init */
 
 /*------------------------------------------------------------------------------*/

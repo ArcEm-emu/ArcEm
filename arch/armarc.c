@@ -350,7 +350,11 @@ ARMul_MemoryInit(ARMul_State *state)
 
   dbug(" ..Done\n ");
 
-  IO_Init(state);
+  if (!IO_Init(state)) {
+    /* There was an error of some sort - it will already have been reported */
+    ARMul_MemoryExit(state);
+    return false;
+  }
 
   if (!DisplayDev_Init(state)) {
     /* There was an error of some sort - it will already have been reported */

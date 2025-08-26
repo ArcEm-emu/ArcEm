@@ -70,7 +70,7 @@ extern struct IOCStruct ioc;
 void IOC_DoIntCheck(ARMul_State *state);
 
 /*-----------------------------------------------------------------------------*/
-void IO_Init(ARMul_State *state);
+bool IO_Init(ARMul_State *state);
 
 /*-----------------------------------------------------------------------------*/
 ARMword GetWord_IO(ARMul_State *state, ARMword address);
