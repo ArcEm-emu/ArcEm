@@ -329,8 +329,4 @@ void EmuRate_Reset(ARMul_State *state);
 /* Update the EmuRate value. Note: Manipulates event queue! */
 void EmuRate_Update(ARMul_State *state);
 
-#include "arch/archio.h"
-#include "arch/armarc.h"
-#include "eventq.h"
-
 #endif

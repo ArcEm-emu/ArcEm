@@ -30,6 +30,7 @@
 #include "arch/keyboard.h"
 #include "arch/displaydev.h"
 #include "arch/dbugsys.h"
+#include "eventq.h"
 #include "win.h"
 #include "ControlPane.h"
 

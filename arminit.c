@@ -23,6 +23,7 @@
 #include "arch/ArcemConfig.h"
 #include "arch/ControlPane.h"
 #include "arch/dbugsys.h"
+#include "eventq.h"
 #include "hostfs.h"
 
 FastMapEntry FastMap[FASTMAP_SIZE];

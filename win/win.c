@@ -7,6 +7,7 @@
 #include "dagstandalone.h"
 #include "arch/ArcemConfig.h"
 #include "arch/dbugsys.h"
+#include "arch/fdc1772.h"
 #include "arch/keyboard.h"
 
 #define NR_THREADS (0x1000)

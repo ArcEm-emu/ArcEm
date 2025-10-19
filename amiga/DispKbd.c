@@ -15,6 +15,7 @@
 #include "../arch/ControlPane.h"
 #include "dagstandalone.h"
 #include "displaydev.h"
+#include "eventq.h"
 #include "KeyTable.h"
 #include "platform.h"
 #include "arexx.h"

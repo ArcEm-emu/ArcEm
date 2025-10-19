@@ -20,6 +20,7 @@
 #include "arch/keyboard.h"
 #include "archio.h"
 #include "dagstandalone.h"
+#include "eventq.h"
 #include "hdc63463.h"
 #include "arch/displaydev.h"
 #include "arch/ArcemConfig.h"

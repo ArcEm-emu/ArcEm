@@ -26,6 +26,7 @@
 
 #include "../armdefs.h"
 
+#include "archio.h"
 #include "dbugsys.h"
 #include "hdc63463.h"
 #include "ArcemConfig.h"

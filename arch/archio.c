@@ -17,6 +17,7 @@
 #include "keyboard.h"
 #include "displaydev.h"
 #include "sound.h"
+#include "eventq.h"
 
 /*#define IOC_TRACE*/
 

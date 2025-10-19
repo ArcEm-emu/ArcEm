@@ -24,6 +24,7 @@
 #include <string.h>
 
 #include "../armdefs.h"
+#include "../eventq.h"
 #include "arch/armarc.h"
 #include "arch/ControlPane.h"
 #include "arch/dbugsys.h"

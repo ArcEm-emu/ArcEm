@@ -28,6 +28,7 @@
 #include "arch/keyboard.h"
 #include "archio.h"
 #include "arch/displaydev.h"
+#include "eventq.h"
 #include "platform.h"
 #include "ControlPane.h"
 

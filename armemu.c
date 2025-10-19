@@ -23,6 +23,7 @@
 #include <time.h>
 #include "prof.h"
 #include "arch/archio.h"
+#include "arch/armarc.h"
 #include "ControlPane.h"
 
 ARMul_State statestr;

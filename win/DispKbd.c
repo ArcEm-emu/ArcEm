@@ -10,6 +10,7 @@
 #include "../arch/dbugsys.h"
 #include "../arch/keyboard.h"
 #include "displaydev.h"
+#include "eventq.h"
 #include "win.h"
 #include "KeyTable.h"
 #include "ControlPane.h"

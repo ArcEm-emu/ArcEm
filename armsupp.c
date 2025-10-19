@@ -19,6 +19,7 @@
 
 #include "armdefs.h"
 #include "armemu.h"
+#include "arch/armarc.h"
 
 /***************************************************************************\
 * Given a processor mode, this routine returns the register bank that       *
