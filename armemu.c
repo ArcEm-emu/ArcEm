@@ -23,7 +23,7 @@
 #include <time.h>
 #include "prof.h"
 #include "arch/archio.h"
-#include "arch/armarc.h"
+#include "arch/fastmap.h"
 #include "ControlPane.h"
 
 ARMul_State statestr;
@@ -36,6 +36,8 @@ typedef struct {
 } PipelineEntry;
 
 static const PipelineEntry abortpipe;
+
+static ARMEmuFunc ARMul_Emulate_DecodeInstr(ARMword instr);
 
 /***************************************************************************\
 *                   Load Instruction                                        *
@@ -1105,7 +1107,7 @@ void EmuRate_Update(ARMul_State *state)
 /* ################################################################################## */
 /* ## Function called when the decode is unknown                                   ## */
 /* ################################################################################## */
-ARMEmuFunc ARMul_Emulate_DecodeInstr(ARMword instr) {
+static ARMEmuFunc ARMul_Emulate_DecodeInstr(ARMword instr) {
   ARMEmuFunc f;
 #define EMFUNCDECL26(name) ARMul_Emulate26_ ## name
 #include "armemudec.c"

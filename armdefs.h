@@ -32,6 +32,8 @@ typedef uint32_t ARMword; /* must be 32 bits wide */
 typedef struct ARMul_State ARMul_State;
 extern ARMul_State statestr;
 
+typedef void (*ARMEmuFunc)(ARMul_State *state, ARMword instr);
+
 #define LOW false
 #define HIGH true
 
@@ -216,6 +218,7 @@ struct ARMul_State {
    ARMBank Bank;              /* the current register bank */
    uint_least8_t ExitCode;    /* return code used when terminating the emulator */
    bool KillEmulator;         /* global used to terminate the emulator */
+   bool OSmode;               /* MEMC USR/OS flag, somewhat redundant with FastMapMode */
    bool NtransSig;            /* MEMC USR/SVC flag, somewhat redundant with FastMapMode */
    bool abortSig;             /* Abort state */
    ARMAbort Aborted;          /* sticky flag for aborts */

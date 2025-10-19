@@ -20,8 +20,8 @@
 #ifdef ARMUL_COPRO_SUPPORT
 #include "armcopro.h"
 #include "armemu.h"
-#include "arch/armarc.h"
 #include "arch/cp15.h"
+#include "arch/fastmap.h"
 
 #include <assert.h>
 

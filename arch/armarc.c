@@ -24,6 +24,7 @@
 #include "armarc.h"
 #include "archio.h"
 #include "archio.h"
+#include "fastmap.h"
 #include "fdc1772.h"
 #include "extnrom.h"
 #include "ArcemConfig.h"
@@ -777,6 +778,7 @@ static void DMA_PutVal(ARMul_State *state,ARMword address)
                   address, (unsigned int)state->pc, (unsigned int)state->Reg[15]);
         MEMC.ControlReg = RegVal;
         MEMC.PageSizeFlags = (MEMC.ControlReg & 3);
+        state->OSmode = (MEMC.ControlReg&(1<<10));
         FastMap_RebuildMapMode(state);
         ARMul_RebuildFastMap(state);
         break;
@@ -1031,7 +1033,3 @@ void ARMul_RebuildFastMap(ARMul_State *state)
   else
     FastMap_SetEntries(state,MEMORY_0x3800000_R_ROM_HIGH,0,FastMap_MEMCFunc,FASTMAP_R_USR|FASTMAP_R_SVC|FASTMAP_R_OS|FASTMAP_W_SVC|FASTMAP_W_FUNC|FASTMAP_R_FUNC,0x800000);
 }
-
-#ifndef FASTMAP_INLINE
-#include "arch/fastmap.c"
-#endif

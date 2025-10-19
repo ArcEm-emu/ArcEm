@@ -19,7 +19,7 @@
 
 #include "armdefs.h"
 #include "armemu.h"
-#include "arch/armarc.h"
+#include "arch/fastmap.h"
 
 /***************************************************************************\
 * Given a processor mode, this routine returns the register bank that       *
@@ -162,3 +162,7 @@ unsigned ARMul_NthReg(ARMword instr, unsigned number)
     if (BIT(bit)) upto++;
  return(bit - 1);
 }
+
+#ifndef FASTMAP_INLINE
+#include "arch/fastmap.c"
+#endif

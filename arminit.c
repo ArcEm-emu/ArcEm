@@ -19,10 +19,10 @@
 #include "armdefs.h"
 #include "armemu.h"
 #include "armcopro.h"
-#include "armarc.h"
 #include "arch/ArcemConfig.h"
 #include "arch/ControlPane.h"
 #include "arch/dbugsys.h"
+#include "arch/fastmap.h"
 #include "eventq.h"
 #include "hostfs.h"
 

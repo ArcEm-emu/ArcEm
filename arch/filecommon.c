@@ -14,8 +14,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "armarc.h"
 #include "dbugsys.h"
+#include "fastmap.h"
 #include "filecalls.h"
 #include "displaydev.h"
 #include "ControlPane.h"

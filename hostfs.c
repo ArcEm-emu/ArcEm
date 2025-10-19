@@ -86,8 +86,8 @@ int __riscosify_control = 0;
 
 #ifdef HOSTFS_ARCEM
 
-#include "arch/armarc.h"
 #include "arch/ArcemConfig.h"
+#include "arch/fastmap.h"
 #include "arch/filecalls.h"
 #include "ControlPane.h"
 #include "c99.h"
