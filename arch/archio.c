@@ -12,12 +12,12 @@
 #include "hdc63463.h"
 #include "i2c.h"
 #ifdef HOSTFS_SUPPORT
-# include "hostfs.h"
+# include "../hostfs.h"
 #endif
 #include "keyboard.h"
 #include "displaydev.h"
 #include "sound.h"
-#include "eventq.h"
+#include "../eventq.h"
 
 /*#define IOC_TRACE*/
 

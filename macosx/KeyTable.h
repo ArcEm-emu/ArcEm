@@ -24,8 +24,8 @@
 
 #include <Carbon/Carbon.h>
 
-#include "armdefs.h"
-#include "arch/keyboard.h"
+#include "../armdefs.h"
+#include "../arch/keyboard.h"
 
 typedef struct {
     int sym;

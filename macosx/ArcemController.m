@@ -24,11 +24,11 @@
 #import "ArcemController.h"
 #import "PreferenceController.h"
 #import "ArcemView.h"
-#include "ArcemConfig.h"
+#include "../arch/ArcemConfig.h"
 #include "win.h"
 
-#import "arch/armarc.h"
-#import "arch/fdc1772.h"
+#import "../arch/armarc.h"
+#import "../arch/fdc1772.h"
 
 #include <Carbon/Carbon.h>
 

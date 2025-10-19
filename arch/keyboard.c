@@ -2,7 +2,7 @@
 
 #include "armarc.h"
 #include "dbugsys.h"
-#include "eventq.h"
+#include "../eventq.h"
 #include "keyboard.h"
 
 /* ------------------------------------------------------------------ */

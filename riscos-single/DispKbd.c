@@ -15,18 +15,18 @@
 #define  ArcEmKey_GetKey 0x53340
 
 #include "../armdefs.h"
-#include "armarc.h"
-#include "arch/dbugsys.h"
-#include "arch/keyboard.h"
-#include "archio.h"
-#include "dagstandalone.h"
-#include "eventq.h"
-#include "hdc63463.h"
-#include "arch/displaydev.h"
-#include "arch/ArcemConfig.h"
+#include "../arch/armarc.h"
+#include "../arch/dbugsys.h"
+#include "../arch/keyboard.h"
+#include "../arch/archio.h"
+#include "../dagstandalone.h"
+#include "../eventq.h"
+#include "../arch/hdc63463.h"
+#include "../arch/displaydev.h"
+#include "../arch/ArcemConfig.h"
 #include "../prof.h"
 
-#include "ControlPane.h"
+#include "../arch/ControlPane.h"
 
 #define ENABLE_MENU
 

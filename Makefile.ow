@@ -16,13 +16,13 @@ SRCS = armcopro.c armemu.c arminit.c armarc.c &
 	arch/ArcemConfig.c arch/cp15.c arch/newsound.c arch/displaydev.c &
 	libs/inih/ini.c
 
-CFLAGS += -DSYSTEM_win -Iwin
+CFLAGS += -DSYSTEM_win
 SRCS += win/ControlPane.c win/DispKbd.c win/filecalls.c win/sound.c win/win.c
 RCSRCS += win/gui.rc
 resources = win/arc.ico win/gui.ico
 
 CFLAGS += -bt=nt -I"$(%WATCOM)/h" -I"$(%WATCOM)/h/nt"
-RCFLAGS += -bt=nt -I"$(%WATCOM)/h/nt" -Iwin
+RCFLAGS += -bt=nt -I"$(%WATCOM)/h/nt"
 
 !ifeq SOUND_SUPPORT yes
 CFLAGS += -DSOUND_SUPPORT
@@ -37,7 +37,7 @@ CFLAGS += -DHOSTFS_SUPPORT
 CFLAGS += -DEXTNROM_SUPPORT
 !endif
 
-CFLAGS += -zq -otanxh -d0 -wx -I. -Iarch -I"libs/inih"
+CFLAGS += -zq -otanxh -d0 -wx -I"libs/inih"
 # newer OpenWatcom versions enable W303 by default
 CFLAGS+= -wcd=303
 OBJS = $(SRCS:.c=.obj)

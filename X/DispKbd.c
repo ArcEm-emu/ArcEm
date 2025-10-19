@@ -21,19 +21,19 @@
 # include <X11/Sunkeysym.h>
 #endif
 
-#include "armdefs.h"
-#include "dagstandalone.h"
-#include "arch/armarc.h"
-#include "arch/dbugsys.h"
-#include "arch/keyboard.h"
-#include "arch/archio.h"
-#include "arch/hdc63463.h"
+#include "../armdefs.h"
+#include "../dagstandalone.h"
+#include "../arch/armarc.h"
+#include "../arch/dbugsys.h"
+#include "../arch/keyboard.h"
+#include "../arch/archio.h"
+#include "../arch/hdc63463.h"
 #ifdef SOUND_SUPPORT
-#include "arch/sound.h"
+#include "../arch/sound.h"
 #endif
-#include "arch/displaydev.h"
+#include "../arch/displaydev.h"
 
-#include "ControlPane.h"
+#include "../arch/ControlPane.h"
 #include "platform.h"
 
 /* ------------------------------------------------------------------ */

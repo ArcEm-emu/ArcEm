@@ -71,7 +71,7 @@ endif
 endif
 
 CFLAGS += $(WARN)
-CPPFLAGS += -I$(SYSTEM) -Iarch -I. -Ilibs/inih
+CPPFLAGS += -Ilibs/inih
 
 PKG_CONFIG = pkg-config
 
@@ -152,7 +152,7 @@ SOUND_PTHREAD=no
 OBJS += riscos-single/sound.o riscos-single/soundbuf.o
 # General
 EXTNROM_SUPPORT=yes
-CPPFLAGS += -I@ -DSYSTEM_riscos_single -Iriscos-single -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
+CPPFLAGS += -DSYSTEM_riscos_single -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
 CFLAGS += -mtune=cortex-a8 -march=armv5te -mthrowback -mfpu=fpa
 LDFLAGS += -static
 # Disable stack limit checks. -ffixed-sl required to prevent sl being used as temp storage, breaking unixlib and any other code that does do stack checks

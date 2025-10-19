@@ -24,7 +24,7 @@
 
 #include "dagstandalone.h"
 #include "armdefs.h"
-#include "ArcemConfig.h"
+#include "arch/ArcemConfig.h"
 
 static ArcemConfig hArcemConfig;
 

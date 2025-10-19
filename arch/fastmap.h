@@ -121,7 +121,7 @@ FASTMAP_PROTO ARMword ARMul_SwapWord(ARMul_State *state, ARMword address, ARMwor
 FASTMAP_PROTO ARMword ARMul_SwapByte(ARMul_State *state, ARMword address, ARMword data);
 
 #ifdef FASTMAP_INLINE
-#include "arch/fastmap.c"
+#include "fastmap.c"
 #endif
 
 /**

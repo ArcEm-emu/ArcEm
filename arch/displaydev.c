@@ -9,7 +9,7 @@
   Utility functions for bridging the gap between the host display code and the
   emulator core
 */
-#include "armdefs.h"
+#include "../armdefs.h"
 #include "displaydev.h"
 #include "archio.h"
 

@@ -4,7 +4,7 @@
 #ifndef _PLATFORM_H_
 #define _PLATFORM_H_
 
-#include "c99.h"
+#include "../c99.h"
 
 #ifdef SYSTEM_SDL3
 #include <SDL3/SDL.h>

@@ -11,10 +11,10 @@
 #include <proto/dos.h>
 #include <proto/icon.h>
 
-#include "ArcemConfig.h"
+#include "../arch/ArcemConfig.h"
 #include "platform.h"
-#include "dbugsys.h"
-#include "displaydev.h"
+#include "../arch/dbugsys.h"
+#include "../arch/displaydev.h"
 
 #ifdef __amigaos4__
 #define CurrentDir SetCurrentDir

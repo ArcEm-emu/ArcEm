@@ -2,11 +2,11 @@
 /* (c) David Alan Gilbert 1995 - see Readme file for copying info */
 
 
-#include "armdefs.h"
-#include "archio.h"
-#include "armarc.h"
-#include "ControlPane.h"
-#include "arch/dbugsys.h"
+#include "../armdefs.h"
+#include "../arch/archio.h"
+#include "../arch/armarc.h"
+#include "../arch/ControlPane.h"
+#include "../arch/dbugsys.h"
 
 #include <Cocoa/Cocoa.h>
 #include <dispatch/dispatch.h>

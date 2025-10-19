@@ -24,7 +24,7 @@
 #include "prof.h"
 #include "arch/archio.h"
 #include "arch/fastmap.h"
-#include "ControlPane.h"
+#include "arch/ControlPane.h"
 
 ARMul_State statestr;
 

@@ -25,14 +25,14 @@
 
 #include <dispatch/dispatch.h>
 
-#include "armdefs.h"
-#include "armarc.h"
-#include "arch/keyboard.h"
-#include "arch/displaydev.h"
-#include "arch/dbugsys.h"
-#include "eventq.h"
+#include "../armdefs.h"
+#include "../arch/armarc.h"
+#include "../arch/keyboard.h"
+#include "../arch/displaydev.h"
+#include "../arch/dbugsys.h"
+#include "../eventq.h"
 #include "win.h"
-#include "ControlPane.h"
+#include "../arch/ControlPane.h"
 
 uint32_t *screenbmp;
 uint32_t *cursorbmp;

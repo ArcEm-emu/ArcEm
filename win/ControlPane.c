@@ -3,10 +3,10 @@
 
 
 #include "../armdefs.h"
-#include "archio.h"
-#include "armarc.h"
-#include "ControlPane.h"
-#include "arch/dbugsys.h"
+#include "../arch/archio.h"
+#include "../arch/armarc.h"
+#include "../arch/ControlPane.h"
+#include "../arch/dbugsys.h"
 
 #include <stdarg.h>
 #include <stdio.h>

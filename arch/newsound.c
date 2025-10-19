@@ -25,10 +25,10 @@
 
 #include "../armdefs.h"
 #include "../eventq.h"
-#include "arch/armarc.h"
-#include "arch/ControlPane.h"
-#include "arch/dbugsys.h"
-#include "arch/sound.h"
+#include "armarc.h"
+#include "ControlPane.h"
+#include "dbugsys.h"
+#include "sound.h"
 #include "displaydev.h"
 
 #ifdef SOUND_SUPPORT

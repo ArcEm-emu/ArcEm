@@ -89,7 +89,7 @@ int __riscosify_control = 0;
 #include "arch/ArcemConfig.h"
 #include "arch/fastmap.h"
 #include "arch/filecalls.h"
-#include "ControlPane.h"
+#include "arch/ControlPane.h"
 #include "c99.h"
 
 #define HOSTFS_ROOT CONFIG.sHostFSDirectory

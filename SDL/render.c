@@ -12,12 +12,12 @@
 #if SDL_VERSION_ATLEAST(2, 0, 0)
 
 #include "../armdefs.h"
-#include "armarc.h"
-#include "archio.h"
-#include "eventq.h"
-#include "arch/dbugsys.h"
-#include "arch/displaydev.h"
-#include "ControlPane.h"
+#include "../arch/armarc.h"
+#include "../arch/archio.h"
+#include "../eventq.h"
+#include "../arch/dbugsys.h"
+#include "../arch/displaydev.h"
+#include "../arch/ControlPane.h"
 #include <stdlib.h>
 
 /* An upper limit on how big to support monitor size, used for

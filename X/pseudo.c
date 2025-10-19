@@ -23,14 +23,14 @@
 #endif
 
 #include "../armdefs.h"
-#include "armarc.h"
-#include "arch/dbugsys.h"
-#include "arch/keyboard.h"
-#include "archio.h"
-#include "arch/displaydev.h"
-#include "eventq.h"
+#include "../arch/armarc.h"
+#include "../arch/dbugsys.h"
+#include "../arch/keyboard.h"
+#include "../arch/archio.h"
+#include "../arch/displaydev.h"
+#include "../eventq.h"
 #include "platform.h"
-#include "ControlPane.h"
+#include "../arch/ControlPane.h"
 
 typedef char SDD_HostColour;
 #define SDD_Name(x) pseudo_##x

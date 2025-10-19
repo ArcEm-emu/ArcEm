@@ -9,17 +9,17 @@
 #include <limits.h>
 
 #include "../armdefs.h"
-#include "armarc.h"
+#include "../arch/armarc.h"
 #include "../arch/dbugsys.h"
 #include "../arch/keyboard.h"
 #include "../arch/ControlPane.h"
-#include "dagstandalone.h"
-#include "displaydev.h"
-#include "eventq.h"
+#include "../dagstandalone.h"
+#include "../arch/displaydev.h"
+#include "../eventq.h"
 #include "KeyTable.h"
 #include "platform.h"
 #include "arexx.h"
-#include "arch/displaydev.h"
+#include "../arch/displaydev.h"
 
 #include <proto/intuition.h>
 #include <proto/graphics.h>

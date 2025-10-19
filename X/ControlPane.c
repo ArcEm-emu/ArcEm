@@ -8,13 +8,13 @@
 #include "X11/extensions/shape.h"
 
 #include "../armdefs.h"
-#include "archio.h"
-#include "armarc.h"
-#include "ControlPane.h"
-#include "arch/dbugsys.h"
-#include "arch/displaydev.h"
+#include "../arch/archio.h"
+#include "../arch/armarc.h"
+#include "../arch/ControlPane.h"
+#include "../arch/dbugsys.h"
+#include "../arch/displaydev.h"
 #include "platform.h"
-#include "arch/keyboard.h"
+#include "../arch/keyboard.h"
 
 #include <string.h>
 #include <stdarg.h>

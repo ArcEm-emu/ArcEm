@@ -36,7 +36,7 @@
 #ifndef ARCEMCONFIG_HEADER
 #define ARCEMCONFIG_HEADER
 
-#include "arch/hdc63463.h"
+#include "hdc63463.h"
 #include "../armdefs.h"
 #include "../c99.h"
 

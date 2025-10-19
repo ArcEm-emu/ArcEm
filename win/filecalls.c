@@ -11,7 +11,7 @@
 #include <shlobj.h>
 
 /* application includes */
-#include "filecalls.h"
+#include "../arch/filecalls.h"
 
 
 /* Compatibility wrapper for Windows 95 without Internet Explorer 4 */

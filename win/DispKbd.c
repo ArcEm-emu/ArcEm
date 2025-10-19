@@ -5,15 +5,15 @@
 
 
 #include "../armdefs.h"
-#include "armarc.h"
+#include "../arch/armarc.h"
 #include "../arch/ArcemConfig.h"
 #include "../arch/dbugsys.h"
 #include "../arch/keyboard.h"
-#include "displaydev.h"
-#include "eventq.h"
+#include "../arch/displaydev.h"
+#include "../eventq.h"
 #include "win.h"
 #include "KeyTable.h"
-#include "ControlPane.h"
+#include "../arch/ControlPane.h"
 
 
 #define MinimumWidth 512

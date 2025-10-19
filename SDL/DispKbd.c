@@ -11,10 +11,10 @@
 
 #include "platform.h"
 
-#include "armdefs.h"
-#include "dagstandalone.h"
-#include "arch/dbugsys.h"
-#include "arch/keyboard.h"
+#include "../armdefs.h"
+#include "../dagstandalone.h"
+#include "../arch/dbugsys.h"
+#include "../arch/keyboard.h"
 
 #include "KeyTable.h"
 

@@ -1,4 +1,4 @@
-#include "armdefs.h"
+#include "../armdefs.h"
 
 extern int rMouseX;
 extern int rMouseY;

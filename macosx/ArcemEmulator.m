@@ -30,7 +30,7 @@
 //
 
 #import "ArcemEmulator.h"
-#import "armdefs.h"
+#import "../armdefs.h"
 #import "ArcemView.h"
 #import "ArcemController.h"
 #import "PreferenceController.h"

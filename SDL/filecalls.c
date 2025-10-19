@@ -7,7 +7,7 @@
 #include <stdio.h>
 
 /* application includes */
-#include "filecalls.h"
+#include "../arch/filecalls.h"
 #include "platform.h"
 
 /**

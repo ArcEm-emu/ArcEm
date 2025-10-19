@@ -2,7 +2,7 @@
 #define HOSTFS_H
 
 #include "armdefs.h"
-#include "dbugsys.h"
+#include "arch/dbugsys.h"
 
 #define ARCEM_SWI_CHUNK    0x56ac0
 #define ARCEM_SWI_SHUTDOWN  (ARCEM_SWI_CHUNK + 0)
