@@ -140,96 +140,25 @@
       f = EMFUNCDECL26(BranchLink);
       break;
 
-      case 0xc:
-      switch ((int)BITS(20,23)) {
-        case 0x0:
-        case 0x4:
-          f=EMFUNCDECL26(CoStoreNoWritePostDec);
-          break;
-
-        case 0x1:
-        case 0x5:
-          f=EMFUNCDECL26(CoLoadNoWritePostDec);
-          break;
-
-
-        case 0x2:
-        case 0x6:
-          f=EMFUNCDECL26(CoStoreWritePostDec);
-          break;
-
-        case 0x3:
-        case 0x7:
-          f=EMFUNCDECL26(CoLoadWritePostDec);
-          break;
-
-        case 0x8:
-        case 0xc:
-          f=EMFUNCDECL26(CoStoreNoWritePostInc);
-          break;
-
-        case 0x9:
-        case 0xd:
-          f=EMFUNCDECL26(CoLoadNoWritePostInc);
-          break;
-
-        case 0xa:
-        case 0xe:
-          f=EMFUNCDECL26(CoStoreWritePostInc);
-          break;
-
-	/*case 0xb:
-	  case 0xf:*/
-        default:
-          f=EMFUNCDECL26(CoLoadWritePostInc);
-          break;
+      case 0xc: {
+        static const ARMEmuFunc funcsc[16]={
+          EMFUNCDECL26(CoStoreNoWritePostDec), EMFUNCDECL26(CoLoadNoWritePostDec), EMFUNCDECL26(CoStoreWritePostDec), EMFUNCDECL26(CoLoadWritePostDec),
+          EMFUNCDECL26(CoStoreNoWritePostDec), EMFUNCDECL26(CoLoadNoWritePostDec), EMFUNCDECL26(CoStoreWritePostDec), EMFUNCDECL26(CoLoadWritePostDec),
+          EMFUNCDECL26(CoStoreNoWritePostInc), EMFUNCDECL26(CoLoadNoWritePostInc), EMFUNCDECL26(CoStoreWritePostInc), EMFUNCDECL26(CoLoadWritePostInc),
+          EMFUNCDECL26(CoStoreNoWritePostInc), EMFUNCDECL26(CoLoadNoWritePostInc), EMFUNCDECL26(CoStoreWritePostInc), EMFUNCDECL26(CoLoadWritePostInc)
+        };
+        f=funcsc[(int)BITS(20,23)];
       };
       break;
 
-      case 0xd:
-      switch ((int)BITS(20,23)) {
-        case 0x0:
-        case 0x4:
-          f=EMFUNCDECL26(CoStoreNoWritePreDec);
-          break;
-
-        case 0x1:
-        case 0x5:
-          f=EMFUNCDECL26(CoLoadNoWritePreDec);
-          break;
-
-
-        case 0x2:
-        case 0x6:
-          f=EMFUNCDECL26(CoStoreWritePreDec);
-          break;
-
-        case 0x3:
-        case 0x7:
-          f=EMFUNCDECL26(CoLoadWritePreDec);
-          break;
-
-        case 0x8:
-        case 0xc:
-          f=EMFUNCDECL26(CoStoreNoWritePreInc);
-          break;
-
-        case 0x9:
-        case 0xd:
-          f=EMFUNCDECL26(CoLoadNoWritePreInc);
-          break;
-
-        case 0xa:
-        case 0xe:
-          f=EMFUNCDECL26(CoStoreWritePreInc);
-          break;
-
-	/*case 0xb:
-	  case 0xf:*/
-        default:
-          f=EMFUNCDECL26(CoLoadWritePreInc);
-          break;
-
+      case 0xd: {
+        static const ARMEmuFunc funcsd[16]={
+          EMFUNCDECL26(CoStoreNoWritePreDec), EMFUNCDECL26(CoLoadNoWritePreDec), EMFUNCDECL26(CoStoreWritePreDec), EMFUNCDECL26(CoLoadWritePreDec),
+          EMFUNCDECL26(CoStoreNoWritePreDec), EMFUNCDECL26(CoLoadNoWritePreDec), EMFUNCDECL26(CoStoreWritePreDec), EMFUNCDECL26(CoLoadWritePreDec),
+          EMFUNCDECL26(CoStoreNoWritePreInc), EMFUNCDECL26(CoLoadNoWritePreInc), EMFUNCDECL26(CoStoreWritePreInc), EMFUNCDECL26(CoLoadWritePreInc),
+          EMFUNCDECL26(CoStoreNoWritePreInc), EMFUNCDECL26(CoLoadNoWritePreInc), EMFUNCDECL26(CoStoreWritePreInc), EMFUNCDECL26(CoLoadWritePreInc)
+        };
+        f=funcsd[(int)BITS(20,23)];
       };
       break;
 
