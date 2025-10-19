@@ -3,8 +3,8 @@
 typedef struct {
     arch_key_id kid;
     unsigned short sprite;
-    short x;
-    short y;
+    unsigned short x;
+    unsigned short y;
 } dvk_to_vkeybd;
 
 enum {

@@ -200,14 +200,16 @@ void ControlPane_Error(bool fatal,const char *fmt,...)
 
 /*----------------------------------------------------------------------------*/
 
+#if 0
 static void ControlPane_TextDrawChar(Window *window, u16 c, int x, int y)
 {
 	x += window->bx;
 	y += window->by;
 	window->map[x + y * 32] = (1 << 12) | c;
 }
+#endif
 
-static void ControlPane_TextDrawString(Window *window, const char *c, int x, int y, int w, bool centred)
+static void ControlPane_TextDrawString(Window *window, const char *c, int x, int y, unsigned int w, bool centred)
 {
 	u16 *ptr, *last;
 	size_t len = strlen(c);
@@ -266,7 +268,7 @@ static void ControlPane_TextDrawLineV(Window *window, u16 c, int x, int y, int h
 	}
 }
 
-static Window *ControlPane_CreateWindow(int layer, int w, int h, const char *title, bool scroll)
+static Window *ControlPane_CreateWindow(int layer, unsigned int w, unsigned int h, const char *title, bool scroll)
 {
 	static const u16 TL[1*3] = {
 		CORNERTL,
@@ -299,7 +301,8 @@ static Window *ControlPane_CreateWindow(int layer, int w, int h, const char *tit
 	};
 	vu16 *scrollXY = REG_BGOFFSETS_SUB + (layer * 2);
 	Window *window;
-	int i, mapbase;
+	int mapbase;
+	size_t i;
 
 	mapbase = 6 + (layer * 4);
 	BGCTRL_SUB[layer] = BG_TILE_BASE(0) | BG_MAP_BASE(mapbase) | BG_COLOR_16 | BG_64x64;
@@ -372,7 +375,7 @@ static void ControlPane_CloseWindow(Window *window)
 
 static void ControlPane_InitWindows(void)
 {
-	int i;
+	size_t i;
 
 	decompress(font_gfx, (void *)CHAR_BASE_BLOCK_SUB(0), LZ77Vram);
 	dmaCopy(font_pal, BG_PALETTE_SUB + 16, font_pal_size);
@@ -387,7 +390,7 @@ static void ControlPane_InitWindows(void)
 static bool ControlPane_ClickWindow(ARMul_State *state, int px, int py)
 {
 	Window *w;
-	int i;
+	size_t i;
 
 	for (i = 0; i < sizeof(windows)/sizeof(*windows); i++) {
 		w = &windows[i];
@@ -417,7 +420,7 @@ static bool ControlPane_ClickWindow(ARMul_State *state, int px, int py)
 
 static bool ControlPane_DragWindow(ARMul_State *state, int px, int py)
 {
-	int newMouseX, newMouseY, xdiff, ydiff;
+	int xdiff, ydiff;
 	Window *w = &windows[drag_mode - DRAG_WINDOW_1];
 	vu16 *scrollXY = REG_BGOFFSETS_SUB + (w->layer * 2);
 
@@ -507,7 +510,6 @@ static void ControlPane_InitKeyboard(ARMul_State *state)
 		0x5FBD,0x6F7B,0x7FFF,0x5EF7,0x5EF7,0x4E73,0x39CE,0x0000,
 		0x6F7B,0x0000,0x0000,0x0320,0x5FBD,0x022A,0x02FF,0x7EE0
 	};
-	int i;
 
 	/* We manage sprite VRAM manually here instead of using oamAllocateGfx() */
 	decompress(keys_gfx, SPRITE_GFX_SUB, LZ77Vram);
@@ -524,7 +526,7 @@ static void ControlPane_UpdateKeyboardLEDs(uint8_t leds)
 	keys_caps = (leds & KBD_LED_CAPSLOCK);
 }
 
-static bool ControlPane_ClickKeyboard(ARMul_State *state, int px, int py)
+static bool ControlPane_ClickKeyboard(ARMul_State *state, unsigned int px, unsigned int py)
 {
 	const dvk_to_vkeybd *ktvk;
 
@@ -547,7 +549,7 @@ static bool ControlPane_ClickKeyboard(ARMul_State *state, int px, int py)
 
 static void ControlPane_ReleaseKeyboard(ARMul_State *state)
 {
-	if (key_pressed != -1) {
+	if (key_pressed != (arch_key_id)-1) {
 		if (state)
 			keyboard_key_changed(&KBD, key_pressed, 1);
 		key_pressed = -1;
@@ -617,7 +619,7 @@ static bool ControlPane_ClickTouchpad(ARMul_State *state, int px, int py)
 
 static bool ControlPane_DragTouchpad(ARMul_State *state, int px, int py)
 {
-	int newMouseX, newMouseY, xdiff, ydiff;
+	int xdiff, ydiff;
 
 	xdiff = (px - old_px) << 2;
 	ydiff = (py - old_py) << 2;
@@ -690,7 +692,7 @@ bool ControlPane_ProcessTouchReleased(ARMul_State *state)
 		retval = true;
 	}
 
-	return false;
+	return retval;
 }
 
 void ControlPane_Redraw(void)

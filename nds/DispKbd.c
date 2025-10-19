@@ -267,7 +267,7 @@ static void RefreshMouse(ARMul_State *state) {
 
 	oamSet(&oamMain, 0, HorizPos, VertPos, 0, 0, SpriteSize_32x64, SpriteColorFormat_16Color,
 	       cursorData, -1, false, false, false, false, false);
-}; /* RefreshMouse */
+} /* RefreshMouse */
 
 /*-----------------------------------------------------------------------------*/
 bool
@@ -318,7 +318,7 @@ static void ProcessButtons(ARMul_State *state, int pressed, int released) {
 		if ((released & btak->sym) && btak->kid != 0)
 			keyboard_key_changed(&KBD, btak->kid, 1);
 	}
-}; /* ProcessButtons */
+} /* ProcessButtons */
 
 /*-----------------------------------------------------------------------------*/
 int
