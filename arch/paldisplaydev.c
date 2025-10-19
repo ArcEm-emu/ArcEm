@@ -108,6 +108,12 @@
    void PDD_Name(Host_EndUpdate)(ARMul_State *state,PDD_Row *row)
     - End updating the region of the row
 
+   ARMword *PDD_Name(Host_TransferUpdate)(ARMul_State *state,PDD_Row *row,
+                                       unsigned int count,const ARMword *src)
+    - Write 'count' bits of the row to the screen.
+    - 'count' will always be a multiple of 32.
+    - This is only used in DS builds at the moment.
+
    void PDD_Name(Host_AdvanceRow)(ARMul_State *state,PDD_Row *row,
                                   unsigned int count)
     - Advance the row pointer by 'count' bits
@@ -211,7 +217,8 @@ struct PDD_Name(DisplayInfo) {
 
 #define ROWFUNC_FORCE 0x1 /* Force row to be fully redrawn */
 #define ROWFUNC_UPDATED 0x2 /* Flag used to indicate whether anything was done */
-#define ROWFUNC_UNALIGNED 0x4 /* Flag that gets set if we know we can't use the byte-aligned rowfuncs */
+#define ROWFUNC_UNALIGNED_BYTE 0x4 /* Flag that gets set if we know we can't use the byte-aligned rowfuncs */
+#define ROWFUNC_UNALIGNED_WORD 0x8 /* Flag that gets set if we know we can't use the word-aligned rowfuncs */
 
 /*
 
@@ -299,6 +306,51 @@ static inline int PDD_Name(RowFunc1XSameByteAligned)(ARMul_State *state,PDD_Row 
   }
 
   DC.Vptr = Vptr<<3;
+
+  return (flags & ROWFUNC_UPDATED);
+}
+
+static inline int PDD_Name(RowFunc1XSameWordAligned)(ARMul_State *state,PDD_Row drow,int flags)
+{
+  uint32_t Vptr = DC.Vptr>>5;
+  uint32_t Vstart = MEMC.Vstart<<2;
+  uint32_t Vend = (MEMC.Vend+1)<<2; /* Point to pixel after end */
+  const ARMword *RAM = MEMC.PhysRam;
+  unsigned int Remaining = DC.BitWidth>>5;
+
+  /* Sanity checks to avoid looping forever */
+  if((Vptr >= Vend) || (Vstart >= Vend))
+    return 0;
+  if(Vptr >= Vend)
+    Vptr = Vstart;
+
+  /* Process the row */
+  while(Remaining > 0)
+  {
+    uint32_t FlagsOffset = Vptr/(UPDATEBLOCKSIZE/4);
+    unsigned int Available = MIN(Remaining,MIN(((FlagsOffset+1)*(UPDATEBLOCKSIZE/4))-Vptr,Vend-Vptr));
+
+    if((flags & ROWFUNC_FORCE) || (HD.UpdateFlags[FlagsOffset] != MEMC.UpdateFlags[FlagsOffset]))
+    {
+      /* Process the pixels in this region, stopping at end of row/update block/Vend */
+#ifndef SYSTEM_nds
+      int outoffset;
+      ARMword *out = PDD_Name(Host_BeginUpdate)(state,&drow,Available<<5,&outoffset);
+      EndianWordCpy(out+(outoffset>>5),RAM+Vptr,Available);
+      PDD_Name(Host_EndUpdate)(state,&drow);
+#else
+      PDD_Name(Host_TransferUpdate)(state,&drow,Available<<5,RAM+Vptr);
+#endif
+      flags |= ROWFUNC_UPDATED;
+    }
+    PDD_Name(Host_AdvanceRow)(state,&drow,Available<<5);
+    Vptr += Available;
+    Remaining -= Available;
+    if(Vptr >= Vend)
+      Vptr = Vstart;
+  }
+
+  DC.Vptr = Vptr<<5;
 
   return (flags & ROWFUNC_UPDATED);
 }
@@ -428,6 +480,45 @@ static inline void PDD_Name(RowFunc1XSameByteAlignedNoFlags)(ARMul_State *state,
   }
 
   DC.Vptr = Vptr<<3;
+}
+
+static inline void PDD_Name(RowFunc1XSameWordAlignedNoFlags)(ARMul_State *state,PDD_Row drow)
+{
+  uint32_t Vptr = DC.Vptr>>5;
+  uint32_t Vstart = MEMC.Vstart<<2;
+  uint32_t Vend = (MEMC.Vend+1)<<2; /* Point to pixel after end */
+  const ARMword *RAM = MEMC.PhysRam;
+  unsigned int Remaining = DC.BitWidth>>5;
+
+  /* Sanity checks to avoid looping forever */
+  if((Vptr >= Vend) || (Vstart >= Vend))
+    return;
+  if(Vptr >= Vend)
+    Vptr = Vstart;
+
+  /* Process the row */
+  while(Remaining > 0)
+  {
+    unsigned int Available = MIN(Remaining,Vend-Vptr);
+
+    /* Process the pixels in this region, stopping at end of row/update block/Vend */
+#ifndef SYSTEM_nds
+    int outoffset;
+    ARMword *out = PDD_Name(Host_BeginUpdate)(state,&drow,Available<<5,&outoffset);
+    EndianWordCpy(out+(outoffset>>5),RAM+Vptr,Available);
+    PDD_Name(Host_EndUpdate)(state,&drow);
+#else
+    PDD_Name(Host_TransferUpdate)(state,&drow,Available<<5,RAM+Vptr);
+#endif
+
+    PDD_Name(Host_AdvanceRow)(state,&drow,Available<<5);
+    Vptr += Available;
+    Remaining -= Available;
+    if(Vptr >= Vend)
+      Vptr = Vstart;
+  }
+
+  DC.Vptr = Vptr<<5;
 }
 
 /*
@@ -708,7 +799,9 @@ static void PDD_Name(EventFunc)(ARMul_State *state,CycleCount nowtime)
     /* We can test these values once here, so that it's only output alignment
        that we need to worry about during the loop */
     if((DC.Vptr & 0x7) || ((Width*BPP)&0x7))
-      flags |= ROWFUNC_UNALIGNED;
+      flags |= ROWFUNC_UNALIGNED_WORD | ROWFUNC_UNALIGNED_BYTE;
+    else if((DC.Vptr & 0x3f) || ((Width*BPP)&0x3f))
+      flags |= ROWFUNC_UNALIGNED_WORD;
 
     if(DisplayDev_UseUpdateFlags)
     {
@@ -732,7 +825,11 @@ static void PDD_Name(EventFunc)(ARMul_State *state,CycleCount nowtime)
           {
             updated = PDD_Name(RowFuncExpandTable)(state,hrow,flags);
           }
-          else if(!(flags & ROWFUNC_UNALIGNED) && !(alignment & 0x7))
+          else if(!(flags & ROWFUNC_UNALIGNED_WORD) && !(alignment & 0x3f))
+          {
+            updated = PDD_Name(RowFunc1XSameWordAligned)(state,hrow,flags);
+          }
+          else if(!(flags & ROWFUNC_UNALIGNED_BYTE) && !(alignment & 0x7))
           {
             updated = PDD_Name(RowFunc1XSameByteAligned)(state,hrow,flags);
           }
@@ -783,7 +880,11 @@ static void PDD_Name(EventFunc)(ARMul_State *state,CycleCount nowtime)
             {
               PDD_Name(RowFuncExpandTableNoFlags)(state,hrow);
             }
-            else if(!(flags & ROWFUNC_UNALIGNED) && !(alignment & 0x7))
+            else if(!(flags & ROWFUNC_UNALIGNED_WORD) && !(alignment & 0x3f))
+            {
+              PDD_Name(RowFunc1XSameWordAlignedNoFlags)(state,hrow);
+            }
+            else if(!(flags & ROWFUNC_UNALIGNED_BYTE) && !(alignment & 0x7))
             {
               PDD_Name(RowFunc1XSameByteAlignedNoFlags)(state,hrow);
             }

@@ -85,4 +85,22 @@ typedef unsigned char bool;
 #define restrict
 #endif
 
+#ifdef SYSTEM_nds
+/* Use integer only versions of printf and scanf to reduce the executable size */
+#include <stdio.h>
+
+#define printf iprintf
+#define fprintf fiprintf
+#define sprintf siprintf
+#define snprintf sniprintf
+
+#define vprintf viprintf
+#define vfprintf vfiprintf
+#define vsprintf vsiprintf
+#define vsnprintf vsniprintf
+
+#define sscanf siscanf
+#define fscanf fiscanf
+#endif
+
 #endif
