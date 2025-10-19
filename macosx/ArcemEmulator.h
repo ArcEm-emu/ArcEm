@@ -32,10 +32,25 @@
 
 #import <Foundation/Foundation.h>
 
+@class ArcemView;
+struct ARMul_State;
 
-@interface ArcemEmulator : NSObject 
+@interface ArcemEmulator : NSObject
+{
+    struct ARMul_State *state;
+    ArcemView *arcemView;
+    BOOL    bActive;
+    BOOL    bRestart;
+}
+
+- (instancetype)initWithView:(ArcemView *)view;
+- (void)restart;
+- (void)keyDown:(int)key;
+- (void)keyUp:(int)key;
+- (void)mouseMovedX:(int)xdiff
+                  Y:(int)ydiff;
+
 - (void)threadStart:(id)anObject;  //!< Where the thread is launched
-- (void)threadKill;
 
 
 @end

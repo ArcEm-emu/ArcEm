@@ -188,7 +188,6 @@ elseif(${SYSTEM} STREQUAL "macosx")
 	target_link_libraries(arcem PRIVATE ${FRAMEWORKS})
 
 	set_property(TARGET arcem APPEND_STRING PROPERTY COMPILE_FLAGS "-fobjc-arc")
-	set_property(SOURCE "macosx/ArcemEmulator.m" APPEND_STRING PROPERTY COMPILE_FLAGS "-fno-objc-arc")
 elseif(${SYSTEM} STREQUAL "win")
 	add_executable(arcem WIN32 ${ARCEM_SOURCES} ${ARCEM_ARCH_SOURCES} ${ARCEM_WIN_SOURCES} ${ARCEM_EXTNROM_MODULES})
 	target_compile_definitions(arcem PRIVATE SYSTEM_win)

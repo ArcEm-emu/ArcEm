@@ -34,6 +34,7 @@
 #import "ArcemView.h"
 #import "ArcemController.h"
 #import "PreferenceController.h"
+#include "../arch/keyboard.h"
 
 #import <pthread.h>
 
@@ -42,7 +43,6 @@ extern ArcemConfig hArcemConfig;
 extern uint32_t *screenbmp;
 extern uint32_t *cursorbmp;
 ArcemView* disp;
-ArcemController* controller;
 char arcemDir[256];
 
 // This is where the imperative world meets the OO world. These functions could
@@ -84,7 +84,23 @@ void updateDisplay(int x, int y, int width, int height, int yield)
 
 
 @implementation ArcemEmulator {
-    NSAutoreleasePool *pool;
+    bool restart;
+}
+
+/*------------------------------------------------------------------------------
+ * initWithView - constructor
+ */
+- (id)initWithView:(ArcemView *)view
+{
+    if (self = [super init])
+    {
+        arcemView = view;
+        bActive = NO;
+        bRestart = NO;
+
+        [self restart];
+    }
+    return self;
 }
 
 
@@ -93,61 +109,96 @@ void updateDisplay(int x, int y, int width, int height, int yield)
  */
 - (void)threadStart:(id)anObject
 {
-    NSArray *params = anObject;
-    NSMutableData *screen, *cursor;
+    int exit_code = EXIT_FAILURE;
     NSURL *dir;
-    ARMul_State *state;
-    int exit_code;
-    
-    pool = [[NSAutoreleasePool alloc] init];
 
-    disp = [[params objectAtIndex: 0] retain];
-    screen = [[params objectAtIndex: 1] retain];
-    cursor = [[params objectAtIndex: 2] retain];
-    controller = [[params objectAtIndex: 3] retain];
-    [params release];
+    disp = anObject;
 
-    screenbmp = [screen mutableBytes];
-    cursorbmp = [cursor mutableBytes];
+    screenbmp = [disp getScreenBytes];
+    cursorbmp = [disp getCursorBytes];
 
     dir = [[NSUserDefaults standardUserDefaults] URLForKey:AEDirectoryKey];
 	strlcpy(arcemDir, dir.fileSystemRepresentation, sizeof(arcemDir));
-	
+
     /* Initialise */
     state = ARMul_NewState(&hArcemConfig);
-    if (!state)
-        exit(EXIT_FAILURE);
 
-    /* Execute */
-    exit_code = ARMul_DoProg(state);
+    bActive = TRUE;
+    [disp setEmulator:self];
 
-    /* Finalise */
-    ARMul_FreeState(state);
+    while (state) {
+        /* Execute */
+        exit_code = ARMul_DoProg(state);
 
-    // TODO: Handle this better
+        /* Finalise */
+        ARMul_FreeState(state);
+
+        if (bRestart) {
+            /* Reinitialise */
+            state = ARMul_NewState(&hArcemConfig);
+            bRestart = FALSE;
+        } else {
+            break;
+        }
+    }
+
+    [disp setEmulator:nil];
+    bActive = FALSE;
+
+    // TODO: Keep the application open so that settings can still be changed
     exit(exit_code);
 
-    [disp release];
-    disp = nil;
-    [screen release];
-    [cursor release];
-    [controller release];
-    controller = nil;
-    [pool release];
-    pool = nil;
     [NSThread exit];
 
     return;
 }
 
 /*------------------------------------------------------------------------------
- * threadKill
+ * restart
  */
-- (void)threadKill
+- (void)restart
 {
-    [pool release];
-    pool = nil;
-    [NSThread exit];
+    if (bActive) {
+        bRestart = TRUE;
+        ARMul_Exit(state,0);
+    } else {
+        // Run the processing thread
+        [NSThread detachNewThreadSelector: @selector(threadStart:)
+                                 toTarget: self
+                               withObject: (__bridge id)CFBridgingRetain(arcemView)];
+    }
+}
+
+/*------------------------------------------------------------------------------
+ * keyDown
+ */
+- (void)keyDown:(int)key
+{
+    keyboard_key_changed(&KBD, key, false);
+}
+
+/*------------------------------------------------------------------------------
+ * keyUp
+ */
+- (void)keyUp:(int)key
+{
+    keyboard_key_changed(&KBD, key, true);
+}
+
+/*------------------------------------------------------------------------------
+ * mouseMoved
+ */
+- (void)mouseMovedX:(int)xdiff
+                  Y:(int)ydiff
+{
+    if (xdiff > 63) xdiff=63;
+    if (xdiff < -63) xdiff=-63;
+
+    if (ydiff>63) ydiff=63;
+    if (ydiff<-63) ydiff=-63;
+
+    KBD.MouseXCount =  xdiff & 127;
+    KBD.MouseYCount = -ydiff & 127;
 }
 
 @end

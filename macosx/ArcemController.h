@@ -45,11 +45,6 @@
     IBOutlet NSMenuItem *menuItemUpscale;
     NSMenuItem *menuItemsEject[4];
     NSMenuItem *menuItemsMount[4];
-    
-    NSMutableData *screenBmp;		//!< Raw screen bitmap
-    CGContextRef screenImg;     	//!< Image for drawing screen
-    NSMutableData *cursorBmp;		//!< Raw cursos bitmap
-    CGContextRef cursorImg;     	//!< Image for drawing cursor
 
     ArcemEmulator *emuThread;		//!< Thread controling the emulator
 
@@ -94,7 +89,6 @@
 - (IBAction)menuReset:(id)sender;
 
 - (void)applicationHide:(NSNotification*)aNotification;
-- (void)destroyEmulatorThread;
 
 - (void)changeDriveImageAtIndex: (int)fdNum toURL: (NSURL*)newfile;
 

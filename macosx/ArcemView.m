@@ -22,6 +22,7 @@
  ****************************************************************************/
 
 #import "ArcemView.h"
+#import "ArcemEmulator.h"
 #import "PreferenceController.h"
 #include <ApplicationServices/ApplicationServices.h>
 #include <pthread.h>
@@ -45,8 +46,18 @@ extern int rMouseHeight;
 {
     if (self = [super initWithFrame:rect])
     {
-        int i;
-        
+        CGColorSpaceRef cgColorspace = CGColorSpaceCreateDeviceRGB();
+
+        // Create the screen bitmap and image
+        screenBmp = [[NSMutableData alloc] initWithLength: MonitorSize * 4];
+        screenImage = CGBitmapContextCreate([screenBmp mutableBytes], MonitorWidth, MonitorHeight, 8, MonitorWidth * 4, cgColorspace, kCGImageAlphaNoneSkipFirst);
+
+        // Create the cursor bitmap and image
+        cursorBmp = [[NSMutableData alloc] initWithLength: 32 * 32 * 4];
+        cursorImage = CGBitmapContextCreate([cursorBmp mutableBytes], 32, 32, 8, 32 * 4, cgColorspace, kCGImageAlphaNoneSkipFirst);
+
+        CGColorSpaceRelease (cgColorspace);
+
         captureMouse = FALSE;
         memset(keyState, false, sizeof(keyState));
 
@@ -68,25 +79,27 @@ extern int rMouseHeight;
 }
 
 
-/*------------------------------------------------------------------------------
- * setBitmapsWithScreen: withCursor - pass the bitmaps from the controller.
- */
-- (void)setBitmapsWithScreen: (CGContextRef)si
-                  withCursor: (CGContextRef)ci
+- (void)setEmulator: (ArcemEmulator *)emu
 {
-    screenImage = si;
-    cursorImage = ci;
-
-    [self setNeedsDisplay: YES];
-
-    // This should be otherwhere, but I'm not sure where yet. All I know is that initWithRect is too early
-    recttag = [self addTrackingRect: [self bounds]
-                              owner: self
-                           userData: NULL
-                       assumeInside: YES];
+    emuThread = emu;
+}
 
 
-    [self prefsUpdated];
+/*------------------------------------------------------------------------------
+ * getScreenBytes:
+ */
+- (void *)getScreenBytes
+{
+    return [screenBmp mutableBytes];
+}
+
+
+/*------------------------------------------------------------------------------
+ * getCursorBytes:
+ */
+- (void *)getCursorBytes
+{
+    return [cursorBmp mutableBytes];
 }
 
 
@@ -342,7 +355,6 @@ extern int rMouseHeight;
  */
 - (void)flagsChanged:(NSEvent *)theEvent
 {
-    ARMul_State *state = &statestr;
     int c = [theEvent keyCode];
     
     keyState[c] = !keyState[c];
@@ -351,12 +363,15 @@ extern int rMouseHeight;
     const mac_to_arch_key *ktak;
     for (ktak = mac_to_arch_key_map; ktak->sym >= 0; ktak++) {
       if (ktak->sym == c) {
-        keyboard_key_changed(&KBD, ktak->kid, !keyState[c]);
+        if (keyState[c])
+          [emuThread keyDown:ktak->kid];
+        else
+          [emuThread keyUp:ktak->kid];
 
         // Need to toggle caps lock and number lock
         if ((c == kVK_CapsLock) || (c == 0x7f))
         {
-            keyboard_key_changed(&KBD, ktak->kid, true);
+            [emuThread keyUp:ktak->kid];
             keyState[c] = false;
         }
         return;
@@ -372,7 +387,6 @@ extern int rMouseHeight;
  */
 - (void)keyDown:(NSEvent *)theEvent
 {
-    ARMul_State *state = &statestr;
     int c = [theEvent keyCode];
 
     //NSLog(@"down char %d\n", c);
@@ -380,7 +394,7 @@ extern int rMouseHeight;
     const mac_to_arch_key *ktak;
     for (ktak = mac_to_arch_key_map; ktak->sym >= 0; ktak++) {
       if (ktak->sym == c) {
-        keyboard_key_changed(&KBD, ktak->kid, false);
+        [emuThread keyDown:ktak->kid];
         return;
       }
     }
@@ -394,7 +408,6 @@ extern int rMouseHeight;
  */
 - (void)keyUp:(NSEvent *)theEvent
 {
-    ARMul_State *state = &statestr;
     int c = [theEvent keyCode];
 
     //NSLog(@"up char %d\n", c);
@@ -402,7 +415,7 @@ extern int rMouseHeight;
     const mac_to_arch_key *ktak;
     for (ktak = mac_to_arch_key_map; ktak->sym >= 0; ktak++) {
       if (ktak->sym == c) {
-        keyboard_key_changed(&KBD, ktak->kid, true);
+        [emuThread keyUp:ktak->kid];
         return;
       }
     }
@@ -417,19 +430,12 @@ extern int rMouseHeight;
  */
 - (void)mouseMoved:(NSEvent *)theEvent
 {
-    ARMul_State *state = &statestr;
     int xdiff, ydiff;
 
     CGGetLastMouseDelta(&xdiff, &ydiff);
 
-    if (xdiff > 63) xdiff=63;
-    if (xdiff < -63) xdiff=-63;
-
-    if (ydiff>63) ydiff=63;
-    if (ydiff<-63) ydiff=-63;
-
-    KBD.MouseXCount =  xdiff & 127;
-    KBD.MouseYCount = -ydiff & 127;
+    [emuThread mouseMovedX:xdiff
+                         Y:ydiff];
 }
 
 
@@ -439,7 +445,6 @@ extern int rMouseHeight;
  */
 - (void)mouseDown: (NSEvent *)theEvent
 {
-    ARMul_State *state = &statestr;
     int button;
     
     // Whoa! Only bother then we're in capture mode
@@ -462,7 +467,7 @@ extern int rMouseHeight;
     }
 
     // Record the button press in the mouse event queue
-    keyboard_key_changed(&KBD, button, false);
+    [emuThread keyDown:button];
 
     // Note what went down for when it comes up, as we can't rely on
     // the l^Huser to still be holding the modifier key
@@ -475,14 +480,12 @@ extern int rMouseHeight;
  */
 - (void)mouseUp: (NSEvent *)theEvent
 {
-    ARMul_State *state = &statestr;
-
     // Only note stuff if we're in capture mode
     if (!captureMouse)
         return;
 
     // Record the up event
-    keyboard_key_changed(&KBD, nMouse, true);
+    [emuThread keyUp:nMouse];
 
     //NSLog(@"nMouse up = %d\n", nButton);
 }
@@ -505,14 +508,12 @@ extern int rMouseHeight;
  */
 - (void)rightMouseDown: (NSEvent *)theEvent
 {
-    ARMul_State *state = &statestr;
-
     NSLog(@"Right mouse button down\n");
     
     if (mouseEmulation)
         return;
 
-    keyboard_key_changed(&KBD, ARCH_KEY_button_3, false);
+    [emuThread keyDown:ARCH_KEY_button_3];
 }
 
 
@@ -521,12 +522,10 @@ extern int rMouseHeight;
  */
 - (void)rightMouseUp: (NSEvent *)theEvent
 {
-    ARMul_State *state = &statestr;
-
     if (mouseEmulation)
         return;
 
-    keyboard_key_changed(&KBD, ARCH_KEY_button_3, true);
+    [emuThread keyUp:ARCH_KEY_button_3];
 }
 
 
@@ -547,14 +546,12 @@ extern int rMouseHeight;
  */
 - (void)otherMouseDown: (NSEvent *)theEvent
 {
-    ARMul_State *state = &statestr;
-
     NSLog(@"Other mouse down\n");
     
     if (mouseEmulation)
         return;
 
-    keyboard_key_changed(&KBD, ARCH_KEY_button_2, false);
+    [emuThread keyDown:ARCH_KEY_button_2];
 }
 
 
@@ -563,12 +560,10 @@ extern int rMouseHeight;
  */
 - (void)otherMouseUp: (NSEvent *)theEvent
 {
-    ARMul_State *state = &statestr;
-
     if (mouseEmulation)
         return;
 
-    keyboard_key_changed(&KBD, ARCH_KEY_button_2, true);
+    [emuThread keyUp:ARCH_KEY_button_2];
 }
 
 
@@ -637,6 +632,18 @@ extern int rMouseHeight;
     mouseEmulation = [defaults boolForKey: AEUseMouseEmulationKey];
     adjustModifier = (int)[defaults integerForKey: AEAdjustModifierKey];
     menuModifier = (int)[defaults integerForKey: AEMenuModifierKey];
+}
+
+
+/*------------------------------------------------------------------------------
+ * destructor -
+ */
+- (void)dealloc
+{
+    if (screenImage)
+        CGContextRelease(screenImage);
+    if (cursorImage)
+        CGContextRelease(cursorImage);
 }
 
 @end

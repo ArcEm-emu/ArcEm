@@ -26,12 +26,16 @@
 
 #import <Cocoa/Cocoa.h>
 
+@class ArcemEmulator;
+
 @interface ArcemView : NSView
 {
-    CGContextRef screenImage;
-    CGContextRef cursorImage;
+    NSMutableData *screenBmp;        //!< Raw screen bitmap
+    CGContextRef screenImage;        //!< Image for drawing screen
+    NSMutableData *cursorBmp;        //!< Raw cursos bitmap
+    CGContextRef cursorImage;        //!< Image for drawing cursor
 
-    NSTrackingRectTag recttag;
+    ArcemEmulator *emuThread;        //!< Thread controling the emulator
 
     BOOL captureMouse;
 
@@ -55,9 +59,9 @@
 
 @property (nonatomic, getter=isMouseLocked) BOOL mouseLock;
 
-//! Pass the bitmaps from the controller.
-- (void)setBitmapsWithScreen: (CGContextRef)si
-                  withCursor: (CGContextRef)ci;
+- (void)setEmulator: (ArcemEmulator *)emu;
+- (void *)getScreenBytes;
+- (void *)getCursorBytes;
 /*! Called when the emulator changes screen size, and
  * adjusts the view to match
  */

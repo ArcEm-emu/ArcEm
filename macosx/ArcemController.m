@@ -40,7 +40,7 @@ ArcemConfig hArcemConfig;
 /*------------------------------------------------------------------------------
  * Constructor - initialises the images for use with the display
  */
-- init
+- (id)init
 {
     if (self = [super init])
     {
@@ -60,21 +60,10 @@ ArcemConfig hArcemConfig;
 
         NSMutableDictionary *defaultValues;
         NSString *path = [NSHomeDirectory() stringByAppendingPathComponent:@"arcem"];
-        
-        CGColorSpaceRef cgColorspace = CGColorSpaceCreateDeviceRGB();
-
-        // Create the screen bitmap and image
-        screenBmp = [[NSMutableData alloc] initWithLength: MonitorSize * 4];
-        screenImg = CGBitmapContextCreate([screenBmp mutableBytes], MonitorWidth, MonitorHeight, 8, MonitorWidth * 4, cgColorspace, kCGImageAlphaNoneSkipFirst);
-
-        // Create the cursor bitmap and image
-        cursorBmp = [[NSMutableData alloc] initWithLength: 32 * 32 * 4];
-        cursorImg = CGBitmapContextCreate([cursorBmp mutableBytes], 32, 32, 8, 32 * 4, cgColorspace, kCGImageAlphaNoneSkipFirst);
-
-        CGColorSpaceRelease (cgColorspace);
 
         bFullScreen = NO;
         preferenceController = nil;
+        emuThread = nil;
 
         // Defaults
         defaultValues = [NSMutableDictionary dictionary];
@@ -97,42 +86,21 @@ ArcemConfig hArcemConfig;
 
 
 /*------------------------------------------------------------------------------
- * createEmulatorThread
+ * restartEmulatorThread
  */
-- (void)createEmulatorThread
-{
-    NSArray *params;
-
-    // Create the thread for the enumlator to run in
-    emuThread = [[ArcemEmulator alloc] init];
-
-    // List the parameters for the thread - the bitmaps, and the view to send the redraw to
-    params = @[arcemView, screenBmp, cursorBmp, self];
-
-    // Run the processing thread
-    [NSThread detachNewThreadSelector: @selector(threadStart:)
-                             toTarget: emuThread
-                           withObject: (__bridge id)CFBridgingRetain(params)];
-
-    // Pass the images to the view
-    [arcemView setBitmapsWithScreen: screenImg
-                         withCursor: cursorImg];
-
-}
-
-
-/*------------------------------------------------------------------------------
- * destroyEmulatorThread
- */
-- (void)destroyEmulatorThread
+- (void)restartEmulatorThread
 {
     if (emuThread != nil)
     {
-        ArcemEmulator* temp = emuThread;
-        emuThread = nil;
-        [temp threadKill];
+        [emuThread restart];
+    }
+    else
+    {
+        // Create the thread for the enumlator to run in
+        emuThread = [[ArcemEmulator alloc] initWithView:arcemView];
     }
 }
+
 
 /*------------------------------------------------------------------------------
  * awakeFromNib - called when the window has been created. Now is the time to
@@ -145,7 +113,7 @@ ArcemConfig hArcemConfig;
     int i;
 
     // Create an initial emulator thread
-    [self createEmulatorThread];
+    [self restartEmulatorThread];
 
     // Bring that window to the front
     [[arcemView window] makeKeyAndOrderFront: self];
@@ -184,16 +152,12 @@ ArcemConfig hArcemConfig;
  */
 - (IBAction)fullScreen:(id)sender
 {
-    // See if there's anything to be of interest in
-    if (emuThread == nil)
-        return;
-    
     // What we do depends if we're in full screen mode or not
     if (!bFullScreen)
     {
         // We're running the emulator in a window, so kill it first
         //[[arcemView window] close];
-        arcemView = nil;
+        //arcemView = nil;
     }
     else
     {
@@ -427,20 +391,8 @@ ArcemConfig hArcemConfig;
  */
 - (IBAction)menuReset:(id)sender
 {
-    [self destroyEmulatorThread];
-    [self createEmulatorThread];
+    [self restartEmulatorThread];
 }
 
-
-/*------------------------------------------------------------------------------
- * destructor - 
- */
-- (void)dealloc
-{
-    if (screenImg)
-        CGContextRelease(screenImg);
-    if (cursorImg)
-        CGContextRelease(cursorImg);
-}
 
 @end
