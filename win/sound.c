@@ -99,7 +99,7 @@ bool
 Sound_InitHost(ARMul_State *state)
 {
 	WAVEFORMATEX format;
-	uint8_t *buffer;
+	LPSTR buffer;
 	int i;
 
 	DWORD totalBufferSize = (BLOCK_SIZE + sizeof(WAVEHDR)) * BLOCK_COUNT;
