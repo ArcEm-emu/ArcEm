@@ -76,6 +76,7 @@ jobs:
         msvc:
         - { platform: Win32 }
         - { platform: x64   }
+        - { platform: ARM64 }
 
     steps:
     - uses: actions/checkout@v3
@@ -92,7 +93,7 @@ jobs:
 
   build-mingw:
     name: Windows (${{ matrix.mingw.msystem }})
-    runs-on: windows-latest
+    runs-on: ${{ matrix.mingw.runs-on }}
 
     defaults:
       run:
@@ -101,8 +102,9 @@ jobs:
     strategy:
       matrix:
         mingw:
-        - { msystem: mingw32, msys-env: mingw-w64-i686 }
-        - { msystem: mingw64, msys-env: mingw-w64-x86_64 }
+        - { msystem: mingw32,    msys-env: mingw-w64-i686,          runs-on: windows-latest }
+        - { msystem: mingw64,    msys-env: mingw-w64-x86_64,        runs-on: windows-latest }
+        - { msystem: clangarm64, msys-env: mingw-w64-clang-aarch64, runs-on: windows-11-arm }
 
     steps:
     - name: Set up MSYS2
