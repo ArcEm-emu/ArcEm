@@ -156,7 +156,7 @@ bool Disk_GetInfo(const char *path, DiskInfo *d)
 	assert(path != NULL);
 	assert(d != NULL);
 
-	if (GetDiskFreeSpaceEx(path, &free, &total, NULL) == 0) {
+	if (GetDiskFreeSpaceExA(path, &free, &total, NULL) == 0) {
 		return false;
 	}
 

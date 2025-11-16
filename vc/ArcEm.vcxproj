@@ -151,7 +151,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>NOOS;NOFPE;EXTNROM_SUPPORT;HOSTFS_SUPPORT;SOUND_SUPPORT;SYSTEM_win;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\arch;..\win;..</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\arch;..\win;..\libs\inih;..</AdditionalIncludeDirectories>
       <CompileAs>Default</CompileAs>
     </ClCompile>
     <Link>
@@ -166,7 +166,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>NOOS;NOFPE;EXTNROM_SUPPORT;HOSTFS_SUPPORT;SOUND_SUPPORT;SYSTEM_win;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\arch;..\win;..</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\arch;..\win;..\libs\inih;..</AdditionalIncludeDirectories>
       <CompileAs>Default</CompileAs>
     </ClCompile>
     <Link>
@@ -181,7 +181,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>NOOS;NOFPE;EXTNROM_SUPPORT;HOSTFS_SUPPORT;SOUND_SUPPORT;SYSTEM_win;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\arch;..\win;..</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\arch;..\win;..\libs\inih;..</AdditionalIncludeDirectories>
       <CompileAs>Default</CompileAs>
     </ClCompile>
     <Link>
@@ -196,7 +196,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>NOOS;NOFPE;EXTNROM_SUPPORT;HOSTFS_SUPPORT;SOUND_SUPPORT;SYSTEM_win;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\arch;..\win;..</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\arch;..\win;..\libs\inih;..</AdditionalIncludeDirectories>
       <CompileAs>Default</CompileAs>
     </ClCompile>
     <Link>
@@ -215,7 +215,7 @@
       <PreprocessorDefinitions>NOOS;NOFPE;EXTNROM_SUPPORT;HOSTFS_SUPPORT;SOUND_SUPPORT;SYSTEM_win;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <AdditionalIncludeDirectories>..\arch;..\win;..</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\arch;..\win;..\libs\inih;..</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -235,7 +235,7 @@
       <PreprocessorDefinitions>NOOS;NOFPE;EXTNROM_SUPPORT;HOSTFS_SUPPORT;SOUND_SUPPORT;SYSTEM_win;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <AdditionalIncludeDirectories>..\arch;..\win;..</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\arch;..\win;..\libs\inih;..</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -255,7 +255,7 @@
       <PreprocessorDefinitions>NOOS;NOFPE;EXTNROM_SUPPORT;HOSTFS_SUPPORT;SOUND_SUPPORT;SYSTEM_win;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <AdditionalIncludeDirectories>..\arch;..\win;..</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\arch;..\win;..\libs\inih;..</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -275,7 +275,7 @@
       <PreprocessorDefinitions>NOOS;NOFPE;EXTNROM_SUPPORT;HOSTFS_SUPPORT;SOUND_SUPPORT;SYSTEM_win;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <AdditionalIncludeDirectories>..\arch;..\win;..</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\arch;..\win;..\libs\inih;..</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

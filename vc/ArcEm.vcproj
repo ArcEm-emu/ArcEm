@@ -49,7 +49,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="../arch,../win,.."
+				AdditionalIncludeDirectories="../arch,../win,../libs/inih,.."
 				PreprocessorDefinitions="NOOS;NOFPE;EXTNROM_SUPPORT;HOSTFS_SUPPORT;SOUND_SUPPORT;SYSTEM_win;_WINDOWS;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE"
 				StringPooling="true"
 				RuntimeLibrary="0"
@@ -145,7 +145,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../arch/,../win/,.."
+				AdditionalIncludeDirectories="../arch,../win,../libs/inih,.."
 				PreprocessorDefinitions="NOOS;NOFPE;EXTNROM_SUPPORT;HOSTFS_SUPPORT;SOUND_SUPPORT;SYSTEM_win;_WINDOWS;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
