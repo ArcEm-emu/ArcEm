@@ -129,8 +129,8 @@ CalcCanTimerInt(ARMul_State *state)
 /** Get the value of a timer uptodate - don't actually update anything - just
  * return the current value (for the Latch command)
  */
-static int32_t
-GetCurrentTimerVal(ARMul_State *state,int toget)
+static uint_fast16_t
+GetCurrentTimerVal(ARMul_State *state,uint_fast8_t toget)
 {
   CycleDiff timeSinceLastUpdate = ARMul_Time - ioc.TimersLastUpdated;
   int32_t scaledTimeSlip = (int32_t)((((uint64_t) timeSinceLastUpdate) * ioc.IOCRate + ioc.TimerFracBit)>>16);
@@ -141,7 +141,7 @@ GetCurrentTimerVal(ARMul_State *state,int toget)
   result = ioc.TimerCount[toget] - (scaledTimeSlip % tmpL);
   if (result < 0) result += tmpL;
 
-  return result;
+  return result & 0xffff;
 }
 
 
@@ -177,7 +177,7 @@ static void UpdateTimerRegisters_Internal(ARMul_State *state,CycleCount nowtime,
 
   if (ioc.Timer0CanInt) {
     tmpL = (uint32_t)((((uint64_t) (ioc.TimerCount[0]+1)) * ioc.InvIOCRate) >> 16);
-    if ((int)tmpL < nextTrigger) nextTrigger = tmpL;
+    if ((int32_t)tmpL < nextTrigger) nextTrigger = tmpL;
   }
 
   /* ----------------------------------------------------------------- */
@@ -192,7 +192,7 @@ static void UpdateTimerRegisters_Internal(ARMul_State *state,CycleCount nowtime,
 
   if (ioc.Timer1CanInt) {
     tmpL = (uint32_t)((((uint64_t) (ioc.TimerCount[1]+1)) * ioc.InvIOCRate) >> 16);
-    if ((int)tmpL < nextTrigger) nextTrigger = tmpL;
+    if ((int32_t)tmpL < nextTrigger) nextTrigger = tmpL;
   }
 
   /* ----------------------------------------------------------------- */
@@ -257,8 +257,8 @@ IOC_ControlLinesUpdate(ARMul_State *state)
  * \param speed   Return IOC speed
  * \param offset  Return IOC offset
  */
-static void
-ParseIOCAddr(ARMword address, ARMword *bank, ARMword *speed, ARMword *offset)
+static inline void
+ParseIOCAddr(ARMword address, uint_fast8_t *bank, uint_fast8_t *speed, uint_fast16_t *offset)
 {
   *bank   = (address >> 16) & 7;
   *speed  = (address >> 19) & 3;
@@ -270,11 +270,10 @@ ParseIOCAddr(ARMword address, ARMword *bank, ARMword *speed, ARMword *offset)
 } /* ParseIOCAddr */
 
 /*-----------------------------------------------------------------------------*/
-static ARMword
-GetWord_IOCReg(ARMul_State *state, int Register)
+static uint_fast8_t
+GetWord_IOCReg(ARMul_State *state, uint_fast8_t Register)
 {
-  ARMword Result;
-  int Timer;
+  uint_fast8_t Result, Timer;
 
   switch (Register) {
     case 0: /* Control reg */
@@ -364,10 +363,10 @@ GetWord_IOCReg(ARMul_State *state, int Register)
 } /* GetWord_IOCReg */
 
 /*-----------------------------------------------------------------------------*/
-static ARMword
-PutVal_IOCReg(ARMul_State *state, int Register, ARMword data, bool bNw)
+static void
+PutVal_IOCReg(ARMul_State *state, uint_fast8_t Register, uint_fast8_t data, bool bNw)
 {
-  int Timer;
+  uint_fast8_t Timer;
 
   switch (Register) {
     case 0: /* Control reg */
@@ -458,7 +457,7 @@ PutVal_IOCReg(ARMul_State *state, int Register, ARMword data, bool bNw)
     case 0x1b: /* T2 Latch command */
     case 0x1f: /* T3 Latch command */
       Timer = (Register & 0xf) / 4;
-      ioc.TimerOutputLatch[Timer] = GetCurrentTimerVal(state,Timer) & 0xffff;
+      ioc.TimerOutputLatch[Timer] = GetCurrentTimerVal(state,Timer);
       /*dbug_ioc("(T%dLc)", Timer); */
       /*dbug_ioc("IOC Write: Timer %d Latch command Output Latch=0x%x\n",
         Timer, ioc.TimerOutputLatch[Timer]); */
@@ -469,8 +468,6 @@ PutVal_IOCReg(ARMul_State *state, int Register, ARMword data, bool bNw)
                Register, data);
       break;
   } /* Register */
-
-  return 0;
 } /* PutVal_IOCReg */
 
 /** Read a word of data from IO address space
@@ -486,7 +483,8 @@ GetWord_IO(ARMul_State *state, ARMword address)
   if (address & (1 << 21)) {
     /* IOC address-space */
 
-    ARMword bank, speed, offset;
+    uint_fast8_t bank, speed;
+    uint_fast16_t offset;
 
     /* Sanitise the address a bit */
     address -= MEMORY_0x3000000_CON_IO;
@@ -563,7 +561,8 @@ PutValIO(ARMul_State *state, ARMword address, ARMword data, bool byteNotword)
   if (address & (1 << 21)) {
     /* IOC address-space */
 
-    ARMword bank, speed, offset;
+    uint_fast8_t bank, speed;
+    uint_fast16_t offset;
 
     /* Sanitise the address a bit */
     address -= MEMORY_0x3000000_CON_IO;
