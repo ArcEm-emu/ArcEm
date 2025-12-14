@@ -23,7 +23,7 @@ void FDC_Init(ARMul_State *state);
  * @param offset Containing the FDC register
  * @returns      Value of register, or 0 on register not handled
  */
-ARMword FDC_Read(ARMul_State *state, ARMword offset);
+uint_fast8_t FDC_Read(ARMul_State *state, uint_fast16_t offset);
 
 /**
  * FDC_Write
@@ -34,9 +34,8 @@ ARMword FDC_Read(ARMul_State *state, ARMword offset);
  * @param offset Containing the FDC register
  * @param data   Data field to write
  * @param bNw    byteNotWord IMPROVE unused parameter
- * @returns      IMRPOVE always 0
  */
-ARMword FDC_Write(ARMul_State *state, ARMword offset, ARMword data, bool bNw);
+void FDC_Write(ARMul_State *state, uint_fast16_t offset, uint_fast8_t data, bool bNw);
 
 /**
  * FDC_LatchAChange
@@ -68,7 +67,7 @@ void FDC_LatchBChange(ARMul_State *state);
  * @param image Filename of image to load
  * @returns NULL on success or string of error message
  */
-const char *FDC_InsertFloppy(unsigned int drive, const char *image);
+const char *FDC_InsertFloppy(uint_fast8_t drive, const char *image);
 
 /**
  * FDC_EjectFloppy
@@ -79,7 +78,7 @@ const char *FDC_InsertFloppy(unsigned int drive, const char *image);
  * @param drive Drive number to unload image [0-3]
  * @returns NULL on success or string of error message
  */
-const char *FDC_EjectFloppy(unsigned int drive);
+const char *FDC_EjectFloppy(uint_fast8_t drive);
 
 /**
  * FDC_IsFloppyInserted
@@ -89,7 +88,7 @@ const char *FDC_EjectFloppy(unsigned int drive);
  * @param drive Drive number to check [0-3]
  * @returns true if a disc is inserted, false otherwise
  */
-bool FDC_IsFloppyInserted(unsigned int drive);
+bool FDC_IsFloppyInserted(uint_fast8_t drive);
 
 /**
  * FDC_Regular
@@ -98,7 +97,7 @@ bool FDC_IsFloppyInserted(unsigned int drive);
  *
  * @param state State of the emulator
  */
-unsigned FDC_Regular(ARMul_State *state);
+void FDC_Regular(ARMul_State *state);
 
 /**
  * FDC_SetLEDsChangeFunc
@@ -113,6 +112,6 @@ unsigned FDC_Regular(ARMul_State *state);
  *
  * @param leds_changed Function to callback on LED changes
  */
-void FDC_SetLEDsChangeFunc(void (*leds_changed)(unsigned int leds));
+void FDC_SetLEDsChangeFunc(void (*leds_changed)(uint_fast8_t leds));
 
 #endif

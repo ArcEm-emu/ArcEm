@@ -57,6 +57,7 @@ typedef uint16_t uint_least16_t;
 #endif
 
 #if defined(_MSC_VER) && (_MSC_VER < 1800)
+#define PRIu32 "I32u"
 #define PRIx32 "I32x"
 #define SCNx32 "lx"
 #else

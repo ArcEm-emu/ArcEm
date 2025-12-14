@@ -70,13 +70,13 @@ static void draw_keyboard_leds(uint8_t leds)
 
 /*----------------------------------------------------------------------------*/
 
-static void draw_floppy_leds(unsigned int leds)
+static void draw_floppy_leds(uint_fast8_t leds)
 {
-    unsigned int floppy;
+    uint_fast8_t floppy;
     char label[12];
 
     for (floppy = 0; floppy < 4; floppy++) {
-      sprintf(label, "Floppy %d", floppy);
+      sprintf(label, "Floppy %u", floppy);
       DoLED(label, leds & (1 << floppy), LEDTOPS, 290 + floppy * 80);
     }
 }

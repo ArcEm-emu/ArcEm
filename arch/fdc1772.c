@@ -32,10 +32,10 @@ typedef struct {
     /* User-visible name. */
     const char *name;
     uint_least16_t bytes_per_sector;
-    uint8_t sectors_per_track;
-    uint8_t sector_base;
-    uint8_t num_cyl;
-    uint8_t num_sides;
+    uint_least8_t sectors_per_track;
+    uint_least8_t sector_base;
+    uint_least8_t num_cyl;
+    uint_least8_t num_sides;
 } floppy_format;
 
 typedef struct {
@@ -49,21 +49,21 @@ typedef struct {
 } floppy_drive;
 
 struct FDCStruct{
-  uint8_t LastCommand;
-  int8_t Direction; /* -1 or 1 */
-  uint8_t StatusReg;
-  uint8_t Track;
-  uint8_t Sector;
-  uint8_t Sector_ReadAddr; /* Used to hold the next sector to be found! */
-  uint8_t Data;
-  int32_t BytesToGo;
+  uint_least8_t LastCommand;
+  int_least8_t Direction; /* -1 or 1 */
+  uint_least8_t StatusReg;
+  uint_least8_t Track;
+  uint_least8_t Sector;
+  uint_least8_t Sector_ReadAddr; /* Used to hold the next sector to be found! */
+  uint_least8_t Data;
+  uint_least8_t CurrentDisc;
+  int_least16_t BytesToGo;
   int32_t DelayCount;
   int32_t DelayLatch;
-  int32_t CurrentDisc;
     floppy_drive drive[4];
     /* The bottom four bits of leds holds their current state.  If the
      * bit is set the LED should be emitting. */
-    void (*leds_changed)(unsigned int leds);
+    void (*leds_changed)(uint_fast8_t leds);
 };
 
 
@@ -144,7 +144,7 @@ static void FDC_DoWriteChar(ARMul_State *state);
 static void FDC_DoReadChar(ARMul_State *state);
 static void FDC_DoReadAddressChar(ARMul_State *state);
 
-static void efseek(FILE *fp, int32_t offset, int whence);
+static void efseek(FILE *fp, long offset, int whence);
 
 /*--------------------------------------------------------------------------*/
 static void GenInterrupt(ARMul_State *state, const char *reason) {
@@ -163,11 +163,11 @@ static void GenInterrupt(ARMul_State *state, const char *reason) {
  *
  * @param state State of the emulator
  */
-unsigned int FDC_Regular(ARMul_State *state)
+void FDC_Regular(ARMul_State *state)
 {
-  int ActualTrack;
+  int_fast16_t ActualTrack;
 
-  if (--FDC.DelayCount) return 0;
+  if (--FDC.DelayCount) return;
 
     if (IS_CMD(FDC.LastCommand, RESTORE)) {
       FDC.StatusReg|=BIT_MOTORON | BIT_MOTORSPINUP | BIT_TR00;
@@ -213,7 +213,7 @@ unsigned int FDC_Regular(ARMul_State *state)
       FDC.DelayCount=FDC.DelayLatch;
     }
 
-    return 0;
+    return;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -246,10 +246,11 @@ static void ClearDRQ(ARMul_State *state) {
  * @param state Emulator state
  */
 void FDC_LatchAChange(ARMul_State *state) {
-  static CycleCount TimeWhenInUseChanged,now,diff;
-  int bit;
-  int val;
-  int diffmask=ioc.LatchA ^ ioc.LatchAold;
+  static CycleCount TimeWhenInUseChanged;
+  CycleCount now,diff;
+  int_fast8_t bit;
+  uint_fast8_t val;
+  uint_fast8_t diffmask=ioc.LatchA ^ ioc.LatchAold;
 
   DBG(("LatchA: 0x%x\n",ioc.LatchA));
 
@@ -290,8 +291,8 @@ void FDC_LatchAChange(ARMul_State *state) {
         case 6:
           now=ARMul_Time;
           diff=now-TimeWhenInUseChanged;
-          DBG(("Floppy In use line now %d (was %s for %lu ticks)\n",
-                  val?1:0,val?"low":"high",(long unsigned int) diff));
+          DBG(("Floppy In use line now %d (was %s for %"PRIu32" ticks)\n",
+                  val?1:0,val?"low":"high",diff));
           TimeWhenInUseChanged=now;
           break;
 
@@ -318,9 +319,9 @@ void FDC_LatchAChange(ARMul_State *state) {
  * @param state Emulator state
  */
 void FDC_LatchBChange(ARMul_State *state) {
-  int bit;
-  int val;
-  int diffmask=ioc.LatchB ^ ioc.LatchBold;
+  int_fast8_t bit;
+  uint_fast8_t val;
+  uint_fast8_t diffmask=ioc.LatchB ^ ioc.LatchBold;
 
   DBG(("LatchB: 0x%x\n",ioc.LatchB));
   /* Start up test */
@@ -405,8 +406,8 @@ static void ReadDataRegSpecial(ARMul_State *state)
  * @param offset Containing the FDC register
  * @returns      Value of register, or 0 on register not handled
  */
-ARMword FDC_Read(ARMul_State *state, ARMword offset) {
-  int reg=(offset>>2) &3;
+uint_fast8_t FDC_Read(ARMul_State *state, uint_fast16_t offset) {
+  uint_fast8_t reg=(offset>>2) &3;
 
   switch (reg) {
     case 0: /* Status */
@@ -470,7 +471,7 @@ static void FDC_NextSector(ARMul_State *state) {
 } /* FDC_NextSector */
 /*--------------------------------------------------------------------------*/
 static void FDC_DoReadAddressChar(ARMul_State *state) {
-  int bps;
+  uint_fast8_t bps;
 
   DBG(("FDC_DoReadAddressChar: BytesToGo=%x\n",FDC.BytesToGo));
 
@@ -542,7 +543,7 @@ static void FDC_DoReadChar(ARMul_State *state) {
     }
   }
   
-  FDC.Data=data;
+  FDC.Data=data & 0xff;
   FDC_DoDRQ(state);
   FDC.BytesToGo--;
   if (!FDC.BytesToGo) {
@@ -576,8 +577,8 @@ static void FDC_SeekCommand(ARMul_State *state) {
 
 /*--------------------------------------------------------------------------*/
 /* Type 1 command, u/h/V/r1,r0 -                                            */
-static void FDC_StepDirCommand(ARMul_State *state,int Dir) {
-  int DesiredTrack=FDC.Track+Dir;
+static void FDC_StepDirCommand(ARMul_State *state,int_fast8_t Dir) {
+  int_fast8_t DesiredTrack=FDC.Track+Dir;
   FDC.StatusReg|=BIT_BUSY;
   FDC.StatusReg&=~(BIT_CRC|BIT_RECNOTFOUND|BIT_TR00);
 
@@ -598,8 +599,8 @@ static void FDC_StepDirCommand(ARMul_State *state,int Dir) {
 
 /*--------------------------------------------------------------------------*/
 static void FDC_ReadAddressCommand(ARMul_State *state) {
-  int32_t offset;
-  int Side=(ioc.LatchA & (1<<4))?0:1; /* Note: Inverted??? Yep!!! */
+  long offset;
+  uint_fast8_t Side=(ioc.LatchA & (1<<4))?0:1; /* Note: Inverted??? Yep!!! */
 
   FDC.StatusReg|=BIT_BUSY;
   FDC.StatusReg &= ~(BIT_DRQ | BIT_LOSTDATA | (1<<5) | BIT_WRITEPROT | BIT_RECNOTFOUND);
@@ -630,13 +631,13 @@ static void FDC_ReadAddressCommand(ARMul_State *state) {
 
 /*--------------------------------------------------------------------------*/
 static void FDC_ReadCommand(ARMul_State *state) {
-  uint32_t offset;
-  int Side=(ioc.LatchA & (1<<4))?0:1; /* Note: Inverted??? Yep!!! */
+  long offset;
+  uint_fast8_t Side=(ioc.LatchA & (1<<4))?0:1; /* Note: Inverted??? Yep!!! */
 
   FDC.StatusReg|=BIT_BUSY;
   FDC.StatusReg &= ~(BIT_DRQ | BIT_LOSTDATA | (1<<5) | BIT_WRITEPROT | BIT_RECNOTFOUND);
 
-  DBG(("FDC_ReadCommand: Starting with Side=%d Track=%d Sector=%d (CurrentDisc=%d)\n",
+  DBG(("FDC_ReadCommand: Starting with Side=%u Track=%d Sector=%d (CurrentDisc=%d)\n",
                  Side,FDC.Track,FDC.Sector,FDC.CurrentDisc));
 
   offset = SECTOR_LOC_TO_BYTE_OFF(FDC.Track, Side, FDC.Sector);
@@ -686,12 +687,12 @@ static void FDC_DoWriteChar(ARMul_State *state) {
 } /* FDC_DoWriteChar */
 /*--------------------------------------------------------------------------*/
 static void FDC_WriteCommand(ARMul_State *state) {
-  uint32_t offset;
-  int Side=(ioc.LatchA & (1<<4))?0:1; /* Note: Inverted??? Yep!!! */
+  long offset;
+  uint_fast8_t Side=(ioc.LatchA & (1<<4))?0:1; /* Note: Inverted??? Yep!!! */
   FDC.StatusReg|=BIT_BUSY;
   FDC.StatusReg &= ~(BIT_DRQ | BIT_LOSTDATA | (1<<5) | BIT_WRITEPROT | BIT_RECNOTFOUND);
 
-  DBG(("FDC_WriteCommand: Starting with Side=%d Track=%d Sector=%d\n",
+  DBG(("FDC_WriteCommand: Starting with Side=%u Track=%d Sector=%d\n",
                  Side,FDC.Track,FDC.Sector));
 
   if (FDC.drive[FDC.CurrentDisc].write_protected) {
@@ -717,7 +718,7 @@ static void FDC_RestoreCommand(ARMul_State *state) {
 } /* FDC_RestoreCommand */
 /*--------------------------------------------------------------------------*/
 
-static void FDC_NewCommand(ARMul_State *state, ARMword data)
+static void FDC_NewCommand(ARMul_State *state, uint_fast8_t data)
 {
   ClearInterrupt(state);
 
@@ -790,10 +791,9 @@ static void FDC_NewCommand(ARMul_State *state, ARMword data)
  * @param offset Containing the FDC register
  * @param data   Data field to write
  * @param bNw    byteNotWord IMPROVE unused parameter
- * @returns      IMRPOVE always 0
  */
-ARMword FDC_Write(ARMul_State *state, ARMword offset, ARMword data, bool bNw) {
-  int reg=(offset>>2) &3;
+void FDC_Write(ARMul_State *state, uint_fast16_t offset, uint_fast8_t data, bool bNw) {
+  uint_fast8_t reg=(offset>>2) &3;
 
   switch (reg) {
     case 0: /* Command/Status register */
@@ -834,7 +834,6 @@ ARMword FDC_Write(ARMul_State *state, ARMword offset, ARMword data, bool bNw) {
         }
       break;
   }
-  return 0;
 } /* FDC_Write */
 
 /**
@@ -845,7 +844,7 @@ ARMword FDC_Write(ARMul_State *state, ARMword offset, ARMword data, bool bNw) {
  * @param state Emulator state IMPROVE unused
  */
 void FDC_Init(ARMul_State *state) {
-  int drive;
+  uint_fast8_t drive;
 
   FDC.StatusReg=0;
   FDC.Track=0;
@@ -887,7 +886,7 @@ void FDC_Init(ARMul_State *state) {
  * @returns NULL on success or string of error message
  */
 const char *
-FDC_InsertFloppy(unsigned int drive, const char *image)
+FDC_InsertFloppy(uint_fast8_t drive, const char *image)
 {
   floppy_drive *dr;
   FILE *fp;
@@ -912,7 +911,7 @@ FDC_InsertFloppy(unsigned int drive, const char *image)
   } else if ((fp = fopen(image, "rb")) != NULL) {
     dr->write_protected = true;
   } else {
-    warn_fdc("couldn't open disc image %s on drive %d\n",
+    warn_fdc("couldn't open disc image %s on drive %u\n",
           image, drive);
     return "couldn't open disc image";
   }
@@ -921,7 +920,7 @@ FDC_InsertFloppy(unsigned int drive, const char *image)
       fseek(fp, 0, SEEK_SET) == -1)
   {
     warn_fdc("couldn't get length of disc image %s on drive "
-            "%d\n", image, drive);
+            "%u\n", image, drive);
     return "couldn't get length of disc image";
   }
 
@@ -937,7 +936,7 @@ FDC_InsertFloppy(unsigned int drive, const char *image)
       break;
     }
   }
-  warn_fdc("floppy format %s used for drive %d's r/%c, %d "
+  warn_fdc("floppy format %s used for drive %u's r/%c, %d "
           "length, image.\n", dr->form->name, drive,
           dr->write_protected ? 'o' : 'w', len);
 
@@ -954,7 +953,7 @@ FDC_InsertFloppy(unsigned int drive, const char *image)
  * @returns NULL on success or string of error message
  */
 const char *
-FDC_EjectFloppy(unsigned int drive)
+FDC_EjectFloppy(uint_fast8_t drive)
 {
   floppy_drive *dr;
 
@@ -965,7 +964,7 @@ FDC_EjectFloppy(unsigned int drive)
 /* assert(NULL) crashes ArcEm on the Amiga, this gives us a quick clean exit
    from FDC_EjectFloppy when no disc is present */
   if (!dr->fp) {
-    warn_fdc("no disc in floppy drive %d: %s\n",
+    warn_fdc("no disc in floppy drive %u: %s\n",
             drive, strerror(errno));
 	return(NULL);
   }
@@ -973,7 +972,7 @@ FDC_EjectFloppy(unsigned int drive)
   assert(dr->fp);
 
   if (fclose(dr->fp)) {
-    warn_fdc("error closing floppy drive %d: %s\n",
+    warn_fdc("error closing floppy drive %u: %s\n",
             drive, strerror(errno));
   }
 
@@ -995,7 +994,7 @@ FDC_EjectFloppy(unsigned int drive)
  * @returns true if a disc is inserted, false otherwise
  */
 bool
-FDC_IsFloppyInserted(unsigned int drive)
+FDC_IsFloppyInserted(uint_fast8_t drive)
 {
     floppy_drive* dr;
 
@@ -1008,10 +1007,10 @@ FDC_IsFloppyInserted(unsigned int drive)
 
 /* ------------------------------------------------------------------ */
 
-static void efseek(FILE *fp, int32_t offset, int whence)
+static void efseek(FILE *fp, long offset, int whence)
 {
   if (fseek(fp, offset, whence)) {
-    ControlPane_Error(true,"efseek(%p, %ld, %d) failed.", fp, (long int) offset,
+    ControlPane_Error(true,"efseek(%p, %ld, %d) failed.", fp, offset,
             whence);
   }
 
@@ -1031,7 +1030,7 @@ static void efseek(FILE *fp, int32_t offset, int whence)
  *
  * @param leds_changed Function to callback on LED changes
  */
-void FDC_SetLEDsChangeFunc(void (*leds_changed)(unsigned int))
+void FDC_SetLEDsChangeFunc(void (*leds_changed)(uint_fast8_t))
 {
   assert(leds_changed);
   
