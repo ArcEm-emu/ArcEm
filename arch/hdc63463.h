@@ -11,16 +11,16 @@
 
 /* Structure used to store the configurable shape of the Harddrive */
 struct HDCshape {
-  uint32_t NCyls,NHeads,NSectors,RecordLength;
+  uint_least16_t NCyls,NHeads,NSectors,RecordLength;
 };
 
 /* Write to HDC memory space */
-void HDC_Write(ARMul_State *state, int offset, int data);
+void HDC_Write(ARMul_State *state, uint_fast16_t offset, uint_fast16_t data);
 /* Read from HDC memory space */
-ARMword HDC_Read(ARMul_State *state, int offset);
+uint_fast16_t HDC_Read(ARMul_State *state, uint_fast16_t offset);
 
 void HDC_Init(ARMul_State *state);
 
-unsigned int HDC_Regular(ARMul_State *state);
+void HDC_Regular(ARMul_State *state);
 
 #endif
