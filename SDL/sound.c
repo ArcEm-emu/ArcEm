@@ -79,7 +79,7 @@ static PIDController pid_init_zn(float Ku, float Tu, float dt)
   float Ki = 1.2f*Ku/Tu;
   float Kd = 0.075f*Ku*Tu;
 #ifdef SOUND_VERBOSE
-  dbug_vidc("Ziegler-Nichols params Ku %f Tu %f dt %f -> Kp %f Ki %f Kd %f\n", Ku, Tu, dt, Kp, Ki, Kd);
+  dbug_sound("Ziegler-Nichols params Ku %f Tu %f dt %f -> Kp %f Ki %f Kd %f\n", Ku, Tu, dt, Kp, Ki, Kd);
 #endif
   return pid_init(Kp, Ki, Kd, dt);
 }
@@ -325,7 +325,7 @@ static void adjust_fudgerate(int32_t used, int32_t out)
   error_count = 0;
   int32_t adjust = pid_step(&sound_pid);
 #ifdef SOUND_VERBOSE
-  dbug_vidc("level %f avg error %f (%f,%f,%f) fudge %f adjust %f remainder %f\n", sound_inv_hostrate*0.5f*used, sound_inv_hostrate*sound_pid.error[1], sound_inv_hostrate*emin, sound_inv_hostrate*emax, sound_inv_hostrate*(emax-emin), ((float)Sound_FudgeRate)/(1<<24), ((float)adjust)/(1<<24), count);
+  dbug_sound("level %f avg error %f (%f,%f,%f) fudge %f adjust %f remainder %f\n", sound_inv_hostrate*0.5f*used, sound_inv_hostrate*sound_pid.error[1], sound_inv_hostrate*emin, sound_inv_hostrate*emax, sound_inv_hostrate*(emax-emin), ((float)Sound_FudgeRate)/(1<<24), ((float)adjust)/(1<<24), count);
   emin = BUFFER_SAMPLES;
   emax = -BUFFER_SAMPLES;
 #endif
@@ -358,7 +358,7 @@ void Sound_HostBuffered(SoundData *buffer,int32_t numSamples)
 
   if (underflows)
   {
-    warn_vidc("*** sound underflow x%d! ***\n", underflows);
+    warn_sound("*** sound underflow x%d! ***\n", underflows);
   }
 
   adjust_fudgerate(used, out);
@@ -426,7 +426,7 @@ Sound_InitHost(ARMul_State *state)
   {
     fprintf(logfile,"event,time,used,delta\n");
   }
-  dbug_vidc("Timer frequency %llu\n", GETCOUNTERRATE);
+  dbug_sound("Timer frequency %llu\n", GETCOUNTERRATE);
   logt0 = GETCOUNTER;
 #endif
 
@@ -455,7 +455,7 @@ Sound_InitHost(ARMul_State *state)
 
   sound_buffer_in = buffer_threshold;
 
-  warn_vidc("Sound_Open got freq %d samples %d desired level %d (%fs)\n", freq, samples, buffer_threshold, sound_inv_hostrate*0.5f*buffer_threshold);
+  warn_sound("Sound_Open got freq %d samples %d desired level %d (%fs)\n", freq, samples, buffer_threshold, sound_inv_hostrate*0.5f*buffer_threshold);
 
   Sound_Resume();
 

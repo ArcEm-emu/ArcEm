@@ -53,18 +53,18 @@ static void sigfunc(int sig)
 #if 0
 	/* Dump some emulator state */
 	ARMul_State *state = &statestr;
-	dbug_vidc("r0 = %08x  r4 = %08x  r8  = %08x  r12 = %08x\n"
-	          "r1 = %08x  r5 = %08x  r9  = %08x  sp  = %08x\n"
-	          "r2 = %08x  r6 = %08x  r10 = %08x  lr  = %08x\n"
-	          "r3 = %08x  r7 = %08x  r11 = %08x  pc  = %08x\n"
-	          "\n",
+	dbug_sound("r0 = %08x  r4 = %08x  r8  = %08x  r12 = %08x\n"
+	           "r1 = %08x  r5 = %08x  r9  = %08x  sp  = %08x\n"
+	           "r2 = %08x  r6 = %08x  r10 = %08x  lr  = %08x\n"
+	           "r3 = %08x  r7 = %08x  r11 = %08x  pc  = %08x\n"
+	           "\n",
 	  state->Reg[0], state->Reg[4], state->Reg[8], state->Reg[12],
 	  state->Reg[1], state->Reg[5], state->Reg[9], state->Reg[13],
 	  state->Reg[2], state->Reg[6], state->Reg[10], state->Reg[14],
 	  state->Reg[3], state->Reg[7], state->Reg[11], state->Reg[15]);
 	int i;
 	for(i=0;i<4;i++)
-	  dbug_vidc("Timer%d Count %08x Latch %08x\n",i,ioc.TimerCount[i],ioc.TimerInputLatch[i]);
+	  dbug_sound("Timer%d Count %08x Latch %08x\n",i,ioc.TimerCount[i],ioc.TimerInputLatch[i]);
 	FILE *f = fopen("$.dump","wb");
 	if(f)
 	{
@@ -157,7 +157,7 @@ static bool init_sharedsound(void)
 	/* Big thresholds will cause problems too! */
 	if(buffer_threshold*4 > BUFFER_SAMPLES)
 		buffer_threshold = BUFFER_SAMPLES>>2;
-	warn_vidc("Host audio rate %dHz, using buffer threshold %d\n",Sound_HostRate>>10,buffer_threshold);
+	warn_sound("Host audio rate %dHz, using buffer threshold %d\n",Sound_HostRate>>10,buffer_threshold);
 	return true;
 }                           
 
@@ -236,7 +236,7 @@ void Sound_HostBuffered(SoundData *buffer,int32_t numSamples)
 
   if(buffree == numSamples)
   {
-    warn_vidc("*** sound overflow! ***\n");
+    warn_sound("*** sound overflow! ***\n");
     if(Sound_FudgeRate < -10)
       Sound_FudgeRate = Sound_FudgeRate/2;
     else
@@ -244,7 +244,7 @@ void Sound_HostBuffered(SoundData *buffer,int32_t numSamples)
   }
   else if(!used)
   {
-    warn_vidc("*** sound underflow! ***\n");
+    warn_sound("*** sound underflow! ***\n");
     if(Sound_FudgeRate > 10)
       Sound_FudgeRate = Sound_FudgeRate/2;
     else

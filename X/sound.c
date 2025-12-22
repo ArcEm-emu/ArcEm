@@ -73,7 +73,7 @@ void Sound_HostBuffered(SoundData *buffer,int32_t numSamples)
   
   if(buffree == numSamples)
   {
-    warn_vidc("*** sound overflow! ***\n");
+    warn_sound("*** sound overflow! ***\n");
     if(Sound_FudgeRate < -10)
       Sound_FudgeRate = Sound_FudgeRate/2;
     else
@@ -81,7 +81,7 @@ void Sound_HostBuffered(SoundData *buffer,int32_t numSamples)
   }
   else if(!used)
   {
-    warn_vidc("*** sound underflow! ***\n");
+    warn_sound("*** sound underflow! ***\n");
     if(Sound_FudgeRate > 10)
       Sound_FudgeRate = Sound_FudgeRate/2;
     else
@@ -121,7 +121,7 @@ void Sound_HostBuffered(SoundData *buffer,int32_t numSamples)
     bufsize /= sizeof(SoundData);
     if(numSamples > buffree)
     {
-      warn_vidc("*** sound overflow! %d %d %d %d ***\n",numSamples-buffree,ARMul_EmuRate,Sound_FudgeRate,Sound_DMARate);
+      warn_sound("*** sound overflow! %d %d %d %d ***\n",numSamples-buffree,ARMul_EmuRate,Sound_FudgeRate,Sound_DMARate);
       numSamples = buffree; /* We could block until space is available, but I'm woried we'd get stuck blocking forever because the FudgeRate increase wouldn't compensate for the ARMul cycles lost due to blocking */
       if(Sound_FudgeRate < -stepsize)
         Sound_FudgeRate = Sound_FudgeRate/2;
@@ -130,7 +130,7 @@ void Sound_HostBuffered(SoundData *buffer,int32_t numSamples)
     }
     else if(!used)
     {
-      warn_vidc("*** sound underflow! %d %d %d ***\n",ARMul_EmuRate,Sound_FudgeRate,Sound_DMARate);
+      warn_sound("*** sound underflow! %d %d %d ***\n",ARMul_EmuRate,Sound_FudgeRate,Sound_DMARate);
       if(Sound_FudgeRate > stepsize)
         Sound_FudgeRate = Sound_FudgeRate/2;
       else
@@ -168,7 +168,7 @@ sound_writeThread(void *arg)
     avail = sound_buffer_in-local_buffer_out;
     pthread_mutex_unlock(&mut);
 
-    dbug_vidc("%d\n",avail);
+    dbug_sound("%d\n",avail);
     if (avail) {
       int32_t ofs = local_buffer_out & sound_buff_mask;
 
@@ -236,7 +236,7 @@ Sound_InitHost(ARMul_State *state)
     ControlPane_Error(false,"Could not read output space");
     return false;
   }
-  warn_vidc("Sound buffer params: frags %d total %d size %d bytes %d\n",buf.fragments,buf.fragstotal,buf.fragsize,buf.bytes);
+  warn_sound("Sound buffer params: frags %d total %d size %d bytes %d\n",buf.fragments,buf.fragstotal,buf.fragsize,buf.bytes);
 
   eSound_StereoSense = Stereo_LeftRight;
 

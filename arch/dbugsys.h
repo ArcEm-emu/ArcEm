@@ -21,6 +21,7 @@
 #undef DEBUG_DMAREAD
 #undef DEBUG_INTS
 #undef DEBUG_VIDC
+#undef DEBUG_SOUND
 #undef DEBUG_KEYBOARD
 #undef DEBUG_FDC1772
 #undef DEBUG_HDC63463
@@ -36,6 +37,7 @@
 #define WARN_DMAREAD
 #define WARN_INTS
 #define WARN_VIDC
+#define WARN_SOUND
 #define WARN_KEYBOARD
 #define WARN_FDC1772
 #define WARN_HDC63463
@@ -192,6 +194,18 @@ int log_null(const char *format, ...);
 # define warn_vidc log_warn
 #else
 # define warn_vidc 1?(void)0:(void)log_null
+#endif
+
+#ifdef DEBUG_SOUND
+# define dbug_sound log_dbug
+#else
+# define dbug_sound 1?(void)0:(void)log_null
+#endif
+
+#ifdef WARN_SOUND
+# define warn_sound log_warn
+#else
+# define warn_sound 1?(void)0:(void)log_null
 #endif
 
 #ifdef DEBUG_KEYBOARD

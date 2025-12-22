@@ -82,7 +82,7 @@ void Sound_HostBuffered(SoundData *buffer,int32_t numSamples)
 		 * wait for a block to become free
 		 */
 		while(!waveFreeBlockCount) {
-			warn_vidc("Waiting for a free block");
+			warn_sound("Waiting for a free block");
 			Sleep(10);
 		}
 		/*
