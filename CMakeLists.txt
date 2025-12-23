@@ -90,6 +90,7 @@ set(ARCEM_MACOSX_SOURCES
 	macosx/PreferenceController.m
 	macosx/filecalls.m
 	macosx/main.m
+	macosx/sound.m
 	macosx/win.h
 )
 set(ARCEM_MACOSX_RESOURCES
@@ -188,6 +189,14 @@ elseif(${SYSTEM} STREQUAL "macosx")
 	target_link_libraries(arcem PRIVATE ${FRAMEWORKS})
 
 	set_property(TARGET arcem APPEND_STRING PROPERTY COMPILE_FLAGS "-fobjc-arc")
+
+	option(SOUND_SUPPORT "Build with sound support" ON)
+	if(SOUND_SUPPORT)
+		find_library(AUDIO_FRAMEWORKS AudioToolbox REQUIRED)
+		target_link_libraries(arcem PRIVATE ${AUDIO_FRAMEWORKS})
+
+		target_compile_definitions(arcem PRIVATE SOUND_SUPPORT)
+	endif()
 elseif(${SYSTEM} STREQUAL "win")
 	add_executable(arcem WIN32 ${ARCEM_SOURCES} ${ARCEM_ARCH_SOURCES} ${ARCEM_WIN_SOURCES} ${ARCEM_EXTNROM_MODULES})
 	target_compile_definitions(arcem PRIVATE SYSTEM_win)

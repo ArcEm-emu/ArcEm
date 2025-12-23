@@ -9,7 +9,7 @@ extern void Sound_Shutdown(ARMul_State *state);
 
 #ifdef SOUND_SUPPORT
 
-#ifdef SYSTEM_SDL
+#if defined(SYSTEM_SDL) || defined(SYSTEM_macosx)
 #define SOUND_FUDGERATE_FRAC
 #endif
 
