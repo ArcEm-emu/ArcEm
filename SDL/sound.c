@@ -1,3 +1,5 @@
+#if defined(SOUND_SUPPORT)
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -23,6 +25,7 @@ volatile int32_t sound_underflows=0;
 volatile int32_t sound_buffer_hostout=0; /* Number of samples requested by the sound thread */
 static const int32_t sound_buff_mask=BUFFER_SAMPLES-1;
 static float sound_inv_hostrate; /* 1/Sound_HostRate */
+static int32_t local_buffer_out = 0;
 static int32_t buffer_threshold; /* Desired buffer level; chosen based around the output sample rate & buffer_seconds */
 static const float buffer_seconds = 0.1f; /* How much audio we want to try and keep buffered */
 
@@ -104,7 +107,7 @@ static int32_t pid_step(PIDController *p)
 
 static PIDController sound_pid;
 
-static void Sound_CallbackImpl(void *userdata, Uint8 *stream, int len);
+static void Sound_CallbackImpl(void *userdata, uint8_t *stream, int len);
 
 #if SDL_VERSION_ATLEAST(3, 0, 0)
 static SDL_AudioDeviceID device_id = 0;
@@ -113,58 +116,64 @@ static Uint8 *callback_buffer = NULL;
 static int callback_buffer_size;
 
 static void Sound_Callback(void *userdata, SDL_AudioStream *stream, int approx_amount, int total_amount) {
-    while (approx_amount > 0) {
-      Sound_CallbackImpl(userdata, callback_buffer, callback_buffer_size);
-      SDL_PutAudioStreamData(stream, callback_buffer, callback_buffer_size);
-      approx_amount -= callback_buffer_size;
-    }
+  while (approx_amount > 0) {
+    Sound_CallbackImpl(userdata, callback_buffer, callback_buffer_size);
+    SDL_PutAudioStreamData(stream, callback_buffer, callback_buffer_size);
+    approx_amount -= callback_buffer_size;
+  }
 }
 
 static void Sound_Close(void)
 {
-    SDL_CloseAudioDevice(device_id);
-    device_id = 0;
-    SDL_DestroyAudioStream(device_stream);
-    device_stream = NULL;
-    SDL_free(callback_buffer);
-    callback_buffer = NULL;
+  SDL_CloseAudioDevice(device_id);
+  device_id = 0;
+  SDL_DestroyAudioStream(device_stream);
+  device_stream = NULL;
+  SDL_free(callback_buffer);
+  callback_buffer = NULL;
 }
 
-static bool Sound_Open(int *freq, int *format, int *channels, int *samples) {
+static bool Sound_Open(int *freq, int *channels, int *samples) {
   SDL_AudioSpec desired, obtained;
+  const int format = SDL_AUDIO_S16;
 
   desired.freq = *freq;
-  desired.format = *format;
+  desired.format = format;
   desired.channels = *channels;
 
   device_id = SDL_OpenAudioDevice(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &desired);
-  if (device_id == 0)
+  if (device_id == 0) {
+    ControlPane_Error(false,"Could not open audio device: %s", SDL_GetError());
     return false;
+  }
 
   SDL_PauseAudioDevice(device_id);
   SDL_GetAudioDeviceFormat(device_id, &obtained, samples);
   *freq = obtained.freq;
-  obtained.format = *format;
+  obtained.format = format;
   obtained.channels = *channels;
 
   device_stream = SDL_CreateAudioStream(&obtained, &desired);
   if (!device_stream) {
-     Sound_Close();
-     return false;
+    ControlPane_Error(false,"Could not create audio stream: %s", SDL_GetError());
+    Sound_Close();
+    return false;
   }
 
-  callback_buffer_size = SDL_AUDIO_BITSIZE(*format) / 8;
+  callback_buffer_size = SDL_AUDIO_BITSIZE(format) / 8;
   callback_buffer_size *= *channels;
   callback_buffer_size *= *samples;
   callback_buffer = SDL_malloc(callback_buffer_size);
   if (!callback_buffer) {
-      Sound_Close();
-      return false;
+    ControlPane_Error(false,"Could not allocate audio buffer");
+    Sound_Close();
+    return false;
   }
 
   SDL_SetAudioStreamGetCallback(device_stream, Sound_Callback, NULL);
 
   if (!SDL_BindAudioStream(device_id, device_stream)) {
+    ControlPane_Error(false,"Could not bind audio stream to device: %s", SDL_GetError());
     Sound_Close();
     return false;
   }
@@ -195,15 +204,15 @@ static void Sound_Callback(void *userdata, Uint8 *stream, int len) {
 
 static void Sound_Close(void)
 {
-    SDL_CloseAudioDevice(device_id);
-    device_id = 0;
+  SDL_CloseAudioDevice(device_id);
+  device_id = 0;
 }
 
-static bool Sound_Open(int *freq, int *format, int *channels, int *samples) {
+static bool Sound_Open(int *freq, int *channels, int *samples) {
   SDL_AudioSpec desired, obtained;
 
   desired.freq = *freq;
-  desired.format = *format;
+  desired.format = SDL_AUDIO_S16;
   desired.channels = *channels;
   desired.samples = *samples;
   desired.callback = Sound_Callback;
@@ -211,11 +220,12 @@ static bool Sound_Open(int *freq, int *format, int *channels, int *samples) {
 
   device_id = SDL_OpenAudioDevice(NULL, 0, &desired, &obtained,
                                   SDL_AUDIO_ALLOW_FREQUENCY_CHANGE | SDL_AUDIO_ALLOW_SAMPLES_CHANGE);
-  if (device_id == 0)
+  if (device_id == 0) {
+    ControlPane_Error(false,"Could not open audio device: %s", SDL_GetError());
     return false;
+  }
 
   *freq = obtained.freq;
-  *format = obtained.format;
   *channels = obtained.channels;
   *samples = obtained.samples;
   return true;
@@ -242,24 +252,25 @@ static void Sound_Callback(void *userdata, Uint8 *stream, int len) {
 
 static void Sound_Close(void)
 {
-    SDL_CloseAudio();
+  SDL_CloseAudio();
 }
 
-static bool Sound_Open(int *freq, int *format, int *channels, int *samples) {
+static bool Sound_Open(int *freq, int *channels, int *samples) {
   SDL_AudioSpec desired, obtained;
 
   desired.freq = *freq;
-  desired.format = *format;
+  desired.format = SDL_AUDIO_S16;
   desired.channels = *channels;
   desired.samples = *samples;
   desired.callback = Sound_Callback;
   desired.userdata = NULL;
 
-  if (SDL_OpenAudio(&desired, &obtained) < 0)
+  if (SDL_OpenAudio(&desired, &obtained) < 0) {
+    ControlPane_Error(false,"Could not open audio device: %s", SDL_GetError());
     return false;
+  }
 
   *freq = obtained.freq;
-  *format = obtained.format;
   *channels = obtained.channels;
   *samples = obtained.samples;
   return true;
@@ -368,9 +379,8 @@ void Sound_HostBuffered(SoundData *buffer,int32_t numSamples)
   Sound_Unlock();
 }
 
-static void Sound_CallbackImpl(void *userdata, Uint8 *stream, int len)
+static void Sound_CallbackImpl(void *userdata, uint8_t *stream, int len)
 {
-  static int32_t local_buffer_out = 0;
   while (len) {
     int32_t avail;
 
@@ -412,11 +422,10 @@ static void Sound_CallbackImpl(void *userdata, Uint8 *stream, int len)
 bool
 Sound_InitHost(ARMul_State *state)
 {
-  int freq = 44100, format = SDL_AUDIO_S16, channels = 2, samples = 512;
+  int freq = 44100, channels = 2, samples = 512;
 
-  if (!Sound_Open(&freq, &format, &channels, &samples))
+  if (!Sound_Open(&freq, &channels, &samples))
   {
-    ControlPane_Error(false,"Could not open audio device: %s", SDL_GetError());
     return false;
   }
 
@@ -454,6 +463,7 @@ Sound_InitHost(ARMul_State *state)
     buffer_threshold = BUFFER_SAMPLES-Sound_BatchSize*4;
 
   sound_buffer_in = buffer_threshold;
+  local_buffer_out = 0;
 
   warn_sound("Sound_Open got freq %d samples %d desired level %d (%fs)\n", freq, samples, buffer_threshold, sound_inv_hostrate*0.5f*buffer_threshold);
 
@@ -474,3 +484,5 @@ Sound_ShutdownHost(ARMul_State *state)
 #endif
   Sound_Close();
 }
+
+#endif
