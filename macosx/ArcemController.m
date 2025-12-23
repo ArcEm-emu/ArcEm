@@ -118,6 +118,7 @@ ArcemConfig hArcemConfig;
     // Bring that window to the front
     [[arcemView window] makeKeyAndOrderFront: self];
     [[arcemView window] makeFirstResponder: arcemView];
+    [arcemView prefsUpdated];
 
     // Set the menu options
 
