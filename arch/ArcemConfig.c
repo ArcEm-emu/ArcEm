@@ -108,15 +108,14 @@ ArcemConfig_Result ArcemConfig_SetupDefaults(ArcemConfig *pConfig)
   memset(pConfig->aST506Paths, 0, sizeof(char *) * 4);
   memset(pConfig->aST506DiskShapes, 0, sizeof(struct HDCshape) * 4);
 
-#if defined(SYSTEM_win)
-  pConfig->eDisplayDriver = DisplayDriver_Standard;
   pConfig->bAspectRatioCorrection = true;
   pConfig->bUpscale = true;
+
+#if defined(SYSTEM_win)
+  pConfig->eDisplayDriver = DisplayDriver_Standard;
 #endif
 #if defined(SYSTEM_riscos_single)
   pConfig->eDisplayDriver = DisplayDriver_Palettised;
-  pConfig->bAspectRatioCorrection = true;
-  pConfig->bUpscale = true;
   pConfig->bRedBlueSwap = false;
   pConfig->bNoLowColour = false;
   pConfig->iMinResX = 0;
@@ -294,13 +293,13 @@ ArcemConfig_Result ArcemConfig_ParseCommandLine(ArcemConfig *pConfig, int argc, 
     "     '8M', '12M' or '16M'\n"
     "  --processor <value> - Set the emulated CPU\n"
     "     Where value is one of 'ARM2', 'ARM250', 'ARM3'\n"
+    "  --noaspect - Disable aspect ratio correction\n"
+    "  --noupscale - Disable upscaling\n"
 #if defined(SYSTEM_riscos_single) || defined(SYSTEM_win)
     "  --display <mode> - Select display driver, 'pal' or 'std'\n"
 #endif /* SYSTEM_riscos_single || SYSTEM_win */
 #if defined(SYSTEM_riscos_single)
     "  --rbswap - Swap red & blue in 16bpp mode (e.g. for Iyonix with GeForce FX)\n"
-    "  --noaspect - Disable aspect ratio correction\n"
-    "  --noupscale - Disable upscaling\n"
     "  --nolowcolour - Disable 1/2/4bpp modes (e.g. for Iyonix with Aemulor running)\n"
     "  --minres <x> <y> - Specify dimensions of smallest screen mode to use\n"
     "  --lcdres <x> <y> - Specify native resolution of your monitor (to avoid using\n"
@@ -421,6 +420,12 @@ ArcemConfig_Result ArcemConfig_ParseCommandLine(ArcemConfig *pConfig, int argc, 
         ControlPane_Error(false,"No argument following the --processor option");
         return Result_Failure;
       }
+    } else if(0 == strcmp("--noaspect",argv[iArgument])) {
+      pConfig->bAspectRatioCorrection = false;
+      iArgument += 1;
+    } else if(0 == strcmp("--noupscale",argv[iArgument])) {
+      pConfig->bUpscale = false;
+      iArgument += 1;
     }
 #if defined(SYSTEM_riscos_single) || defined(SYSTEM_win)
     else if(0 == strcmp("--display", argv[iArgument])) {
@@ -441,12 +446,6 @@ ArcemConfig_Result ArcemConfig_ParseCommandLine(ArcemConfig *pConfig, int argc, 
         ControlPane_Error(false,"No argument following the --display option");
         return Result_Failure;
       }
-    } else if(0 == strcmp("--noaspect",argv[iArgument])) {
-      pConfig->bAspectRatioCorrection = false;
-      iArgument += 1;
-    } else if(0 == strcmp("--noupscale",argv[iArgument])) {
-      pConfig->bUpscale = false;
-      iArgument += 1;
     }
 #endif /* SYSTEM_riscos_single || SYSTEM_win */
 #if defined(SYSTEM_riscos_single)

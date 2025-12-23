@@ -9,6 +9,7 @@
 #include <limits.h>
 
 #include "../armdefs.h"
+#include "../arch/ArcemConfig.h"
 #include "../arch/armarc.h"
 #include "../arch/dbugsys.h"
 #include "../arch/keyboard.h"
@@ -141,12 +142,12 @@ static int changemode(int width,int height,int log2bpp,int *xscale,int *yscale)
 	*yscale = 1;
 #if 0 /* TODO - Get scaling working on amiga. Cursor image will need to be scaled, for a start. */
 	/* Try and detect rectangular pixel modes */
-	if(width >= height*2)
+	if(CONFIG.bAspectRatioCorrection && width >= height*2)
 	{
 		*yscale = 2;
 		height *= 2;
 	}
-	else if(height >= width*2)
+	else if(CONFIG.bAspectRatioCorrection && height >= width*2)
 	{
 		*xscale = 2;
 		width *= 2;

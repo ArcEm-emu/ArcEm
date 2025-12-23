@@ -97,11 +97,12 @@ struct ArcemConfig_s {
   /* Shapes of the MFM ST506 drives as set in the config file */
   struct HDCshape aST506DiskShapes[4];
 
+  bool bAspectRatioCorrection; /* Apply H/V scaling for aspect ratio correction */
+  bool bUpscale; /* Allow upscaling to fill screen */
+
   /* Platform-specific bits */
 #if defined(SYSTEM_riscos_single) || defined(SYSTEM_win)
   ArcemConfig_DisplayDriver eDisplayDriver;
-  bool bAspectRatioCorrection; /* Apply H/V scaling for aspect ratio correction */
-  bool bUpscale; /* Allow upscaling to fill screen */
 #endif
 #if defined(SYSTEM_riscos_single)
   bool bRedBlueSwap; /* Red/blue swap 16bpp output */

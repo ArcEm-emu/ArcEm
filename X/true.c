@@ -21,6 +21,7 @@
 #endif
 
 #include "../armdefs.h"
+#include "../arch/ArcemConfig.h"
 #include "../arch/armarc.h"
 #include "../arch/dbugsys.h"
 #include "../arch/keyboard.h"
@@ -97,18 +98,18 @@ static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,in
   HD.XScale = 1;
   HD.YScale = 1;
   /* Try and detect rectangular pixel modes */
-  if((width >= height*2) && (height*2 <= MaxVideoHeight))
+  if(CONFIG.bAspectRatioCorrection && (width >= height*2) && (height*2 <= MaxVideoHeight))
   {
     HD.YScale = 2;
     height *= 2;
   }
-  else if((height >= width) && (width*2 <= MaxVideoWidth))
+  else if(CONFIG.bAspectRatioCorrection && (height >= width) && (width*2 <= MaxVideoWidth))
   {
     HD.XScale = 2;
     width *= 2;
   }
   /* Try and detect small screen resolutions */
-  else if((width < MinVideoWidth) && (width * 2 <= MaxVideoWidth) && (height * 2 <= MaxVideoHeight))
+  else if(CONFIG.bUpscale && (width < MinVideoWidth) && (width * 2 <= MaxVideoWidth) && (height * 2 <= MaxVideoHeight))
   {
     HD.XScale = 2;
     HD.YScale = 2;

@@ -12,6 +12,7 @@
 #if SDL_VERSION_ATLEAST(2, 0, 0)
 
 #include "../armdefs.h"
+#include "../arch/ArcemConfig.h"
 #include "../arch/armarc.h"
 #include "../arch/archio.h"
 #include "../eventq.h"
@@ -259,20 +260,20 @@ static void SetupScreen(ARMul_State *state,int width,int height,int hz)
   sdd_texture = SDL_CreateTexture(renderer, format->format, SDL_TEXTUREACCESS_STREAMING, width, height);
 
   /* Try and detect rectangular pixel modes */
-  if((width >= height*2) && (height*2 <= MaxVideoHeight))
+  if(CONFIG.bAspectRatioCorrection && (width >= height*2) && (height*2 <= MaxVideoHeight))
   {
     xscale = 1;
     yscale = 2;
     height *= 2;
   }
-  else if((height >= width) && (width*2 <= MaxVideoWidth))
+  else if(CONFIG.bAspectRatioCorrection && (height >= width) && (width*2 <= MaxVideoWidth))
   {
     xscale = 2;
     yscale = 1;
     width *= 2;
   }
   /* Try and detect small screen resolutions */
-  else if((width < MinVideoWidth) && (width * 2 <= MaxVideoWidth) && (height * 2 <= MaxVideoHeight))
+  else if(CONFIG.bUpscale && (width < MinVideoWidth) && (width * 2 <= MaxVideoWidth) && (height * 2 <= MaxVideoHeight))
   {
     xscale = 2;
     yscale = 2;
