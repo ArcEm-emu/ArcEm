@@ -17,6 +17,7 @@
 #include "../armdefs.h"
 #include "../arch/sound.h"
 #include "../arch/archio.h"
+#include "../arch/ControlPane.h"
 #include "../arch/dbugsys.h"
 #include "../arch/displaydev.h"
 
