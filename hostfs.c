@@ -1172,7 +1172,6 @@ hostfs_args_3_write_file_extent(ARMul_State *state)
     return;
   }
 
-#ifndef __amigaos3__ /* no ftruncate in libnix - not sure if this is a critical function */
   /* Set file to required extent */
   /* FIXME Not defined if file is increased in size */
   if (ftruncate(fd, (off_t) state->Reg[2])) {
@@ -1180,7 +1179,6 @@ hostfs_args_3_write_file_extent(ARMul_State *state)
                 strerror(errno), errno);
     return;
   }
-#endif
 }
 
 static void
