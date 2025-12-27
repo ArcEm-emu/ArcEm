@@ -374,7 +374,7 @@ static void PrintParams(ARMul_State *state) {
 /* Place the following values in the parameter block to be read back by the host */
 static void ReturnParams(ARMul_State *state,const int NParams, ...) {
   va_list args;
-  uint_fast8_t param;
+  int param;
 
   UNUSED_VAR(state);
 
@@ -396,7 +396,7 @@ static void ReturnParams(ARMul_State *state,const int NParams, ...) {
    else false. */
 static bool GetParams(ARMul_State *state, const int NParams, ...) {
   va_list args;
-  uint_fast8_t param;
+  int param;
   uint_least8_t *resptr;
 
   UNUSED_VAR(state);
@@ -1601,7 +1601,8 @@ void HDC_Init(ARMul_State *state) {
   
   
   HDC.StatusReg=0;
-  HDC.PBPtr=HDC.DBufPtrs[0]=HDC.DBufPtrs[1]=0;
+  HDC.PBPtr=0;
+  HDC.DBufPtrs[0]=HDC.DBufPtrs[1]=0;
   HDC.LastCommand=0xffff;
   HDC.CurrentlyOpenDataBuffer=0xff;
   HDC.HaveGotSpecify=false;
