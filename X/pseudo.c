@@ -116,6 +116,7 @@ static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,in
 
 /* Refresh the mouses image                                                   */
 static void RefreshMouse(ARMul_State *state) {
+  SDD_HostColour cursorPalette[3];
   int x, y, height, offset;
   int memptr, TransBit;
   char *ImgPtr, *TransPtr;
@@ -127,7 +128,6 @@ static void RefreshMouse(ARMul_State *state) {
   TransPtr = PD.ShapePixmapData;
   TransBit = 0;
 
-  SDD_HostColour cursorPalette[3];
   for(x=0;x<3;x++)
   {
     cursorPalette[x] = SDD_Name(Host_GetColour)(state,VIDC.CursorPalette[x]);

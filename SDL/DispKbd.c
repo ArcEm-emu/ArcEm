@@ -61,11 +61,11 @@ static void ProcessKey(ARMul_State *state, const SDL_KeyboardEvent *key, bool up
 #else
   const SDL_Keycode sym = key->keysym.sym;
 #endif
+  const sdlk_to_arch_key *ktak;
 
   if (sym == SDLK_KP_PLUS && up)
       ToggleGrab();
 
-  const sdlk_to_arch_key *ktak;
   for (ktak = sdlk_to_arch_key_map; ktak->sym; ktak++) {
     if (ktak->sym == sym) {
       keyboard_key_changed(&KBD, ktak->kid, up);

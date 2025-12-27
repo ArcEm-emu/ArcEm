@@ -295,12 +295,13 @@ static void Sound_Resume(void)
 SoundData *Sound_GetHostBuffer(int32_t *destavail)
 {
   /* Work out how much space is available until next wrap point, or we start overwriting data */
+  int32_t local_buffer_in,used,ofs,buffree;
   Sound_Lock();
-  int32_t local_buffer_in = sound_buffer_in;
-  int32_t used = local_buffer_in-sound_buffer_out;
+  local_buffer_in = sound_buffer_in;
+  used = local_buffer_in-sound_buffer_out;
   Sound_Unlock();
-  int32_t ofs = local_buffer_in & sound_buff_mask;
-  int32_t buffree = BUFFER_SAMPLES-MAX(ofs,used);
+  ofs = local_buffer_in & sound_buff_mask;
+  buffree = BUFFER_SAMPLES-MAX(ofs,used);
   *destavail = buffree>>1;
   return sound_buffer + ofs;
 }
@@ -309,7 +310,7 @@ static void adjust_fudgerate(int32_t used, int32_t out)
 {
   static float count;
   static int32_t error_count,old_out;
-  int32_t error = used - buffer_threshold;
+  int32_t adjust,error = used - buffer_threshold;
   error = error >> 1; /* Re-scale to 16 bit sample pairs, so all our rate tracking will work correctly */
   sound_pid.error[0] += error;
 #ifdef SOUND_VERBOSE
@@ -334,7 +335,7 @@ static void adjust_fudgerate(int32_t used, int32_t out)
   }
   sound_pid.error[0] /= error_count;
   error_count = 0;
-  int32_t adjust = pid_step(&sound_pid);
+  adjust = pid_step(&sound_pid);
 #ifdef SOUND_VERBOSE
   dbug_sound("level %f avg error %f (%f,%f,%f) fudge %f adjust %f remainder %f\n", sound_inv_hostrate*0.5f*used, sound_inv_hostrate*sound_pid.error[1], sound_inv_hostrate*emin, sound_inv_hostrate*emax, sound_inv_hostrate*(emax-emin), ((float)Sound_FudgeRate)/(1<<24), ((float)adjust)/(1<<24), count);
   emin = BUFFER_SAMPLES;
@@ -355,12 +356,13 @@ static void adjust_fudgerate(int32_t used, int32_t out)
 
 void Sound_HostBuffered(SoundData *buffer,int32_t numSamples)
 {
+  int32_t local_buffer_in,used,out,underflows;
   numSamples <<= 1;
   Sound_Lock();
-  int32_t local_buffer_in = sound_buffer_in;
-  int32_t used = local_buffer_in-sound_buffer_out;
-  int32_t out = sound_buffer_hostout;
-  int32_t underflows = sound_underflows;
+  local_buffer_in = sound_buffer_in;
+  used = local_buffer_in-sound_buffer_out;
+  out = sound_buffer_hostout;
+  underflows = sound_underflows;
   sound_underflows = 0;
   LOG_EVENT("Sound_HostBuffered",numSamples);
   Sound_Unlock();

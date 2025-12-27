@@ -43,13 +43,14 @@ SoundData sound_buffer[256*2]; /* Must be >= 2*Sound_BatchSize! */
 SoundData *Sound_GetHostBuffer(int32_t *destavail)
 {
 #ifdef SOUND_THREAD
+  int32_t local_buffer_in,used,ofs,buffree;
   /* Work out how much space is available until next wrap point, or we start overwriting data */
   pthread_mutex_lock(&mut);
-  int32_t local_buffer_in = sound_buffer_in;
-  int32_t used = local_buffer_in-sound_buffer_out;
+  local_buffer_in = sound_buffer_in;
+  used = local_buffer_in-sound_buffer_out;
   pthread_mutex_unlock(&mut);
-  int32_t ofs = local_buffer_in & sound_buff_mask;
-  int32_t buffree = BUFFER_SAMPLES-MAX(ofs,used);
+  ofs = local_buffer_in & sound_buff_mask;
+  buffree = BUFFER_SAMPLES-MAX(ofs,used);
   *destavail = buffree>>1;
   return sound_buffer + ofs;
 #else
@@ -61,13 +62,14 @@ SoundData *Sound_GetHostBuffer(int32_t *destavail)
 
 void Sound_HostBuffered(SoundData *buffer,int32_t numSamples)
 {
-  numSamples <<= 1;
 #ifdef SOUND_THREAD
+  int32_t local_buffer_in,used,ofs;
+  numSamples <<= 1;
   pthread_mutex_lock(&mut);
-  int32_t local_buffer_in = sound_buffer_in;
-  int32_t used = local_buffer_in-sound_buffer_out;
+  local_buffer_in = sound_buffer_in;
+  used = local_buffer_in-sound_buffer_out;
   pthread_mutex_unlock(&mut);
-  int32_t ofs = local_buffer_in & sound_buff_mask;
+  ofs = local_buffer_in & sound_buff_mask;
 
   local_buffer_in += numSamples;
   
@@ -109,6 +111,7 @@ void Sound_HostBuffered(SoundData *buffer,int32_t numSamples)
   pthread_yield();
 #else
   audio_buf_info buf;
+  numSamples <<= 1;
   if (ioctl(soundDevice, SOUND_PCM_GETOSPACE, &buf) != -1) {
     /* Adjust fudge rate based around how much buffer space is available
        We aim for the buffer to be somewhere between 1/4 and 3/4 full, but don't
@@ -195,6 +198,8 @@ sound_writeThread(void *arg)
 bool
 Sound_InitHost(ARMul_State *state)
 {
+  audio_buf_info buf;
+
   if ((soundDevice = open("/dev/dsp", O_WRONLY )) < 0) {
     ControlPane_Error(false,"Could not open audio device /dev/dsp");
     return false;
@@ -231,7 +236,6 @@ Sound_InitHost(ARMul_State *state)
   }
 
   /* Check that GETOSPACE is supported */
-  audio_buf_info buf;
   if (ioctl(soundDevice, SOUND_PCM_GETOSPACE, &buf) == -1) {
     ControlPane_Error(false,"Could not read output space");
     return false;

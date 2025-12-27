@@ -322,13 +322,13 @@ void PDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,int depth
   {
     /* Expansion! */
     static ARMword expandtable[256];
+    unsigned int mul = 1;
+    int i;
     HD.ExpandFactor = 0;
     while((1<<HD.ExpandFactor) < HD.XScale)
       HD.ExpandFactor++;
     HD.ExpandFactor += (3-depth);
     HD.ExpandTable = expandtable;
-    unsigned int mul = 1;
-    int i;
     for(i=0;i<HD.XScale;i++)
     {
       mul |= 1<<(i*8);
