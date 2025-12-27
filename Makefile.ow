@@ -38,8 +38,6 @@ CFLAGS += -DEXTNROM_SUPPORT
 !endif
 
 CFLAGS += -zq -otanxh -d0 -wx -I"libs/inih"
-# newer OpenWatcom versions enable W303 by default
-CFLAGS+= -wcd=303
 OBJS = $(SRCS:.c=.obj)
 RCOBJS = $(RCSRCS:.rc=.res)
 name = ArcEm

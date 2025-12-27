@@ -55,6 +55,8 @@ void Sound_HostBuffered(SoundData *buffer,int32_t numSamples)
 bool
 Sound_InitHost(ARMul_State *state)
 {
+	UNUSED_VAR(state);
+
 	if(!openaudio())
 		return false;
 
@@ -78,6 +80,8 @@ void sound_exit(void)
 void
 Sound_ShutdownHost(ARMul_State *state)
 {
+	UNUSED_VAR(state);
+
 	sound_exit();
 }
 

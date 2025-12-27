@@ -170,7 +170,7 @@ ARMul_LoadInstrTriplet(ARMul_State *state,ARMword addr,PipelineEntry *p)
 \***************************************************************************/
 
 static inline ARMword
-ARMul_Align(ARMul_State *state, ARMword address, ARMword data)
+ARMul_Align(ARMword address, ARMword data)
 {/* this code assumes the address is really unaligned,
     as a shift by 32 is undefined in C */
 
@@ -577,7 +577,7 @@ static bool LoadWord(ARMul_State *state, ARMword instr, ARMword address)
     return false; /* LATEABTSIG */
     }
  if (address & 3)
-    dest = ARMul_Align(state,address,dest);
+    dest = ARMul_Align(address,dest);
  WRITEDEST(dest);
  ARMul_Icycles(state,1);
 

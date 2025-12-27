@@ -359,6 +359,9 @@ static uint_fast16_t HDC_DMARead(ARMul_State *state, uint_fast16_t offset) {
 /*---------------------------------------------------------------------------*/
 static void PrintParams(ARMul_State *state) {
   uint_fast8_t ptr;
+
+  UNUSED_VAR(state);
+
   warn_hdc("HDC: Param block contents: ");
 
   for(ptr=0;ptr<HDC.PBPtr;ptr++) {
@@ -372,6 +375,8 @@ static void PrintParams(ARMul_State *state) {
 static void ReturnParams(ARMul_State *state,const int NParams, ...) {
   va_list args;
   uint_fast8_t param;
+
+  UNUSED_VAR(state);
 
   assert(NParams > 0 && NParams <= 16);
 
@@ -393,6 +398,8 @@ static bool GetParams(ARMul_State *state, const int NParams, ...) {
   va_list args;
   uint_fast8_t param;
   uint_least8_t *resptr;
+
+  UNUSED_VAR(state);
 
   assert(NParams > 0 && NParams <= 16);
 

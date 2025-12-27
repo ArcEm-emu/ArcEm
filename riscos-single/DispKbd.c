@@ -211,6 +211,7 @@ static const int SDD_RowsAtOnce = 1;
 
 static SDD_HostColour SDD_Name(Host_GetColour)(ARMul_State *state,unsigned int col)
 {
+  UNUSED_VAR(state);
   return sdd_palette[col & ~0x1000];
 }  
 
@@ -218,20 +219,49 @@ static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,in
 
 static inline SDD_Row SDD_Name(Host_BeginRow)(ARMul_State *state,int row,int offset)
 {
+  UNUSED_VAR(state);
   return ((SDD_Row) (ModeVarsOut[MODE_VAR_ADDR] + ModeVarsOut[MODE_VAR_BPL]*row))+offset;
 }
 
-static inline void SDD_Name(Host_EndRow)(ARMul_State *state,SDD_Row *row) { /* nothing */ }
+static inline void SDD_Name(Host_EndRow)(ARMul_State *state,SDD_Row *row)
+{
+  /* nothing */
+  UNUSED_VAR(state);
+  UNUSED_VAR(row);
+}
 
-static inline void SDD_Name(Host_BeginUpdate)(ARMul_State *state,SDD_Row *row,unsigned int count) { /* nothing */ }
+static inline void SDD_Name(Host_BeginUpdate)(ARMul_State *state,SDD_Row *row,unsigned int count)
+{
+  /* nothing */
+  UNUSED_VAR(state);
+  UNUSED_VAR(row);
+  UNUSED_VAR(count);
+}
 
-static inline void SDD_Name(Host_EndUpdate)(ARMul_State *state,SDD_Row *row) { /* nothing */ }
+static inline void SDD_Name(Host_EndUpdate)(ARMul_State *state,SDD_Row *row)
+{
+  /* nothing */
+  UNUSED_VAR(state);
+  UNUSED_VAR(row);
+}
 
-static inline void SDD_Name(Host_SkipPixels)(ARMul_State *state,SDD_Row *row,unsigned int count) { (*row) += count; }
+static inline void SDD_Name(Host_SkipPixels)(ARMul_State *state,SDD_Row *row,unsigned int count)
+{
+  UNUSED_VAR(state);
+  (*row) += count;
+}
 
-static inline void SDD_Name(Host_WritePixel)(ARMul_State *state,SDD_Row *row,SDD_HostColour pix) { *(*row)++ = pix; }
+static inline void SDD_Name(Host_WritePixel)(ARMul_State *state,SDD_Row *row,SDD_HostColour pix)
+{
+  UNUSED_VAR(state);
+  *(*row)++ = pix;
+}
 
-static inline void SDD_Name(Host_WritePixels)(ARMul_State *state,SDD_Row *row,SDD_HostColour pix,unsigned int count) { while(count--) *(*row)++ = pix; }
+static inline void SDD_Name(Host_WritePixels)(ARMul_State *state,SDD_Row *row,SDD_HostColour pix,unsigned int count)
+{
+  UNUSED_VAR(state);
+  while(count--) *(*row)++ = pix;
+}
 
 static void
 SDD_Name(Host_PollDisplay)(ARMul_State *state);
@@ -294,6 +324,7 @@ SDD_Name(Host_PollDisplay)(ARMul_State *state)
 
 static SDD_HostColour SDD_Name(Host_GetColour)(ARMul_State *state,unsigned int col)
 {
+  UNUSED_VAR(state);
   return sdd_palette[col & ~0x1000];
 }  
 
@@ -301,20 +332,49 @@ static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,in
 
 static inline SDD_Row SDD_Name(Host_BeginRow)(ARMul_State *state,int row,int offset)
 {
+  UNUSED_VAR(state);
   return ((SDD_Row) (ModeVarsOut[MODE_VAR_ADDR] + ModeVarsOut[MODE_VAR_BPL]*row))+offset;
 }
 
-static inline void SDD_Name(Host_EndRow)(ARMul_State *state,SDD_Row *row) { /* nothing */ }
+static inline void SDD_Name(Host_EndRow)(ARMul_State *state,SDD_Row *row)
+{
+  /* nothing */
+  UNUSED_VAR(state);
+  UNUSED_VAR(row);
+}
 
-static inline void SDD_Name(Host_BeginUpdate)(ARMul_State *state,SDD_Row *row,unsigned int count) { /* nothing */ }
+static inline void SDD_Name(Host_BeginUpdate)(ARMul_State *state,SDD_Row *row,unsigned int count)
+{
+  /* nothing */
+  UNUSED_VAR(state);
+  UNUSED_VAR(row);
+  UNUSED_VAR(count);
+}
 
-static inline void SDD_Name(Host_EndUpdate)(ARMul_State *state,SDD_Row *row) { /* nothing */ }
+static inline void SDD_Name(Host_EndUpdate)(ARMul_State *state,SDD_Row *row)
+{
+  /* nothing */
+  UNUSED_VAR(state);
+  UNUSED_VAR(row);
+}
 
-static inline void SDD_Name(Host_SkipPixels)(ARMul_State *state,SDD_Row *row,unsigned int count) { (*row) += count; }
+static inline void SDD_Name(Host_SkipPixels)(ARMul_State *state,SDD_Row *row,unsigned int count)
+{
+  UNUSED_VAR(state);
+  (*row) += count;
+}
 
-static inline void SDD_Name(Host_WritePixel)(ARMul_State *state,SDD_Row *row,SDD_HostColour pix) { *(*row)++ = pix; }
+static inline void SDD_Name(Host_WritePixel)(ARMul_State *state,SDD_Row *row,SDD_HostColour pix)
+{
+  UNUSED_VAR(state);
+  *(*row)++ = pix;
+}
 
-static inline void SDD_Name(Host_WritePixels)(ARMul_State *state,SDD_Row *row,SDD_HostColour pix,unsigned int count) { while(count--) *(*row)++ = pix; }
+static inline void SDD_Name(Host_WritePixels)(ARMul_State *state,SDD_Row *row,SDD_HostColour pix,unsigned int count)
+{
+  UNUSED_VAR(state);
+  while(count--) *(*row)++ = pix;
+}
 
 static void
 SDD_Name(Host_PollDisplay)(ARMul_State *state);
@@ -383,6 +443,9 @@ static void PDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,in
 static void PDD_Name(Host_SetPaletteEntry)(ARMul_State *state,int i,uint_fast16_t phys)
 {
   uint8_t buf[5];
+
+  UNUSED_VAR(state);
+
   buf[0] = i;
   buf[1] = 16;
   buf[2] = (phys & 0xf)*0x11;
@@ -397,11 +460,17 @@ static void PDD_Name(Host_SetPaletteEntry)(ARMul_State *state,int i,uint_fast16_
 static void PDD_Name(Host_SetCursorPaletteEntry)(ARMul_State *state,int i,uint_fast16_t phys)
 {
   /* TODO */
+  UNUSED_VAR(state);
+  UNUSED_VAR(i);
+  UNUSED_VAR(phys);
 }
 
 static void PDD_Name(Host_SetBorderColour)(ARMul_State *state,uint_fast16_t phys)
 {
   uint8_t buf[5];
+
+  UNUSED_VAR(state);
+
   /* Set real border */
   buf[0] = 0;
   buf[1] = 24;
@@ -426,6 +495,7 @@ static inline PDD_Row PDD_Name(Host_BeginRow)(ARMul_State *state,int row,int off
 {
   PDD_Row drow;
   ARMword base = ModeVarsOut[MODE_VAR_ADDR] + ModeVarsOut[MODE_VAR_BPL]*row;
+  UNUSED_VAR(state);
   offset = offset<<ModeVarsOut[MODE_VAR_LOG2BPP];
   base += offset>>3;
   drow.offset = (offset & 0x7) | ((base<<3) & 0x18); /* Just in case bytes per line isn't aligned */
@@ -434,18 +504,31 @@ static inline PDD_Row PDD_Name(Host_BeginRow)(ARMul_State *state,int row,int off
   return drow;
 }
 
-static inline void PDD_Name(Host_EndRow)(ARMul_State *state,PDD_Row *row) { /* nothing */ }
+static inline void PDD_Name(Host_EndRow)(ARMul_State *state,PDD_Row *row)
+{
+  /* nothing */
+  UNUSED_VAR(state);
+  UNUSED_VAR(row);
+}
 
 static inline ARMword *PDD_Name(Host_BeginUpdate)(ARMul_State *state,PDD_Row *row,unsigned int count,int *outoffset)
 {
+  UNUSED_VAR(state);
+  UNUSED_VAR(count);
   *outoffset = row->offset;
   return row->data;
 }
 
-static inline void PDD_Name(Host_EndUpdate)(ARMul_State *state,PDD_Row *row) { /* nothing */ }
+static inline void PDD_Name(Host_EndUpdate)(ARMul_State *state,PDD_Row *row)
+{
+  /* nothing */
+  UNUSED_VAR(state);
+  UNUSED_VAR(row);
+}
 
 static inline void PDD_Name(Host_AdvanceRow)(ARMul_State *state,PDD_Row *row,unsigned int count)
 {
+  UNUSED_VAR(state);
   row->offset += count;
   row->data += count>>5;
   row->offset &= 0x1f;
@@ -456,6 +539,8 @@ PDD_Name(Host_PollDisplay)(ARMul_State *state);
 
 static void PDD_Name(Host_DrawBorderRect)(ARMul_State *state,int x,int y,int width,int height)
 {
+  UNUSED_VAR(state);
+
   /* Quickest way is likely to be to OS_Plot */
   y = ModeVarsOut[MODE_VAR_HEIGHT]+1-(y+height);
   x = x<<ModeVarsOut[MODE_VAR_XEIG];

@@ -364,7 +364,7 @@ GetWord_IOCReg(ARMul_State *state, uint_fast8_t Register)
 
 /*-----------------------------------------------------------------------------*/
 static void
-PutVal_IOCReg(ARMul_State *state, uint_fast8_t Register, uint_fast8_t data, bool bNw)
+PutVal_IOCReg(ARMul_State *state, uint_fast8_t Register, uint_fast8_t data)
 {
   uint_fast8_t Timer;
 
@@ -583,11 +583,11 @@ PutValIO(ARMul_State *state, ARMword address, ARMword data, bool byteNotword)
       case 0:
         offset /= 4;
         offset &= 0x1f;
-        PutVal_IOCReg(state, offset, data & 0xff, byteNotword);
+        PutVal_IOCReg(state, offset, data & 0xff);
         break;
 
       case 1:
-        FDC_Write(state, offset, data & 0xff, byteNotword);
+        FDC_Write(state, offset, data & 0xff);
         break;
 
       case 2:

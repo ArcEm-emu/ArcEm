@@ -77,5 +77,6 @@ FILE *File_OpenAppData(const char *sName, const char *sMode)
  */
 Directory *Directory_OpenAppDir(const char *sName)
 {
+    UNUSED_VAR(sName);
     return NULL;
 }

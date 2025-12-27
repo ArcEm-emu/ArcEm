@@ -44,6 +44,7 @@ static int UpdateMinY=INT_MAX,UpdateMaxY=-1;
 
 static SDD_HostColour SDD_Name(Host_GetColour)(ARMul_State *state,unsigned int col)
 {
+  UNUSED_VAR(state);
   return vidc_col_to_x_col(col);
 }  
 
@@ -52,32 +53,50 @@ static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,in
 static inline SDD_Row SDD_Name(Host_BeginRow)(ARMul_State *state,int row,int offset)
 {
   SDD_Row dhrow;
+  UNUSED_VAR(state);
   dhrow.x = offset;
   dhrow.y = row;
   return dhrow;
 }
 
-static inline void SDD_Name(Host_EndRow)(ARMul_State *state,SDD_Row *row) { /* nothing */ }
+static inline void SDD_Name(Host_EndRow)(ARMul_State *state,SDD_Row *row)
+{
+  /* nothing */
+  UNUSED_VAR(state);
+  UNUSED_VAR(row);
+}
 
 static inline void SDD_Name(Host_BeginUpdate)(ARMul_State *state,SDD_Row *row,unsigned int count)
 {
+  UNUSED_VAR(state);
   UpdateMinX = MIN(UpdateMinX,row->x);
   UpdateMaxX = MAX(UpdateMaxX,(int)(row->x+count-1));
   UpdateMinY = MIN(UpdateMinY,row->y);
   UpdateMaxY = MAX(UpdateMaxY,row->y);
 }
 
-static inline void SDD_Name(Host_EndUpdate)(ARMul_State *state,SDD_Row *row) { /* nothing */ }
+static inline void SDD_Name(Host_EndUpdate)(ARMul_State *state,SDD_Row *row)
+{
+  /* nothing */
+  UNUSED_VAR(state);
+  UNUSED_VAR(row);
+}
 
-static inline void SDD_Name(Host_SkipPixels)(ARMul_State *state,SDD_Row *row,unsigned int count) { row->x += count; }
+static inline void SDD_Name(Host_SkipPixels)(ARMul_State *state,SDD_Row *row,unsigned int count)
+{
+  UNUSED_VAR(state);
+  row->x += count;
+}
 
 static inline void SDD_Name(Host_WritePixel)(ARMul_State *state,SDD_Row *row,SDD_HostColour pix)
 {
+  UNUSED_VAR(state);
   XPutPixel(PD.DisplayImage, row->x++, row->y, pix);
 }
 
 static inline void SDD_Name(Host_WritePixels)(ARMul_State *state,SDD_Row *row,SDD_HostColour pix,unsigned int count)
 {
+  UNUSED_VAR(state);
   while(count--)
   {
     XPutPixel(PD.DisplayImage, row->x++, row->y, pix);
@@ -90,6 +109,8 @@ static void SDD_Name(Host_PollDisplay)(ARMul_State *state);
 
 static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,int hz)
 {
+  UNUSED_VAR(hz);
+
   if (width > MaxVideoWidth || height > MaxVideoHeight) {
       ControlPane_Error(true,"Resize_Window: new size (%d, %d) exceeds maximum (%d, %d)",
           width, height, MaxVideoWidth, MaxVideoHeight);
@@ -119,7 +140,7 @@ static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,in
   HD.Width = MIN(MaxVideoWidth,width + (VIDC_BORDER * 2));
   HD.Height = MIN(MaxVideoHeight,height + (VIDC_BORDER * 2));
 
-  Resize_Window(state,HD.Width,HD.Height);
+  Resize_Window(HD.Width,HD.Height);
 
   UpdateMinX=UpdateMinY=0;
   UpdateMaxX=HD.Width-1;

@@ -61,10 +61,14 @@ static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,
 
 static SDD_HostColour SDD_Name(Host_GetColour)(ARMul_State *state,uint_fast16_t col)
 {
+  int r, g, b;
+
+  UNUSED_VAR(state);
+
   /* Convert to 8-bit component values */
-  int r = (col & 0x00f);
-  int g = (col & 0x0f0);
-  int b = (col & 0xf00) >> 8;
+  r = (col & 0x00f);
+  g = (col & 0x0f0);
+  b = (col & 0xf00) >> 8;
   /* May want to tweak this a bit at some point? */
   r |= r<<4;
   g |= g>>4;
@@ -75,12 +79,15 @@ static SDD_HostColour SDD_Name(Host_GetColour)(ARMul_State *state,uint_fast16_t 
 static void SDD_Name(Host_SkipPixels)(ARMul_State *state,SDD_Row *row,
                                unsigned int count)
 {
+  UNUSED_VAR(state);
   (*row) += count;
 }
 
 static SDD_Row SDD_Name(Host_BeginRow)(ARMul_State *state,int row,int offset)
 {
   SDD_Row dibbmp = screenbmp;
+
+  UNUSED_VAR(state);
 
   return &dibbmp[(row*MonitorWidth)+offset];
 }
@@ -89,18 +96,22 @@ const int SDD_RowsAtOnce = 1;
 
 static void SDD_Name(Host_EndRow)(ARMul_State *state,SDD_Row *row)
 {
-  
+  /* nothing */
+  UNUSED_VAR(state);
+  UNUSED_VAR(row);
 }
 
 static void SDD_Name(Host_WritePixel)(ARMul_State *state,SDD_Row *row,
                                SDD_HostColour col)
 {
+  UNUSED_VAR(state);
   *(*row)++ = col;
 }
 
 static void SDD_Name(Host_WritePixels)(ARMul_State *state,SDD_Row *row,
                                 SDD_HostColour col,unsigned int count)
 {
+  UNUSED_VAR(state);
   while(count--) {
     *(*row)++ = col;
   }
@@ -109,12 +120,17 @@ static void SDD_Name(Host_WritePixels)(ARMul_State *state,SDD_Row *row,
 static void SDD_Name(Host_BeginUpdate)(ARMul_State *state,SDD_Row *row,
                                     unsigned int count)
 {
-  
+  /* nothing */
+  UNUSED_VAR(state);
+  UNUSED_VAR(row);
+  UNUSED_VAR(count);
 }
 
 static void SDD_Name(Host_EndUpdate)(ARMul_State *state,SDD_Row *row)
 {
-  
+  /* nothing */
+  UNUSED_VAR(state);
+  UNUSED_VAR(row);
 }
 
 #include "../arch/stddisplaydev.c"
@@ -122,6 +138,8 @@ static void SDD_Name(Host_EndUpdate)(ARMul_State *state,SDD_Row *row)
 static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,
                                       int hz)
 {
+  UNUSED_VAR(hz);
+
   HD.Width = width;
   HD.Height = height;
   HD.XScale = 1;
@@ -202,6 +220,7 @@ int
 Kbd_PollHostKbd(ARMul_State *state)
 {
   /* Keyboard and mouse input is handled in ArcemView */
+  UNUSED_VAR(state);
   return 0;
 }
 

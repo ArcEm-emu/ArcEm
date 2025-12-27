@@ -414,6 +414,8 @@ static void
 hostfs_object_set_attribs(ARMul_State *state, const char *ro_path, const char *host_path, ARMword load, ARMword exec,ARMword attribs)
 {
 #ifdef __riscos__
+  UNUSED_VAR(state);
+  UNUSED_VAR(ro_path);
   _swix(OS_File,_INR(0,3)|_IN(5),1,host_path,load,exec,attribs);
 #else
   char new_pathname[PATH_MAX];
@@ -430,6 +432,7 @@ hostfs_object_set_attribs(ARMul_State *state, const char *ro_path, const char *h
   hostfs_object_set_loadexec(new_pathname, load, exec);
 
   /* TODO handle attributes */
+  UNUSED_VAR(attribs);
 #endif
 }
 
@@ -596,6 +599,9 @@ path_construct(ARMul_State *state, const char *old_path, const char *ro_path,
     /* File has load and exec addresses */
     sprintf(new_suffix, ",%"PRIx32"-%"PRIx32, load, exec);
   }
+#else
+  UNUSED_VAR(load);
+  UNUSED_VAR(exec);
 #endif
 }
 
@@ -1233,7 +1239,7 @@ hostfs_args_8_write_zeros(ARMul_State *state)
 static void
 hostfs_args_9_read_file_datestamp(ARMul_State *state)
 {
-  assert(state);
+  UNUSED_VAR(state);
 
   dbug_hostfs("\tRead file datestamp\n");
 }
@@ -2320,7 +2326,7 @@ hostfs_func(ARMul_State *state)
 static void
 hostfs_gbpb(ARMul_State *state)
 {
-  assert(state);
+  UNUSED_VAR(state);
 
   dbug_hostfs("GBPB\n");
 }

@@ -64,6 +64,8 @@ static SDD_HostColour SDD_Name(Host_GetColour)(ARMul_State *state,unsigned int c
   SDD_HostColour hostCol;
   uint8_t r, g, b;
 
+  UNUSED_VAR(state);
+
 #if SDD_BitsPerPixel >= 24
   /* Convert to 8-bit component values */
   r = (col & 0x00f);
@@ -101,20 +103,49 @@ static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,in
 
 static inline SDD_Row SDD_Name(Host_BeginRow)(ARMul_State *state,int row,int offset)
 {
+  UNUSED_VAR(state);
   return ((SDD_Row)(void *) ((uint8_t *)dibbmp + dibstride*row))+offset;
 }
 
-static inline void SDD_Name(Host_EndRow)(ARMul_State *state,SDD_Row *row) { /* nothing */ }
+static inline void SDD_Name(Host_EndRow)(ARMul_State *state,SDD_Row *row)
+{
+  /* nothing */
+  UNUSED_VAR(state);
+  UNUSED_VAR(row);
+}
 
-static inline void SDD_Name(Host_BeginUpdate)(ARMul_State *state,SDD_Row *row,unsigned int count) { /* nothing */ }
+static inline void SDD_Name(Host_BeginUpdate)(ARMul_State *state,SDD_Row *row,unsigned int count)
+{
+  /* nothing */
+  UNUSED_VAR(state);
+  UNUSED_VAR(row);
+  UNUSED_VAR(count);
+}
 
-static inline void SDD_Name(Host_EndUpdate)(ARMul_State *state,SDD_Row *row) { /* nothing */ }
+static inline void SDD_Name(Host_EndUpdate)(ARMul_State *state,SDD_Row *row)
+{
+  /* nothing */
+  UNUSED_VAR(state);
+  UNUSED_VAR(row);
+}
 
-static inline void SDD_Name(Host_SkipPixels)(ARMul_State *state,SDD_Row *row,unsigned int count) { (*row) += count; }
+static inline void SDD_Name(Host_SkipPixels)(ARMul_State *state,SDD_Row *row,unsigned int count)
+{
+  UNUSED_VAR(state);
+  (*row) += count;
+}
 
-static inline void SDD_Name(Host_WritePixel)(ARMul_State *state,SDD_Row *row,SDD_HostColour pix) { *(*row)++ = pix; }
+static inline void SDD_Name(Host_WritePixel)(ARMul_State *state,SDD_Row *row,SDD_HostColour pix)
+{
+  UNUSED_VAR(state);
+  *(*row)++ = pix;
+}
 
-static inline void SDD_Name(Host_WritePixels)(ARMul_State *state,SDD_Row *row,SDD_HostColour pix,unsigned int count) { while(count--) *(*row)++ = pix; }
+static inline void SDD_Name(Host_WritePixels)(ARMul_State *state,SDD_Row *row,SDD_HostColour pix,unsigned int count)
+{
+  UNUSED_VAR(state);
+  while(count--) *(*row)++ = pix;
+}
 
 void SDD_Name(Host_PollDisplay)(ARMul_State *state);
 
@@ -122,6 +153,8 @@ void SDD_Name(Host_PollDisplay)(ARMul_State *state);
 
 static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,int hz)
 {
+  UNUSED_VAR(hz);
+
   if((width > MonitorWidth) || (height > MonitorHeight))
   {
     ControlPane_Error(true,"Mode %dx%d too big",width,height);
@@ -244,6 +277,8 @@ static void PDD_Name(Host_SetPaletteEntry)(ARMul_State *state,int i,uint_fast16_
 {
   uint8_t r, g, b;
 
+  UNUSED_VAR(state);
+
   /* Convert to 8-bit component values */
   r = (phys & 0x00f);
   g = (phys & 0x0f0);
@@ -260,6 +295,8 @@ static void PDD_Name(Host_SetCursorPaletteEntry)(ARMul_State *state,int i,uint_f
 {
   uint8_t r, g, b;
 
+  UNUSED_VAR(state);
+
   /* Convert to 8-bit component values */
   r = (phys & 0x00f);
   g = (phys & 0x0f0);
@@ -275,30 +312,46 @@ static void PDD_Name(Host_SetCursorPaletteEntry)(ARMul_State *state,int i,uint_f
 static void PDD_Name(Host_SetBorderColour)(ARMul_State *state,uint_fast16_t phys)
 {
   /* TODO */
+  UNUSED_VAR(state);
+  UNUSED_VAR(phys);
 }
 
 static inline PDD_Row PDD_Name(Host_BeginRow)(ARMul_State *state,int row,int offset,int *alignment)
 {
   PDD_Row drow;
   uintptr_t base = ((uintptr_t)dibbmp + dibstride*row) + offset;
+  UNUSED_VAR(state);
   drow.offset = ((base<<3) & 0x18); /* Just in case bytes per line isn't aligned */
   drow.data = (ARMword *) (base & ~0x3);
   *alignment = drow.offset;
   return drow;
 }
 
-static inline void PDD_Name(Host_EndRow)(ARMul_State *state,PDD_Row *row) { /* nothing */ }
+static inline void PDD_Name(Host_EndRow)(ARMul_State *state,PDD_Row *row)
+{
+  /* nothing */
+  UNUSED_VAR(state);
+  UNUSED_VAR(row);
+}
 
 static inline ARMword *PDD_Name(Host_BeginUpdate)(ARMul_State *state,PDD_Row *row,unsigned int count,int *outoffset)
 {
+  UNUSED_VAR(state);
+  UNUSED_VAR(count);
   *outoffset = row->offset;
   return row->data;
 }
 
-static inline void PDD_Name(Host_EndUpdate)(ARMul_State *state,PDD_Row *row) { /* nothing */ }
+static inline void PDD_Name(Host_EndUpdate)(ARMul_State *state,PDD_Row *row)
+{
+  /* nothing */
+  UNUSED_VAR(state);
+  UNUSED_VAR(row);
+}
 
 static inline void PDD_Name(Host_AdvanceRow)(ARMul_State *state,PDD_Row *row,unsigned int count)
 {
+  UNUSED_VAR(state);
   row->offset += count;
   row->data += count>>5;
   row->offset &= 0x1f;
@@ -310,12 +363,19 @@ PDD_Name(Host_PollDisplay)(ARMul_State *state);
 static void PDD_Name(Host_DrawBorderRect)(ARMul_State *state,int x,int y,int width,int height)
 {
   /* TODO */
+  UNUSED_VAR(state);
+  UNUSED_VAR(x);
+  UNUSED_VAR(y);
+  UNUSED_VAR(width);
+  UNUSED_VAR(height);
 }
 
 #include "../arch/paldisplaydev.c"
 
 void PDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,int depth,int hz)
 {
+  UNUSED_VAR(hz);
+
   if((width > MonitorWidth) || (height > MonitorHeight))
   {
     ControlPane_Error(true,"Mode %dx%d too big",width,height);
@@ -480,7 +540,7 @@ void MouseMoved(ARMul_State *state, int nMouseX, int nMouseY) {
 
 
 /*-----------------------------------------------------------------------------*/
-void ProcessKey(ARMul_State *state, int nVirtKey, int lKeyData, int nKeyStat) {
+void ProcessKey(ARMul_State *state, int nVirtKey, int nKeyStat) {
   const vk_to_arch_key *ktak;
   for (ktak = vk_to_arch_key_map; ktak->sym; ktak++) {
     if (ktak->sym == nVirtKey) {

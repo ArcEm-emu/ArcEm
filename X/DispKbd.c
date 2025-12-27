@@ -576,12 +576,6 @@ DisplayDev_Init(ARMul_State *state)
 } /* DisplayKbd_InitHost */
 
 
-/*----------------------------------------------------------------------------*/
-
-static void BackingWindow_Event(ARMul_State *state,XEvent *e) {
-    warn("unwanted BackingWindow_Event type=%d\n", e->type);
-} /* BackingWindow_Event */
-
 /* ------------------------------------------------------------------ */
 
 /* All X servers will support a cursor of 16 x 16 bits. */
@@ -904,7 +898,7 @@ Kbd_PollHostKbd(ARMul_State *state)
 #endif
 
     if (e.xany.window == PD.BackingWindow) {
-      BackingWindow_Event(state, &e);
+      warn("unwanted BackingWindow_Event type=%d\n", e.type);
     } else if (e.xany.window == PD.MainPane) {
       MainPane_Event(state, &e);
     } else if (e.xany.window == PD.ControlPane) {
@@ -925,7 +919,7 @@ Kbd_PollHostKbd(ARMul_State *state)
  *
  * Resize the window to fit the new video mode.
  */
-void Resize_Window(ARMul_State *state,int x,int y)
+void Resize_Window(int x,int y)
 {
     /* resize outer window */
     XResizeWindow(PD.disp, PD.BackingWindow,

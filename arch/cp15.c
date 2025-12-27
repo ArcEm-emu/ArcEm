@@ -36,6 +36,8 @@ static struct
  */
 static bool ARM3_Initialise(ARMul_State *hState)
 {
+  UNUSED_VAR(hState);
+
   ARM3_CP15_Registers.uControlRegister = 0;
 
   return true;
@@ -55,6 +57,8 @@ static bool ARM3_Initialise(ARMul_State *hState)
  */
 static bool ARM3_RegisterRead(ARMul_State *hState, unsigned uReg, ARMword *puValue)
 {
+  UNUSED_VAR(hState);
+
   switch (uReg) {
     case ARM3_CP15_REG_0_RO_PROCESSOR_ID:
       *puValue = ARM3_CPU_ID;
@@ -101,6 +105,8 @@ static bool ARM3_RegisterRead(ARMul_State *hState, unsigned uReg, ARMword *puVal
  */
 static bool ARM3_RegisterWrite(ARMul_State *hState, unsigned uReg, ARMword uValue)
 {
+  UNUSED_VAR(hState);
+
   switch (uReg)
   {
     case ARM3_CP15_REG_0_RO_PROCESSOR_ID:
@@ -157,6 +163,8 @@ static unsigned ARM3_MRCs(ARMul_State *hState, unsigned uType, ARMword instr, AR
 {
   unsigned uReg = BITS(16, 19); /* coprocessor register number is stored in the instruction */
 
+  UNUSED_VAR(uType);
+
   if(ARM3_RegisterRead(hState, uReg, puValue)) {
     return ARMul_DONE;
   } else {
@@ -179,6 +187,8 @@ static unsigned ARM3_MRCs(ARMul_State *hState, unsigned uType, ARMword instr, AR
 static unsigned ARM3_MCRs(ARMul_State *hState, unsigned uType, ARMword instr, ARMword uValue)
 {
   unsigned uReg = BITS(16, 19); /* coprocessor register number is stored in the instruction */
+
+  UNUSED_VAR(uType);
 
   if(ARM3_RegisterWrite(hState, uReg, uValue)) {
     return ARMul_DONE;

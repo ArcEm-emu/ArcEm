@@ -17,6 +17,7 @@
 
 bool ControlPane_Init(ARMul_State *state)
 {
+  UNUSED_VAR(state);
   return true;
 }
 

@@ -276,7 +276,7 @@ else()
 		target_compile_definitions(arcem PRIVATE _LARGEFILE_SOURCE _LARGEFILE64_SOURCE _FILE_OFFSET_BITS=64)
 	endif()
 
-	target_compile_options(arcem PRIVATE -Wall -W -Wno-unused-parameter
+	target_compile_options(arcem PRIVATE -Wall -W
 		   -Wshadow -Wpointer-arith -Wcast-align -Wstrict-prototypes
 		   -Wmissing-prototypes -Wmissing-declarations -Wnested-externs
 		   -Wcast-qual -Wwrite-strings)

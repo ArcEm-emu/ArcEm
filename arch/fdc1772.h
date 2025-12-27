@@ -33,9 +33,8 @@ uint_fast8_t FDC_Read(ARMul_State *state, uint_fast16_t offset);
  * @param state  Emulator State
  * @param offset Containing the FDC register
  * @param data   Data field to write
- * @param bNw    byteNotWord IMPROVE unused parameter
  */
-void FDC_Write(ARMul_State *state, uint_fast16_t offset, uint_fast8_t data, bool bNw);
+void FDC_Write(ARMul_State *state, uint_fast16_t offset, uint_fast8_t data);
 
 /**
  * FDC_LatchAChange

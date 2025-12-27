@@ -26,7 +26,7 @@
 * will be accessed in that mode.                                            *
 \***************************************************************************/
 
-static ARMword ModeToBank(ARMul_State *state, ARMword mode) {
+static inline ARMword ModeToBank(ARMword mode) {
     return(mode&3);
 }
 
@@ -37,7 +37,7 @@ static ARMword ModeToBank(ARMul_State *state, ARMword mode) {
 void ARMul_SetReg(ARMul_State *state, unsigned mode, unsigned reg, ARMword value)
 {mode &= R15MODEBITS;
  if (mode != R15MODE)
-    state->RegBank[ModeToBank(state,(ARMword)mode)][reg] = value;
+    state->RegBank[ModeToBank((ARMword)mode)][reg] = value;
  else
     state->Reg[reg] = value;
 }
@@ -117,8 +117,8 @@ void ARMul_R15Altered(ARMul_State *state)
 ARMword ARMul_SwitchMode(ARMul_State *state,ARMword oldmode, ARMword newmode)
 {unsigned i;
 
- oldmode = ModeToBank(state,oldmode);
- state->Bank = ModeToBank(state,newmode);
+ oldmode = ModeToBank(oldmode);
+ state->Bank = ModeToBank(newmode);
  if (oldmode != state->Bank) { /* really need to do it */
     switch (oldmode) { /* save away the old registers */
        case USERBANK  :

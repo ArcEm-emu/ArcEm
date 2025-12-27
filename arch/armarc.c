@@ -56,6 +56,8 @@ static void DumpHandler(int sig) {
   int i, idx;
   ARMword size;
 
+  UNUSED_VAR(sig);
+
   warn("SIGUSR2 at PC=0x%x\n",ARMul_GetPC(state));
   signal(SIGUSR2,DumpHandler);
   /* Register dump */
@@ -613,6 +615,7 @@ static void ARMul_PurgeFastMapPTIdx(ARMul_State *state,ARMword idx)
 
 static void FastMap_DMAAbleWrite(ARMword address,ARMword data)
 {
+  UNUSED_VAR(data);
   MEMC.UpdateFlags[address/UPDATEBLOCKSIZE]++;
 }
 
@@ -802,6 +805,8 @@ static void MEMC_PutVal(ARMul_State *state, ARMword address)
 static ARMword FastMap_ROMMap1Func(ARMul_State *state, ARMword addr,ARMword data,ARMword flags)
 {
   /* Does nothing more than set ROMMapFlag to 2 and read a word of ROM */
+  UNUSED_VAR(data);
+  UNUSED_VAR(flags);
   MEMC.ROMMapFlag = MapFlag_UnaccessedROM;
   ARMul_RebuildFastMap(state);
   return MEMC.ROMHigh[(addr & MEMC.ROMHighMask)>>2];

@@ -33,6 +33,10 @@ static void CALLBACK sound_callback(HWAVEOUT hwo, UINT uMsg, DWORD_PTR dwInstanc
 {
 	int* freeBlockCounter = (int*)dwInstance;
 
+	UNUSED_VAR(hwo);
+	UNUSED_VAR(dwParam1);
+	UNUSED_VAR(dwParam2);
+
 	if(uMsg != WOM_DONE)
 		return;
 
@@ -147,6 +151,8 @@ void
 Sound_ShutdownHost(ARMul_State *state)
 {
 	int i;
+
+	UNUSED_VAR(state);
 
 	if (hWaveOut == INVALID_HANDLE_VALUE)
 		return;

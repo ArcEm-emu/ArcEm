@@ -16,6 +16,7 @@
 
 bool ControlPane_Init(ARMul_State *state)
 {
+  UNUSED_VAR(state);
   return true;
 }
 
@@ -24,6 +25,7 @@ void ControlPane_Error(bool fatal,const char *fmt,...)
   /* TODO: Allow continuing emulation when !fatal */
   char buf[1024];
   va_list args;
+  UNUSED_VAR(fatal);
   /* Assume mode 28 is available */
   _swix(OS_ScreenMode,_INR(0,1),0,28);
   va_start(args,fmt);
@@ -40,5 +42,6 @@ void ControlPane_Error(bool fatal,const char *fmt,...)
 void log_msgv(int type, const char *format, va_list ap)
 {
   /* stdout is reserved for menu/stats display on RISC OS */
+  UNUSED_VAR(type);
   vfprintf(stderr, format, ap);
 }

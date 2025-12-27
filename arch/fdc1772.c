@@ -323,6 +323,8 @@ void FDC_LatchBChange(ARMul_State *state) {
   uint_fast8_t val;
   uint_fast8_t diffmask=ioc.LatchB ^ ioc.LatchBold;
 
+  UNUSED_VAR(state);
+
   DBG(("LatchB: 0x%x\n",ioc.LatchB));
   /* Start up test */
   if (ioc.LatchBold>0xff) {
@@ -453,6 +455,8 @@ static void FDC_DoDRQ(ARMul_State *state) {
 
 static void FDC_NextTrack(ARMul_State *state)
 {
+  UNUSED_VAR(state);
+
   if (FDC.Track < CURRENT_FORMAT->num_cyl) {
       FDC.Track++;
   }
@@ -634,6 +638,8 @@ static void FDC_ReadCommand(ARMul_State *state) {
   long offset;
   uint_fast8_t Side=(ioc.LatchA & (1<<4))?0:1; /* Note: Inverted??? Yep!!! */
 
+  UNUSED_VAR(state);
+
   FDC.StatusReg|=BIT_BUSY;
   FDC.StatusReg &= ~(BIT_DRQ | BIT_LOSTDATA | (1<<5) | BIT_WRITEPROT | BIT_RECNOTFOUND);
 
@@ -712,6 +718,7 @@ static void FDC_WriteCommand(ARMul_State *state) {
 } /* FDC_WriteCommand */
 /*--------------------------------------------------------------------------*/
 static void FDC_RestoreCommand(ARMul_State *state) {
+  UNUSED_VAR(state);
   FDC.StatusReg|=BIT_BUSY;
   FDC.StatusReg&=~(BIT_RECNOTFOUND | BIT_CRC | BIT_DRQ);
   FDC.DelayCount=FDC.DelayLatch=READSPACING;
@@ -790,9 +797,8 @@ static void FDC_NewCommand(ARMul_State *state, uint_fast8_t data)
  * @param state  Emulator State
  * @param offset Containing the FDC register
  * @param data   Data field to write
- * @param bNw    byteNotWord IMPROVE unused parameter
  */
-void FDC_Write(ARMul_State *state, uint_fast16_t offset, uint_fast8_t data, bool bNw) {
+void FDC_Write(ARMul_State *state, uint_fast16_t offset, uint_fast8_t data) {
   uint_fast8_t reg=(offset>>2) &3;
 
   switch (reg) {

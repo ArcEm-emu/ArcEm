@@ -72,15 +72,20 @@ void ARexx_Cleanup()
 	}
 }
 
-STATIC VOID rx_quit(struct ARexxCmd *cmd, struct RexxMsg *rxm __attribute__((unused)))
+STATIC VOID rx_quit(struct ARexxCmd *cmd, struct RexxMsg *rxm)
 {
+	UNUSED_VAR(cmd);
+	UNUSED_VAR(rxm);
+
 	arexx_quit = TRUE;
 }
 
-STATIC VOID rx_floppy(struct ARexxCmd *cmd, struct RexxMsg *rxm __attribute__((unused)))
+STATIC VOID rx_floppy(struct ARexxCmd *cmd, struct RexxMsg *rxm)
 {
 	long drv = 0;
 	const char *err;
+
+	UNUSED_VAR(rxm);
 
 	drv = *(long *)cmd->ac_ArgList[0];
 	FDC_EjectFloppy(drv);
@@ -96,8 +101,11 @@ STATIC VOID rx_floppy(struct ARexxCmd *cmd, struct RexxMsg *rxm __attribute__((u
 	}
 }
 
-STATIC VOID rx_led(struct ARexxCmd *cmd, struct RexxMsg *rxm __attribute__((unused)))
+STATIC VOID rx_led(struct ARexxCmd *cmd, struct RexxMsg *rxm)
 {
+	UNUSED_VAR(cmd);
+	UNUSED_VAR(rxm);
+
 /* Not implemented yet
 	(KBD.Leds & 1) Caps
 	(KBD.Leds & 2) Num

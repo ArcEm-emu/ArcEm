@@ -331,7 +331,7 @@ static inline void SDD_Name(PaletteUpdate8bpp)(ARMul_State *state,SDD_HostColour
 */
 typedef int (*SDD_Name(RowFunc))(ARMul_State *state,int row,SDD_Row drow,int flags);
 /* Alternate version for when UpdateFlags are disabled */
-typedef void (*SDD_Name(RowFuncNoFlags))(ARMul_State *state,int row,SDD_Row drow);
+typedef void (*SDD_Name(RowFuncNoFlags))(ARMul_State *state,SDD_Row drow);
 
 
 #define ROWFUNC_FORCE 0x1 /* Force row to be fully redrawn */
@@ -1133,7 +1133,7 @@ static int SDD_Name(RowFunc8bpp2X)(ARMul_State *state,int row,SDD_Row drow,int f
 
 */
 
-static void SDD_Name(RowFunc1bpp1XNoFlags)(ARMul_State *state,int row,SDD_Row drow)
+static void SDD_Name(RowFunc1bpp1XNoFlags)(ARMul_State *state,SDD_Row drow)
 {
   int i, Remaining;
   uint32_t Vptr, Vstart, Vend;
@@ -1187,7 +1187,7 @@ static void SDD_Name(RowFunc1bpp1XNoFlags)(ARMul_State *state,int row,SDD_Row dr
   SDD_Name(Host_EndUpdate)(state,&drow);
 }
 
-static void SDD_Name(RowFunc2bpp1XNoFlags)(ARMul_State *state,int row,SDD_Row drow)
+static void SDD_Name(RowFunc2bpp1XNoFlags)(ARMul_State *state,SDD_Row drow)
 {
   int i, Remaining;
   uint32_t Vptr, Vstart, Vend;
@@ -1244,7 +1244,7 @@ static void SDD_Name(RowFunc2bpp1XNoFlags)(ARMul_State *state,int row,SDD_Row dr
   SDD_Name(Host_EndUpdate)(state,&drow);
 }
 
-static void SDD_Name(RowFunc4bpp1XNoFlags)(ARMul_State *state,int row,SDD_Row drow)
+static void SDD_Name(RowFunc4bpp1XNoFlags)(ARMul_State *state,SDD_Row drow)
 {
   int i, Remaining;
   uint32_t Vptr, Vstart, Vend;
@@ -1305,7 +1305,7 @@ static void SDD_Name(RowFunc4bpp1XNoFlags)(ARMul_State *state,int row,SDD_Row dr
   SDD_Name(Host_EndUpdate)(state,&drow);
 }
 
-static void SDD_Name(RowFunc8bpp1XNoFlags)(ARMul_State *state,int row,SDD_Row drow)
+static void SDD_Name(RowFunc8bpp1XNoFlags)(ARMul_State *state,SDD_Row drow)
 {
   int i, Remaining;
   uint32_t Vptr, Vstart, Vend;
@@ -1377,7 +1377,7 @@ static void SDD_Name(RowFunc8bpp1XNoFlags)(ARMul_State *state,int row,SDD_Row dr
 
 */
 
-static void SDD_Name(RowFunc1bpp2XNoFlags)(ARMul_State *state,int row,SDD_Row drow)
+static void SDD_Name(RowFunc1bpp2XNoFlags)(ARMul_State *state,SDD_Row drow)
 {
   int i, Remaining;
   uint32_t Vptr, Vstart, Vend;
@@ -1432,7 +1432,7 @@ static void SDD_Name(RowFunc1bpp2XNoFlags)(ARMul_State *state,int row,SDD_Row dr
   SDD_Name(Host_EndUpdate)(state,&drow);
 }
 
-static void SDD_Name(RowFunc2bpp2XNoFlags)(ARMul_State *state,int row,SDD_Row drow)
+static void SDD_Name(RowFunc2bpp2XNoFlags)(ARMul_State *state,SDD_Row drow)
 {
   int i, Remaining;
   uint32_t Vptr, Vstart, Vend;
@@ -1489,7 +1489,7 @@ static void SDD_Name(RowFunc2bpp2XNoFlags)(ARMul_State *state,int row,SDD_Row dr
   SDD_Name(Host_EndUpdate)(state,&drow);
 }
 
-static void SDD_Name(RowFunc4bpp2XNoFlags)(ARMul_State *state,int row,SDD_Row drow)
+static void SDD_Name(RowFunc4bpp2XNoFlags)(ARMul_State *state,SDD_Row drow)
 {
   int i, Remaining;
   uint32_t Vptr, Vstart, Vend;
@@ -1550,7 +1550,7 @@ static void SDD_Name(RowFunc4bpp2XNoFlags)(ARMul_State *state,int row,SDD_Row dr
   SDD_Name(Host_EndUpdate)(state,&drow);
 }
 
-static void SDD_Name(RowFunc8bpp2XNoFlags)(ARMul_State *state,int row,SDD_Row drow)
+static void SDD_Name(RowFunc8bpp2XNoFlags)(ARMul_State *state,SDD_Row drow)
 {
   int i, Remaining;
   uint32_t Vptr, Vstart, Vend;
@@ -1831,7 +1831,7 @@ static void SDD_Name(DisplayRowNoFlags)(ARMul_State *state,int row)
     SDD_Row drow;
     DC.Vptr = Vptr;
     drow = SDD_Name(Host_BeginRow)(state,hoststart,HD.XOffset);
-    (*rf)(state,row,drow);
+    (*rf)(state,drow);
     SDD_Name(Host_EndRow)(state,&drow);
   } while(++hoststart < hostend);
 }
@@ -2197,6 +2197,9 @@ static void SDD_Name(RowStart)(ARMul_State *state,CycleCount nowtime)
 static void SDD_Name(VIDCPutVal)(ARMul_State *state,ARMword address, ARMword data,bool bNw) {
   uint32_t addr, val;
 
+  UNUSED_VAR(address);
+  UNUSED_VAR(bNw);
+
   addr=(data>>24) & 255;
   val=data & 0xffffff;
 
@@ -2368,6 +2371,7 @@ static void SDD_Name(VIDCPutVal)(ARMul_State *state,ARMword address, ARMword dat
 } /* PutValVIDC */
 
 static void SDD_Name(IOEBCRWrite)(ARMul_State *state,ARMword data) {
+  UNUSED_VAR(data);
   DC.ModeChanged = true;
 }
 
@@ -2430,6 +2434,8 @@ static void SDD_Name(Shutdown)(ARMul_State *state)
 
 static void SDD_Name(DAGWrite)(ARMul_State *state,uint_fast8_t reg,uint_fast16_t val)
 {
+  UNUSED_VAR(val);
+
   /* We only care about Vstart & Vend updates. Vinit updates are picked up on at the start of the frame. */
   switch(reg)
   {

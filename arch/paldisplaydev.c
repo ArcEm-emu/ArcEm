@@ -824,6 +824,9 @@ static void PDD_Name(EventFunc)(ARMul_State *state,CycleCount nowtime)
 static void PDD_Name(VIDCPutVal)(ARMul_State *state,ARMword address, ARMword data,bool bNw) {
   uint32_t addr, val;
 
+  UNUSED_VAR(address);
+  UNUSED_VAR(bNw);
+
   addr=(data>>24) & 255;
   val=data & 0xffffff;
 
@@ -991,6 +994,7 @@ static void PDD_Name(VIDCPutVal)(ARMul_State *state,ARMword address, ARMword dat
 } /* PutValVIDC */
 
 static void PDD_Name(IOEBCRWrite)(ARMul_State *state,ARMword data) {
+  UNUSED_VAR(data);
   DC.ModeChanged = true;
 }
 
@@ -1039,6 +1043,9 @@ static void PDD_Name(Shutdown)(ARMul_State *state)
 
 static void PDD_Name(DAGWrite)(ARMul_State *state,uint_fast8_t reg,uint_fast16_t val)
 {
+  UNUSED_VAR(reg);
+  UNUSED_VAR(val);
+
   /* Vinit, Vstart & Vend changes require a full screen refresh */
   DC.ForceRefresh = true;
 }

@@ -323,7 +323,7 @@ static void EMFUNCDECL26(TstRegMrs1SwpNorm) (ARMul_State *state, ARMword instr) 
                 }
 
                 if (temp & 3) {
-                  DEST = ARMul_Align(state,temp,dest);
+                  DEST = ARMul_Align(temp,dest);
                 } else {
                   DEST = dest;
                 }
@@ -497,7 +497,7 @@ static void EMFUNCDECL26(TstRegMrs1SwpPC) (ARMul_State *state, ARMword instr) {
                 else
                   dest = ARMul_SwapWord(state,temp,state->Reg[RHSReg]);
                 if (temp & 3)
-                    DEST = ARMul_Align(state,temp,dest);
+                    DEST = ARMul_Align(temp,dest);
                 else
                     DEST = dest;
                 if (state->abortSig || state->Aborted) {
@@ -1450,6 +1450,7 @@ static void EMFUNCDECL26(LoadBWritePreIncReg) (ARMul_State *state, ARMword instr
 }
 
 static void EMFUNCDECL26(Undef) (ARMul_State *state, ARMword instr) {
+  UNUSED_VAR(instr);
   EMFUNC_CONDTEST
   ARMul_Abort(state,ARMul_UndefinedInstrV);
 }
@@ -1844,4 +1845,6 @@ static void EMFUNCDECL26(SWI) (ARMul_State *state, ARMword instr) {
 }
 
 static void EMFUNCDECL26(Noop) (ARMul_State *state, ARMword instr) {
+  UNUSED_VAR(state);
+  UNUSED_VAR(instr);
 }

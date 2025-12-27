@@ -45,7 +45,7 @@ struct plat_display {
 
 extern struct plat_display PD;
 
-extern void Resize_Window(ARMul_State *state,int x,int y);
+extern void Resize_Window(int x,int y);
 
 extern unsigned int vidc_col_to_x_col(unsigned int col);
 

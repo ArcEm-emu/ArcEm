@@ -116,6 +116,8 @@ static Uint8 *callback_buffer = NULL;
 static int callback_buffer_size;
 
 static void Sound_Callback(void *userdata, SDL_AudioStream *stream, int approx_amount, int total_amount) {
+  UNUSED_VAR(total_amount);
+
   while (approx_amount > 0) {
     Sound_CallbackImpl(userdata, callback_buffer, callback_buffer_size);
     SDL_PutAudioStreamData(stream, callback_buffer, callback_buffer_size);
@@ -357,6 +359,7 @@ static void adjust_fudgerate(int32_t used, int32_t out)
 void Sound_HostBuffered(SoundData *buffer,int32_t numSamples)
 {
   int32_t local_buffer_in,used,out,underflows;
+  UNUSED_VAR(buffer);
   numSamples <<= 1;
   Sound_Lock();
   local_buffer_in = sound_buffer_in;
@@ -383,6 +386,8 @@ void Sound_HostBuffered(SoundData *buffer,int32_t numSamples)
 
 static void Sound_CallbackImpl(void *userdata, uint8_t *stream, int len)
 {
+  UNUSED_VAR(userdata);
+
   while (len) {
     int32_t avail;
 
@@ -425,6 +430,8 @@ bool
 Sound_InitHost(ARMul_State *state)
 {
   int freq = 44100, channels = 2, samples = 512;
+
+  UNUSED_VAR(state);
 
   if (!Sound_Open(&freq, &channels, &samples))
   {
@@ -477,6 +484,8 @@ Sound_InitHost(ARMul_State *state)
 void
 Sound_ShutdownHost(ARMul_State *state)
 {
+  UNUSED_VAR(state);
+
 #ifdef SOUND_LOGGING
   if (logfile)
   {
@@ -484,6 +493,7 @@ Sound_ShutdownHost(ARMul_State *state)
     logfile = NULL;
   }
 #endif
+
   Sound_Close();
 }
 

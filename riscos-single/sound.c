@@ -180,6 +180,8 @@ static void shutdown_sharedsound(void)
 
 bool Sound_InitHost(ARMul_State *state)
 {
+  UNUSED_VAR(state);
+
   /* We want the right channel first */
   eSound_StereoSense = Stereo_RightLeft;
 
@@ -201,6 +203,7 @@ bool Sound_InitHost(ARMul_State *state)
 
 void Sound_ShutdownHost(ARMul_State *state)
 {
+  UNUSED_VAR(state);
   shutdown_sharedsound();
 }
 
@@ -223,6 +226,8 @@ SoundData *Sound_GetHostBuffer(int32_t *destavail)
 void Sound_HostBuffered(SoundData *buffer,int32_t numSamples)
 {
   int used, buffree;
+
+  UNUSED_VAR(buffer);
 
   if(!sound_handler_id)
     return;

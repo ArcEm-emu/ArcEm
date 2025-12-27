@@ -393,7 +393,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 }
                 break;
             }
-            ProcessKey(state, nVirtKey & 255, (int)lParam, 0);
+            ProcessKey(state, nVirtKey & 255, 0);
             break;
 
 
@@ -403,7 +403,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             if (wParam == VK_SHIFT || wParam == VK_CONTROL || wParam == VK_MENU)
                 nVirtKey = MapVirtualKey((lParam & 0xff0000) >> 16, MAPVK_VSC_TO_VK_EX);
 
-            ProcessKey(state, nVirtKey & 255, (int)lParam, 1);
+            ProcessKey(state, nVirtKey & 255, 1);
             break;
 
 
@@ -492,6 +492,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
  */
 INT_PTR CALLBACK AboutDlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam)
 {
+    UNUSED_VAR(lParam);
+
     switch (iMsg)
     {
     case WM_INITDIALOG :
@@ -683,6 +685,11 @@ int resizeWindow(int hWidth, int hHeight)
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
+  UNUSED_VAR(hInstance);
+  UNUSED_VAR(hPrevInstance);
+  UNUSED_VAR(lpCmdLine);
+  UNUSED_VAR(nShowCmd);
+
 #ifdef DEBUG
   AllocConsole( );
 

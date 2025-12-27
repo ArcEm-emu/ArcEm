@@ -100,6 +100,8 @@ static const uint_least8_t CMOSDefaults[] = {
 static void
 I2C_SetupTransmit(ARMul_State *state)
 {
+  UNUSED_VAR(state);
+
   /*dbug_i2c("I2C_SetupTransmit (address=%d)\n",I2C.WordAddress); */
   I2C.IAmTransmitter = true;
   I2C.state = I2CChipState_TransmittingToMaster;

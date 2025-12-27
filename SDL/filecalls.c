@@ -46,6 +46,8 @@ FILE *File_OpenAppData(const char *sName, const char *sMode)
     SDL_free(sAppData);
     return f;
 #else
+    UNUSED_VAR(sName);
+    UNUSED_VAR(sMode);
     return NULL;
 #endif
 }
@@ -108,6 +110,7 @@ Directory *Directory_OpenAppDir(const char *sName)
     SDL_free(sBasePath);
     return ret;
 #else
+    UNUSED_VAR(sName);
     return NULL;
 #endif
 }

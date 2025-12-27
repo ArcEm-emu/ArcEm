@@ -207,6 +207,7 @@ void Sound_StereoUpdated(ARMul_State *state)
 void Sound_SoundFreqUpdated(ARMul_State *state)
 {
   /* Do nothing for now */
+  UNUSED_VAR(state);
 }
 
 static void Sound_Log2Lin(const uint8_t *in,SoundData *out,int32_t avail)

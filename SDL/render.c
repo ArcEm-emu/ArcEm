@@ -43,7 +43,7 @@ static SDL_FRect mouse_rect;
 static int xscale = 1, yscale = 1;
 
 static uint32_t GetColour(ARMul_State *state,unsigned int col);
-static void SetupScreen(ARMul_State *state,int width,int height,int hz);
+static void SetupScreen(ARMul_State *state,int width,int height);
 static void PollDisplay(ARMul_State *state);
 
 /* ------------------------------------------------------------------ */
@@ -62,20 +62,49 @@ static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,in
 
 static inline SDD_Row SDD_Name(Host_BeginRow)(ARMul_State *state,int row,int offset)
 {
+  UNUSED_VAR(state);
   return ((SDD_Row)(void *) ((uint8_t *)sdd_surface->pixels + sdd_surface->pitch*row))+offset;
 }
 
-static inline void SDD_Name(Host_EndRow)(ARMul_State *state,SDD_Row *row) { /* nothing */ }
+static inline void SDD_Name(Host_EndRow)(ARMul_State *state,SDD_Row *row)
+{
+  /* nothing */
+  UNUSED_VAR(state);
+  UNUSED_VAR(row);
+}
 
-static inline void SDD_Name(Host_BeginUpdate)(ARMul_State *state,SDD_Row *row,unsigned int count) { /* nothing */ }
+static inline void SDD_Name(Host_BeginUpdate)(ARMul_State *state,SDD_Row *row,unsigned int count)
+{
+  /* nothing */
+  UNUSED_VAR(state);
+  UNUSED_VAR(row);
+  UNUSED_VAR(count);
+}
 
-static inline void SDD_Name(Host_EndUpdate)(ARMul_State *state,SDD_Row *row) { /* nothing */ }
+static inline void SDD_Name(Host_EndUpdate)(ARMul_State *state,SDD_Row *row)
+{
+  /* nothing */
+  UNUSED_VAR(state);
+  UNUSED_VAR(row);
+}
 
-static inline void SDD_Name(Host_SkipPixels)(ARMul_State *state,SDD_Row *row,unsigned int count) { (*row) += count; }
+static inline void SDD_Name(Host_SkipPixels)(ARMul_State *state,SDD_Row *row,unsigned int count)
+{
+  UNUSED_VAR(state);
+  (*row) += count;
+}
 
-static inline void SDD_Name(Host_WritePixel)(ARMul_State *state,SDD_Row *row,SDD_HostColour pix) { *(*row)++ = pix; }
+static inline void SDD_Name(Host_WritePixel)(ARMul_State *state,SDD_Row *row,SDD_HostColour pix)
+{
+  UNUSED_VAR(state);
+  *(*row)++ = pix;
+}
 
-static inline void SDD_Name(Host_WritePixels)(ARMul_State *state,SDD_Row *row,SDD_HostColour pix,unsigned int count) { while(count--) *(*row)++ = pix; }
+static inline void SDD_Name(Host_WritePixels)(ARMul_State *state,SDD_Row *row,SDD_HostColour pix,unsigned int count)
+{
+  UNUSED_VAR(state);
+  while(count--) *(*row)++ = pix;
+}
 
 static void SDD_Name(Host_PollDisplay)(ARMul_State *state) { PollDisplay(state); }
 
@@ -83,6 +112,8 @@ static void SDD_Name(Host_PollDisplay)(ARMul_State *state) { PollDisplay(state);
 
 static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,int hz)
 {
+  UNUSED_VAR(hz);
+
   if (width > MaxVideoWidth || height > MaxVideoHeight) {
     ControlPane_Error(true,"Resize_Window: new size (%d, %d) exceeds maximum (%d, %d)",
         width, height, MaxVideoWidth, MaxVideoHeight);
@@ -93,7 +124,7 @@ static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,in
   HD.Width = width;
   HD.Height = height;
 
-  SetupScreen(state,width,height,hz);
+  SetupScreen(state,width,height);
 }
 
 #undef SDD_HostColour
@@ -116,20 +147,49 @@ static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,in
 
 static inline SDD_Row SDD_Name(Host_BeginRow)(ARMul_State *state,int row,int offset)
 {
+  UNUSED_VAR(state);
   return ((SDD_Row)(void *) ((uint8_t *)sdd_surface->pixels + sdd_surface->pitch*row))+offset;
 }
 
-static inline void SDD_Name(Host_EndRow)(ARMul_State *state,SDD_Row *row) { /* nothing */ }
+static inline void SDD_Name(Host_EndRow)(ARMul_State *state,SDD_Row *row)
+{
+  /* nothing */
+  UNUSED_VAR(state);
+  UNUSED_VAR(row);
+}
 
-static inline void SDD_Name(Host_BeginUpdate)(ARMul_State *state,SDD_Row *row,unsigned int count) { /* nothing */ }
+static inline void SDD_Name(Host_BeginUpdate)(ARMul_State *state,SDD_Row *row,unsigned int count)
+{
+  /* nothing */
+  UNUSED_VAR(state);
+  UNUSED_VAR(row);
+  UNUSED_VAR(count);
+}
 
-static inline void SDD_Name(Host_EndUpdate)(ARMul_State *state,SDD_Row *row) { /* nothing */ }
+static inline void SDD_Name(Host_EndUpdate)(ARMul_State *state,SDD_Row *row)
+{
+  /* nothing */
+  UNUSED_VAR(state);
+  UNUSED_VAR(row);
+}
 
-static inline void SDD_Name(Host_SkipPixels)(ARMul_State *state,SDD_Row *row,unsigned int count) { (*row) += count; }
+static inline void SDD_Name(Host_SkipPixels)(ARMul_State *state,SDD_Row *row,unsigned int count)
+{
+  UNUSED_VAR(state);
+  (*row) += count;
+}
 
-static inline void SDD_Name(Host_WritePixel)(ARMul_State *state,SDD_Row *row,SDD_HostColour pix) { *(*row)++ = pix; }
+static inline void SDD_Name(Host_WritePixel)(ARMul_State *state,SDD_Row *row,SDD_HostColour pix)
+{
+  UNUSED_VAR(state);
+  *(*row)++ = pix;
+}
 
-static inline void SDD_Name(Host_WritePixels)(ARMul_State *state,SDD_Row *row,SDD_HostColour pix,unsigned int count) { while(count--) *(*row)++ = pix; }
+static inline void SDD_Name(Host_WritePixels)(ARMul_State *state,SDD_Row *row,SDD_HostColour pix,unsigned int count)
+{
+  UNUSED_VAR(state);
+  while(count--) *(*row)++ = pix;
+}
 
 static void SDD_Name(Host_PollDisplay)(ARMul_State *state) { PollDisplay(state); }
 
@@ -137,6 +197,8 @@ static void SDD_Name(Host_PollDisplay)(ARMul_State *state) { PollDisplay(state);
 
 static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,int hz)
 {
+  UNUSED_VAR(hz);
+
   if (width > MaxVideoWidth || height > MaxVideoHeight) {
     ControlPane_Error(true,"Resize_Window: new size (%d, %d) exceeds maximum (%d, %d)",
         width, height, MaxVideoWidth, MaxVideoHeight);
@@ -147,7 +209,7 @@ static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,in
   HD.Width = width;
   HD.Height = height;
 
-  SetupScreen(state,width,height,hz);
+  SetupScreen(state,width,height);
 }
 
 #undef SDD_HostColour
@@ -161,6 +223,8 @@ static void SDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,in
 static uint32_t GetColour(ARMul_State *state,unsigned int col)
 {
   uint8_t r, g, b;
+
+  UNUSED_VAR(state);
 
   /* Convert to 8-bit component values */
   r = (col & 0xf)*0x11;
@@ -248,7 +312,7 @@ static void RefreshMouse(ARMul_State *state) {
   mouse_texture = SDL_CreateTextureFromSurface(renderer, mouse_surface);
 } /* RefreshMouse */
 
-static void SetupScreen(ARMul_State *state,int width,int height,int hz)
+static void SetupScreen(ARMul_State *state,int width,int height)
 {
   /* TODO: Use SDL_LockTexture() instead of creating a separate surface? */
   if (!sdd_surface)

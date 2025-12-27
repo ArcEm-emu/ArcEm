@@ -455,9 +455,13 @@ static void PDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,in
 
 static void PDD_Name(Host_SetPaletteEntry)(ARMul_State *state,int i,uint_fast16_t phys)
 {
-	ULONG r = (phys & 0xf)*0x11111111;
-	ULONG g = ((phys>>4) & 0xf)*0x11111111;
-	ULONG b = ((phys>>8) & 0xf)*0x11111111;
+	ULONG r, g, b;
+
+	UNUSED_VAR(state);
+
+	r = (phys & 0xf)*0x11111111;
+	g = ((phys>>4) & 0xf)*0x11111111;
+	b = ((phys>>8) & 0xf)*0x11111111;
 
 	SetRGB32(&screen->ViewPort,i,r,g,b);
 }
@@ -465,10 +469,15 @@ static void PDD_Name(Host_SetPaletteEntry)(ARMul_State *state,int i,uint_fast16_
 static void PDD_Name(Host_SetCursorPaletteEntry)(ARMul_State *state,int i,uint_fast16_t phys)
 {
 	/* TODO */
+	UNUSED_VAR(state);
+	UNUSED_VAR(i);
+	UNUSED_VAR(phys);
 }
 
 static void PDD_Name(Host_SetBorderColour)(ARMul_State *state,uint_fast16_t phys)
 {
+	UNUSED_VAR(state);
+
 	/* Set border palette entry */
 	if(BorderPalEntry != 256)
 	{
@@ -483,16 +492,23 @@ static void PDD_Name(Host_SetBorderColour)(ARMul_State *state,uint_fast16_t phys
 static inline PDD_Row PDD_Name(Host_BeginRow)(ARMul_State *state,int row,int offset,int *alignment)
 {
 	PDD_Row drow;
+	UNUSED_VAR(state);
 	drow.x = offset;
 	drow.y = row;
 	*alignment = 0;
 	return drow;
 }
 
-static inline void PDD_Name(Host_EndRow)(ARMul_State *state,PDD_Row *row) { /* nothing */ }
+static inline void PDD_Name(Host_EndRow)(ARMul_State *state,PDD_Row *row)
+{
+	/* nothing */
+	UNUSED_VAR(state);
+	UNUSED_VAR(row);
+}
 
 static inline ARMword *PDD_Name(Host_BeginUpdate)(ARMul_State *state,PDD_Row *row,unsigned int count,int *outoffset)
 {
+	UNUSED_VAR(state);
 	row->width = count>>3;
 	*outoffset = 0;
 	redraw_miny = MIN(redraw_miny,row->y);
@@ -502,11 +518,13 @@ static inline ARMword *PDD_Name(Host_BeginUpdate)(ARMul_State *state,PDD_Row *ro
 
 static inline void PDD_Name(Host_EndUpdate)(ARMul_State *state,PDD_Row *row)
 {
+	UNUSED_VAR(state);
 	WritePixelLine8(&friend,row->x,row->y,row->width,(UBYTE *)RowBuffer,&tmprp);
 }
 
 static inline void PDD_Name(Host_AdvanceRow)(ARMul_State *state,PDD_Row *row,unsigned int count)
 {
+	UNUSED_VAR(state);
 	row->x += count>>3;
 }
 
@@ -515,6 +533,12 @@ PDD_Name(Host_PollDisplay)(ARMul_State *state);
 
 static void PDD_Name(Host_DrawBorderRect)(ARMul_State *state,int x,int y,int width,int height)
 {
+	UNUSED_VAR(state);
+	UNUSED_VAR(x);
+	UNUSED_VAR(y);
+	UNUSED_VAR(width);
+	UNUSED_VAR(height);
+
 	if(BorderPalEntry != 256)
 	{
 		/* TODO - Fill rectangle with border colour */
@@ -526,6 +550,8 @@ static void PDD_Name(Host_DrawBorderRect)(ARMul_State *state,int x,int y,int wid
 void PDD_Name(Host_ChangeMode)(ARMul_State *state,int width,int height,int depth,int hz)
 {
 	int realdepth = changemode(width,height,depth,&HD.XScale,&HD.YScale);
+
+	UNUSED_VAR(hz);
 
 	HD.Width = oldwidth;
 	HD.Height = oldheight;

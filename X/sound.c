@@ -65,6 +65,7 @@ void Sound_HostBuffered(SoundData *buffer,int32_t numSamples)
 {
 #ifdef SOUND_THREAD
   int32_t local_buffer_in,used,ofs;
+  UNUSED_VAR(buffer);
   numSamples <<= 1;
   pthread_mutex_lock(&mut);
   local_buffer_in = sound_buffer_in;
@@ -164,6 +165,9 @@ static void *
 sound_writeThread(void *arg)
 {
   int32_t local_buffer_out = sound_buffer_out;
+
+  UNUSED_VAR(arg);
+
   for (;;) {
     int32_t avail;
 
@@ -200,6 +204,8 @@ bool
 Sound_InitHost(ARMul_State *state)
 {
   audio_buf_info buf;
+
+  UNUSED_VAR(state);
 
   if ((soundDevice = open("/dev/dsp", O_WRONLY )) < 0) {
     ControlPane_Error(false,"Could not open audio device /dev/dsp");
@@ -261,6 +267,7 @@ void
 Sound_ShutdownHost(ARMul_State *state)
 {
   /* TODO */
+  UNUSED_VAR(state);
 }
 
 #endif

@@ -31,7 +31,7 @@
 
 /*-----------------------------------------------------------------------------*/
 
-static void TextAt(ARMul_State *state, const char *Text, int x, int y) {
+static void TextAt(const char *Text, int x, int y) {
   XDrawImageString(PD.disp, PD.ControlPane, PD.ControlPaneGC, x, y,
                    Text, strlen(Text));
 } /* TextAt */
@@ -44,7 +44,7 @@ static void DoLED(const char *Text, int On, int ty, int lx)
   XSetBackground(PD.disp, PD.ControlPaneGC, PD.OffWhite.pixel);
   XSetForeground(PD.disp, PD.ControlPaneGC, PD.Black.pixel);
 
-  TextAt(NULL, Text, lx + LEDWIDTH + 2, ty);
+  TextAt(Text, lx + LEDWIDTH + 2, ty);
 
   XSetForeground(PD.disp, PD.ControlPaneGC, PD.Black.pixel);
   XSetFillStyle(PD.disp, PD.ControlPaneGC, FillSolid);
@@ -111,7 +111,7 @@ static void insert_or_eject_floppy(int drive)
 /* Centres the text in the 'lx rx' box placing the text so that its top edge   */
 /* is at 'ty'; it returns the position of the bottom of the text               */
 
-static int TextCenteredH(ARMul_State *state, const char *Text, int ty, int lx, int rx) {
+static int TextCenteredH(const char *Text, int ty, int lx, int rx) {
   int dirreturn, ascentret, descentret;
   XCharStruct overall;
   int x;
@@ -123,7 +123,7 @@ static int TextCenteredH(ARMul_State *state, const char *Text, int ty, int lx, i
   ty += ascentret;
   x= (rx - lx) / 2;
 
-  TextAt(state, Text, x - overall.width / 2, ty);
+  TextAt(Text, x - overall.width / 2, ty);
 
   return ty + descentret;
 } /* TextCenteredH */
@@ -131,26 +131,26 @@ static int TextCenteredH(ARMul_State *state, const char *Text, int ty, int lx, i
 
 /*-----------------------------------------------------------------------------*/
 
-static void ControlPane_Redraw(ARMul_State *state, XExposeEvent *e) {
+static void ControlPane_Redraw(ARMul_State *state) {
   int y;
 
   XSetBackground(PD.disp, PD.ControlPaneGC, PD.OffWhite.pixel);
   XSetForeground(PD.disp, PD.ControlPaneGC, PD.Black.pixel);
-  y = TextCenteredH(state, "Archimedes Emulation (c) 1995-1999 David Alan Gilbert", 0, 0,
+  y = TextCenteredH("Archimedes Emulation (c) 1995-1999 David Alan Gilbert", 0, 0,
                     CTRLPANEWIDTH);
 
   y += 2;
-  y = TextCenteredH(state, "http://arcem.sf.net/", y, 0, CTRLPANEWIDTH);
+  y = TextCenteredH("http://arcem.sf.net/", y, 0, CTRLPANEWIDTH);
 
   y+=2;
   XDrawLine(PD.disp, PD.ControlPane, PD.ControlPaneGC,
             0, y, CTRLPANEWIDTH-1, y);
 
   y += 2;
-  y = TextCenteredH(state, "Type `q' to quit.", y, 0, CTRLPANEWIDTH);
+  y = TextCenteredH("Type `q' to quit.", y, 0, CTRLPANEWIDTH);
 
   y += 2;
-  y = TextCenteredH(state, "Type `0', `1', `2', or `3' to "
+  y = TextCenteredH("Type `0', `1', `2', or `3' to "
       "insert/eject floppy image.", y, 0, CTRLPANEWIDTH);
 
   y+=2;
@@ -179,7 +179,7 @@ void ControlPane_Event(ARMul_State *state, XEvent *event) {
       break;
 
     case Expose:
-      ControlPane_Redraw(state, &event->xexpose);
+      ControlPane_Redraw(state);
       break;
 
     default:

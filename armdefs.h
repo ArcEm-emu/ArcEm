@@ -264,11 +264,13 @@ extern void state_free(void *p);
  */
 static inline void *state_alloc(int s)
 {
+	UNUSED_VAR(s);
 	return &statestr;
 }
 
 static inline void state_free(void *p)
 {
+	UNUSED_VAR(p);
 }
 #endif
  
