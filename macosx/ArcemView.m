@@ -46,15 +46,16 @@ extern int rMouseHeight;
 {
     if (self = [super initWithFrame:rect])
     {
+        CGBitmapInfo cgBitmapInfo = kCGImageAlphaNoneSkipFirst | kCGImageByteOrderDefault | kCGImagePixelFormatPacked;
         CGColorSpaceRef cgColorspace = CGColorSpaceCreateDeviceRGB();
 
         // Create the screen bitmap and image
         screenBmp = [[NSMutableData alloc] initWithLength: MonitorSize * 4];
-        screenImage = CGBitmapContextCreate([screenBmp mutableBytes], MonitorWidth, MonitorHeight, 8, MonitorWidth * 4, cgColorspace, kCGImageAlphaNoneSkipFirst);
+        screenImage = CGBitmapContextCreate([screenBmp mutableBytes], MonitorWidth, MonitorHeight, 8, MonitorWidth * 4, cgColorspace, cgBitmapInfo);
 
         // Create the cursor bitmap and image
         cursorBmp = [[NSMutableData alloc] initWithLength: 32 * 32 * 4];
-        cursorImage = CGBitmapContextCreate([cursorBmp mutableBytes], 32, 32, 8, 32 * 4, cgColorspace, kCGImageAlphaNoneSkipFirst);
+        cursorImage = CGBitmapContextCreate([cursorBmp mutableBytes], 32, 32, 8, 32 * 4, cgColorspace, cgBitmapInfo);
 
         CGColorSpaceRelease (cgColorspace);
 
@@ -128,7 +129,7 @@ extern int rMouseHeight;
     CGRect r;
     
     NSGraphicsContext *ctx = [NSGraphicsContext currentContext];
-    CGContextRef cgc = (CGContextRef) [ctx graphicsPort];
+    CGContextRef cgc = [ctx CGContext];
 
     r.size.width = nXScale * MonitorWidth;
     r.size.height = nYScale * MonitorHeight;

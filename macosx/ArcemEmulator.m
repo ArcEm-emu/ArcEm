@@ -34,6 +34,7 @@
 #import "ArcemView.h"
 #import "ArcemController.h"
 #import "PreferenceController.h"
+#import "win.h"
 #include "../arch/keyboard.h"
 
 #import <pthread.h>
@@ -52,22 +53,19 @@ char arcemDir[256];
  * resizeWindow - called when the VIDC display sizes. Sometimes it's negative
  *                so we protect the view here.
  */
-int resizeWindow(int hWidth, int hHeight)
+void resizeWindow(int hWidth, int hHeight)
 {
     if ((hWidth > 0) && (hHeight > 0))
         [disp resizeToWidth: hWidth
                    toHeight: hHeight];
     [disp setNeedsDisplay: YES];
-    return 0;
 }
 
 
 /*------------------------------------------------------------------------------
- * updateDisplay - called when ArcEm wants to refresh the display. If yield
- *                 is non-zero then we yield so that we have a more responsive
- *                 interactive env (well, that's the theory anyway).
+ * updateDisplay - called when ArcEm wants to refresh the display.
  */
-void updateDisplay(int x, int y, int width, int height, int yield)
+void updateDisplay(int x, int y, int width, int height)
 {
     NSRect rect;
 
@@ -77,9 +75,6 @@ void updateDisplay(int x, int y, int width, int height, int yield)
     rect.size.height = height;
     
     [disp setNeedsScaledDisplayInRect: rect];
-    
-    //if (yield)
-      //  sched_yield();
 }
 
 

@@ -366,10 +366,10 @@ ArcemConfig hArcemConfig;
 {
     [arcemView toggleAspect];
 
-    if ([sender state] == NSOnState)
-        [sender setState: NSOffState];
+    if ([sender state] == NSControlStateValueOn)
+        [sender setState: NSControlStateValueOff];
     else
-        [sender setState: NSOnState];
+        [sender setState: NSControlStateValueOn];
 }
 
 
@@ -380,10 +380,10 @@ ArcemConfig hArcemConfig;
 {
     [arcemView toggleUpscale];
 
-    if ([sender state] == NSOnState)
-        [sender setState: NSOffState];
+    if ([sender state] == NSControlStateValueOn)
+        [sender setState: NSControlStateValueOff];
     else
-        [sender setState: NSOnState];
+        [sender setState: NSControlStateValueOn];
 }
 
 

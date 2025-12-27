@@ -32,6 +32,5 @@ extern int rMouseX;
 extern int rMouseY;
 extern int rMouseHeight;
 
-extern int createWindow(int w, int h);
-extern int updateDisplay(int, int, int, int, int);
-extern int resizeWindow(int hWidth, int hHeight);
+extern void updateDisplay(int, int, int, int);
+extern void resizeWindow(int hWidth, int hHeight);

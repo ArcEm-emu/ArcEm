@@ -52,7 +52,7 @@ static void SDD_Name(Host_PollDisplay)(ARMul_State *state)
 {
   RefreshMouse(state);
   dispatch_sync(dispatch_get_main_queue(), ^{
-    updateDisplay(0, 0, MonitorWidth, MonitorHeight, 1);
+    updateDisplay(0, 0, MonitorWidth, MonitorHeight);
   });
 }
 
