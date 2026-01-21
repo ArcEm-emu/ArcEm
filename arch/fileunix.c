@@ -14,7 +14,9 @@
 
 /* posix includes */
 #include <sys/stat.h>
+#ifndef __amigaos3__
 #include <sys/statvfs.h>
+#endif
 #include <sys/types.h>
 #include <dirent.h>
 
@@ -201,6 +203,7 @@ bool Directory_GetEntrySize(DirEntry *hDirEntry, Offset *ulFilesize)
 
 bool Disk_GetInfo(const char *path, DiskInfo *d)
 {
+#ifndef __amigaos3__
 	struct statvfs s;
 	int ret;
 
@@ -215,6 +218,11 @@ bool Disk_GetInfo(const char *path, DiskInfo *d)
 	d->free = (uint64_t) s.f_bavail * (uint64_t) s.f_frsize;
 
 	return true;
+#else
+	UNUSED_VAR(path);
+	UNUSED_VAR(d);
+	return false;
+#endif
 }
 
 #endif
