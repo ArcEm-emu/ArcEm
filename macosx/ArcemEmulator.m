@@ -41,8 +41,6 @@
 
 extern ArcemConfig hArcemConfig;
 
-extern uint32_t *screenbmp;
-extern uint32_t *cursorbmp;
 ArcemView* disp;
 char arcemDir[256];
 
@@ -108,9 +106,6 @@ void updateDisplay(int x, int y, int width, int height)
     NSURL *dir;
 
     disp = anObject;
-
-    screenbmp = [disp getScreenBytes];
-    cursorbmp = [disp getCursorBytes];
 
     dir = [[NSUserDefaults standardUserDefaults] URLForKey:AEDirectoryKey];
 	strlcpy(arcemDir, dir.fileSystemRepresentation, sizeof(arcemDir));

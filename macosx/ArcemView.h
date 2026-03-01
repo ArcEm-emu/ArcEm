@@ -30,9 +30,7 @@
 
 @interface ArcemView : NSView
 {
-    NSMutableData *screenBmp;        //!< Raw screen bitmap
     CGContextRef screenImage;        //!< Image for drawing screen
-    NSMutableData *cursorBmp;        //!< Raw cursos bitmap
     CGContextRef cursorImage;        //!< Image for drawing cursor
 
     ArcemEmulator *emuThread;        //!< Thread controling the emulator
@@ -60,8 +58,6 @@
 @property (nonatomic, getter=isMouseLocked) BOOL mouseLock;
 
 - (void)setEmulator: (ArcemEmulator *)emu;
-- (void *)getScreenBytes;
-- (void *)getCursorBytes;
 /*! Called when the emulator changes screen size, and
  * adjusts the view to match
  */
@@ -81,5 +77,6 @@
 - (void)toggleUpscale;
 - (void)prefsUpdated;
 - (void)setNeedsScaledDisplayInRect: (NSRect)rect;
+- (void)recreateSurfaces;
 
 @end

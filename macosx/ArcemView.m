@@ -30,12 +30,6 @@
 #include "KeyTable.h"
 
 
-extern int rMouseX;
-extern int rMouseY;
-extern int rMouseHeight;
-
-#define CURSOR_HEIGHT 32
-
 @implementation ArcemView
 @synthesize mouseLock=captureMouse;
 
@@ -46,30 +40,17 @@ extern int rMouseHeight;
 {
     if (self = [super initWithFrame:rect])
     {
-        CGBitmapInfo cgBitmapInfo = kCGImageAlphaNoneSkipFirst | kCGImageByteOrderDefault | kCGImagePixelFormatPacked;
-        CGColorSpaceRef cgColorspace = CGColorSpaceCreateDeviceRGB();
-
-        // Create the screen bitmap and image
-        screenBmp = [[NSMutableData alloc] initWithLength: MonitorSize * 4];
-        screenImage = CGBitmapContextCreate([screenBmp mutableBytes], MonitorWidth, MonitorHeight, 8, MonitorWidth * 4, cgColorspace, cgBitmapInfo);
-
-        // Create the cursor bitmap and image
-        cursorBmp = [[NSMutableData alloc] initWithLength: 32 * 32 * 4];
-        cursorImage = CGBitmapContextCreate([cursorBmp mutableBytes], 32, 32, 8, 32 * 4, cgColorspace, cgBitmapInfo);
-
-        CGColorSpaceRelease (cgColorspace);
-
         captureMouse = FALSE;
         memset(keyState, false, sizeof(keyState));
 
         // Set the default display region
         dispFrame.origin.x = 0.0;
         dispFrame.origin.y = 0.0;
-        dispFrame.size.width = MonitorWidth;
-        dispFrame.size.height = MonitorHeight;
+        dispFrame.size.width = 640;
+        dispFrame.size.height = 480;
 
-        nWidth = MonitorWidth;
-        nHeight = MonitorHeight;
+        nWidth = 640;
+        nHeight = 480;
         nXScale = nYScale = 1;
         bAspect = bUpscale = YES;
 
@@ -83,24 +64,6 @@ extern int rMouseHeight;
 - (void)setEmulator: (ArcemEmulator *)emu
 {
     emuThread = emu;
-}
-
-
-/*------------------------------------------------------------------------------
- * getScreenBytes:
- */
-- (void *)getScreenBytes
-{
-    return [screenBmp mutableBytes];
-}
-
-
-/*------------------------------------------------------------------------------
- * getCursorBytes:
- */
-- (void *)getCursorBytes
-{
-    return [cursorBmp mutableBytes];
 }
 
 
@@ -121,6 +84,32 @@ extern int rMouseHeight;
 
 
 /*------------------------------------------------------------------------------
+ * recreateSurfaces
+ */
+- (void)recreateSurfaces
+{
+    CGBitmapInfo cgBitmapInfo = kCGImageAlphaNoneSkipFirst | kCGImageByteOrderDefault | kCGImagePixelFormatPacked;
+    CGColorSpaceRef cgColorspace = CGColorSpaceCreateDeviceRGB();
+
+    // Recreate the screen image
+    if (screenImage)
+        CGContextRelease(screenImage);
+    screenImage = CGBitmapContextCreate(NULL, nWidth, nHeight, 8, nWidth * 4, cgColorspace, cgBitmapInfo);
+
+    // Recreate the cursor image
+    if (cursorImage)
+        CGContextRelease(cursorImage);
+    cursorImage = CGBitmapContextCreate(NULL, 32, nHeight, 8, 32 * 4, cgColorspace, cgBitmapInfo);
+
+    CGColorSpaceRelease (cgColorspace);
+
+    screenbmp = CGBitmapContextGetData(screenImage);
+    cursorbmp = CGBitmapContextGetData(cursorImage);
+    screenpitch = CGBitmapContextGetBytesPerRow(screenImage);
+    cursorpitch = CGBitmapContextGetBytesPerRow(cursorImage);
+}
+
+/*------------------------------------------------------------------------------
  * drawRect - This redraws the display
  */
 - (void)drawRect:(NSRect)rect
@@ -131,8 +120,8 @@ extern int rMouseHeight;
     NSGraphicsContext *ctx = [NSGraphicsContext currentContext];
     CGContextRef cgc = [ctx CGContext];
 
-    r.size.width = nXScale * MonitorWidth;
-    r.size.height = nYScale * MonitorHeight;
+    r.size.width = nXScale * nWidth;
+    r.size.height = nYScale * nHeight;
     r.origin.x = 0;
     r.origin.y = -(r.size.height - bounds.size.height);
 
@@ -145,8 +134,8 @@ extern int rMouseHeight;
         CGImageRelease(image);
     }
 
-    r.size.width = nXScale * 32;
-    r.size.height = nYScale * 32;
+    r.size.width = nXScale * rMouseWidth;
+    r.size.height = nYScale * rMouseHeight;
     r.origin.x = (rMouseX * nXScale);
     r.origin.y = -(r.size.height - bounds.size.height) - (rMouseY * nYScale);
 
@@ -155,7 +144,11 @@ extern int rMouseHeight;
         CGContextFlush(cursorImage);
 
         CGImageRef image = CGBitmapContextCreateImage(cursorImage);
-        CGContextDrawImage (cgc, r, image);
+        CGImageRef subImage = CGImageCreateWithImageInRect (image, CGRectMake(0, 0, rMouseWidth, rMouseHeight));
+
+        CGContextDrawImage (cgc, r, subImage);
+
+        CGImageRelease(subImage);
         CGImageRelease(image);
     }
 
@@ -270,8 +263,12 @@ extern int rMouseHeight;
 
     frame = [window frame];
 
-    nWidth = width;
-    nHeight = height;
+    if (width != nWidth || height != nHeight) {
+        nWidth = width;
+        nHeight = height;
+
+        [self recreateSurfaces];
+    }
 
     /* Try and detect rectangular pixel modes */
     if(bAspect && (width >= height*2))
@@ -312,10 +309,7 @@ extern int rMouseHeight;
     dispFrame.size.width = width;
     dispFrame.size.height = height;
     dispFrame.origin.x = 0.0;
-
-    // We need to shift the image as the screen is draw top right of the
-    // bitmap, but cocoa will use the origin as bottom left
-    dispFrame.origin.y = MonitorHeight - height;
+    dispFrame.origin.y = 0.0;
 }
 
 

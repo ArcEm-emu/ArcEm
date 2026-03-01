@@ -24,13 +24,14 @@
 
 
 #define MinimumWidth 512
-#define MonitorWidth 800
-#define MonitorHeight 600
-#define MonitorSize MonitorWidth * MonitorHeight
 
 extern int rMouseX;
 extern int rMouseY;
+extern int rMouseWidth;
 extern int rMouseHeight;
+
+extern void *screenbmp, *cursorbmp;
+extern size_t screenpitch, cursorpitch;
 
 extern void updateDisplay(int, int, int, int);
 extern void resizeWindow(int hWidth, int hHeight);
