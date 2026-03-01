@@ -45,6 +45,7 @@ struct ARMul_State;
 
 - (instancetype)initWithView:(ArcemView *)view;
 - (void)restart;
+- (void)quit;
 - (void)keyDown:(int)key;
 - (void)keyUp:(int)key;
 - (void)mouseMovedX:(int)xdiff

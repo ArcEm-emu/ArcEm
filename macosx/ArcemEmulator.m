@@ -160,6 +160,17 @@ void updateDisplay(int x, int y, int width, int height)
 }
 
 /*------------------------------------------------------------------------------
+ * quit
+ */
+- (void)quit
+{
+   if (bActive) {
+       bRestart = FALSE;
+       ARMul_Exit(state,0);
+   }
+}
+
+/*------------------------------------------------------------------------------
  * keyDown
  */
 - (void)keyDown:(int)key

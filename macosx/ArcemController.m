@@ -396,4 +396,17 @@ ArcemConfig hArcemConfig;
 }
 
 
+/*------------------------------------------------------------------------------
+ *
+ */
+- (bool)windowShouldClose: (NSWindow *)sender
+{
+    if (emuThread != nil)
+    {
+        [emuThread quit];
+    }
+    return true;
+}
+
+
 @end
