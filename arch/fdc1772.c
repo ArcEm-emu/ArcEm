@@ -57,6 +57,10 @@ struct FDCStruct{
   uint_least8_t Sector_ReadAddr; /* Used to hold the next sector to be found! */
   uint_least8_t Data;
   uint_least8_t CurrentDisc;
+  uint_least8_t LatchA;
+  uint_least8_t LatchB;
+  uint_least16_t LatchAold;
+  uint_least16_t LatchBold;
   int_least16_t BytesToGo;
   int32_t DelayCount;
   int32_t DelayLatch;
@@ -245,24 +249,30 @@ static void ClearDRQ(ARMul_State *state) {
  *
  * @param state Emulator state
  */
-void FDC_LatchAChange(ARMul_State *state) {
+void FDC_LatchAChange(ARMul_State *state,uint_fast8_t data) {
   static CycleCount TimeWhenInUseChanged;
   CycleCount now,diff;
   int_fast8_t bit;
   uint_fast8_t val;
-  uint_fast8_t diffmask=ioc.LatchA ^ ioc.LatchAold;
+  uint_fast8_t diffmask;
 
-  DBG(("LatchA: 0x%x\n",ioc.LatchA));
+  DBG(("LatchA: 0x%x\n",data));
+
+  FDC.LatchA = data;
 
   /* Start up test */
-  if (ioc.LatchAold>0xff) {
+  if (FDC.LatchAold>0xff) {
     diffmask=0xff;
+  } else {
+    diffmask=FDC.LatchA ^ FDC.LatchAold;
   }
+
+  FDC.LatchAold = data;
 
   for(bit=7;bit>=0;bit--) {
     if (diffmask & (1<<bit)) {
       /* Bit changed! */
-      val = ioc.LatchA & (1 << bit);
+      val = FDC.LatchA & (1 << bit);
 
       switch (bit) {
         case 0:
@@ -303,8 +313,8 @@ void FDC_LatchAChange(ARMul_State *state) {
     } /* Difference if */
   } /* bit loop */
 
-    if (diffmask & 0xf && FDC.leds_changed) {
-        (*FDC.leds_changed)(~ioc.LatchA & 0xf);
+    if (diffmask & 0xf) {
+        FDC_UpdateLEDs();
     }
 
     return;
@@ -313,28 +323,35 @@ void FDC_LatchAChange(ARMul_State *state) {
 /**
  * FDC_LatchBChange
  *
- * Callback function, whenever LatchA is written too (regardless of
+ * Callback function, whenever LatchB is written too (regardless of
  * whether the value has changed).
  *
  * @param state Emulator state
  */
-void FDC_LatchBChange(ARMul_State *state) {
+void FDC_LatchBChange(ARMul_State *state,uint_fast8_t data) {
   int_fast8_t bit;
   uint_fast8_t val;
-  uint_fast8_t diffmask=ioc.LatchB ^ ioc.LatchBold;
+  uint_fast8_t diffmask;
 
   UNUSED_VAR(state);
 
-  DBG(("LatchB: 0x%x\n",ioc.LatchB));
+  DBG(("LatchB: 0x%x\n",data));
+
+  FDC.LatchB = data;
+
   /* Start up test */
-  if (ioc.LatchBold>0xff) {
+  if (FDC.LatchBold>0xff) {
     diffmask=0xff;
+  } else {
+    diffmask=FDC.LatchB ^ FDC.LatchBold;
   }
+
+  FDC.LatchBold = data;
 
   for(bit=7;bit>=0;bit--) {
     if (diffmask & (1<<bit)) {
       /* Bit changed! */
-      val=ioc.LatchB & (1<<bit);
+      val=FDC.LatchB & (1<<bit);
 
       switch (bit) {
         case 0:
@@ -485,7 +502,7 @@ static void FDC_DoReadAddressChar(ARMul_State *state) {
       break;
 
     case 5: /* side number */
-      FDC.Data=(ioc.LatchA & (1<<4))?1:0; /* I've not inverted this - should I ? */
+      FDC.Data=(FDC.LatchA & (1<<4))?1:0; /* I've not inverted this - should I ? */
       break;
 
     case 4: /* sector addr */
@@ -604,7 +621,7 @@ static void FDC_StepDirCommand(ARMul_State *state,int_fast8_t Dir) {
 /*--------------------------------------------------------------------------*/
 static void FDC_ReadAddressCommand(ARMul_State *state) {
   long offset;
-  uint_fast8_t Side=(ioc.LatchA & (1<<4))?0:1; /* Note: Inverted??? Yep!!! */
+  uint_fast8_t Side=(FDC.LatchA & (1<<4))?0:1; /* Note: Inverted??? Yep!!! */
 
   FDC.StatusReg|=BIT_BUSY;
   FDC.StatusReg &= ~(BIT_DRQ | BIT_LOSTDATA | (1<<5) | BIT_WRITEPROT | BIT_RECNOTFOUND);
@@ -636,7 +653,7 @@ static void FDC_ReadAddressCommand(ARMul_State *state) {
 /*--------------------------------------------------------------------------*/
 static void FDC_ReadCommand(ARMul_State *state) {
   long offset;
-  uint_fast8_t Side=(ioc.LatchA & (1<<4))?0:1; /* Note: Inverted??? Yep!!! */
+  uint_fast8_t Side=(FDC.LatchA & (1<<4))?0:1; /* Note: Inverted??? Yep!!! */
 
   UNUSED_VAR(state);
 
@@ -694,7 +711,7 @@ static void FDC_DoWriteChar(ARMul_State *state) {
 /*--------------------------------------------------------------------------*/
 static void FDC_WriteCommand(ARMul_State *state) {
   long offset;
-  uint_fast8_t Side=(ioc.LatchA & (1<<4))?0:1; /* Note: Inverted??? Yep!!! */
+  uint_fast8_t Side=(FDC.LatchA & (1<<4))?0:1; /* Note: Inverted??? Yep!!! */
   FDC.StatusReg|=BIT_BUSY;
   FDC.StatusReg &= ~(BIT_DRQ | BIT_LOSTDATA | (1<<5) | BIT_WRITEPROT | BIT_RECNOTFOUND);
 
@@ -862,6 +879,8 @@ void FDC_Init(ARMul_State *state) {
   FDC.CurrentDisc=0;
   FDC.leds_changed = NULL;
   FDC.Sector_ReadAddr = 0;
+  FDC.LatchA = FDC.LatchB = 0xff;
+  FDC.LatchAold = FDC.LatchBold = 0xffff;
 
   for (drive = 0; drive < 4; drive++) {
     FDC.drive[drive].fp = NULL;
@@ -1041,4 +1060,17 @@ void FDC_SetLEDsChangeFunc(void (*leds_changed)(uint_fast8_t))
   assert(leds_changed);
   
   FDC.leds_changed = leds_changed;
+}
+
+/**
+ * FDC_UpdateLEDs
+ *
+ * Updates the LED callback with the current state.
+ *
+ */
+void FDC_UpdateLEDs(void)
+{
+  if (FDC.leds_changed) {
+    FDC.leds_changed(~FDC.LatchA & 0xf);
+  }
 }

@@ -44,17 +44,17 @@ void FDC_Write(ARMul_State *state, uint_fast16_t offset, uint_fast8_t data);
  *
  * @param state Emulator state
  */
-void FDC_LatchAChange(ARMul_State *state);
+void FDC_LatchAChange(ARMul_State *state,uint_fast8_t data);
 
 /**
  * FDC_LatchBChange
  *
- * Callback function, whenever LatchA is written too (regardless of
+ * Callback function, whenever LatchB is written too (regardless of
  * whether the value has changed).
  *
  * @param state Emulator state
  */
-void FDC_LatchBChange(ARMul_State *state);
+void FDC_LatchBChange(ARMul_State *state,uint_fast8_t data);
 
 /**
  * FDC_InsertFloppy
@@ -112,5 +112,13 @@ void FDC_Regular(ARMul_State *state);
  * @param leds_changed Function to callback on LED changes
  */
 void FDC_SetLEDsChangeFunc(void (*leds_changed)(uint_fast8_t leds));
+
+/**
+ * FDC_UpdateLEDs
+ *
+ * Updates the LED callback with the current state.
+ *
+ */
+void FDC_UpdateLEDs(void);
 
 #endif

@@ -155,7 +155,7 @@ static void ControlPane_Redraw(ARMul_State *state) {
 
   y+=2;
   draw_keyboard_leds(KBD.Leds);
-  draw_floppy_leds(~ioc.LatchA & 0xf);
+  FDC_UpdateLEDs();
 } /* ControlPane_Redraw */
 
 

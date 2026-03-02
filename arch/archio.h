@@ -11,11 +11,6 @@ struct IOCStruct {
   uint_least8_t SerialTxData;
   uint_least8_t IOEBControlReg;
 
-  uint_least8_t LatchA;
-  uint_least8_t LatchB;
-  uint_least16_t LatchAold;
-  uint_least16_t LatchBold;
-
   uint_least8_t FIRQStatus,FIRQMask;
   uint_least16_t IRQStatus,IRQMask;
   int32_t TimerCount[4];

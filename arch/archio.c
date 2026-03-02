@@ -44,8 +44,6 @@ IO_Init(ARMul_State *state)
   ioc.IRQMask = 0;
   ioc.FIRQStatus = 0;
   ioc.FIRQMask = 0;
-  ioc.LatchA = ioc.LatchB = 0xff;
-  ioc.LatchAold = ioc.LatchBold = 0xffff;
   ioc.TimerInputLatch[0] = 0xffff;
   ioc.TimerInputLatch[1] = 0xffff;
   ioc.TimerInputLatch[2] = 0xffff;
@@ -626,17 +624,13 @@ PutValIO(ARMul_State *state, ARMword address, ARMword data, bool byteNotword)
             case 0x18:
               dbug_ioc("Write to Latch B offset=0x%"PRIxFAST16" data=0x%"PRIx32"\n",
                        offset, data);
-              ioc.LatchB = data & 0xff;
-              FDC_LatchBChange(state);
-              ioc.LatchBold = data & 0xff;
+              FDC_LatchBChange(state,data & 0xff);
               break;
   
             case 0x40:
               dbug_ioc("Write to Latch A offset=0x%"PRIxFAST16" data=0x%"PRIx32"\n",
                        offset, data);
-              ioc.LatchA = data & 0xff;
-              FDC_LatchAChange(state);
-              ioc.LatchAold = data & 0xff;
+              FDC_LatchAChange(state,data & 0xff);
               break;
   
             default:
