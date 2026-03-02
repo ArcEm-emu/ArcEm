@@ -57,6 +57,8 @@ typedef uint16_t uint_least16_t;
 #endif
 
 #if defined(_MSC_VER) && (_MSC_VER < 1800)
+#define PRIuFAST16 PRIu32
+#define PRIxFAST16 PRIx32
 #define PRId32 "I32d"
 #define PRIu32 "I32u"
 #define PRIx32 "I32x"
@@ -86,13 +88,13 @@ typedef unsigned char bool;
 #endif
 
 #if __STDC_VERSION__ >= 199901L
-/* restrict is available */
+#define RESTRICT restrict
 #elif GCC_VERSION >= 30100
-#define restrict __restrict__
+#define RESTRICT __restrict__
 #elif (defined(_MSC_VER) && _MSC_VER >= 1400) || defined(__WATCOMC__)
-#define restrict __restrict
+#define RESTRICT __restrict
 #else
-#define restrict
+#define RESTRICT
 #endif
 
 #if __STDC_VERSION__ >= 199901L

@@ -101,7 +101,7 @@ void DisplayDev_VSync(ARMul_State *state)
   (instead of just endian swapping the destination, as suggested above)
 
 */
-void ByteCopy(void *restrict destp,const void *restrict srcp,size_t size)
+void ByteCopy(void *RESTRICT destp,const void *RESTRICT srcp,size_t size)
 {
   const uint8_t *src = (const uint8_t *)srcp;
   uint8_t *dest = (uint8_t *)destp;
@@ -159,7 +159,7 @@ void ByteCopy(void *restrict destp,const void *restrict srcp,size_t size)
   This time we need to do endian swapping on the destination address
 
 */
-void InvByteCopy(void *restrict destp,const void *restrict srcp,size_t size)
+void InvByteCopy(void *RESTRICT destp,const void *RESTRICT srcp,size_t size)
 {
   const uint8_t *src = (const uint8_t *)srcp;
   uint8_t *dest = (uint8_t *)destp;
@@ -221,7 +221,7 @@ void InvByteCopy(void *restrict destp,const void *restrict srcp,size_t size)
 
 */
 
-void BitCopy(ARMword *restrict dest,int destalign,const ARMword *restrict src,int srcalign,int count)
+void BitCopy(ARMword *RESTRICT dest,int destalign,const ARMword *RESTRICT src,int srcalign,int count)
 {
   /* Get the destination word aligned */
   int invdestalign = 32-destalign;
@@ -319,7 +319,7 @@ int GetExpandTableSize(unsigned int srcbpp,unsigned int factor)
 
 */
 
-void GenExpandTable(ARMword *restrict dest,unsigned int srcbpp,unsigned int factor,ARMword mul)
+void GenExpandTable(ARMword *RESTRICT dest,unsigned int srcbpp,unsigned int factor,ARMword mul)
 {
   ARMword i,j;
   unsigned int srcbits, destbpp = srcbpp<<factor;
@@ -353,7 +353,7 @@ void GenExpandTable(ARMword *restrict dest,unsigned int srcbpp,unsigned int fact
   destalign must be multiple of srcbpp<<factor
 */
 
-void BitCopyExpand(ARMword *restrict dest,int destalign,const ARMword *restrict src,int srcalign,int count,const ARMword *restrict expandtable,unsigned int srcbpp,unsigned int factor)
+void BitCopyExpand(ARMword *RESTRICT dest,int destalign,const ARMword *RESTRICT src,int srcalign,int count,const ARMword *RESTRICT expandtable,unsigned int srcbpp,unsigned int factor)
 {
   int invdestalign, invsrcalign; 
   ARMword srcmask, tempsrc1, tempsrc2;
