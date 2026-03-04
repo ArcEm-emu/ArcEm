@@ -11,6 +11,7 @@
 #define IDM_EXIT	108
 #define IDM_COPY	110
 #define IDM_PASTE	111
+#define IDM_LOCKMOUSE	112
 #define IDM_STDDISPLAY	120
 #define IDM_PALDISPLAY	121
 #define IDM_ASPECT	122

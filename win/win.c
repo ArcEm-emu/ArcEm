@@ -46,8 +46,6 @@ static BOOL captureMouse = FALSE;
 
 static RECT rcClip;           /* new area for ClipCursor */
 
-static RECT rcOldClip;        /* previous area for ClipCursor */
-
 
 
 
@@ -63,6 +61,7 @@ static bool SelectCheckbox(HWND hWnd, int wmId, bool value);
 
 static MSG msg;
 static HANDLE hInst;
+static HACCEL hAccel;
 static HWND mainWin;
 static DWORD tid;
 
@@ -91,14 +90,21 @@ static DWORD WINAPI threadWindow(LPVOID param)
         return FALSE;
     }
 
+    hAccel = LoadAccelerators(hInst, TEXT("GuiAccel"));
+    if (!hAccel) {
+        return FALSE;
+    }
+
     SelectMenuItem(mainWin, CONFIG.eDisplayDriver);
     requestedAspect = SelectCheckbox(mainWin, IDM_ASPECT, CONFIG.bAspectRatioCorrection);
     requestedUpscale = SelectCheckbox(mainWin, IDM_UPSCALE, CONFIG.bUpscale);
 
     /* Main message loop: */
     while (GetMessage(&msg, NULL, 0, 0)) {
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
+        if (!TranslateAccelerator(mainWin, hAccel, &msg)) {
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        }
     }
 
     return 0;
@@ -251,7 +257,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
  */
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-  int wmId, nVirtKey, nMouseX, nMouseY;
+  int wmId, nVirtKey;
   PAINTSTRUCT ps;
   HDC hdc;
   ARMul_State *state = &statestr;
@@ -267,6 +273,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
           DialogBox(hInst, (LPCTSTR)IDD_ABOUTBOX, hWnd, AboutDlgProc);
           break;
         case IDM_COPY:
+          break;
+        case IDM_LOCKMOUSE:
+          captureMouse = !captureMouse;
+          if (captureMouse) {
+            ClipCursor(&rcClip);
+            SetCursor(NULL);
+          } else {
+            ClipCursor(NULL);
+            SetCursor(LoadCursor(NULL, IDC_ARROW));
+          }
           break;
         case IDM_OPEN0:
         case IDM_OPEN1:
@@ -381,18 +397,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             if (wParam == VK_SHIFT || wParam == VK_CONTROL || wParam == VK_MENU)
                 nVirtKey = MapVirtualKey((lParam & 0xff0000) >> 16, MAPVK_VSC_TO_VK_EX);
 
-            if (wParam == VK_ADD) {
-                captureMouse = !captureMouse;
-                if (captureMouse) {
-                    GetClipCursor(&rcOldClip);
-                    GetWindowRect(hWnd, &rcClip);
-                    ClipCursor(&rcClip);
-                    SetCursor(NULL);
-                } else {
-                    ClipCursor(&rcOldClip);
-                }
-                break;
-            }
             ProcessKey(state, nVirtKey & 255, 0);
             break;
 
@@ -409,16 +413,25 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
         case WM_MOUSEMOVE:
 
-            nMouseX = GET_X_LPARAM(lParam);  /* horizontal position of cursor */
-            nMouseY = GET_Y_LPARAM(lParam);  /* vertical position of cursor */
-
             if (captureMouse) {
-                SetCursor(NULL);
-                nMouseX *= 2;
-                nMouseY *= 2;
-            }
+                POINT mouse, centre;
 
-            MouseMoved(state, nMouseX, nMouseY);
+                mouse.x = GET_X_LPARAM(lParam);
+                mouse.y = GET_Y_LPARAM(lParam);
+                ClientToScreen(hWnd, &mouse);
+
+                centre.x = (rcClip.right - rcClip.left) / 2;
+                centre.y = (rcClip.bottom - rcClip.top) / 2;
+                ClientToScreen(hWnd, &centre);
+
+                mouse.x -= centre.x;
+                mouse.y -= centre.y;
+
+                if (mouse.x || mouse.y) {
+                    SetCursorPos(centre.x, centre.y);
+                    MouseMoved(state, mouse.x, -mouse.y);
+                }
+            }
 
             break;
 
@@ -474,8 +487,33 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
             if (captureMouse) {
                 SetCursor(NULL);
-            } else {
+            } else if (LOWORD(lParam) == HTCLIENT) {
                 SetCursor(LoadCursor(NULL, IDC_ARROW));
+            }
+            break;
+
+
+        case WM_WINDOWPOSCHANGED:
+            {
+                POINT pt;
+
+                GetClientRect(hWnd, &rcClip);
+
+                pt.x = rcClip.left;
+                pt.y = rcClip.top;
+                ClientToScreen(hWnd, &pt);
+                rcClip.left = pt.x;
+                rcClip.top = pt.y;
+
+                pt.x = rcClip.right;
+                pt.y = rcClip.bottom;
+                ClientToScreen(hWnd, &pt);
+                rcClip.right = pt.x;
+                rcClip.bottom = pt.y;
+
+                if (captureMouse) {
+                    ClipCursor(&rcClip);
+                }
             }
             break;
 

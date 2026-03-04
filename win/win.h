@@ -13,4 +13,4 @@ extern int updateDisplay(void);
 extern int resizeWindow(int hWidth, int hHeight);
 
 extern void ProcessKey(ARMul_State *state, int nVirtKey, int nKeyStat);
-extern void MouseMoved(ARMul_State *state, int nMouseX, int nMouseY);
+extern void MouseMoved(ARMul_State *state, int xdiff, int ydiff);

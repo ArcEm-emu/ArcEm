@@ -38,8 +38,6 @@ int rMouseX = 0;
 int rMouseY = 0;
 int rMouseWidth = 0;
 int rMouseHeight = 0;
-int oldMouseX = 0;
-int oldMouseY = 0;
 
 
 
@@ -506,12 +504,7 @@ PDD_Name(Host_PollDisplay)(ARMul_State *state)
 
 
 /*-----------------------------------------------------------------------------*/
-void MouseMoved(ARMul_State *state, int nMouseX, int nMouseY) {
-  int xdiff, ydiff;
-
-  xdiff = -(oldMouseX - nMouseX);
-  ydiff = oldMouseY - nMouseY;
-
+void MouseMoved(ARMul_State *state, int xdiff, int ydiff) {
 #ifdef DEBUG_MOUSEMOVEMENT
   dbug_kbd("MouseMoved: xdiff = %d  ydiff = %d\n",
            xdiff, ydiff);
@@ -526,9 +519,6 @@ void MouseMoved(ARMul_State *state, int nMouseX, int nMouseY) {
     ydiff=63;
   if (ydiff<-63)
     ydiff=-63;
-
-  oldMouseX = nMouseX;
-  oldMouseY = nMouseY;
 
   KBD.MouseXCount = xdiff & 127;
   KBD.MouseYCount = ydiff & 127;
