@@ -35,6 +35,8 @@
 
 #define ROUND_UP_TO_4(x) (((x) + 3) & (~3))
 
+#define MAXIMUM_FILE_SIZE (0xffffff)
+
 enum OS_ID_BYTE {
   OS_ID_BYTE_RISCOS_MODULE = 0x81,
   OS_ID_BYTE_DEVICE_DESCR  = 0xf5
@@ -102,8 +104,12 @@ extnrom_calculate_size(const char *dir, uint32_t *entry_count)
       continue;
     }
 
+    if (ulFilesize > MAXIMUM_FILE_SIZE) {
+        continue;
+    }
+
     /* Add on size of file */
-    required_size += ROUND_UP_TO_4(ulFilesize);
+    required_size += (uint32_t)ROUND_UP_TO_4(ulFilesize);
 
     /* Add on overhead for each file */
     required_size += 12; /* 8 for Chunk directory info, 4 for size prefix */
@@ -235,6 +241,10 @@ extnrom_load(const char *dir, uint32_t size, uint32_t entry_count, void *address
       continue;
     }
 
+    if (ulFilesize > MAXIMUM_FILE_SIZE) {
+      continue;
+    }
+
     f = Directory_OpenEntryFile(hDirEntry, "rb");
     if (!f) {
       warn_data("Could not open module \'%s\': %s\n",
@@ -247,17 +257,17 @@ extnrom_load(const char *dir, uint32_t size, uint32_t entry_count, void *address
 
     /* Prepare Chunk Directory information for this entry */
     chunk[0] = OS_ID_BYTE_RISCOS_MODULE |
-               (ulFilesize << 8);
+               (ARMword)(ulFilesize << 8);
     chunk[1] = offset;
 
     /* Prepare undocumented size prefix - size includes the size data */
-    modules[0] = ulFilesize + 4;
+    modules[0] = (ARMword)(ulFilesize + 4);
 
     /* Point to next word within module area - after the size */
     modules++;
 
     /* Load module */
-    if (File_ReadEmu(f, (uint8_t *)modules, ulFilesize) != (size_t)ulFilesize) {
+    if (File_ReadEmu(f, (uint8_t *)modules, (size_t)ulFilesize) != (size_t)ulFilesize) {
       warn_data("Error while loading module \'%s\': %s\n",
                 sFilename, strerror(errno));
       fclose(f);
