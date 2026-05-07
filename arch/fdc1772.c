@@ -918,7 +918,7 @@ FDC_InsertFloppy(uint_fast8_t drive, const char *image)
   long len;
   const floppy_format *ff;
 
-  assert(drive < sizeof FDC.drive / sizeof FDC.drive[0]);
+  assert(drive < countof(FDC.drive));
   assert(image);
 
   if (FDC.LastCommand != CMD_FORCE_INTR) {
@@ -951,8 +951,7 @@ FDC_InsertFloppy(uint_fast8_t drive, const char *image)
 
   dr->fp = fp;
   dr->form = avail_format;
-  for (ff = avail_format; ff < avail_format +
-      (sizeof avail_format / sizeof(avail_format[0])); ff++)
+  for (ff = avail_format; ff < avail_format + countof(avail_format); ff++)
   {
     if (len == ff->num_sides * ff->num_cyl * ff->sectors_per_track *
         ff->bytes_per_sector)
@@ -982,7 +981,7 @@ FDC_EjectFloppy(uint_fast8_t drive)
 {
   floppy_drive *dr;
 
-  assert(drive < sizeof FDC.drive / sizeof FDC.drive[0]);
+  assert(drive < countof(FDC.drive));
 
   dr = FDC.drive + drive;
 
@@ -1023,7 +1022,7 @@ FDC_IsFloppyInserted(uint_fast8_t drive)
 {
     floppy_drive* dr;
 
-    assert(drive < sizeof FDC.drive / sizeof FDC.drive[0]);
+    assert(drive < countof(FDC.drive));
 
     dr = FDC.drive + drive;
 

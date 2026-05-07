@@ -38,11 +38,6 @@
 
 /* ------------------------------------------------------------------ */
 
-/* General macros to help handle arrays.  Number of elements, i.e. what
- * its dimension is, and a pointer to the element past the end. */
-#define DIM(a) ((sizeof (a)) / sizeof (a)[0])
-#define END(a) ((a) + DIM(a))
-
 /* A sensible set of defaults for the start window, the OS
    will call the VIDC and push this smaller or bigger later. */
 #define InitialVideoWidth 640
@@ -504,7 +499,7 @@ DisplayDev_Init(ARMul_State *state)
         const desired_colour *d;
         XColor discard;
 
-        for (d = desired; d < END(desired); d++) {
+        for (d = desired; d < desired + countof(desired); d++) {
             if (!XAllocNamedColor(PD.disp, PD.DefaultColormap, d->name,
                 d->dest, &discard)) {
                 warn("arcem: failed to allocate colour %s\n", d->name);

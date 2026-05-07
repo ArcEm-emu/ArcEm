@@ -435,9 +435,6 @@ static void Cause_Error(ARMul_State *state, uint_fast8_t errcode) {
 
 /* Sets the pointer in the appropriate data file - returns 1 if it succeeded */
 
-/* FIXME: should have just one definition of this. */
-#define DIM(a) ((sizeof (a)) / sizeof (a)[0])
-
 static bool SetFilePtr(ARMul_State *state, uint_fast8_t drive, uint_fast8_t head,
     uint_fast16_t cyl, uint_fast8_t sect)
 {
@@ -446,9 +443,9 @@ static bool SetFilePtr(ARMul_State *state, uint_fast8_t drive, uint_fast8_t head
 
     dbug("SetFilePtr: drive=%u head=%u cyl=%"PRIuFAST16" sec=%u\n", drive, head, cyl, sect);
 
-    if (drive > DIM(CONFIG.aST506DiskShapes)) {
+    if (drive > countof(CONFIG.aST506DiskShapes)) {
         ControlPane_Error(true,"SetFilePtr: drive %u out of range 0..%"PRIuSIZE,
-            drive, DIM(CONFIG.aST506DiskShapes));
+            drive, countof(CONFIG.aST506DiskShapes));
     }
 
     disc = CONFIG.aST506DiskShapes + drive;

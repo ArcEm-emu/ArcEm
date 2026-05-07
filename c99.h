@@ -15,6 +15,10 @@
 
 /* For now, assume we're using a C99 compiler */
 
+#ifndef __has_include
+#define __has_include(x) 0
+#endif
+
 #include <stddef.h>
 
 #ifdef __GNUC__
@@ -81,6 +85,12 @@ typedef unsigned char bool;
 #define false 0
 #else
 #include <stdbool.h>
+#endif
+
+#if __has_include(<stdcountof.h>)
+#include <stdcountof.h>
+#else
+#define countof(a) ((sizeof (a)) / sizeof (a)[0])
 #endif
 
 #ifdef _MSC_VER
