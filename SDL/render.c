@@ -432,7 +432,7 @@ bool DisplayDev_Init(ARMul_State *state)
 #if SDL_VERSION_ATLEAST(3, 0, 0)
   texture_formats = (const SDL_PixelFormat *)SDL_GetPointerProperty(SDL_GetRendererProperties(renderer), SDL_PROP_RENDERER_TEXTURE_FORMATS_POINTER, NULL);
   if (texture_formats) {
-    for (i = 0; i < texture_formats[i]; ++i) {
+    for (i = 0; texture_formats[i]; ++i) {
       pf = ExaminePixelFormat(texture_formats[i], pf);
     }
   }
