@@ -168,8 +168,11 @@
       };
       break;
 
-      /* case 0xf:*/
-      default:
+      case 0xf:
         f=EMFUNCDECL26(SWI);
+        break;
+
+      default:
+        unreachable();
         break;
     };

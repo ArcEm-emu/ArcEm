@@ -18,8 +18,12 @@
 #ifndef __has_include
 #define __has_include(x) 0
 #endif
+#ifndef __has_builtin
+#define __has_builtin(x) 0
+#endif
 
 #include <stddef.h>
+#include <stdlib.h>
 
 #ifdef __GNUC__
 #define GCC_VERSION (__GNUC__ * 10000 \
@@ -113,6 +117,14 @@ typedef unsigned char bool;
 /* __func__ is available */
 #else
 #define __func__ __FUNCTION__
+#endif
+
+#ifdef unreachable
+/* unreachable() is available */
+#elif GCC_VERSION >= 40500 || __has_builtin(__builtin_unreachable)
+#define unreachable() __builtin_unreachable()
+#else
+#define unreachable() abort()
 #endif
 
 #if GCC_VERSION >= 30000

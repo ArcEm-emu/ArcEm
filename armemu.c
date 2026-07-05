@@ -362,6 +362,7 @@ GetDPRegRHS(ARMul_State *state, ARMword instr)
                      return(base);
                   else
                      return((base << (32 - shamt)) | (base >> shamt));
+       default: unreachable();
        }
     }
  else { /* shift amount is a constant */
@@ -381,9 +382,9 @@ GetDPRegRHS(ARMul_State *state, ARMword instr)
                      return((base >> 1) | (CFLAG << 31));
                   else
                      return((base << (32 - shamt)) | (base >> shamt));
+       default: unreachable();
        }
     }
- return(0); /* just to shut up lint */
  }
 #endif
 
@@ -456,6 +457,7 @@ GetDPSRegRHS(ARMul_State *state, ARMword instr)
                      ASSIGNC((base >> (shamt-1)) & 1);
                      return((base << (32-shamt)) | (base >> shamt));
                      }
+       default: unreachable();
        }
     }
  else { /* shift amount is a constant */
@@ -493,9 +495,10 @@ GetDPSRegRHS(ARMul_State *state, ARMword instr)
                      ASSIGNC((base >> (shamt - 1)) & 1);
                      return((base << (32-shamt)) | (base >> shamt));
                      }
+       default: unreachable();
        }
     }
- return(0); /* just to shut up lint */
+    unreachable();
  }
 
 
@@ -555,8 +558,9 @@ static ARMword GetLSRegRHS(ARMul_State *state, ARMword instr)
                   return((base >> 1) | (CFLAG << 31));
                else
                   return((base << (32-shamt)) | (base >> shamt));
+
+    default: unreachable();
     }
- return(0); /* just to shut up lint */
  }
 
 /***************************************************************************\
