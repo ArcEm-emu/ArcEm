@@ -117,6 +117,10 @@ SOUND_SUPPORT=yes
 SOUND_PTHREAD=no
 SRCS += amiga/wb.c amiga/arexx.c amiga/sound.c
 OBJS += amiga/wb.o amiga/arexx.o amiga/sound.o
+ifneq (,$(findstring m68k,$(CROSS)))
+CFLAGS += -noixemul
+LDFLAGS += -noixemul
+else
 CPPFLAGS += -D__LARGE64_FILES -D__USE_INLINE__
 CFLAGS += -mcrt=newlib
 LDFLAGS += -mcrt=newlib
@@ -128,19 +132,6 @@ LDFLAGS += -mcrt=newlib
 # the emulator up but slows it down, so it is disabled by default
 #CPPFLAGS += -DONCHIPMEM_SUPPORT
 endif
-
-ifeq (${SYSTEM},amigaos3)
-CROSS=m68k-amigaos-
-HOST_BIGENDIAN=yes
-HOSTFS_SUPPORT=yes
-EXTNROM_SUPPORT=yes
-SOUND_SUPPORT=yes
-SOUND_PTHREAD=no
-SRCS += amiga/wb.c amiga/sound.c
-OBJS += amiga/wb.o amiga/sound.o
-CPPFLAGS += -D__amigaos3__
-CFLAGS += -noixemul
-LDFLAGS += -noixemul
 endif
 
 ifeq (${SYSTEM},riscos-single)

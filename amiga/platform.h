@@ -6,9 +6,7 @@
 #include <proto/exec.h>
 #include <proto/dos.h>
 #include <proto/asl.h>
-#ifdef __amigaos4__ /* weird _NewObject error */
 #include <proto/intuition.h>
-#endif
 #include <proto/graphics.h>
 #include <proto/utility.h>
 /* #include <proto/input.h> */
