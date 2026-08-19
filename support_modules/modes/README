@@ -39,6 +39,8 @@ PDA style modes (I wanted to see what RISC OS would look like on an iPaq)
 124       240  320   4      16
 125       240  320   8     256
 
+126       256  192   8     256
+
 Developing and assembling
 -------------------------
 
