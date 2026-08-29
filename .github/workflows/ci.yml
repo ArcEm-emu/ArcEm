@@ -163,14 +163,16 @@ jobs:
     strategy:
       matrix:
         amiga:
-        # - { name: "AmigaOS 3", host: "m68k-amigaos", system: "amigaos3" }
-        - { name: "AmigaOS 4", host: "ppc-amigaos", system: "amiga" }
+        # - { name: "AmigaOS 3", host: "m68k-amigaos", cmake-flags: -DM68K_CRT=nix20 }
+        - { name: "AmigaOS 4", host: "ppc-amigaos", cmake-flags: -DPPC_CRT=newlib }
 
     steps:
     - uses: actions/checkout@v3
+    - name: Configure
+      run: cmake -B build/ -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ${{ matrix.amiga.cmake-flags }} .
     - name: Build
-      run: make SYSTEM=${{ matrix.amiga.system }} CROSS=${{ matrix.amiga.host }}-
+      run: cmake --build build/ --config ${{env.BUILD_TYPE}} --parallel
     - uses: actions/upload-artifact@v4
       with:
         name: arcem-${{ matrix.amiga.host }}
-        path: ./arcem
+        path: ./build/arcem
