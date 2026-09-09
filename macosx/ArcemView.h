@@ -40,6 +40,7 @@
     NSRect dispFrame;
     
     bool keyState[256];
+    NSEventModifierFlags modState;
     int nMouse;
 
     // Lets us return the mouse after we capture it
@@ -52,7 +53,7 @@
     int nWidth, nHeight;
 
     BOOL mouseEmulation;
-    int adjustModifier, menuModifier;
+    NSEventModifierFlags adjustModifier, menuModifier;
 }
 
 @property (nonatomic, getter=isMouseLocked) BOOL mouseLock;

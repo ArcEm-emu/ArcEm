@@ -43,6 +43,8 @@
         captureMouse = FALSE;
         memset(keyState, false, sizeof(keyState));
 
+        modState = 0;
+
         // Set the default display region
         dispFrame.origin.x = 0.0;
         dispFrame.origin.y = 0.0;
@@ -351,7 +353,8 @@
 - (void)flagsChanged:(NSEvent *)theEvent
 {
     int c = [theEvent keyCode];
-    
+    modState = [theEvent modifierFlags];
+
     keyState[c] = !keyState[c];
     //NSLog(@"set %d to %d\n", c, keyState[c]);
 
@@ -449,9 +452,9 @@
     // Work out which mouse button it should be
     if (mouseEmulation)
     {
-        if (keyState[adjustModifier])
+        if (modState & adjustModifier)
             button = ARCH_KEY_button_3;
-        else if (keyState[menuModifier])
+        else if (modState & menuModifier)
             button = ARCH_KEY_button_2;
         else
             button = ARCH_KEY_button_1;
@@ -505,7 +508,7 @@
 {
     NSLog(@"Right mouse button down\n");
     
-    if (mouseEmulation)
+    if (!captureMouse)
         return;
 
     [emuThread keyDown:ARCH_KEY_button_3];
@@ -517,7 +520,7 @@
  */
 - (void)rightMouseUp: (NSEvent *)theEvent
 {
-    if (mouseEmulation)
+    if (!captureMouse)
         return;
 
     [emuThread keyUp:ARCH_KEY_button_3];
@@ -543,7 +546,7 @@
 {
     NSLog(@"Other mouse down\n");
     
-    if (mouseEmulation)
+    if (!captureMouse)
         return;
 
     [emuThread keyDown:ARCH_KEY_button_2];
@@ -555,7 +558,7 @@
  */
 - (void)otherMouseUp: (NSEvent *)theEvent
 {
-    if (mouseEmulation)
+    if (!captureMouse)
         return;
 
     [emuThread keyUp:ARCH_KEY_button_2];
@@ -625,8 +628,8 @@
     
     // Get some of the prefs
     mouseEmulation = [defaults boolForKey: AEUseMouseEmulationKey];
-    adjustModifier = (int)[defaults integerForKey: AEAdjustModifierKey];
-    menuModifier = (int)[defaults integerForKey: AEMenuModifierKey];
+    adjustModifier = [defaults integerForKey: AEAdjustModifierKey];
+    menuModifier = [defaults integerForKey: AEMenuModifierKey];
 }
 
 

@@ -24,8 +24,6 @@
 
 #import "PreferenceController.h"
 
-#include <Carbon/Carbon.h>
-
 // The keys we use for our plist
 NSString *const AEUseMouseEmulationKey = @"Use Mouse Emulation";
 NSString *const AEAdjustModifierKey = @"Adjust Modifier";
@@ -34,7 +32,13 @@ NSString *const AEDirectoryKey = @"Directory";
 
 @implementation PreferenceController
 
-const static int modifier_table[5] = {kVK_Option, kVK_Command, kVK_Control, kVK_Function, kVK_Shift};
+const static NSEventModifierFlags modifier_table[5] = {
+    NSEventModifierFlagOption,
+    NSEventModifierFlagCommand,
+    NSEventModifierFlagControl,
+    NSEventModifierFlagFunction,
+    NSEventModifierFlagShift
+};
 
 /*------------------------------------------------------------------------------
  *
@@ -86,7 +90,7 @@ const static int modifier_table[5] = {kVK_Option, kVK_Command, kVK_Control, kVK_
 - (IBAction)changeMenuModifier:(id)sender
 {
     id cell;
-    int mod;
+    NSEventModifierFlags mod;
 
     // find what's currently selected
     cell = [menuModifier selectedCell];
@@ -107,16 +111,16 @@ const static int modifier_table[5] = {kVK_Option, kVK_Command, kVK_Control, kVK_
 - (IBAction)changeAdjustModifier:(id)sender
 {
     id cell;
-    int mod;
+    NSEventModifierFlags mod;
 
     // find what's currently selected
-    cell = [menuModifier selectedCell];
+    cell = [adjustModifier selectedCell];
 
     // Set set the cell's tag to match up with entries in out modifier_table
     mod = modifier_table[[cell tag]];
 
     [[NSUserDefaults standardUserDefaults] setInteger: mod
-                                               forKey: AEMenuModifierKey];
+                                               forKey: AEAdjustModifierKey];
 
     [view prefsUpdated];
 }
@@ -142,7 +146,7 @@ const static int modifier_table[5] = {kVK_Option, kVK_Command, kVK_Control, kVK_
         NSURL *path = [openPanel URL];
 
         [[NSUserDefaults standardUserDefaults] setObject: path
-                                                  forKey: AEMenuModifierKey];        
+                                                  forKey: AEDirectoryKey];
         
         [directoryText setStringValue: path.path];
     }

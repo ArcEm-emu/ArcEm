@@ -30,8 +30,6 @@
 #import "../arch/armarc.h"
 #import "../arch/fdc1772.h"
 
-#include <Carbon/Carbon.h>
-
 extern ArcemConfig hArcemConfig;
 ArcemConfig hArcemConfig;
 
@@ -71,9 +69,9 @@ ArcemConfig hArcemConfig;
         // ...
         [defaultValues setObject: @YES
                           forKey: AEUseMouseEmulationKey];
-        [defaultValues setObject: @(kVK_Option)
+        [defaultValues setObject: @(NSEventModifierFlagOption)
                           forKey: AEMenuModifierKey];
-        [defaultValues setObject: @(kVK_Command)
+        [defaultValues setObject: @(NSEventModifierFlagCommand)
                           forKey: AEAdjustModifierKey];
         [defaultValues setObject: [NSURL fileURLWithPath:path]
                           forKey: AEDirectoryKey];
