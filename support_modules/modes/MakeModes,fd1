@@ -8,10 +8,10 @@ REM (at your option) any later version.
 REM
 REM This program is distributed in the hope that it will be useful,
 REM but WITHOUT ANY WARRANTY; without even the implied warranty of
-REM MERCHANABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
+REM MERCHANABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 REM GNU General Public License for more details.
 REM
-REM You should have received a copy of the GNU General Public License 
+REM You should have received a copy of the GNU General Public License
 REM along with this program; if not, write to the Free Software
 REM Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 REM
@@ -47,7 +47,7 @@ P% = 0
 .Title
         EQUS    "ArcemModes"+CHR$(0)
         .Help
-        EQUS    "ArcemModes"+CHR$(9)+"1.01 (27 Aug 2011) GPL"+CHR$(0)
+        EQUS    "ArcemModes"+CHR$(9)+"1.02 (27 Apr 2021) GPL"+CHR$(0)
         ALIGN
 ; .Flags
    ;     EQUD    1
@@ -93,6 +93,7 @@ P% = 0
         equd    123: equd VIDClist123: equd VIDCworkspacelist123
         equd    124: equd VIDClist124: equd VIDCworkspacelist124
         equd    125: equd VIDClist125: equd VIDCworkspacelist125
+        equd    126: equd VIDClist126: equd VIDCworkspacelist126
         equd     -1
 
 .VIDClist32 ; 800x600x8bpp
@@ -360,6 +361,25 @@ P% = 0
      equd       (&A0 << 24) OR (321 << 14)
      equd       (&E0 << 24) OR (3 << 2)
      equd       -1       ; Terminate standard parameters
+
+.VIDClist126 ; 256x192x8bpp
+        equd       0 ; List format (0 = Standard)
+        equd       15 ; Base mode number
+        equd       (&80 << 24) OR (161 << 14)
+        equd       (&88 << 24) OR (1 << 14)
+        equd       (&8C << 24) OR (15 << 14)
+        equd       (&90 << 24) OR (143 << 14)
+        equd       (&94 << 24) OR (161 << 14)
+        equd       (&84 << 24) OR (1 << 14)
+        equd       (&9C << 24) OR (81 << 14)
+        equd       (&A4 << 24) OR (1 << 14)
+        equd       (&A8 << 24) OR (1 << 14)
+        equd       (&AC << 24) OR (1 << 14)
+        equd       (&B0 << 24) OR (193 << 14)
+        equd       (&B4 << 24) OR (193 << 14)
+        equd       (&A0 << 24) OR (193 << 14)
+        equd       (&E0 << 24) OR (3 << 2) OR 0
+        equd       -1       ; Terminate standard parameters
 
 .VIDCworkspacelist32
      equd    0
@@ -794,6 +814,37 @@ P% = 0
      equd    12              ; Number of Y pixels on screen -1
      equd    320 - 1
      equd    -1
+
+.VIDCworkspacelist126
+        equd    0               ; list format
+        equd    15               ; Base mode number
+        equd    0               ; Mode Flags
+        equd    0
+        equd    1               ; Text columns -1
+        equd    32 - 1
+        equd    2               ; Text rows -1
+        equd    24 - 1
+        equd    3               ; Maximum logical colour
+        equd    63
+        equd    4               ; XEigFactor
+        equd    2
+        equd    5               ; YEigFactor
+        equd    2
+        equd    6               ; Bytelength of one pixel-line
+        equd    256
+        equd    7               ; Bytesize of entire screen
+        equd    49152
+        equd    8               ; YShiftFactor - Don't use
+        equd    0
+        equd    9               ; BitsPerPixel = 1 << Log2BPP
+        equd    3               ; 3 = 8bpp
+        equd    10              ; BytesPerChar = 1 << Log2BPC
+        equd    3               ; 3 = 8bpc
+        equd    11              ; Number of X pixels on screen -1
+        equd    256 - 1
+        equd    12              ; Number of Y pixels on screen -1
+        equd    192 - 1
+        equd    -1              ; List Terminator
 
 .Module_End
 ]

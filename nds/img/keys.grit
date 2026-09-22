@@ -1,0 +1,14 @@
+# exclude map data
+-m!
+
+# graphics bit depth is 4 (16 color)
+-gB4
+
+# include palette data
+-p
+
+# metatile is 2x2 tiles (16x16 pixels)
+-Mw2 -Mh2
+
+# use lz77 compression
+-gzl

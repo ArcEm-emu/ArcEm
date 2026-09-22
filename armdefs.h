@@ -254,7 +254,7 @@ struct ARMul_State {
 #endif
  };
 
-#ifdef AMIGA
+#if defined(AMIGA) || defined(SYSTEM_nds)
 extern void *state_alloc(int s);
 extern void state_free(void *p);
 #else
